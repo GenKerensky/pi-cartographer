@@ -22,6 +22,7 @@
   "files": [
     "README.md",
     "LICENSE",
+    "assets",
     "skills",
     "!**/__pycache__/**",
     "!**/*.pyc",
@@ -31,7 +32,8 @@
   "pi": {
     "skills": [
       "skills"
-    ]
+    ],
+    "image": "assets/pi-cartographer.png"
   },
   "scripts": {
     "check:scripts": "python -m py_compile skills/index-project/scripts/index_project.py skills/plan/scripts/validate_planning_graph.py",

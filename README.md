@@ -1,5 +1,7 @@
 # Pi Cartographer
 
+![Pi Cartographer logo](assets/pi-cartographer.png)
+
 Graph-grounded planning skills for [pi](https://pi.dev): turn an idea into a proposal, a dependency-aware plan, and a phase-by-phase implementation workflow.
 
 Pi Cartographer is a package of four skills that work together:
