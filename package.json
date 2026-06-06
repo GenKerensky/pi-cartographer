@@ -1,0 +1,44 @@
+{
+  "name": "pi-blueprint",
+  "version": "0.1.0",
+  "description": "Pi skills for graph-grounded proposals, plans, and phase-by-phase implementation workflows.",
+  "keywords": [
+    "pi-package",
+    "pi",
+    "skills",
+    "planning",
+    "agents",
+    "blueprint"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GenKerensky/pi-blueprint.git"
+  },
+  "bugs": {
+    "url": "https://github.com/GenKerensky/pi-blueprint/issues"
+  },
+  "homepage": "https://github.com/GenKerensky/pi-blueprint#readme",
+  "files": [
+    "README.md",
+    "LICENSE",
+    "skills",
+    "!**/__pycache__/**",
+    "!**/*.pyc",
+    "requirements-dev.txt",
+    "pyproject.toml"
+  ],
+  "pi": {
+    "skills": [
+      "skills"
+    ]
+  },
+  "scripts": {
+    "check:scripts": "python -m py_compile skills/index-project/scripts/index_project.py skills/plan/scripts/validate_planning_graph.py",
+    "lint:py": "ruff check skills tests",
+    "format:check": "ruff format --check skills tests",
+    "format:py": "ruff format skills tests",
+    "test": "python -m unittest discover tests",
+    "check": "npm run check:scripts && npm run lint:py && npm run format:check && npm run test"
+  }
+}
