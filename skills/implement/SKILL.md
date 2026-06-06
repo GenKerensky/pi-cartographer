@@ -1,11 +1,11 @@
 ---
 name: "implement"
-description: "Pi Blueprint implementation workflow: execute .plan/<topic>/plan.md phase-by-phase using scout, worker, reviewer, optional oracle checks, quality gates, and conventional commits."
+description: "Pi Cartographer implementation workflow: execute .plan/<topic>/plan.md phase-by-phase using scout, worker, reviewer, optional oracle checks, quality gates, and conventional commits."
 version: 3
 created: "2026-06-06"
 updated: "2026-06-06"
 ---
-# Pi Blueprint Implement
+# Pi Cartographer Implement
 
 ## When to Use
 
@@ -99,7 +99,7 @@ If the plan is missing, ask the user whether to generate it first with the `plan
    - Do not commit `.plan/_index/project-graph.sqlite` or other index/cache artifacts unless they are already tracked or the user explicitly wants them committed.
 
 4. **Refresh implementation context**
-   - Load/use the `index-project` skill when available. In the Pi Blueprint package, prefer `../index-project/SKILL.md` relative to this `SKILL.md`.
+   - Load/use the `index-project` skill when available. In the Pi Cartographer package, prefer `../index-project/SKILL.md` relative to this `SKILL.md`.
    - Refresh the shared index before starting implementation:
 
      ```bash

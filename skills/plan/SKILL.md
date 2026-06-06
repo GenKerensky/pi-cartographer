@@ -1,11 +1,11 @@
 ---
 name: "plan"
-description: "Pi Blueprint planning workflow: generate .plan/<topic>/plan.md from a proposal plus index-project, map, and research graphs with ordered phases, dependencies, checklists, and validation criteria."
+description: "Pi Cartographer planning workflow: generate .plan/<topic>/plan.md from a proposal plus index-project, map, and research graphs with ordered phases, dependencies, checklists, and validation criteria."
 version: 3
 created: "2026-06-06"
 updated: "2026-06-06"
 ---
-# Pi Blueprint Plan
+# Pi Cartographer Plan
 
 ## When to Use
 

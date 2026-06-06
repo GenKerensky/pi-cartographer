@@ -1,8 +1,8 @@
-# Pi Blueprint
+# Pi Cartographer
 
 Graph-grounded planning skills for [pi](https://pi.dev): turn an idea into a proposal, a dependency-aware plan, and a phase-by-phase implementation workflow.
 
-Pi Blueprint is a package of four skills that work together:
+Pi Cartographer is a package of four skills that work together:
 
 | Skill | Purpose | Primary output |
 |---|---|---|
@@ -19,26 +19,26 @@ Hard dependency:
 
 Soft dependency:
 
-- **[pi-subagents](https://pi.dev/packages/pi-subagents?name=sub+agents)** — strongly recommended for delegated `scout`, `researcher`, `planner`, `oracle`, `reviewer`, and `worker` workflows. Without subagents, the skills can ask to continue in approved serial mode with the current agent, but the full Blueprint workflow works best with subagents installed.
+- **[pi-subagents](https://pi.dev/packages/pi-subagents?name=sub+agents)** — strongly recommended for delegated `scout`, `researcher`, `planner`, `oracle`, `reviewer`, and `worker` workflows. Without subagents, the skills can ask to continue in approved serial mode with the current agent, but the full Cartographer workflow works best with subagents installed.
 
 ## Install
 
 From a local checkout:
 
 ```bash
-pi install /path/to/pi-blueprint
+pi install /path/to/pi-cartographer
 ```
 
 From GitHub:
 
 ```bash
-pi install git:github.com/GenKerensky/pi-blueprint
+pi install git:github.com/GenKerensky/pi-cartographer
 ```
 
 For one-off use without installing:
 
 ```bash
-pi -e /path/to/pi-blueprint
+pi -e /path/to/pi-cartographer
 ```
 
 ## Workflow
@@ -60,7 +60,7 @@ Recommended commands inside pi:
 
 ## Artifacts
 
-Pi Blueprint stores durable planning artifacts under `.plan/` in the target project.
+Pi Cartographer stores durable planning artifacts under `.plan/` in the target project.
 
 Shared project index:
 

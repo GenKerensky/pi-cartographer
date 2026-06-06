@@ -1,11 +1,11 @@
 ---
 name: "proposal"
-description: "Pi Blueprint proposal workflow: create .plan/<topic>/proposal.md using the index-project SQLite/FTS graph plus delegated scope, mapping, research, design, oracle review, and validation."
+description: "Pi Cartographer proposal workflow: create .plan/<topic>/proposal.md using the index-project SQLite/FTS graph plus delegated scope, mapping, research, design, oracle review, and validation."
 version: 16
 created: "2026-06-05"
 updated: "2026-06-06"
 ---
-# Pi Blueprint Proposal
+# Pi Cartographer Proposal
 
 ## When to Use
 

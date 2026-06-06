@@ -1,11 +1,11 @@
 ---
 name: "index-project"
-description: "Pi Blueprint indexer: build and update a shared .plan/_index/project-graph.sqlite SQLite + FTS5 code/doc graph for LLM planning. Use before proposal planning, file discovery, or topic-scoped project mapping."
+description: "Pi Cartographer indexer: build and update a shared .plan/_index/project-graph.sqlite SQLite + FTS5 code/doc graph for LLM planning. Use before proposal planning, file discovery, or topic-scoped project mapping."
 version: 2
 created: "2026-06-06"
 updated: "2026-06-06"
 ---
-# Pi Blueprint Index Project
+# Pi Cartographer Index Project
 
 ## When to Use
 
@@ -113,7 +113,7 @@ Node IDs are stable and typed, for example:
 - `nodes`
 - `edges`
 
-Pi Blueprint skills may transform this slice into JSONL map graph artifacts, Markdown references, or planner context.
+Pi Cartographer skills may transform this slice into JSONL map graph artifacts, Markdown references, or planner context.
 
 ## Update Behavior
 

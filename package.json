@@ -1,24 +1,24 @@
 {
-  "name": "pi-blueprint",
+  "name": "pi-cartographer",
   "version": "0.1.0",
-  "description": "Pi skills for graph-grounded proposals, plans, and phase-by-phase implementation workflows.",
+  "description": "Pi skills for mapping codebases into graph-grounded proposals, plans, and implementation routes.",
   "keywords": [
     "pi-package",
     "pi",
     "skills",
     "planning",
     "agents",
-    "blueprint"
+    "cartography"
   ],
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/GenKerensky/pi-blueprint.git"
+    "url": "git+https://github.com/GenKerensky/pi-cartographer.git"
   },
   "bugs": {
-    "url": "https://github.com/GenKerensky/pi-blueprint/issues"
+    "url": "https://github.com/GenKerensky/pi-cartographer/issues"
   },
-  "homepage": "https://github.com/GenKerensky/pi-blueprint#readme",
+  "homepage": "https://github.com/GenKerensky/pi-cartographer#readme",
   "files": [
     "README.md",
     "LICENSE",
