@@ -23,16 +23,22 @@ Soft dependency:
 
 ## Install
 
-From a local checkout:
+From npm:
 
 ```bash
-pi install /path/to/pi-cartographer
+pi install npm:pi-cartographer
 ```
 
 From GitHub:
 
 ```bash
 pi install git:github.com/GenKerensky/pi-cartographer
+```
+
+From a local checkout:
+
+```bash
+pi install /path/to/pi-cartographer
 ```
 
 For one-off use without installing:
