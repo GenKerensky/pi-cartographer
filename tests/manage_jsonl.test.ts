@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -16,6 +16,15 @@ function runJson(args: string[], cwd = process.cwd()): any {
 		},
 	);
 	return JSON.parse(stdout);
+}
+
+function runJsonUnchecked(args: string[], cwd = process.cwd()): any {
+	const result = spawnSync(
+		"node",
+		["--experimental-strip-types", script, ...args, "--json"],
+		{ cwd, encoding: "utf8" },
+	);
+	return { status: result.status, payload: JSON.parse(result.stdout) };
 }
 
 function tempDir(): string {
@@ -83,6 +92,45 @@ describe("manage_jsonl CLI", () => {
 		);
 		expect(facts).toContain("F900");
 		expect(facts).toContain("S904");
+	});
+
+	it("validates lifecycle, verification evidence, and miss logs", () => {
+		const root = tempDir();
+		const file = path.join(root, "nodes.jsonl");
+		fs.writeFileSync(
+			file,
+			`${JSON.stringify({ id: "N1", type: "artifact", lifecycle: "bogus" })}\n${JSON.stringify({ id: "N2", type: "file", verified: true })}\n`,
+			"utf8",
+		);
+		const validation = runJsonUnchecked(["validate-file", "--file", file]);
+		expect(validation.status).not.toBe(0);
+		expect(validation.payload.ok).toBe(false);
+		expect(validation.payload.errors.join("\n")).toContain("Invalid lifecycle");
+		expect(validation.payload.errors.join("\n")).toContain("verified=true");
+
+		const missDir = path.join(root, ".plan", "_retrieval");
+		fs.mkdirSync(missDir, { recursive: true });
+		const missFile = path.join(missDir, "misses.jsonl");
+		fs.writeFileSync(
+			missFile,
+			`${JSON.stringify({ id: "miss:1", created_at: "2026-06-07T00:00:00+00:00", original_query: "config", failure_type: "vocabulary_mismatch", resolution: "query_expansion" })}\n`,
+			"utf8",
+		);
+		const missValidation = runJson(["validate-misses", "--root", root]);
+		expect(missValidation.ok).toBe(true);
+		const missList = runJson(["list-misses", "--root", root]);
+		expect(missList.count).toBe(1);
+
+		fs.appendFileSync(
+			missFile,
+			`${JSON.stringify({ id: "miss:2", failure_type: "bad", text: "raw" })}\n`,
+			"utf8",
+		);
+		const invalidMisses = runJsonUnchecked(["validate-misses", "--root", root]);
+		expect(invalidMisses.status).not.toBe(0);
+		expect(invalidMisses.payload.ok).toBe(false);
+		expect(invalidMisses.payload.errors.join("\n")).toContain("Invalid failure_type");
+		expect(invalidMisses.payload.errors.join("\n")).toContain("Raw snippet");
 	});
 
 	it("validates topic fact citations and support edges", () => {

@@ -103,25 +103,25 @@ Validation:
 
 ### Phase P3 — Add JSONL validation and lifecycle tooling
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P0, P2
 - **Objective:** Teach Cartographer validation/tooling to understand lifecycle states, candidate/verified metadata, stale/superseded rationale, and retrieval miss records.
 - **Source references:** `skills/plan/scripts/manage_jsonl.ts`, `skills/plan/scripts/validate_planning_graph.py`, `tests/test_manage_jsonl.py`, `tests/manage_jsonl.test.ts`, `tests/test_validate_planning_graph.py`
 
 Checklist:
 
-- [ ] **P3.T1** Add lifecycle status validation for proposal, map, fact, and plan graph records where status metadata is present.
-- [ ] **P3.T2** Add warnings or errors for `verified: true` records that lack supporting read/rg/validation evidence.
-- [ ] **P3.T3** Add warnings for high-impact candidate-only references in proposal/plan artifacts.
-- [ ] **P3.T4** Add warnings for retrieved rationale that is `draft`, `superseded`, `stale`, or missing `last_verified_at` when used as implementation guidance.
-- [ ] **P3.T5** Add list/upsert/validate support for retrieval miss records under `.plan/_retrieval/misses.jsonl`.
-- [ ] **P3.T6** Preserve existing JSONL validation behavior for projects that do not yet use lifecycle or retrieval miss metadata.
+- [x] **P3.T1** Add lifecycle status validation for proposal, map, fact, and plan graph records where status metadata is present.
+- [x] **P3.T2** Add warnings or errors for `verified: true` records that lack supporting read/rg/validation evidence.
+- [x] **P3.T3** Add warnings for high-impact candidate-only references in proposal/plan artifacts.
+- [x] **P3.T4** Add warnings for retrieved rationale that is `draft`, `superseded`, `stale`, or missing `last_verified_at` when used as implementation guidance.
+- [x] **P3.T5** Add list/upsert/validate support for retrieval miss records under `.plan/_retrieval/misses.jsonl`.
+- [x] **P3.T6** Preserve existing JSONL validation behavior for projects that do not yet use lifecycle or retrieval miss metadata.
 
 Validation:
 
-- [ ] **P3.V1** `node --experimental-strip-types skills/plan/scripts/manage_jsonl.ts validate-topic --root "$PWD" --topic retrieval-workflow --json` passes or reports only intended warnings.
-- [ ] **P3.V2** `python skills/plan/scripts/validate_planning_graph.py --root "$PWD" --topic retrieval-workflow --json` passes for valid artifacts.
-- [ ] **P3.V3** Invalid lifecycle, unsupported `verified: true`, and malformed miss-log fixtures are detected by tests.
+- [x] **P3.V1** `node --experimental-strip-types skills/plan/scripts/manage_jsonl.ts validate-topic --root "$PWD" --topic retrieval-workflow --json` passes or reports only intended warnings.
+- [x] **P3.V2** `python skills/plan/scripts/validate_planning_graph.py --root "$PWD" --topic retrieval-workflow --json` passes for valid artifacts.
+- [x] **P3.V3** Invalid lifecycle, unsupported `verified: true`, and malformed miss-log fixtures are detected by tests.
 
 ### Phase P4 — Add retrieval-quality and lifecycle tests
 

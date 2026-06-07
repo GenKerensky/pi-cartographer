@@ -20,6 +20,17 @@ TASK_RE = re.compile(r"\*\*(P\d+\.T\d+)\*\*")
 VALIDATION_RE = re.compile(r"\*\*(P\d+\.V\d+)\*\*")
 FACT_CITATION_RE = re.compile(r"\[(F\d+)\]")
 REFERENCE_RE = re.compile(r"(?<![\w/.-])([A-Za-z0-9_./@+-]+\.[A-Za-z0-9_./@+-]+):(\d+)")
+LIFECYCLE_STATES = {"draft", "accepted", "planned", "in-progress", "implemented", "superseded", "stale"}
+MISS_FAILURE_TYPES = {
+    "vocabulary_mismatch",
+    "generic_noise",
+    "missing_context",
+    "stale_artifact",
+    "ranking_failure",
+    "tool_failure",
+}
+MISS_RESOLUTIONS = {"query_expansion", "path_constraint", "manual_read", "user_hint", "unresolved"}
+RAW_MISS_FIELDS = {"text", "snippet", "raw_snippet", "content", "raw_content"}
 
 
 def read_jsonl(path: Path, errors: list[str], required: bool = False) -> list[dict[str, Any]]:
@@ -109,6 +120,81 @@ def validate_file_references(root: Path, records: list[dict[str, Any]], path: Pa
                 candidate = root / rel
                 if not candidate.exists():
                     errors.append(f"Missing referenced file {rel!r} in {path} record {index} field {key}")
+
+
+def has_verification_evidence(record: dict[str, Any]) -> bool:
+    verification = record.get("verification")
+    if not isinstance(verification, dict):
+        return False
+    return any(bool(verification.get(key)) for key in ("read", "rg", "validation"))
+
+
+def lifecycle_field(record: dict[str, Any]) -> str | None:
+    for field in ("lifecycle", "lifecycle_status", "artifact_status"):
+        if field in record:
+            return field
+    record_type = str(record.get("type", ""))
+    record_id = str(record.get("id", ""))
+    if (
+        "status" in record
+        and not record_id.startswith(("phase:", "task:", "validation:"))
+        and record_type in {"proposal", "plan", "map", "fact", "source", "artifact", "rationale"}
+    ):
+        return "status"
+    return None
+
+
+def validate_lifecycle_and_retrieval_metadata(
+    records: list[dict[str, Any]], label: str, errors: list[str], warnings: list[str]
+) -> None:
+    for index, record in enumerate(records, start=1):
+        field = lifecycle_field(record)
+        if field:
+            state = str(record.get(field))
+            if state not in LIFECYCLE_STATES:
+                errors.append(f"Invalid lifecycle state {state!r} in {label} record {index}")
+        if record.get("verified") is True and not has_verification_evidence(record):
+            errors.append(f"verified=true lacks read/rg/validation evidence in {label} record {index}")
+        record_type = str(record.get("type", ""))
+        if (
+            record.get("candidate") is True
+            and record.get("verified") is not True
+            and record_type
+            in {
+                "file",
+                "symbol",
+                "dependency",
+                "depends_on",
+                "imports",
+                "references",
+                "relevant_to",
+            }
+        ):
+            warnings.append(f"High-impact candidate-only reference in {label} record {index}")
+        used_as = record.get("used_as")
+        used_for_implementation = (
+            record.get("implementation_guidance") is True
+            or used_as == "implementation_guidance"
+            or (isinstance(used_as, list) and "implementation_guidance" in used_as)
+        )
+        if used_for_implementation:
+            state = str(record.get(field)) if field else None
+            if not state or state in {"draft", "superseded", "stale"} or not record.get("last_verified_at"):
+                warnings.append(f"Implementation guidance uses stale/unverified rationale in {label} record {index}")
+
+
+def validate_miss_records(records: list[dict[str, Any]], label: str, errors: list[str]) -> None:
+    for index, record in enumerate(records, start=1):
+        for field in ("id", "created_at", "original_query", "failure_type", "resolution"):
+            if not record.get(field):
+                errors.append(f"Missing {field} in {label} record {index}")
+        if record.get("failure_type") and str(record["failure_type"]) not in MISS_FAILURE_TYPES:
+            errors.append(f"Invalid failure_type {record['failure_type']!r} in {label} record {index}")
+        if record.get("resolution") and str(record["resolution"]) not in MISS_RESOLUTIONS:
+            errors.append(f"Invalid resolution {record['resolution']!r} in {label} record {index}")
+        for field in record:
+            if field in RAW_MISS_FIELDS:
+                errors.append(f"Raw snippet/content field {field} is not allowed in {label} record {index}")
 
 
 def phase_blocks(plan_text: str) -> list[tuple[str, str]]:
@@ -228,6 +314,7 @@ def main() -> int:
     topic_dir = root / ".plan" / args.topic
     db_path = root / ".plan/_index/project-graph.sqlite"
     errors: list[str] = []
+    warnings: list[str] = []
 
     map_nodes = read_jsonl(topic_dir / "map.nodes.jsonl", errors)
     map_edges = read_jsonl(topic_dir / "map.edges.jsonl", errors)
@@ -235,6 +322,7 @@ def main() -> int:
     fact_edges = read_jsonl(topic_dir / "facts.edges.jsonl", errors)
     plan_nodes = read_jsonl(topic_dir / "plan.nodes.jsonl", errors, required=True)
     plan_edges = read_jsonl(topic_dir / "plan.edges.jsonl", errors, required=True)
+    retrieval_misses = read_jsonl(root / ".plan/_retrieval/misses.jsonl", errors)
     graph = read_json(topic_dir / "map.graph.json", errors) or {}
 
     map_ids = validate_unique_ids(map_nodes, topic_dir / "map.nodes.jsonl", errors)
@@ -249,6 +337,13 @@ def main() -> int:
     validate_file_references(
         root, [*map_nodes, *map_edges, *fact_nodes, *fact_edges, *plan_nodes, *plan_edges], topic_dir, errors
     )
+    validate_lifecycle_and_retrieval_metadata(map_nodes, "map.nodes.jsonl", errors, warnings)
+    validate_lifecycle_and_retrieval_metadata(map_edges, "map.edges.jsonl", errors, warnings)
+    validate_lifecycle_and_retrieval_metadata(fact_nodes, "facts.nodes.jsonl", errors, warnings)
+    validate_lifecycle_and_retrieval_metadata(fact_edges, "facts.edges.jsonl", errors, warnings)
+    validate_lifecycle_and_retrieval_metadata(plan_nodes, "plan.nodes.jsonl", errors, warnings)
+    validate_lifecycle_and_retrieval_metadata(plan_edges, "plan.edges.jsonl", errors, warnings)
+    validate_miss_records(retrieval_misses, "misses.jsonl", errors)
 
     fact_nodes_by_id = {str(node.get("id")): node for node in fact_nodes if node.get("id")}
     source_ids = {node_id for node_id, node in fact_nodes_by_id.items() if node.get("type") == "source"}
@@ -275,6 +370,7 @@ def main() -> int:
         "topic": args.topic,
         "ok": not errors,
         "errors": errors,
+        "warnings": warnings,
         "counts": {
             "map_nodes": len(map_nodes),
             "map_edges": len(map_edges),
@@ -282,6 +378,7 @@ def main() -> int:
             "fact_edges": len(fact_edges),
             "plan_nodes": len(plan_nodes),
             "plan_edges": len(plan_edges),
+            "retrieval_misses": len(retrieval_misses),
         },
     }
     if args.json:
@@ -290,8 +387,12 @@ def main() -> int:
         print("Planning graph validation failed:")
         for error in errors:
             print(f"- {error}")
+        for warning in warnings:
+            print(f"Warning: {warning}")
     else:
         print("Planning graph validation passed.")
+        for warning in warnings:
+            print(f"Warning: {warning}")
     return 0 if not errors else 1
 
 

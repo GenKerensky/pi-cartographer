@@ -34,6 +34,79 @@ class ManageJsonlTests(unittest.TestCase):
             )
             self.assertTrue(validation["ok"])
 
+    def test_validate_lifecycle_verification_and_misses(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            nodes = root / "nodes.jsonl"
+            nodes.write_text(
+                "\n".join(
+                    [
+                        json.dumps({"id": "N1", "type": "artifact", "lifecycle": "bogus"}),
+                        json.dumps({"id": "N2", "type": "file", "verified": True}),
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            validation = subprocess.run(
+                [
+                    "node",
+                    "--experimental-strip-types",
+                    str(SCRIPT),
+                    "validate-file",
+                    "--file",
+                    str(nodes),
+                    "--json",
+                ],
+                text=True,
+                capture_output=True,
+            )
+            self.assertNotEqual(validation.returncode, 0)
+            report = json.loads(validation.stdout)
+            self.assertFalse(report["ok"])
+            self.assertTrue(any("Invalid lifecycle" in error for error in report["errors"]))
+            self.assertTrue(any("verified=true" in error for error in report["errors"]))
+
+            miss_dir = root / ".plan/_retrieval"
+            miss_dir.mkdir(parents=True)
+            (miss_dir / "misses.jsonl").write_text(
+                json.dumps(
+                    {
+                        "id": "miss:1",
+                        "created_at": "2026-06-07T00:00:00+00:00",
+                        "original_query": "config",
+                        "failure_type": "vocabulary_mismatch",
+                        "resolution": "query_expansion",
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            miss_report = json.loads(self.run_script("validate-misses", "--root", str(root), "--json").stdout)
+            self.assertTrue(miss_report["ok"])
+            listed = json.loads(self.run_script("list-misses", "--root", str(root), "--json").stdout)
+            self.assertEqual(listed["count"], 1)
+
+            with (miss_dir / "misses.jsonl").open("a", encoding="utf-8") as handle:
+                handle.write(json.dumps({"id": "miss:2", "failure_type": "bad", "text": "raw"}) + "\n")
+            invalid = subprocess.run(
+                [
+                    "node",
+                    "--experimental-strip-types",
+                    str(SCRIPT),
+                    "validate-misses",
+                    "--root",
+                    str(root),
+                    "--json",
+                ],
+                text=True,
+                capture_output=True,
+            )
+            self.assertNotEqual(invalid.returncode, 0)
+            invalid_report = json.loads(invalid.stdout)
+            self.assertTrue(any("Invalid failure_type" in error for error in invalid_report["errors"]))
+            self.assertTrue(any("Raw snippet" in error for error in invalid_report["errors"]))
+
     def test_validate_topic_checks_fact_support(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

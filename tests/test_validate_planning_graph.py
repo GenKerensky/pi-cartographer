@@ -151,6 +151,27 @@ Finish the feature.
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             self.assertIn("Planning graph validation passed", result.stdout)
 
+    def test_lifecycle_verification_and_miss_errors_fail(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            topic_dir = self.write_valid_project(project)
+            nodes_path = topic_dir / "map.nodes.jsonl"
+            with nodes_path.open("a", encoding="utf-8") as handle:
+                handle.write(json.dumps({"id": "artifact:bad", "type": "artifact", "lifecycle": "bogus"}) + "\n")
+                handle.write(json.dumps({"id": "file:src/verified.ts", "type": "file", "verified": True}) + "\n")
+            miss_dir = project / ".plan/_retrieval"
+            miss_dir.mkdir(parents=True)
+            (miss_dir / "misses.jsonl").write_text(
+                json.dumps({"id": "miss:1", "failure_type": "bad", "text": "raw"}) + "\n",
+                encoding="utf-8",
+            )
+            result = self.run_validator(project)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("Invalid lifecycle", result.stdout)
+            self.assertIn("verified=true", result.stdout)
+            self.assertIn("Invalid failure_type", result.stdout)
+            self.assertIn("Raw snippet", result.stdout)
+
     def test_missing_fact_citation_fails(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)

@@ -7,6 +7,37 @@ import { fileURLToPath } from "node:url";
 const FACT_CITATION_RE = /\[(F\d+)\]/g;
 const REFERENCE_RE =
 	/(^|\s|[`([])([A-Za-z0-9_./@+-]+\.[A-Za-z0-9_./@+-]+):(\d+)/g;
+const LIFECYCLE_STATES = new Set([
+	"draft",
+	"accepted",
+	"planned",
+	"in-progress",
+	"implemented",
+	"superseded",
+	"stale",
+]);
+const MISS_FAILURE_TYPES = new Set([
+	"vocabulary_mismatch",
+	"generic_noise",
+	"missing_context",
+	"stale_artifact",
+	"ranking_failure",
+	"tool_failure",
+]);
+const MISS_RESOLUTIONS = new Set([
+	"query_expansion",
+	"path_constraint",
+	"manual_read",
+	"user_hint",
+	"unresolved",
+]);
+const RAW_MISS_FIELDS = new Set([
+	"text",
+	"snippet",
+	"raw_snippet",
+	"content",
+	"raw_content",
+]);
 
 type JsonRecord = Record<string, unknown>;
 type ValidateReport = {
@@ -14,6 +45,7 @@ type ValidateReport = {
 	topic?: string;
 	file?: string;
 	errors: string[];
+	warnings?: string[];
 	count?: number;
 	counts?: Record<string, number>;
 };
@@ -54,6 +86,8 @@ function usage(exitCode: number): never {
 	console.log(`Usage:
   ${script} validate-topic --root <root> --topic <topic> [--json]
   ${script} validate-file --file <path> [--require-id] [--json]
+  ${script} validate-misses --root <root> [--json]
+  ${script} list-misses --root <root> [--limit 20] [--json]
   ${script} upsert --file <path> --record '<json>' [--key id] [--no-merge] [--json]
   ${script} list --file <path> [--limit 20] [--json]
   ${script} seed-pi-facts --root <root> --topic <topic> [--json]`);
@@ -269,6 +303,104 @@ function validateFileRefs(
 	}
 }
 
+function hasVerificationEvidence(record: JsonRecord): boolean {
+	const verification = record.verification;
+	if (!verification || typeof verification !== "object" || Array.isArray(verification))
+		return false;
+	return ["read", "rg", "validation"].some((key) => {
+		const value = (verification as JsonRecord)[key];
+		return Array.isArray(value) ? value.length > 0 : Boolean(value);
+	});
+}
+
+function lifecycleField(record: JsonRecord): string | undefined {
+	for (const field of ["lifecycle", "lifecycle_status", "artifact_status"])
+		if (record[field] !== undefined) return field;
+	const recordType = typeof record.type === "string" ? record.type : "";
+	const id = typeof record.id === "string" ? record.id : "";
+	if (
+		record.status !== undefined &&
+		!id.startsWith("phase:") &&
+		!id.startsWith("task:") &&
+		!id.startsWith("validation:") &&
+		["proposal", "plan", "map", "fact", "source", "artifact", "rationale"].includes(recordType)
+	)
+		return "status";
+	return undefined;
+}
+
+function validateLifecycleAndRetrievalMetadata(
+	records: JsonRecord[],
+	label: string,
+	errors: string[],
+	warnings: string[],
+): void {
+	records.forEach((record, index) => {
+		const field = lifecycleField(record);
+		if (field) {
+			const value = String(record[field]);
+			if (!LIFECYCLE_STATES.has(value))
+				errors.push(
+					`Invalid lifecycle state ${JSON.stringify(value)} in ${label} record ${index + 1}`,
+				);
+		}
+		if (record.verified === true && !hasVerificationEvidence(record))
+			errors.push(
+				`verified=true lacks read/rg/validation evidence in ${label} record ${index + 1}`,
+			);
+		const highImpactCandidate =
+			record.candidate === true &&
+			record.verified !== true &&
+			(["file", "symbol", "dependency"].includes(String(record.type)) ||
+				["depends_on", "imports", "references", "relevant_to"].includes(
+					String(record.type),
+				));
+		if (highImpactCandidate)
+			warnings.push(
+				`High-impact candidate-only reference in ${label} record ${index + 1}`,
+			);
+		const usedForImplementation =
+			record.implementation_guidance === true ||
+			record.used_as === "implementation_guidance" ||
+			(Array.isArray(record.used_as) &&
+				record.used_as.includes("implementation_guidance"));
+		if (usedForImplementation) {
+			const state = field ? String(record[field]) : undefined;
+			if (!state || ["draft", "superseded", "stale"].includes(state) || !record.last_verified_at)
+				warnings.push(
+					`Implementation guidance uses stale/unverified rationale in ${label} record ${index + 1}`,
+				);
+		}
+	});
+}
+
+function validateMissRecords(
+	records: JsonRecord[],
+	label: string,
+	errors: string[],
+): void {
+	records.forEach((record, index) => {
+		for (const field of ["id", "created_at", "original_query", "failure_type", "resolution"])
+			if (!record[field])
+				errors.push(`Missing ${field} in ${label} record ${index + 1}`);
+		if (record.failure_type && !MISS_FAILURE_TYPES.has(String(record.failure_type)))
+			errors.push(
+				`Invalid failure_type ${JSON.stringify(record.failure_type)} in ${label} record ${index + 1}`,
+			);
+		if (record.resolution && !MISS_RESOLUTIONS.has(String(record.resolution)))
+			errors.push(
+				`Invalid resolution ${JSON.stringify(record.resolution)} in ${label} record ${index + 1}`,
+			);
+		for (const field of Object.keys(record))
+			if (RAW_MISS_FIELDS.has(field))
+				errors.push(`Raw snippet/content field ${field} is not allowed in ${label} record ${index + 1}`);
+	});
+}
+
+function retrievalMissPath(root: string): string {
+	return path.join(root, ".plan", "_retrieval", "misses.jsonl");
+}
+
 function validateTopic(
 	options: Record<string, string | boolean | string[]>,
 ): ValidateReport {
@@ -276,6 +408,7 @@ function validateTopic(
 	const topic = optString(options, "topic");
 	const dir = path.join(root, ".plan", topic);
 	const errors: string[] = [];
+	const warnings: string[] = [];
 	const read = (name: string) => {
 		const result = readJsonl(path.join(dir, name));
 		errors.push(...result.errors);
@@ -287,6 +420,8 @@ function validateTopic(
 	const factEdges = read("facts.edges.jsonl");
 	const planNodes = read("plan.nodes.jsonl");
 	const planEdges = read("plan.edges.jsonl");
+	const missResult = readJsonl(retrievalMissPath(root));
+	errors.push(...missResult.errors);
 
 	const mapIds = validateUnique(mapNodes, "map.nodes.jsonl", errors);
 	const factIdsAll = validateUnique(factNodes, "facts.nodes.jsonl", errors);
@@ -307,6 +442,13 @@ function validateTopic(
 		],
 		errors,
 	);
+	validateLifecycleAndRetrievalMetadata(mapNodes, "map.nodes.jsonl", errors, warnings);
+	validateLifecycleAndRetrievalMetadata(mapEdges, "map.edges.jsonl", errors, warnings);
+	validateLifecycleAndRetrievalMetadata(factNodes, "facts.nodes.jsonl", errors, warnings);
+	validateLifecycleAndRetrievalMetadata(factEdges, "facts.edges.jsonl", errors, warnings);
+	validateLifecycleAndRetrievalMetadata(planNodes, "plan.nodes.jsonl", errors, warnings);
+	validateLifecycleAndRetrievalMetadata(planEdges, "plan.edges.jsonl", errors, warnings);
+	validateMissRecords(missResult.records, "misses.jsonl", errors);
 
 	const factById = new Map(
 		factNodes.filter((item) => item.id).map((item) => [String(item.id), item]),
@@ -341,6 +483,7 @@ function validateTopic(
 		ok: errors.length === 0,
 		topic,
 		errors,
+		warnings,
 		counts: {
 			map_nodes: mapNodes.length,
 			map_edges: mapEdges.length,
@@ -348,6 +491,7 @@ function validateTopic(
 			fact_edges: factEdges.length,
 			plan_nodes: planNodes.length,
 			plan_edges: planEdges.length,
+			retrieval_misses: missResult.records.length,
 		},
 	};
 }
@@ -357,14 +501,34 @@ function validateFile(
 ): ValidateReport {
 	const filePath = path.resolve(optString(options, "file"));
 	const result = readJsonl(filePath, true);
-	if (options["require-id"])
-		validateUnique(result.records, path.basename(filePath), result.errors);
+	const warnings: string[] = [];
+	const label = path.basename(filePath);
+	if (options["require-id"]) validateUnique(result.records, label, result.errors);
+	validateLifecycleAndRetrievalMetadata(result.records, label, result.errors, warnings);
+	if (filePath.endsWith(path.join("_retrieval", "misses.jsonl")) || label === "misses.jsonl")
+		validateMissRecords(result.records, label, result.errors);
 	return {
 		ok: result.errors.length === 0,
 		file: filePath,
 		errors: result.errors,
+		warnings,
 		count: result.records.length,
 	};
+}
+
+function validateMisses(
+	options: Record<string, string | boolean | string[]>,
+): ValidateReport {
+	const root = path.resolve(optString(options, "root", process.cwd()));
+	const filePath = retrievalMissPath(root);
+	return validateFile({ file: filePath, "require-id": true });
+}
+
+function listMisses(
+	options: Record<string, string | boolean | string[]>,
+): Record<string, unknown> {
+	const root = path.resolve(optString(options, "root", process.cwd()));
+	return listRecords({ file: retrievalMissPath(root), limit: options.limit ?? "20" });
 }
 
 function listRecords(
@@ -587,6 +751,8 @@ function main(): number {
 	let payload: Record<string, unknown>;
 	if (command === "validate-topic") payload = validateTopic(options);
 	else if (command === "validate-file") payload = validateFile(options);
+	else if (command === "validate-misses") payload = validateMisses(options);
+	else if (command === "list-misses") payload = listMisses(options);
 	else if (command === "upsert") payload = upsert(options);
 	else if (command === "list") payload = listRecords(options);
 	else if (command === "seed-pi-facts") payload = seedPiFacts(options);
