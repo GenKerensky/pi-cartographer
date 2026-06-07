@@ -125,7 +125,10 @@ If the plan is missing, ask the user whether to generate it first with the `plan
      - risks/mitigations
      - notes for implementation agent
 
-6. **Gather phase context; use `scout` only when needed**
+6. **Create a bounded retrieval plan and gather phase context; use `scout` only when needed**
+   - Before phase context gathering or optional scout, write a short retrieval plan with 5-10 targeted probes derived from the selected phase. Include exact identifiers, filenames, tests, scripts, commands, config keys, generated artifacts, error strings, and constrained generic terms.
+   - Run bounded rationale retrieval in `.plan/` for the active topic and explicitly related topics only. Treat retrieved rationale as historical evidence requiring freshness checks before it influences implementation.
+   - Keep source-code retrieval and rationale retrieval separate: code probes should exclude `.plan/**`; rationale probes should explicitly target `.plan/`.
    - First use `.plan/{topic}/plan.md`, map JSONL, fact JSONL, deterministic validation reports, `cartographer_index query/read`, focused `rg`/grep searches, and selective file reads to gather phase context. For concrete code evidence, search exact identifiers, filenames, scripts, tests, commands, and error strings before relying on broad indexed snippets. Do not read entire large files or raw generated artifacts when targeted indexed context or lexical hits are enough.
    - Delegate to `scout`, or approved serial scout role, only if this index/map plus lexical context is missing, contradictory, or too broad for a safe worker handoff. If using scout, provide:
      - the selected phase text

@@ -103,7 +103,10 @@ Create or update these topic-specific proposal files in the current project:
      - `## Non-Goals`
    - Emphasize the problem the user wants to solve and the desired outcome. Keep technology and code details secondary in these sections.
 
-5. **Create the topic map with deterministic tools first; use `scout` only as an exception**
+5. **Create a bounded retrieval plan, then map project files**
+   - Before map generation or optional scouting, write a short retrieval plan with 5-10 targeted probes derived from the request. Include exact identifiers, filenames, commands, tests, config keys, error strings, and constrained generic terms to verify after index lookup.
+   - Run a bounded rationale retrieval pass in `.plan/` for related prior proposals, plans, facts, superseded work, and non-goals. Treat results as historical evidence requiring freshness checks, not current source truth.
+   - Keep source-code retrieval and rationale retrieval separate: code probes should exclude `.plan/**`; rationale probes should explicitly target `.plan/`.
    - Prefer deterministic map generation over delegated scouting:
 
      ```bash

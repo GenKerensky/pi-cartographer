@@ -59,24 +59,24 @@ Validation:
 
 ### Phase P1 — Add workflow prompt changes for retrieval and rationale behavior
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P0
 - **Objective:** Update proposal, plan, and implement skills so agents generate bounded retrieval plans, verify candidates, perform explicit rationale retrieval at workflow boundaries, and treat old planning artifacts as historical evidence.
 - **Source references:** `skills/proposal/SKILL.md`, `skills/plan/SKILL.md`, `skills/implement/SKILL.md`, `.plan/retrieval-workflow/proposal.md`
 
 Checklist:
 
-- [ ] **P1.T1** Add bounded retrieval-plan instructions to proposal workflow before map refinement or optional scout.
-- [ ] **P1.T2** Add bounded retrieval-plan instructions to plan workflow before gathering plan-relevant context.
-- [ ] **P1.T3** Add bounded retrieval-plan instructions to implement workflow before phase context and worker handoff.
-- [ ] **P1.T4** Add explicit rationale retrieval moments for proposal, plan, implementation, reviewer, and oracle workflows.
-- [ ] **P1.T5** Add guidance that retrieved `.plan/` artifacts are historical evidence requiring freshness checks, not automatically authoritative current code facts.
+- [x] **P1.T1** Add bounded retrieval-plan instructions to proposal workflow before map refinement or optional scout.
+- [x] **P1.T2** Add bounded retrieval-plan instructions to plan workflow before gathering plan-relevant context.
+- [x] **P1.T3** Add bounded retrieval-plan instructions to implement workflow before phase context and worker handoff.
+- [x] **P1.T4** Add explicit rationale retrieval moments for proposal, plan, implementation, reviewer, and oracle workflows.
+- [x] **P1.T5** Add guidance that retrieved `.plan/` artifacts are historical evidence requiring freshness checks, not automatically authoritative current code facts.
 
 Validation:
 
-- [ ] **P1.V1** `rg "rationale retrieval" skills/proposal/SKILL.md skills/plan/SKILL.md skills/implement/SKILL.md` finds the new workflow guidance.
-- [ ] **P1.V2** `rg "retrieval plan" skills/proposal/SKILL.md skills/plan/SKILL.md skills/implement/SKILL.md` finds bounded retrieval-plan instructions.
-- [ ] **P1.V3** Skill instructions preserve `.plan/_index/` ignore policy and do not recommend ignoring committed proposal/plan/fact/map JSONL rationale artifacts.
+- [x] **P1.V1** `rg "rationale retrieval" skills/proposal/SKILL.md skills/plan/SKILL.md skills/implement/SKILL.md` finds the new workflow guidance.
+- [x] **P1.V2** `rg "retrieval plan" skills/proposal/SKILL.md skills/plan/SKILL.md skills/implement/SKILL.md` finds bounded retrieval-plan instructions.
+- [x] **P1.V3** Skill instructions preserve `.plan/_index/` ignore policy and do not recommend ignoring committed proposal/plan/fact/map JSONL rationale artifacts.
 
 ### Phase P2 — Add index/query support for scopes, context packing, and miss logging
 

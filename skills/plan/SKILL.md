@@ -110,7 +110,10 @@ Use or create/update these supporting artifacts when needed:
    - If research fact graph artifacts are missing or insufficient for dependency/tool choices, ask `researcher` to append source-backed nodes/edges to `facts.nodes.jsonl` and `facts.edges.jsonl`. Every source-backed fact must have a `fact` node, a `source` node, and a `supported_by` edge.
    - In serial mode, perform the scout/researcher roles yourself after user approval.
 
-5. **Gather plan-relevant context**
+5. **Create a bounded retrieval plan and gather plan-relevant context**
+   - Before gathering context or launching optional scout, write a short retrieval plan with 5-10 targeted probes derived from the proposal/request. Include exact identifiers, filenames, tests, scripts, commands, config keys, generated artifacts, error strings, and constrained generic terms.
+   - Run bounded rationale retrieval in `.plan/` for related prior proposals, plans, facts, superseded work, validation decisions, and non-goals that may constrain the new plan. Treat retrieved rationale as historical evidence requiring freshness checks.
+   - Keep source-code retrieval and rationale retrieval separate: code probes should exclude `.plan/**`; rationale probes should explicitly target `.plan/`.
    - Prefer existing map JSONL, `cartographer_index query/read`, focused `rg`/grep, and selective reads to identify plan-relevant context. Use lexical search first for exact identifiers, filenames, tests, scripts, commands, and error strings. Ask `scout`, or in approved serial mode inspect manually, only when this context is insufficient:
      - files likely to change
      - files that constrain the work
