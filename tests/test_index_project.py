@@ -379,6 +379,51 @@ class IndexProjectTests(unittest.TestCase):
             self.assertEqual(alpha_blocks[0]["end_line"], 7)
             self.assertGreaterEqual(len(alpha_blocks[0]["sources"]), 2)
 
+    def test_repo_map_and_safe_search(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            self.make_project(project)
+            self.run_script("index", "--root", str(project), "--no-git-root", "--json")
+
+            repo_map = json.loads(
+                self.run_script(
+                    "repo-map",
+                    "--root",
+                    str(project),
+                    "--no-git-root",
+                    "--topic",
+                    "helper function",
+                    "--max-tokens",
+                    "800",
+                    "--json",
+                ).stdout
+            )
+            self.assertEqual(repo_map["scope"], "code")
+            self.assertTrue(repo_map["files"])
+            self.assertTrue(any(item["path"] == "src/util.ts" for item in repo_map["files"]))
+            self.assertLessEqual(repo_map["token_estimate"], 800)
+            self.assertIn("next_actions", repo_map)
+
+            dash_file = project / "src/dash.ts"
+            dash_file.write_text("export const flag = '--scope code';\n", encoding="utf-8")
+            self.run_script("index", "--root", str(project), "--no-git-root", "--json")
+            search = json.loads(
+                self.run_script(
+                    "search",
+                    "--root",
+                    str(project),
+                    "--no-git-root",
+                    "--pattern",
+                    "--scope code",
+                    "--path",
+                    "src/dash.ts",
+                    "--json",
+                ).stdout
+            )
+            self.assertEqual(search["match_count"], 1)
+            self.assertEqual(search["matches"][0]["reference"], "src/dash.ts:1")
+            self.assertIn("--fixed-strings", search["verification"]["rg"][0])
+
     def test_incremental_update_removes_deleted_files(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)

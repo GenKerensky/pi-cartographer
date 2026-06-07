@@ -321,7 +321,7 @@ Performance rules:
 - After each significant command, subagent handoff, timeout, or phase decision, append a `.plan/{topic}/receipts.jsonl` record instead of relying on transcript continuity. Validation receipts should include commands, exit codes/results, durations, changed-file hashes when available, and validation IDs satisfied.
 - Keep raw command/search/session output in `/tmp/pi-cartographer-runs/` by default; use ignored `.plan/_runs/` only when explicitly useful for local replay, and never cite or commit raw run logs.
 - Do not inline large scout/research/planner outputs into worker/reviewer prompts; pass artifact paths and concise summaries. Use `outputMode: "file-only"` for large child outputs.
-- Prefer `cartographer_index query/read`, `cartographer_jsonl validate-topic`, focused `rg`/grep, and selective reads before launching optional scout.
+- Prefer `cartographer_index context`, `repo-map`, `read`, safe `search`, `cartographer_jsonl validate-topic`, focused `rg`/grep, and selective reads before launching optional scout.
 - Do not ask child agents to dump SQLite schemas, grep entire large drafts, or read whole local docs unless targeted indexed reads and focused lexical searches are insufficient.
 - Use reviewer for code/artifact validation and oracle only for decision/scope consistency.
 

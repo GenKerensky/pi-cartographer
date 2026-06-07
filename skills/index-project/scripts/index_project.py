@@ -1595,6 +1595,161 @@ def query_results_silent(args: argparse.Namespace) -> list[dict[str, Any]]:
             sys.stdout = original_stdout
 
 
+def repo_map_index(args: argparse.Namespace) -> dict[str, Any]:
+    root = find_project_root(Path(args.root)) if args.git_root else Path(args.root).resolve()
+    db_path = root / DEFAULT_DB_REL
+    if not db_path.exists():
+        raise SystemExit(f"Index database not found: {db_path}. Run the index command first.")
+    conn = connect(db_path)
+    ensure_schema(conn)
+    query_args = argparse.Namespace(
+        root=str(root),
+        git_root=False,
+        topic=args.topic,
+        limit=args.limit,
+        neighbors=5,
+        json=False,
+        path_prefix=getattr(args, "path_prefix", []),
+        exclude=getattr(args, "exclude", []),
+        node_types=getattr(args, "node_types", []),
+        scope=getattr(args, "scope", "code"),
+    )
+    results = query_results_silent(query_args)
+    files: list[dict[str, Any]] = []
+    approximate_tokens = 0
+    for item in results:
+        path_value = str(item["path"])
+        symbols = [
+            {
+                "id": row["id"],
+                "type": row["type"],
+                "title": row["title"],
+                "reference": f"{row['path']}:{row['start_line']}" if row["start_line"] else row["path"],
+            }
+            for row in conn.execute(
+                """
+                SELECT id, type, title, path, start_line
+                FROM nodes
+                WHERE path = ? AND type IN ('symbol', 'doc-section')
+                ORDER BY start_line ASC
+                LIMIT 8
+                """,
+                (path_value,),
+            ).fetchall()
+        ]
+        node_ids = [row["id"] for row in conn.execute("SELECT id FROM nodes WHERE path = ?", (path_value,)).fetchall()]
+        centrality = 0
+        if node_ids:
+            placeholders = ",".join("?" for _ in node_ids)
+            centrality = int(
+                conn.execute(
+                    f"SELECT COUNT(*) FROM edges WHERE from_id IN ({placeholders}) OR to_id IN ({placeholders})",
+                    [*node_ids, *node_ids],
+                ).fetchone()[0]
+            )
+        entry = {
+            "path": path_value,
+            "score": item.get("score"),
+            "centrality": centrality,
+            "candidate": True,
+            "verified": False,
+            "matches": [match.get("reference") for match in item.get("matches", [])],
+            "symbols": symbols,
+            "neighbors": item.get("neighbors", [])[:5],
+            "verification": item.get("verification", {}),
+        }
+        token_count = max(1, len(json.dumps(entry, sort_keys=True)) // 4)
+        if approximate_tokens + token_count > args.max_tokens and files:
+            break
+        approximate_tokens += token_count
+        files.append(entry)
+    payload = {
+        "topic": args.topic,
+        "scope": args.scope,
+        "token_budget": args.max_tokens,
+        "token_estimate": approximate_tokens,
+        "files": files,
+        "omitted_results": max(0, len(results) - len(files)),
+        "next_actions": [
+            "Use read for high-impact files before editing.",
+            "Use search with fixed mode for exact identifier verification.",
+        ],
+    }
+    if args.json:
+        print(json.dumps(payload, indent=2, sort_keys=True))
+    else:
+        print(f"Repo map for {args.topic} ({len(files)} files, omitted {payload['omitted_results']})")
+        for entry in files:
+            print(f"- {entry['path']} score={entry.get('score')} centrality={entry['centrality']}")
+            for symbol in entry.get("symbols", [])[:3]:
+                print(f"  - {symbol['type']} {symbol['title']} @ {symbol['reference']}")
+    return payload
+
+
+def search_index(args: argparse.Namespace) -> dict[str, Any]:
+    root = find_project_root(Path(args.root)) if args.git_root else Path(args.root).resolve()
+    pattern = args.pattern
+    flags = 0 if args.case_sensitive else re.IGNORECASE
+    regex = re.compile(pattern, flags) if args.mode == "regex" else None
+    requested_paths = getattr(args, "paths", []) or []
+    if requested_paths:
+        candidate_files = [root / value for value in requested_paths]
+    else:
+        candidate_files = scan_indexable_files(root, args.max_bytes)
+    matches: list[dict[str, Any]] = []
+    scanned = 0
+    for file in candidate_files:
+        try:
+            rel = file.resolve().relative_to(root).as_posix()
+        except ValueError:
+            continue
+        if (
+            not file.exists() or not file.is_file() or not should_include(file, root, args.max_bytes)
+        ) and not should_include_plan_artifact(file, root, args.max_bytes):
+            continue
+        if not path_is_allowed(rel, args):
+            continue
+        scanned += 1
+        try:
+            lines = read_text(file).splitlines()
+        except OSError:
+            continue
+        for line_number, line in enumerate(lines, start=1):
+            hit = (
+                bool(regex.search(line))
+                if regex
+                else (pattern in line if args.case_sensitive else pattern.lower() in line.lower())
+            )
+            if not hit:
+                continue
+            record = {"path": rel, "line": line_number, "reference": f"{rel}:{line_number}"}
+            if args.context:
+                snippet = re.sub(r"\s+", " ", line).strip()
+                record["snippet"] = snippet[:240]
+            matches.append(record)
+            if len(matches) >= args.limit:
+                break
+        if len(matches) >= args.limit:
+            break
+    payload = {
+        "pattern": pattern if len(pattern) <= 80 else pattern[:79] + "…",
+        "mode": args.mode,
+        "scope": args.scope,
+        "scanned_files": scanned,
+        "matches": matches,
+        "match_count": len(matches),
+        "truncated": len(matches) >= args.limit,
+        "verification": {"rg": [f"rg {'--fixed-strings ' if args.mode == 'fixed' else ''}-- {shlex.quote(pattern)}"]},
+    }
+    if args.json:
+        print(json.dumps(payload, indent=2, sort_keys=True))
+    else:
+        print(f"Search found {len(matches)} match(es) for {pattern!r}")
+        for match in matches:
+            print(match["reference"])
+    return payload
+
+
 def context_index(args: argparse.Namespace) -> list[dict[str, Any]]:
     root = find_project_root(Path(args.root)) if args.git_root else Path(args.root).resolve()
     query_args = argparse.Namespace(
@@ -2010,6 +2165,30 @@ def build_parser() -> argparse.ArgumentParser:
     add_filter_args(context_p)
     context_p.add_argument("--json", action="store_true", help="Print JSON context payload.")
     context_p.set_defaults(func=context_index)
+
+    repo_map_p = sub.add_parser("repo-map", help="Build a compact graph-ranked repository map for a topic.")
+    add_common_args(repo_map_p)
+    repo_map_p.add_argument("--topic", required=True, help="Topic or search phrase.")
+    repo_map_p.add_argument("--limit", type=int, default=12, help="Maximum file results before budget packing.")
+    repo_map_p.add_argument("--max-tokens", type=int, default=1500, help="Approximate repo-map token budget.")
+    add_filter_args(repo_map_p)
+    repo_map_p.add_argument("--json", action="store_true", help="Print JSON repo-map payload.")
+    repo_map_p.set_defaults(func=repo_map_index)
+
+    search_p = sub.add_parser("search", help="Run safe bounded lexical search over indexed project files.")
+    add_common_args(search_p)
+    search_p.add_argument("--pattern", required=True, help="Pattern to search for. Fixed-string by default.")
+    search_p.add_argument("--mode", choices=["fixed", "regex"], default="fixed", help="Search mode. Default: fixed.")
+    search_p.add_argument(
+        "--path", dest="paths", action="append", default=[], help="Project-relative path to search. Repeatable."
+    )
+    search_p.add_argument("--limit", type=int, default=50, help="Maximum matching lines to return.")
+    search_p.add_argument("--max-bytes", type=int, default=1_500_000, help="Skip files larger than this many bytes.")
+    search_p.add_argument("--case-sensitive", action="store_true", help="Use case-sensitive matching.")
+    search_p.add_argument("--context", action="store_true", help="Include one-line snippets in the result.")
+    add_filter_args(search_p)
+    search_p.add_argument("--json", action="store_true", help="Print JSON search payload.")
+    search_p.set_defaults(func=search_index)
 
     miss_p = sub.add_parser("log-miss", help="Append a material retrieval miss to .plan/_retrieval/misses.jsonl.")
     add_common_args(miss_p)

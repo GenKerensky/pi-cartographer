@@ -153,7 +153,7 @@ The scoped query CLI (`--scope code|plans|all`) is implemented for `query`, `con
 
 `query` performs FTS5 search over indexed chunks and returns file-level **candidate** matches with representative snippets, scope labels, generic-query warnings, and verification hints. Treat query results as candidates: verify high-impact hits with direct file reads and/or the returned `rg` commands before citing them in proposal/plan prose or editing code.
 
-For LLM-facing workflows, prefer compact `context` output and future `repo-map`/safe `search` projections over raw `query` JSON. Direct CLI output may remain raw/debug-friendly, but Pi extension responses should follow the Clean Context Contract: about 8KB by default, about 16KB for expanded diagnostics, and oversized output represented by receipts with `full_output_path`, `token_estimate`, `counts`, and `next_actions`. Full raw output should go to `/tmp/pi-cartographer-runs/` by default or to ignored `.plan/_runs/` only when local replay is explicitly needed.
+For LLM-facing workflows, prefer compact `context`, `repo-map`, and safe `search` projections over raw `query` JSON. Direct CLI output may remain raw/debug-friendly, but Pi extension responses should follow the Clean Context Contract: about 8KB by default, about 16KB for expanded diagnostics, and oversized output represented by receipts with `full_output_path`, `token_estimate`, `counts`, and `next_actions`. Full raw output should go to `/tmp/pi-cartographer-runs/` by default or to ignored `.plan/_runs/` only when local replay is explicitly needed.
 
 Candidate/verified metadata uses these fields where applicable:
 

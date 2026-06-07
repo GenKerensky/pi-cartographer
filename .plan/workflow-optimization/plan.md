@@ -217,7 +217,7 @@ Prefer pure helper functions and tests around output shaping. Avoid broad Pi-run
 
 ### Phase P3 — Repo-map and safe search
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P2
 - **Unlocks:** P7
 - **Primary references:** `file:skills/index-project/scripts/index_project.py`, `symbol:skills/index-project/scripts/index_project.py#query_index`, `symbol:skills/index-project/scripts/index_project.py#context_index`, `file:tests/test_index_project.py`, [F004], [F005], [F006], [F007]
@@ -236,18 +236,18 @@ Add compact retrieval products that reduce raw search/query output while preserv
 
 #### Checklist
 
-- [ ] **P3.T1** Implement `repo-map` CLI options: `--topic`, `--scope`, `--max-tokens`, `--limit`, filters, and `--json`.
-- [ ] **P3.T2** Implement safe `search` CLI/action with fixed-string default, explicit regex mode, path constraints, match limits, and budgeted snippets.
-- [ ] **P3.T3** Add extension schema/prompt-guideline support for `repo-map` and `search`.
-- [ ] **P3.T4** Update README and index/proposal/plan/implement skills to prefer `repo-map`/`context`/safe `search` over raw `query` for LLM-facing context.
-- [ ] **P3.T5** Add tests for repo-map ranking, deduped/merged context, generic-term warnings, and patterns beginning with `-`.
+- [x] **P3.T1** Implement `repo-map` CLI options: `--topic`, `--scope`, `--max-tokens`, `--limit`, filters, and `--json`.
+- [x] **P3.T2** Implement safe `search` CLI/action with fixed-string default, explicit regex mode, path constraints, match limits, and budgeted snippets.
+- [x] **P3.T3** Add extension schema/prompt-guideline support for `repo-map` and `search`.
+- [x] **P3.T4** Update README and index/proposal/plan/implement skills to prefer `repo-map`/`context`/safe `search` over raw `query` for LLM-facing context.
+- [x] **P3.T5** Add tests for repo-map ranking, deduped/merged context, generic-term warnings, and patterns beginning with `-`.
 
 #### Validation
 
-- [ ] **P3.V1** Run `python -m unittest discover tests -p "test_index_project.py"`.
-- [ ] **P3.V2** Run `python skills/index-project/scripts/index_project.py repo-map --root "$PWD" --topic "workflow optimization" --max-tokens 1500 --json` and confirm output is compact and relevant.
-- [ ] **P3.V3** Run a safe-search fixture for a pattern that begins with `-` and confirm it is treated as a pattern, not an `rg` flag.
-- [ ] **P3.V4** Run `npm run check:scripts` after extension schema updates.
+- [x] **P3.V1** Run `python -m unittest discover tests -p "test_index_project.py"`.
+- [x] **P3.V2** Run `python skills/index-project/scripts/index_project.py repo-map --root "$PWD" --topic "workflow optimization" --max-tokens 1500 --json` and confirm output is compact and relevant.
+- [x] **P3.V3** Run a safe-search fixture for a pattern that begins with `-` and confirm it is treated as a pattern, not an `rg` flag.
+- [x] **P3.V4** Run `npm run check:scripts` after extension schema updates.
 
 #### Exit Criteria
 

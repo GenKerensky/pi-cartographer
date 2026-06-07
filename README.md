@@ -334,6 +334,10 @@ python skills/index-project/scripts/index_project.py query --root "$PWD" --scope
 # Produce compact context blocks with verification hints
 python skills/index-project/scripts/index_project.py context --root "$PWD" --scope code --topic "search UI" --json
 
+# Produce a compact repo-map synopsis and run safe fixed-string search
+python skills/index-project/scripts/index_project.py repo-map --root "$PWD" --scope code --topic "search UI" --max-tokens 1500 --json
+python skills/index-project/scripts/index_project.py search --root "$PWD" --pattern "--flag-like text" --path "README.md" --json
+
 # Read indexed metadata for a file or node
 python skills/index-project/scripts/index_project.py read --root "$PWD" --path "README.md" --json
 python skills/index-project/scripts/index_project.py read --root "$PWD" --node-id "file:README.md" --json
@@ -364,7 +368,7 @@ node --experimental-strip-types skills/plan/scripts/manage_jsonl.ts list --file 
 node --experimental-strip-types skills/plan/scripts/manage_jsonl.ts upsert --file ".plan/search-ui/map.nodes.jsonl" --record '{"id":"topic:search-ui","type":"topic","title":"search UI"}' --json
 ```
 
-`query`, `context`, `slice`, and `slice-jsonl` also support repeated/comma-separated filters such as `--path-prefix`, `--exclude`, and `--type`.
+`query`, `context`, `repo-map`, `search`, `slice`, and `slice-jsonl` also support repeated/comma-separated filters such as `--path-prefix`, `--exclude`, and `--type` where applicable.
 
 ## Limitations and safety notes
 

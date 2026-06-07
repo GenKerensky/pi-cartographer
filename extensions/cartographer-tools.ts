@@ -21,7 +21,7 @@ type OutputShapeParams = {
 };
 
 type CartographerIndexParams = OutputShapeParams & {
-	action: "ensure" | "query" | "context" | "read" | "slice-jsonl" | "status" | "log-miss";
+	action: "ensure" | "query" | "context" | "repo-map" | "search" | "read" | "slice-jsonl" | "status" | "log-miss";
 	root?: string;
 	topic?: string;
 	path?: string;
@@ -29,6 +29,11 @@ type CartographerIndexParams = OutputShapeParams & {
 	outDir?: string;
 	limit?: number;
 	maxTokens?: number;
+	pattern?: string;
+	mode?: "fixed" | "regex";
+	paths?: string[];
+	context?: boolean;
+	caseSensitive?: boolean;
 	scope?: "code" | "plans" | "all";
 	includeRawSlice?: boolean;
 	workflow?: "proposal" | "plan" | "implement" | "manual";
@@ -317,7 +322,8 @@ export default function cartographerTools(pi: PiApi): void {
 			"Use cartographer_index before manual file discovery when Pi Cartographer index context is needed.",
 			"Treat cartographer_index query/context results as candidates; verify high-impact hits with read and focused rg/grep before citing or editing.",
 			"Use scope=code for default source retrieval, scope=plans only for explicit .plan rationale retrieval, and scope=all for intentional combined review.",
-			"Use action=context for compact candidate snippets with verification hints instead of reading large raw files.",
+			"Use action=context or action=repo-map for compact candidate snippets and graph-ranked overviews instead of reading large raw files.",
+			"Use action=search with fixed mode for safe exact lexical checks, especially patterns that could be mistaken for shell flags.",
 			"Use action=log-miss only for material retrieval misses; keep records concise and do not log secrets or raw snippets.",
 			"Use lifecycle states draft, accepted, planned, in-progress, implemented, superseded, and stale when reasoning about planning artifacts.",
 			"Use cartographer_index with action=ensure when the index may be stale; it re-indexes only when needed.",
@@ -328,6 +334,8 @@ export default function cartographerTools(pi: PiApi): void {
 				Type.Literal("ensure"),
 				Type.Literal("query"),
 				Type.Literal("context"),
+				Type.Literal("repo-map"),
+				Type.Literal("search"),
 				Type.Literal("read"),
 				Type.Literal("slice-jsonl"),
 				Type.Literal("status"),
@@ -354,8 +362,15 @@ export default function cartographerTools(pi: PiApi): void {
 			),
 			limit: Type.Optional(Type.Number({ description: "Result limit." })),
 			maxTokens: Type.Optional(
-				Type.Number({ description: "Approximate context token budget." }),
+				Type.Number({ description: "Approximate context/repo-map token budget." }),
 			),
+			pattern: Type.Optional(Type.String({ description: "Pattern for search action." })),
+			mode: Type.Optional(
+				Type.Union([Type.Literal("fixed"), Type.Literal("regex")], { description: "Search mode. Defaults to fixed." }),
+			),
+			paths: Type.Optional(Type.Array(Type.String(), { description: "Project-relative paths for search." })),
+			context: Type.Optional(Type.Boolean({ description: "Include line snippets for search results." })),
+			caseSensitive: Type.Optional(Type.Boolean({ description: "Use case-sensitive search." })),
 			scope: Type.Optional(
 				Type.Union([Type.Literal("code"), Type.Literal("plans"), Type.Literal("all")], {
 					description: "Retrieval scope. Defaults to code.",
@@ -426,6 +441,33 @@ export default function cartographerTools(pi: PiApi): void {
 				if (params.action === "context")
 					args.push("--max-tokens", String(optionalNumber(params.maxTokens, 3000)));
 				args.push("--json");
+			} else if (params.action === "repo-map") {
+				args.push(
+					"--topic",
+					requireString(params.topic, "cartographer_index repo-map requires topic"),
+					"--scope",
+					params.scope || "code",
+					"--limit",
+					String(optionalNumber(params.limit, 12)),
+					"--max-tokens",
+					String(optionalNumber(params.maxTokens, 1500)),
+					"--json",
+				);
+			} else if (params.action === "search") {
+				args.push(
+					"--pattern",
+					requireString(params.pattern, "cartographer_index search requires pattern"),
+					"--mode",
+					params.mode || "fixed",
+					"--scope",
+					params.scope || "code",
+					"--limit",
+					String(optionalNumber(params.limit, 50)),
+					"--json",
+				);
+				for (const searchPath of params.paths || []) args.push("--path", searchPath);
+				if (params.context) args.push("--context");
+				if (params.caseSensitive) args.push("--case-sensitive");
 			} else if (params.action === "read") {
 				if (params.path) args.push("--path", params.path);
 				else if (params.nodeId) args.push("--node-id", params.nodeId);
