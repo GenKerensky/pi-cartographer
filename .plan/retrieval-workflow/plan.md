@@ -38,7 +38,7 @@ rg "retrieval workflow" .plan
 
 ### Phase P0 — Define retrieval and lifecycle contracts
 
-- **Status:** complete
+- **Status:** implemented
 - **Depends on:** none
 - **Objective:** Establish the shared data contract for candidate/verified retrieval evidence, retrieval miss records, query scopes, and artifact lifecycle states before changing workflow behavior.
 - **Source references:** `.plan/retrieval-workflow/proposal.md`, `skills/proposal/SKILL.md`, `skills/plan/SKILL.md`, `skills/implement/SKILL.md`, `skills/plan/scripts/manage_jsonl.ts`, `skills/plan/scripts/validate_planning_graph.py`
@@ -59,7 +59,7 @@ Validation:
 
 ### Phase P1 — Add workflow prompt changes for retrieval and rationale behavior
 
-- **Status:** complete
+- **Status:** implemented
 - **Depends on:** P0
 - **Objective:** Update proposal, plan, and implement skills so agents generate bounded retrieval plans, verify candidates, perform explicit rationale retrieval at workflow boundaries, and treat old planning artifacts as historical evidence.
 - **Source references:** `skills/proposal/SKILL.md`, `skills/plan/SKILL.md`, `skills/implement/SKILL.md`, `.plan/retrieval-workflow/proposal.md`
@@ -80,7 +80,7 @@ Validation:
 
 ### Phase P2 — Add index/query support for scopes, context packing, and miss logging
 
-- **Status:** complete
+- **Status:** implemented
 - **Depends on:** P0
 - **Objective:** Extend index-project tooling so callers can intentionally search code, planning rationale, or both; request compact verified context; and record material retrieval misses.
 - **Source references:** `skills/index-project/scripts/index_project.py`, `skills/index-project/SKILL.md`, `tests/test_index_project.py`, `.plan/retrieval-workflow/proposal.md`
@@ -103,7 +103,7 @@ Validation:
 
 ### Phase P3 — Add JSONL validation and lifecycle tooling
 
-- **Status:** complete
+- **Status:** implemented
 - **Depends on:** P0, P2
 - **Objective:** Teach Cartographer validation/tooling to understand lifecycle states, candidate/verified metadata, stale/superseded rationale, and retrieval miss records.
 - **Source references:** `skills/plan/scripts/manage_jsonl.ts`, `skills/plan/scripts/validate_planning_graph.py`, `tests/test_manage_jsonl.py`, `tests/manage_jsonl.test.ts`, `tests/test_validate_planning_graph.py`
@@ -125,7 +125,7 @@ Validation:
 
 ### Phase P4 — Add retrieval-quality and lifecycle tests
 
-- **Status:** complete
+- **Status:** implemented
 - **Depends on:** P1, P2, P3
 - **Objective:** Add regression coverage for the retrieval behaviors and artifact lifecycle rules that motivated this proposal.
 - **Source references:** `tests/test_index_project.py`, `tests/test_validate_planning_graph.py`, `tests/test_manage_jsonl.py`, `tests/manage_jsonl.test.ts`, `.plan/retrieval-workflow/facts.nodes.jsonl`
@@ -146,7 +146,7 @@ Validation:
 
 ### Phase P5 — Update extension guidance and user-facing docs
 
-- **Status:** complete
+- **Status:** implemented
 - **Depends on:** P1, P2, P3
 - **Objective:** Expose the retrieval contract, scopes, miss logging, and lifecycle behavior to agents and users through tool registration metadata and README/skill documentation.
 - **Source references:** `extensions/cartographer-tools.ts`, `README.md`, `skills/index-project/SKILL.md`, `skills/proposal/SKILL.md`, `skills/plan/SKILL.md`, `skills/implement/SKILL.md`
@@ -167,25 +167,25 @@ Validation:
 
 ### Phase P6 — Final integration validation and migration notes
 
-- **Status:** pending
+- **Status:** implemented
 - **Depends on:** P4, P5
 - **Objective:** Validate the full workflow, update this plan's lifecycle metadata, and provide migration notes for existing `.plan/` artifacts.
 - **Source references:** `package.json`, `.plan/retrieval-workflow/proposal.md`, `.plan/retrieval-workflow/plan.md`, `.plan/retrieval-workflow/plan.nodes.jsonl`, `.plan/retrieval-workflow/plan.edges.jsonl`
 
 Checklist:
 
-- [ ] **P6.T1** Run the full project check suite and record command output in implementation notes.
-- [ ] **P6.T2** Validate map/fact/plan JSONL artifacts for `retrieval-workflow`.
-- [ ] **P6.T3** Add migration notes for existing `.plan/` topics that lack lifecycle metadata.
-- [ ] **P6.T4** Mark completed phases as `implemented` and record commit SHAs in plan graph metadata during implementation.
-- [ ] **P6.T5** Confirm `.plan/_index/` is ignored and no generated SQLite/cache artifacts are staged.
+- [x] **P6.T1** Run the full project check suite and record command output in implementation notes.
+- [x] **P6.T2** Validate map/fact/plan JSONL artifacts for `retrieval-workflow`.
+- [x] **P6.T3** Add migration notes for existing `.plan/` topics that lack lifecycle metadata.
+- [x] **P6.T4** Mark completed phases as `implemented` and record commit SHAs in plan graph metadata during implementation.
+- [x] **P6.T5** Confirm `.plan/_index/` is ignored and no generated SQLite/cache artifacts are staged.
 
 Validation:
 
-- [ ] **P6.V1** `npm run check` passes.
-- [ ] **P6.V2** `node --experimental-strip-types skills/plan/scripts/manage_jsonl.ts validate-topic --root "$PWD" --topic retrieval-workflow --json` passes.
-- [ ] **P6.V3** `python skills/plan/scripts/validate_planning_graph.py --root "$PWD" --topic retrieval-workflow --json` passes.
-- [ ] **P6.V4** `git status --short` shows only intentional source, tests, docs, and committed `.plan/retrieval-workflow/` artifacts; `.plan/_index/` is not staged.
+- [x] **P6.V1** `npm run check` passes.
+- [x] **P6.V2** `node --experimental-strip-types skills/plan/scripts/manage_jsonl.ts validate-topic --root "$PWD" --topic retrieval-workflow --json` passes.
+- [x] **P6.V3** `python skills/plan/scripts/validate_planning_graph.py --root "$PWD" --topic retrieval-workflow --json` passes.
+- [x] **P6.V4** `git status --short` shows only intentional source, tests, docs, and committed `.plan/retrieval-workflow/` artifacts; `.plan/_index/` is not staged.
 
 ## Cross-Phase Validation
 

@@ -116,6 +116,10 @@ draft -> accepted -> planned -> in-progress -> implemented -> superseded/stale
 
 Lifecycle metadata may appear in JSONL records as `status`, `created_at`, `last_verified_at`, `implemented_by`, `superseded_by`, and `stale_reason`.
 
+### Migration notes for existing `.plan/` topics
+
+Older topic artifacts may not have lifecycle metadata. They remain valid rationale, but agents should treat missing lifecycle and `last_verified_at` fields as unknown freshness until the artifact is revalidated. When touching an older topic, add lifecycle metadata opportunistically: mark current accepted proposals as `accepted`, generated plans as `planned` or `implemented`, obsolete decisions as `superseded`, and known-invalid rationale as `stale` with a short `stale_reason`. Do not rewrite historical Markdown solely to add metadata unless it is already part of the active workflow.
+
 ## Retrieval Contract
 
 Cartographer separates source-code retrieval from rationale retrieval:
