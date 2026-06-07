@@ -82,7 +82,6 @@ Topic artifacts:
 ```text
 .plan/<topic>/proposal.md
 .plan/<topic>/plan.md
-.plan/<topic>/map.graph.json
 .plan/<topic>/map.nodes.jsonl
 .plan/<topic>/map.edges.jsonl
 .plan/<topic>/facts.nodes.jsonl
@@ -103,12 +102,14 @@ Topic artifacts:
 
 ### `index-project`
 
-Builds and queries a shared project graph:
+Builds and queries a shared project graph. The package also registers `cartographer_index` and `cartographer_jsonl` tools for agents; the Python CLIs are available as fallbacks:
 
 ```bash
-python skills/index-project/scripts/index_project.py index --root "$PWD"
+python skills/index-project/scripts/index_project.py ensure --root "$PWD"
 python skills/index-project/scripts/index_project.py query --root "$PWD" --topic "project goals" --limit 5
+python skills/index-project/scripts/index_project.py read --root "$PWD" --path "README.md" --json
 python skills/index-project/scripts/index_project.py slice-jsonl --root "$PWD" --topic "search UI" --out-dir ".plan/search-ui"
+node --experimental-strip-types skills/plan/scripts/manage_jsonl.ts validate-topic --root "$PWD" --topic "search-ui" --json
 ```
 
 ### `proposal`

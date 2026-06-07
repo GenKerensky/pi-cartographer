@@ -1,9 +1,9 @@
 ---
 name: "implement"
 description: "Pi Cartographer implementation workflow: execute .plan/<topic>/plan.md phase-by-phase using scout, worker, reviewer, optional oracle checks, quality gates, and conventional commits."
-version: 3
+version: 4
 created: "2026-06-06"
-updated: "2026-06-06"
+updated: "2026-06-07"
 ---
 # Pi Cartographer Implement
 
@@ -13,7 +13,7 @@ Use this skill when the user asks to implement an existing `.plan/{topic}/plan.m
 
 This skill executes the plan phase-by-phase. It delegates:
 
-- codebase lookups and context gathering to `scout`
+- codebase lookups and context gathering to deterministic Cartographer tools plus focused lexical search; optional `scout` only when context is still insufficient
 - actual code edits/fixes to `worker`
 - code review and validation-step review to `reviewer`
 
@@ -30,7 +30,6 @@ Supporting artifacts, when present:
 - `.plan/{topic}/plan.nodes.jsonl`
 - `.plan/{topic}/plan.edges.jsonl`
 - `.plan/{topic}/proposal.md`
-- `.plan/{topic}/map.graph.json`
 - `.plan/{topic}/map.nodes.jsonl`
 - `.plan/{topic}/map.edges.jsonl`
 - `.plan/{topic}/facts.nodes.jsonl`
@@ -44,7 +43,7 @@ If the plan is missing, ask the user whether to generate it first with the `plan
 
 - Work one phase at a time in dependency order.
 - Do not start a phase until all phases it depends on are complete and committed, or explicitly documented as no-op completed.
-- Use `scout` for lookups/context before code edits in each phase.
+- Prefer plan/map JSONL, `cartographer_index query/read`, focused `rg`/grep, and selective file reads for lookups/context before code edits. Use `scout` only when this deterministic and lexical context is insufficient or the phase spans complex unfamiliar architecture.
 - Use `worker` for code edits and fixes. The main agent should not make substantial code edits unless the user approves serial fallback.
 - Check off plan checklist items in `.plan/{topic}/plan.md` only after verifying completion, and mirror status changes in `plan.nodes.jsonl` when present.
 - Run all available relevant quality tools until green: typecheck, lint, build, tests, format/check, and phase-specific validations.
@@ -77,9 +76,10 @@ If the plan is missing, ask the user whether to generate it first with the `plan
 2. **Inspect subagents and choose execution mode**
    - Call the subagent list action before delegating whenever the subagent tool is available.
    - Required preferred agents:
-     - `scout`
      - `worker`
      - `reviewer`
+   - Optional preferred agent:
+     - `scout` only for missing/ambiguous context after index/map plus focused `rg`/grep checks, or for complex unfamiliar architecture
    - Useful optional agents:
      - `oracle` for ambiguous plan/scope/dependency decisions, plan drift, repeated agent/tool failures, and unknown blockers
      - `planner` for repairing a flawed plan
@@ -87,7 +87,7 @@ If the plan is missing, ask the user whether to generate it first with the `plan
      - substitute another editing-capable agent
      - run worker duties serially with the current agent
      - stop until `worker` is available
-   - If `scout` or `reviewer` is unavailable, ask whether to substitute another agent or run that role serially. Do not silently skip review.
+   - If `reviewer` is unavailable, ask whether to substitute another agent or run that role serially. Do not silently skip review. If `scout` is unavailable, continue with Cartographer index/map tools unless the phase genuinely requires scout-style reconnaissance.
    - If no executable subagents are available, alert the user and ask whether to continue serially with the current agent. Only continue after approval.
 
 3. **Preflight repository safety**
@@ -100,20 +100,16 @@ If the plan is missing, ask the user whether to generate it first with the `plan
 
 4. **Refresh implementation context**
    - Load/use the `index-project` skill when available. In the Pi Cartographer package, prefer `../index-project/SKILL.md` relative to this `SKILL.md`.
-   - Refresh the shared index before starting implementation:
+   - Run `ensure` before starting implementation so the index is created or re-indexed only when stale:
 
      ```bash
-     python <index-project-skill-dir>/scripts/index_project.py index --root "$PWD"
+     python <index-project-skill-dir>/scripts/index_project.py ensure --root "$PWD" --json
      ```
 
-   - Export or refresh `.plan/{topic}/map.graph.json` if needed:
-
-     ```bash
-     python <index-project-skill-dir>/scripts/index_project.py slice --root "$PWD" --topic "{topic}" --out ".plan/{topic}/map.graph.json" --limit 30
-     ```
-
-   - When supported, use `slice-jsonl --out-dir ".plan/{topic}"` if `map.nodes.jsonl` or `map.edges.jsonl` are missing/thin, then let scout verify/refine them.
-   - If indexing fails, report the error and ask the user whether to continue with manual discovery. Do not silently skip indexing.
+   - The indexer must ensure `.plan/_index/` is present in the target project's `.gitignore`; do not commit the generated SQLite index/cache unless the user explicitly asks.
+   - Do not create `.plan/{topic}/map.graph.json` by default; it duplicates the shared SQLite index. Only request a raw JSON slice for explicit debugging or offline review.
+   - When supported, use `slice-jsonl --out-dir ".plan/{topic}"` if `map.nodes.jsonl` or `map.edges.jsonl` are missing/thin, then validate with `cartographer_jsonl validate-topic`. Let scout verify/refine them only if deterministic output plus focused `rg`/grep checks are inadequate.
+   - If indexing fails, report the error and ask the user whether to continue with manual discovery using `rg`/grep and selective reads. Do not silently skip indexing.
 
 5. **Select the next executable phase**
    - Choose the first incomplete phase whose dependencies are complete.
@@ -129,13 +125,15 @@ If the plan is missing, ask the user whether to generate it first with the `plan
      - risks/mitigations
      - notes for implementation agent
 
-6. **Scout phase context**
-   - Delegate to `scout`, or approved serial scout role, with:
+6. **Gather phase context; use `scout` only when needed**
+   - First use `.plan/{topic}/plan.md`, map JSONL, fact JSONL, deterministic validation reports, `cartographer_index query/read`, focused `rg`/grep searches, and selective file reads to gather phase context. For concrete code evidence, search exact identifiers, filenames, scripts, tests, commands, and error strings before relying on broad indexed snippets. Do not read entire large files or raw generated artifacts when targeted indexed context or lexical hits are enough.
+   - Delegate to `scout`, or approved serial scout role, only if this index/map plus lexical context is missing, contradictory, or too broad for a safe worker handoff. If using scout, provide:
      - the selected phase text
      - `.plan/{topic}/plan.md`
      - relevant proposal/map/fact artifacts
-     - index path and graph slice path
-   - Ask scout to return:
+     - index path and map JSONL paths
+     - any known `rg`/grep findings and exact identifiers or filenames to verify
+   - Ask scout to start with focused `rg`/grep for concrete code evidence, cross-check index/map context, and return:
      - likely files to edit
      - files to avoid/edit carefully
      - existing symbols/components/functions to reuse
@@ -282,7 +280,7 @@ If the plan is missing, ask the user whether to generate it first with the `plan
 14. **Continue to the next phase**
    - After a successful phase commit or documented no-op completion:
      - refresh `git status --short`
-     - optionally refresh the project index if source files changed substantially
+     - optionally run `index_project.py ensure --root "$PWD" --json` if source files changed substantially
      - select the next incomplete dependency-ready phase
    - Repeat steps 5-13 until every phase is complete and validated.
 
@@ -313,11 +311,30 @@ If the plan is missing, ask the user whether to generate it first with the `plan
 
 ## Delegation Prompt Templates
 
-### Scout
+Performance rules:
+
+- Do not inline large scout/research/planner outputs into worker/reviewer prompts; pass artifact paths and concise summaries. Use `outputMode: "file-only"` for large child outputs.
+- Prefer `cartographer_index query/read`, `cartographer_jsonl validate-topic`, focused `rg`/grep, and selective reads before launching optional scout.
+- Do not ask child agents to dump SQLite schemas, grep entire large drafts, or read whole local docs unless targeted indexed reads and focused lexical searches are insufficient.
+- Use reviewer for code/artifact validation and oracle only for decision/scope consistency.
+
+Cartographer tool access for every delegated agent in this workflow (`scout`, `worker`, `reviewer`, and optional `oracle`/`planner`):
+
+```bash
+cartographer_index({"action":"ensure","root":"$PWD"})
+cartographer_index({"action":"query","root":"$PWD","topic":"{topic}","limit":10})
+cartographer_index({"action":"read","root":"$PWD","path":"<project-relative-path>"})
+cartographer_index({"action":"read","root":"$PWD","nodeId":"<indexed-node-id>"})
+cartographer_jsonl({"action":"validate-topic","root":"$PWD","topic":"{topic}"})
+```
+
+When launching delegated agents through pi-subagents, include the package extension path `extensions/cartographer-tools.ts` in the child tool/extension configuration when supported so these tools are callable. Tell each delegated agent it may run `cartographer_index` with `action: "ensure"` before reading the index; if it reports `action: "reindexed"`, it should continue from the refreshed index and mention that in its handoff. If custom tools are unavailable in the child, use the equivalent `python <index-project-skill-dir>/scripts/index_project.py ...` and `node --experimental-strip-types <plan-skill-dir>/scripts/manage_jsonl.ts ...` CLI commands via bash. Do not ask agents to inspect the SQLite file manually when the index tool can answer the question.
+
+### Optional Scout
 
 ```text
-Inspect implementation context for phase <PHASE_ID> of .plan/{topic}/plan.md.
-Use .plan/_index/project-graph.sqlite, .plan/{topic}/map.graph.json, map.nodes.jsonl, map.edges.jsonl, facts.nodes.jsonl, and facts.edges.jsonl when present.
+Inspect implementation context for phase <PHASE_ID> of .plan/{topic}/plan.md only where deterministic Cartographer index/map context plus focused lexical checks are insufficient.
+Start from cartographer_index query/read and .plan/{topic}/map.nodes.jsonl, map.edges.jsonl, facts.nodes.jsonl, and facts.edges.jsonl when present. Then use focused `rg`/grep for exact identifiers, filenames, tests, scripts, commands, generated artifacts, and error strings. Do not rediscover the repo broadly or read whole large files unless indexed snippets and lexical hits are insufficient.
 Return likely files to edit, files to avoid/edit carefully, reusable symbols, tests/validation commands, generated artifacts/scripts, risks, and any mismatch between the phase plan and current code.
 Do not edit files.
 ```
@@ -326,7 +343,7 @@ Do not edit files.
 
 ```text
 Implement phase <PHASE_ID> from .plan/{topic}/plan.md.
-Use the scout findings and source artifacts provided. Complete only the listed unchecked checklist items for this phase. Make code/config/doc/test changes as needed. Do not commit. Avoid unrelated changes. Run targeted checks if practical.
+Use the deterministic context summary, optional scout findings, and source artifacts provided. You have read access to Cartographer tools; run ensure/read if you need fresh indexed context, and use focused `rg`/grep for exact code evidence before editing. Complete only the listed unchecked checklist items for this phase. Make code/config/doc/test changes as needed. Do not commit. Avoid unrelated changes. Run targeted checks if practical.
 Acceptance criteria:
 - Complete checklist IDs: <P?.T?>
 - Provide changed-files summary and commands run.
@@ -338,19 +355,19 @@ Report changed files, commands run, checklist items completed, and residual risk
 ### Worker Fix
 
 ```text
-Fix the failures found while validating phase <PHASE_ID>. Use the command output/reviewer findings below. Keep the fix scoped to this phase. Do not commit. Report changed files and commands run.
+Fix the failures found while validating phase <PHASE_ID>. Use the command output/reviewer findings below. You have read access to the index tool commands and may run ensure/read if you need fresh indexed context; use focused `rg`/grep for exact failing identifiers, files, tests, or errors. Keep the fix scoped to this phase. Do not commit. Report changed files and commands run.
 ```
 
 ### Oracle
 
 ```text
-Evaluate this decision-level blocker for phase <PHASE_ID>. Do not review code line-by-line. Determine whether the issue is within the approved plan, requires a phase/order/scope change, or should be escalated to the user. Consider proposal goals/non-goals, phase dependencies, current codebase constraints, quality-tool output, and scout/worker/reviewer findings. Return recommended options and any stop condition.
+Evaluate this decision-level blocker for phase <PHASE_ID>. Do not review code line-by-line. You have read access to the index tool commands and may run ensure/read if freshness or references are uncertain. Determine whether the issue is within the approved plan, requires a phase/order/scope change, or should be escalated to the user. Consider proposal goals/non-goals, phase dependencies, current codebase constraints, quality-tool output, deterministic context, and worker/reviewer/optional-scout findings. Return recommended options and any stop condition.
 ```
 
 ### Reviewer
 
 ```text
-Review phase <PHASE_ID> implementation. Check the current diff, commands run, checked checklist items, unchecked validation items, and source artifacts. Verify correctness, scope control, maintainability, and every validation item for this phase. If you can edit, check off passing validation items in .plan/{topic}/plan.md. If not, report exact validation items that may be checked off. Reject with required fixes for any issue.
+Review phase <PHASE_ID> implementation. Check the current diff, commands run, checked checklist items, unchecked validation items, and source artifacts. You have read access to the index tool commands and may run ensure/read if freshness or references are uncertain. Verify correctness, scope control, maintainability, and every validation item for this phase. If you can edit, check off passing validation items in .plan/{topic}/plan.md. If not, report exact validation items that may be checked off. Reject with required fixes for any issue.
 ```
 
 ## Stop Conditions
@@ -373,6 +390,7 @@ Stop and ask the user before continuing when:
 Before final completion, verify:
 
 - `.plan/{topic}/plan.md` exists.
+- `.gitignore` contains `.plan/_index/` when indexing succeeded.
 - Every phase is checked off or otherwise clearly marked complete.
 - Every checklist item is checked off.
 - Every validation item is checked off by reviewer approval or verified command output.

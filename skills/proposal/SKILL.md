@@ -1,9 +1,9 @@
 ---
 name: "proposal"
 description: "Pi Cartographer proposal workflow: create .plan/<topic>/proposal.md using the index-project SQLite/FTS graph plus delegated scope, mapping, research, design, oracle review, and validation."
-version: 16
+version: 17
 created: "2026-06-05"
-updated: "2026-06-06"
+updated: "2026-06-07"
 ---
 # Pi Cartographer Proposal
 
@@ -21,8 +21,7 @@ Create or update these shared project-index files:
 Create or update these topic-specific proposal files in the current project:
 
 - `.plan/{topic}/proposal.md`
-- `.plan/{topic}/map.graph.json` — raw topic graph slice exported from the shared project index.
-- `.plan/{topic}/map.nodes.jsonl` — curated topic-map graph nodes derived from the index slice and verified manual additions.
+- `.plan/{topic}/map.nodes.jsonl` — curated topic-map graph nodes derived from the shared SQLite index and verified manual additions.
 - `.plan/{topic}/map.edges.jsonl` — curated topic-map graph edges connecting relevant files, symbols, docs, dependencies, constraints, and design context.
 - `.plan/{topic}/facts.nodes.jsonl` — append-only research graph nodes: facts, sources, tools, examples, risks, constraints.
 - `.plan/{topic}/facts.edges.jsonl` — append-only research graph edges connecting facts to sources, project context, goals, risks, and design steps.
@@ -60,34 +59,43 @@ Create or update these topic-specific proposal files in the current project:
 
 2. **Inspect available subagents and choose execution mode**
    - Call the subagent list action before delegating whenever the subagent tool is available.
-   - Prefer the exact agents named `delegate`, `scout`, `researcher`, `planner`, and `oracle` when available.
+   - Prefer the exact agents named `delegate`, `researcher`, `planner`, `oracle`, and `reviewer` when available.
+   - Treat `scout` as optional. Use deterministic Cartographer index/map tools plus focused `rg`/grep verification first; call `scout` only when context is missing, contradictory, or too complex for the parent/tooling to summarize.
    - If the subagent list returns **no executable subagents**, or the subagent tool is unavailable:
      - Alert the user that no subagents are available for the proposal workflow.
      - Ask whether they want to continue by running the whole workflow serially with the current agent.
      - Do not proceed beyond initialization unless the user approves serial mode.
      - If the user declines, stop and report any initialized paths.
-   - If the user approves serial mode, the current agent performs each role in order:
+   - If the user approves serial mode, the current agent performs each required role in order:
      1. scope writer for `delegate`
-     2. codebase mapper for `scout`
-     3. web/documentation researcher for `researcher`
+     2. deterministic codebase mapper using Cartographer tools plus focused `rg`/grep verification; run a scout-style manual pass only if the map tools and lexical checks fail or are ambiguous
+     3. web/documentation researcher for `researcher` only when needed facts are missing or stale
      4. design planner for `planner`
      5. skeptical consistency checker for `oracle`
-     6. final validator for the second `planner` pass
+     6. final validator using `reviewer` when available, or `oracle` for consistency-focused validation
    - If some executable subagents exist but a required exact agent is unavailable, ask the user whether to substitute the closest available agent. Do not silently skip a role.
 
 3. **Create or update the shared project index**
    - Load and use the `index-project` skill. If this skill is installed from the bundled `pi-skills` repository, read the sibling skill at `../index-project/SKILL.md` relative to this `SKILL.md`.
-   - Run the index-project workflow to create or update:
+   - Run `ensure` from the index-project workflow to create the index or re-index only when stale:
+
+     ```bash
+     python <index-project-skill-dir>/scripts/index_project.py ensure --root "$PWD" --json
+     ```
+
+   - This creates or updates:
      - `.plan/_index/project-graph.sqlite`
      - `.plan/_index/project-graph-manifest.json`
-   - Query the index for `{topic}` and export a topic graph slice to `.plan/{topic}/map.graph.json`.
-   - When the `index-project` skill supports it and the curated map graph files are missing or thin, prefer `slice-jsonl --out-dir ".plan/{topic}"` to initialize `.plan/{topic}/map.graph.json`, `.plan/{topic}/map.nodes.jsonl`, and `.plan/{topic}/map.edges.jsonl` before the scout pass. Do not overwrite useful existing curated map JSONL without reconciling it.
-   - If indexing fails, alert the user with the error and ask whether to continue with manual file discovery. Do not silently skip the index.
-   - Treat `.plan/_index/project-graph.sqlite` and `.plan/{topic}/map.graph.json` as the primary source for finding relevant files throughout the rest of the workflow.
+   - The indexer must ensure `.plan/_index/` is present in the target project's `.gitignore`; do not commit the generated SQLite index/cache unless the user explicitly asks.
+   - Query the index for `{topic}` and capture concise query output for handoffs when useful. Do not read whole large files into parent context when `cartographer_index read`, focused `rg`/grep searches, or selective reads can return relevant context.
+   - When the `index-project` skill supports it and the curated map graph files are missing or thin, prefer `slice-jsonl --out-dir ".plan/{topic}"` to initialize `.plan/{topic}/map.nodes.jsonl` and `.plan/{topic}/map.edges.jsonl` before any optional scout/review pass. Do not overwrite useful existing curated map JSONL without reconciling it.
+   - Do not create `.plan/{topic}/map.graph.json` by default; it duplicates the SQLite index. Only request a raw JSON slice for explicit debugging or offline review.
+   - If indexing fails, alert the user with the error and ask whether to continue with manual file discovery using `rg`/grep and selective reads. Do not silently skip the index.
+   - Treat `.plan/_index/project-graph.sqlite` plus `.plan/{topic}/map.nodes.jsonl` and `.plan/{topic}/map.edges.jsonl` as the durable source for proposal map artifacts; use `rg`/grep to verify exact code evidence and fill targeted lexical gaps throughout the rest of the workflow.
 
 4. **Scope the proposal with `delegate` or serial scope pass**
    - Delegate an agent, or in approved serial mode act as the scope writer, to think carefully about the request, mull over the user's intent, consider the whole chat and current project context, and define proposal scope.
-   - Provide the topic graph slice and any relevant index-query output as context, but keep this pass problem-centered rather than file-centered.
+   - Provide concise index-query output when relevant, but keep this pass problem-centered rather than file-centered.
    - Write content for these sections in `proposal.md`:
      - `## Description`
      - `## Problem Statement`
@@ -95,9 +103,23 @@ Create or update these topic-specific proposal files in the current project:
      - `## Non-Goals`
    - Emphasize the problem the user wants to solve and the desired outcome. Keep technology and code details secondary in these sections.
 
-5. **Map project files with `scout` or serial codebase mapping**
-   - Ask `scout`, or in approved serial mode inspect the indexed graph yourself, to create a curated topic-specific file/code/doc graph.
-   - Start from `.plan/{topic}/map.graph.json` and the shared SQLite index. Use manual inspection only to verify, refine, or add clearly relevant files not retrieved by the index.
+5. **Create the topic map with deterministic tools first; use `scout` only as an exception**
+   - Prefer deterministic map generation over delegated scouting:
+
+     ```bash
+     python <index-project-skill-dir>/scripts/index_project.py slice-jsonl --root "$PWD" --topic "{topic}" --out-dir ".plan/{topic}" --limit 30
+     node --experimental-strip-types <plan-skill-dir>/scripts/manage_jsonl.ts validate-topic --root "$PWD" --topic "{topic}" --json
+     ```
+
+   - Use `cartographer_index({"action":"slice-jsonl", ...})` and `cartographer_jsonl({"action":"validate-topic", ...})` when the Cartographer tools are available.
+   - Treat the generated `.plan/{topic}/map.nodes.jsonl` and `.plan/{topic}/map.edges.jsonl` as the map source of truth. Verify high-impact files, symbols, tests, scripts, and commands with focused `rg`/grep or selective reads before citing them in proposal prose.
+   - Do **not** delegate to `scout` just to read `draft.md`, dump SQLite rows, or hand-curate JSONL that the indexer can generate.
+   - Call `scout` only when one of these is true:
+     - `slice-jsonl` returns no useful files/nodes for a non-trivial topic
+     - the topic crosses many source files and requires architectural judgment not represented by graph edges
+     - validation finds unresolved/contradictory references that deterministic tools cannot explain
+     - the user explicitly asks for a scout-style code reconnaissance handoff
+   - If `scout` is used, give it a narrow task based on `cartographer_index query/read` outputs plus exact `rg`/grep targets to verify, and ask for **suggested additions only**, not a full rewrite of map JSONL.
    - Create or refine these JSONL graph files as the source of truth for the proposal map:
      - `.plan/{topic}/map.nodes.jsonl`
      - `.plan/{topic}/map.edges.jsonl`
@@ -133,8 +155,16 @@ Create or update these topic-specific proposal files in the current project:
    ```
 
 6. **Research background with `researcher` or serial research pass**
-   - Ask `researcher`, or in approved serial mode research yourself, to search for tooling, documentation, similar projects, examples, prior art, and implementation constraints related to the topic.
-   - Use indexed project context to narrow research questions to this repository's actual architecture and constraints.
+   - Before launching `researcher`, seed and inspect existing `facts.nodes.jsonl`/`facts.edges.jsonl` with `cartographer_jsonl`:
+
+     ```bash
+     node --experimental-strip-types <plan-skill-dir>/scripts/manage_jsonl.ts seed-pi-facts --root "$PWD" --topic "{topic}" --json
+     node --experimental-strip-types <plan-skill-dir>/scripts/manage_jsonl.ts validate-topic --root "$PWD" --topic "{topic}" --json
+     ```
+
+   - Reuse still-valid local docs facts. Do not re-read and re-summarize Pi docs or pi-subagents docs when equivalent source/fact nodes already exist.
+   - Ask `researcher`, or in approved serial mode research yourself, only for missing, stale, or genuinely external facts about tooling, documentation, similar projects, examples, prior art, and implementation constraints related to the topic.
+   - Use indexed project context to narrow research questions to this repository's actual architecture and constraints. Pass concise index/query summaries and artifact paths, not full raw draft/docs content.
    - Treat research as an append-only JSONL graph, not YAML.
    - Write each finding **one at a time before continuing search** by appending nodes to `.plan/{topic}/facts.nodes.jsonl` and edges to `.plan/{topic}/facts.edges.jsonl`.
    - Each JSONL line must be one complete valid JSON object. Do not wrap the file in an array and do not add trailing commas.
@@ -169,7 +199,7 @@ Create or update these topic-specific proposal files in the current project:
    - `## Viability` should answer whether this has been done before, what examples/tools exist, and how hard it would be to implement in this project for the specific problem.
 
 7. **Design with `planner` and per-step `oracle` review, or serial planner/oracle passes**
-   - Ask `planner`, or in approved serial mode act as the planner, to combine the problem statement, goals/non-goals, `map.nodes.jsonl`, `map.edges.jsonl`, `map.graph.json`, the shared SQLite index, `facts.nodes.jsonl`, and `facts.edges.jsonl` into a rough plan.
+   - Ask `planner`, or in approved serial mode act as the planner, to combine the problem statement, goals/non-goals, concise map/fact summaries, and artifact paths into a rough plan. Do not inline large map/research/scout outputs; use `outputMode: "file-only"` for large subagent outputs and pass file paths plus short summaries.
    - First pass: produce high-level implementation steps under `## Design`, with each step as `### <step>`.
    - Examples of step names: `### Scaffold Vite App`, `### Configure Terraform Infra`, `### Create API Project`, `### Add Docker Compose Database`.
    - Before finalizing each design step, call `oracle`, or in approved serial mode pause and perform a separate skeptical oracle check yourself, to verify that the step makes sense in context and does not conflict with the proposal scope, indexed project graph, file map, or research.
@@ -182,8 +212,9 @@ Create or update these topic-specific proposal files in the current project:
      - references to fact IDs and file map/index entries
    - Include Mermaid diagrams and tables where they clarify control flow, data flow, responsibilities, dependencies, or sequencing.
 
-8. **Validate the plan with `planner` again or a serial validation pass**
-   - Call `planner` one more time, or in approved serial mode perform a distinct validation pass yourself, to validate the complete proposal.
+8. **Validate the proposal with `reviewer`/`oracle` or a serial validation pass**
+   - Prefer `reviewer` for artifact validation and concrete reference/citation checks. Use `oracle` for consistency, scope-fit, and design-step skepticism. Do not use `planner` for final validation unless no reviewer/oracle substitute is available.
+   - In approved serial mode, perform a distinct validation pass yourself.
    - The validation pass must check that:
      - dependencies are declared and appear valid
      - steps align with the researched facts
@@ -193,16 +224,15 @@ Create or update these topic-specific proposal files in the current project:
      - `facts.nodes.jsonl` and `facts.edges.jsonl` parse as valid JSONL
      - facts cited in `proposal.md` exist as `fact` nodes in `facts.nodes.jsonl`
      - every cited source-backed fact has a `supported_by` edge to a `source` node
-     - indexed nodes or graph-slice entries cited in `proposal.md`, `map.nodes.jsonl`, or `map.edges.jsonl` exist in `.plan/{topic}/map.graph.json` or `.plan/_index/project-graph.sqlite`
+     - indexed nodes cited in `proposal.md`, `map.nodes.jsonl`, or `map.edges.jsonl` exist in `.plan/_index/project-graph.sqlite`
      - the plan respects `## Goals` and `## Non-Goals`
-   - Apply any necessary corrections to `proposal.md`, `map.nodes.jsonl`, `map.edges.jsonl`, `map.graph.json`, `facts.nodes.jsonl`, or `facts.edges.jsonl`.
+   - Apply any necessary corrections to `proposal.md`, `map.nodes.jsonl`, `map.edges.jsonl`, `facts.nodes.jsonl`, or `facts.edges.jsonl`.
 
 9. **Final response**
    - Reply with the created topic and paths:
      - `.plan/_index/project-graph.sqlite`
      - `.plan/_index/project-graph-manifest.json`
      - `.plan/{topic}/proposal.md`
-     - `.plan/{topic}/map.graph.json`
      - `.plan/{topic}/map.nodes.jsonl`
      - `.plan/{topic}/map.edges.jsonl`
      - `.plan/{topic}/facts.nodes.jsonl`
@@ -211,9 +241,33 @@ Create or update these topic-specific proposal files in the current project:
 
 ## Delegation Guidance
 
-Use sequential delegation because each artifact feeds the next stage. Keep the parent agent responsible for orchestration, artifact integrity, index freshness, and final validation.
+Keep the parent agent responsible for orchestration, artifact integrity, index freshness, and final validation. Do not default to one long serial subagent chain. Prefer deterministic parent/tool steps for index refresh, map generation, JSONL validation, and small JSONL upserts.
 
-After choosing delegated or approved serial execution mode, use the `index-project` skill to create/update `.plan/_index/project-graph.sqlite` and export `.plan/{topic}/map.graph.json` before scope, mapping, research, or planning passes. When this proposal skill is installed alongside `index-project`, prefer the direct sibling reference `../index-project/SKILL.md` to avoid ambiguity with another discovered skill of the same name. Pass the graph slice path, relevant query results, and index artifact paths into subagent prompts. Subagents should use the index-derived graph as their starting context rather than rediscovering the project from scratch.
+Performance rules:
+
+- Do not read entire large files (`draft.md`, local Pi docs, raw README files, generated artifacts) unless targeted indexed reads or focused lexical searches are insufficient. Use `cartographer_index query/read` for durable planning context and `rg`/grep for exact identifiers, filenames, scripts, tests, and error strings.
+- Treat lexical search as the fast verification path for concrete code evidence; treat the shared index as a reusable planning/map cache, not the only discovery mechanism.
+- Do not inline large subagent outputs into later prompts. Use `outputMode: "file-only"` for researcher, optional scout, planner, reviewer, or any child expected to produce more than a short answer.
+- Parallelize independent read-only roles where practical: scope writing and missing research can run after deterministic map generation without waiting for optional scout. Keep oracle/reviewer validation after design.
+- Seed/cache local Pi docs and pi-subagents facts with `cartographer_jsonl({"action":"seed-pi-facts", ...})`; do not ask researcher to re-summarize the same local docs every proposal.
+- Use `cartographer_jsonl validate-topic` for artifact checks before asking reviewer/oracle to reason about higher-level quality.
+
+Use subagents only where they add judgment: scope wording, missing research, design synthesis, oracle consistency review, and reviewer validation.
+
+After choosing delegated or approved serial execution mode, use the `index-project` skill to create/update `.plan/_index/project-graph.sqlite` before scope, mapping, research, or planning passes. When this proposal skill is installed alongside `index-project`, prefer the direct sibling reference `../index-project/SKILL.md` to avoid ambiguity with another discovered skill of the same name. Pass concise query results, map JSONL paths, index artifact paths, and the index tool commands into subagent prompts. Subagents should use the index-derived graph as their starting context for proposal artifacts, then use `rg`/grep and selective file reads to verify exact code evidence or fill obvious lexical gaps.
+
+Cartographer tool access for every delegated agent in this workflow (`delegate`, `scout`, `researcher`, `planner`, `oracle`, and `reviewer`):
+
+```bash
+cartographer_index({"action":"ensure","root":"$PWD"})
+cartographer_index({"action":"query","root":"$PWD","topic":"{topic}","limit":10})
+cartographer_index({"action":"read","root":"$PWD","path":"<project-relative-path>"})
+cartographer_index({"action":"read","root":"$PWD","nodeId":"<indexed-node-id>"})
+cartographer_jsonl({"action":"seed-pi-facts","root":"$PWD","topic":"{topic}"})
+cartographer_jsonl({"action":"validate-topic","root":"$PWD","topic":"{topic}"})
+```
+
+When launching delegated agents through pi-subagents, include the package extension path `extensions/cartographer-tools.ts` in the child tool/extension configuration when supported so these tools are callable. Tell each delegated agent it may run `cartographer_index` with `action: "ensure"` before reading the index; if it reports `action: "reindexed"`, it should continue from the refreshed index and mention that in its handoff. If custom tools are unavailable in the child, use the equivalent `python <index-project-skill-dir>/scripts/index_project.py ...` and `node --experimental-strip-types <plan-skill-dir>/scripts/manage_jsonl.ts ...` CLI commands via bash.
 
 If no executable subagents are available, first alert the user and ask whether they want the current agent to run the same sequence as an internal serial workflow. Only continue serially after the user approves. If they decline, stop and report any initialized/index artifacts.
 
@@ -221,37 +275,38 @@ In approved serial mode, clearly separate each role in your own reasoning and ou
 
 Recommended prompts for delegated mode:
 
-- `delegate`: "Think deeply about the user's request and current context. Define the proposal scope. Use `.plan/{topic}/map.graph.json` only as background context; focus on the problem and desired outcome, not implementation details. Produce Description, Problem Statement, Goals, and Non-Goals sections for `.plan/{topic}/proposal.md`."
-- `scout`: "Use `.plan/_index/project-graph.sqlite` and `.plan/{topic}/map.graph.json` to find project files relevant to `{topic}`. Create `.plan/{topic}/map.nodes.jsonl` and `.plan/{topic}/map.edges.jsonl` as a curated topic graph. Every node needs id, type, title, description, optional file-path:line-number reference, and should include `source`/`confidence` when available. Every edge needs from, to, and type."
-- `researcher`: "Research tooling, documentation, similar projects, and examples for `{topic}` in light of the indexed project context from `.plan/{topic}/map.graph.json`. After each finding, immediately append JSONL nodes to `.plan/{topic}/facts.nodes.jsonl` and JSONL edges to `.plan/{topic}/facts.edges.jsonl` before continuing. Every source-backed claim needs a fact node, source node, and `supported_by` edge. When done, produce Background and Viability sections for `.plan/{topic}/proposal.md` citing fact IDs."
-- `planner`: "Using proposal scope, `.plan/{topic}/map.nodes.jsonl`, `.plan/{topic}/map.edges.jsonl`, `.plan/{topic}/map.graph.json`, the shared project index, `facts.nodes.jsonl`, and `facts.edges.jsonl`, create high-level design steps under `## Design`, then fill each step with details, citations, dependencies, diagrams, and tables as appropriate."
-- `oracle`: "Before the planner finalizes this step, check whether the step makes sense in context, fits the scope, respects goals/non-goals, aligns with facts, and references real project files or indexed nodes. Return concerns and suggested corrections."
+- `delegate`: "Think deeply about the user's request and current context. Define the proposal scope. You have read access to the index tool commands; run `ensure` if freshness is uncertain, then use concise query output only as background context. Focus on the problem and desired outcome, not implementation details. Produce Description, Problem Statement, Goals, and Non-Goals sections for `.plan/{topic}/proposal.md`."
+- Optional `scout`: "Start from `cartographer_index query/read` outputs and existing map JSONL for `{topic}`, then use focused `rg`/grep searches for exact identifiers, filenames, scripts, tests, commands, and error strings that may be missing or questionable. Do not rediscover the repo broadly or read whole large files unless index snippets and lexical hits are insufficient. Do not rewrite map JSONL and do not create `map.graph.json`; return concise suggested node/edge additions with evidence."
+- `researcher`: "Research only missing or stale facts for `{topic}` in light of indexed project context. First inspect existing fact JSONL summaries; do not re-summarize local Pi docs or pi-subagents docs when existing supported fact nodes cover them. You have read access to Cartographer tools; run `cartographer_index ensure` if freshness is uncertain and use `query`/`read` for project context. Return concise JSONL node/edge suggestions and Background/Viability prose citing fact IDs. Every source-backed claim needs a fact node, source node, and `supported_by` edge. Do not read whole large docs unless targeted facts are missing."
+- `planner`: "Using proposal scope, concise map/fact summaries, artifact paths, and the shared project index, create high-level design steps under `## Design`, then fill each step with details, citations, dependencies, diagrams, and tables as appropriate. Use Cartographer tools for targeted reads before citing indexed context. Do not request or inline full raw map/research/scout outputs when file paths plus concise summaries are sufficient."
+- `oracle`: "Before the planner finalizes this step, check whether the step makes sense in context, fits the scope, respects goals/non-goals, aligns with facts, and references real project files or indexed nodes. You have read access to Cartographer tools and may run `cartographer_index`/`cartographer_jsonl` if freshness, references, or graph validity are uncertain. Return concerns and suggested corrections."
+- `reviewer`: "Final-validate the complete proposal artifacts. Use `cartographer_jsonl` to validate JSONL where available, and `cartographer_index` to verify indexed references when needed. Check required sections, fact citations/support, map/fact JSONL validity, file references, goals/non-goals alignment, and handoff readiness. Do not create new design content; return pass/fail with required corrections."
 
 Serial-mode confirmation prompt:
 
-- "No executable subagents are available for this proposal workflow. Do you want me to continue by creating/updating the shared project index and then performing the delegate, scout, researcher, planner, oracle, and validation passes serially as the current agent?"
+- "No executable subagents are available for this proposal workflow. Do you want me to continue by creating/updating the shared project index, generating/validating map JSONL deterministically, and then performing needed scope, research, planner, oracle, and validation passes serially as the current agent?"
 
 Serial-mode role prompts:
 
-- Scope writer: define `## Description`, `## Problem Statement`, `## Goals`, and `## Non-Goals` from the user's intent and current context, using the topic graph only as background.
-- Codebase mapper: inspect `.plan/{topic}/map.graph.json` and the shared index, verify relevant files manually as needed, and write `map.nodes.jsonl` plus `map.edges.jsonl` with valid file references and resolvable graph IDs.
+- Scope writer: define `## Description`, `## Problem Statement`, `## Goals`, and `## Non-Goals` from the user's intent and current context, using index-query output only as background.
+- Codebase mapper: inspect the shared SQLite index and starter map JSONL, verify relevant files with focused `rg`/grep and selective reads as needed, and write `map.nodes.jsonl` plus `map.edges.jsonl` with valid file references and resolvable graph IDs.
 - Researcher: search or inspect documentation yourself, using indexed project constraints to focus the search, and append each source-backed finding as JSONL graph records to `facts.nodes.jsonl` and `facts.edges.jsonl` before continuing.
 - Planner: draft `## Design` as high-level `###` steps, then fill each step with dependencies, references to facts and indexed files, risks, diagrams, and tables where helpful.
 - Oracle checker: before each step is finalized, switch perspective and challenge the step for scope fit, fact alignment, index/file-reference validity, and hidden assumptions.
-- Final validator: perform the second planner pass and correct missing dependencies, invalid references, unsupported citations, missing index citations, or scope drift.
+- Final validator: perform a reviewer-style artifact validation pass and correct missing dependencies, invalid references, unsupported citations, missing index citations, or scope drift.
 
 ## Pitfalls
 
-- Do not skip the `index-project` step; the shared SQLite + FTS5 graph is the primary discovery source for proposal mapping.
-- Do not continue after an indexing failure without alerting the user and getting approval for manual discovery.
+- Do not skip the `index-project` step; the shared SQLite + FTS5 graph is the primary durable source for proposal mapping artifacts.
+- Do not continue after an indexing failure without alerting the user and getting approval for manual discovery with `rg`/grep and selective reads.
 - Do not continue automatically in the zero-subagent case; alert the user and ask whether to proceed serially with the current agent.
 - Do not run serial mode unless the user has approved it.
 - Do not treat serial mode as permission to skip roles. The current agent must still perform scope, mapping, research, planning, oracle checking, and final validation as separate passes.
 - Do not let research claims enter `proposal.md` without a corresponding `fact` node ID in `facts.nodes.jsonl` and a supporting `supported_by` edge in `facts.edges.jsonl`.
 - Do not write YAML, JSON arrays, or comma-separated JSON objects into the map or research graph files; they must remain newline-delimited JSON objects.
 - Treat `map.nodes.jsonl` plus `map.edges.jsonl` as the proposal map source of truth.
-- Do not let the map graph become a flat grep dump; it should be a curated graph view of the indexed topic graph.
-- Do not rely only on raw FTS ranking; verify high-impact files and include graph neighbors where relevant.
+- Do not let the map graph become a flat grep dump; it should be a curated graph view grounded in the indexed topic graph and verified with focused lexical evidence where useful.
+- Do not rely only on raw FTS ranking; verify high-impact files with `rg`/grep or direct reads and include graph neighbors where relevant.
 - Do not turn the scope sections into a technology shopping list; keep them problem-centered.
 - Do not skip oracle checks for design steps, even in serial mode.
 - Do not overwrite useful existing proposal content without preserving or reconciling it.
@@ -262,16 +317,16 @@ Before finalizing, verify:
 
 - `.plan/_index/project-graph.sqlite` exists.
 - `.plan/_index/project-graph-manifest.json` exists and reports nonzero indexed files/chunks.
-- `.plan/{topic}/map.graph.json` exists and was exported from the shared index for the proposal topic.
+- `.gitignore` contains `.plan/_index/` so generated index/cache files are not committed.
 - `.plan/{topic}/proposal.md` exists and contains all required sections.
 - `.plan/{topic}/map.nodes.jsonl` exists, parses as valid JSONL, and contains curated map nodes with `id`, `type`, `title`, `description`, optional `reference`, and index metadata such as `source`/`confidence` when available.
-- `.plan/{topic}/map.edges.jsonl` exists, parses as valid JSONL, and contains typed edges whose `from`/`to` IDs resolve to curated map nodes, indexed graph-slice nodes, or other explicitly cited graph nodes.
+- `.plan/{topic}/map.edges.jsonl` exists, parses as valid JSONL, and contains typed edges whose `from`/`to` IDs resolve to curated map nodes, indexed nodes in the shared SQLite database, or other explicitly cited graph nodes.
 - `.plan/{topic}/facts.nodes.jsonl` exists, parses as valid JSONL, and contains source-backed fact/source/tool/example/risk/constraint nodes with stable IDs.
 - `.plan/{topic}/facts.edges.jsonl` exists, parses as valid JSONL, and contains typed edges, including `supported_by` edges from fact nodes to source nodes.
 - Every fact citation in `proposal.md` exists as a `fact` node in `facts.nodes.jsonl`.
 - Every cited source-backed fact has a `supported_by` edge to a `source` node.
 - Every file reference in `map.nodes.jsonl` or `map.edges.jsonl` points to an existing project file, ideally with a line number.
-- Every indexed node ID cited in `map.nodes.jsonl`, `map.edges.jsonl`, or `proposal.md` exists in `.plan/{topic}/map.graph.json` or `.plan/_index/project-graph.sqlite`.
+- Every indexed node ID cited in `map.nodes.jsonl`, `map.edges.jsonl`, or `proposal.md` exists in `.plan/_index/project-graph.sqlite`.
 - `## Design` contains high-level `###` steps plus details, dependencies, references, and any useful diagrams/tables.
 - Design steps use indexed project files where relevant instead of relying only on ad-hoc file discovery.
-- A final planner validation pass has been completed and corrections were applied.
+- A final reviewer/oracle validation pass has been completed and corrections were applied.

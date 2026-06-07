@@ -49,6 +49,10 @@ class IndexProjectTests(unittest.TestCase):
             "export const helper = (value: string) => `search ${value}`;\n",
             encoding="utf-8",
         )
+        (root / "src/settings.ts").write_text(
+            "export function loadUserSettings() { return { theme: 'dark' }; }\n",
+            encoding="utf-8",
+        )
         (root / "docs/guide.md").write_text(
             "# Guide\n\nThis guide documents the helper function and links to [index](../src/index.ts).\n",
             encoding="utf-8",
@@ -63,13 +67,18 @@ class IndexProjectTests(unittest.TestCase):
 
             index_result = self.run_script("index", "--root", str(project), "--no-git-root", "--json")
             summary = json.loads(index_result.stdout)
-            self.assertEqual(summary["files_seen"], 5)
+            self.assertEqual(summary["files_seen"], 6)
+            self.assertTrue(summary["gitignore_updated"])
+            self.assertIn(".plan/_index/", (project / ".gitignore").read_text(encoding="utf-8"))
             self.assertTrue((project / ".plan/_index/project-graph.sqlite").exists())
             self.assertTrue((project / ".plan/_index/project-graph-manifest.json").exists())
 
             conn = sqlite3.connect(project / ".plan/_index/project-graph.sqlite")
             files = [row[0] for row in conn.execute("SELECT path FROM files ORDER BY path")]
-            self.assertEqual(files, ["README.md", "docs/guide.md", "package.json", "src/index.ts", "src/util.ts"])
+            self.assertEqual(
+                files,
+                ["README.md", "docs/guide.md", "package.json", "src/index.ts", "src/settings.ts", "src/util.ts"],
+            )
             self.assertFalse(any(path.startswith("node_modules/") or path.startswith(".plan/") for path in files))
             self.assertNotIn("package-lock.json", files)
             imports = list(conn.execute("SELECT from_id, to_id, type FROM edges WHERE type = 'imports'"))
@@ -93,6 +102,37 @@ class IndexProjectTests(unittest.TestCase):
             self.assertIn("src/index.ts", paths)
             self.assertIn("docs/guide.md", paths)
             self.assertIn("src/util.ts", paths)
+            self.assertTrue(all(item.get("candidate") for item in query))
+            self.assertTrue(all(item.get("verification", {}).get("read") for item in query))
+            util_match = next(match for item in query if item["path"] == "src/util.ts" for match in item["matches"])
+            self.assertTrue(util_match.get("verification", {}).get("rg"))
+            self.assertTrue(
+                any(
+                    structure["node_id"].startswith("symbol:src/util.ts#helper")
+                    for structure in util_match["structural_matches"]
+                )
+            )
+
+            identifier_result = self.run_script(
+                "query",
+                "--root",
+                str(project),
+                "--no-git-root",
+                "--topic",
+                "load user settings",
+                "--limit",
+                "3",
+                "--json",
+            )
+            identifier_query = json.loads(identifier_result.stdout)
+            self.assertTrue(identifier_query)
+            self.assertEqual(identifier_query[0]["path"], "src/settings.ts")
+            self.assertTrue(
+                any(
+                    structure["node_id"].startswith("symbol:src/settings.ts#loadUserSettings")
+                    for structure in identifier_query[0]["matches"][0]["structural_matches"]
+                )
+            )
 
             filtered_result = self.run_script(
                 "query",
@@ -124,7 +164,7 @@ class IndexProjectTests(unittest.TestCase):
                 "--limit",
                 "5",
             )
-            self.assertTrue((out_dir / "map.graph.json").exists())
+            self.assertFalse((out_dir / "map.graph.json").exists())
             node_lines = (out_dir / "map.nodes.jsonl").read_text(encoding="utf-8").splitlines()
             edge_lines = (out_dir / "map.edges.jsonl").read_text(encoding="utf-8").splitlines()
             self.assertTrue(node_lines)
@@ -132,7 +172,34 @@ class IndexProjectTests(unittest.TestCase):
             nodes = [json.loads(line) for line in node_lines]
             edges = [json.loads(line) for line in edge_lines]
             self.assertTrue(any(node["id"] == "topic:helper-function" for node in nodes))
-            self.assertTrue(any(edge["type"] == "relevant_to" for edge in edges))
+            relevant_edges = [edge for edge in edges if edge["type"] == "relevant_to"]
+            self.assertTrue(relevant_edges)
+            self.assertTrue(any(edge.get("candidate") for edge in relevant_edges))
+            self.assertTrue(any(edge.get("verification", {}).get("read") for edge in relevant_edges))
+
+            read_result = self.run_script(
+                "read",
+                "--root",
+                str(project),
+                "--no-git-root",
+                "--path",
+                "src/index.ts",
+                "--json",
+            )
+            read_payload = json.loads(read_result.stdout)
+            self.assertEqual(read_payload["file"]["path"], "src/index.ts")
+            self.assertTrue(any(node["id"] == "file:src/index.ts" for node in read_payload["nodes"]))
+            self.assertTrue(read_payload["edges"])
+
+            ensure_result = self.run_script("ensure", "--root", str(project), "--no-git-root", "--json")
+            ensure_payload = json.loads(ensure_result.stdout)
+            self.assertEqual(ensure_payload["action"], "fresh")
+            self.assertFalse(ensure_payload["gitignore_updated"])
+            (project / "src/util.ts").write_text("export function helper() { return 'changed'; }\n", encoding="utf-8")
+            stale_result = self.run_script("ensure", "--root", str(project), "--no-git-root", "--json")
+            stale_payload = json.loads(stale_result.stdout)
+            self.assertEqual(stale_payload["action"], "reindexed")
+            self.assertFalse(stale_payload["after"]["stale"])
 
     def test_incremental_update_removes_deleted_files(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -141,7 +208,7 @@ class IndexProjectTests(unittest.TestCase):
             self.run_script("index", "--root", str(project), "--no-git-root", "--json")
             second = json.loads(self.run_script("index", "--root", str(project), "--no-git-root", "--json").stdout)
             self.assertEqual(second["files_indexed"], 0)
-            self.assertEqual(second["files_skipped_unchanged"], 5)
+            self.assertEqual(second["files_skipped_unchanged"], 6)
 
             (project / "src/index.ts").unlink()
             third = json.loads(self.run_script("index", "--root", str(project), "--no-git-root", "--json").stdout)

@@ -16,13 +16,14 @@ import json
 import os
 import posixpath
 import re
+import shlex
 import sqlite3
 import sys
 from collections.abc import Iterable
 from pathlib import Path
 from typing import Any
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 DEFAULT_DB_REL = ".plan/_index/project-graph.sqlite"
 DEFAULT_MANIFEST_REL = ".plan/_index/project-graph-manifest.json"
 
@@ -468,6 +469,42 @@ def chunk_lines(lines: list[str], chunk_size: int = 120, overlap: int = 15) -> I
         start += step
 
 
+def structure_aware_chunk_lines(
+    lines: list[str], nodes: list[dict[str, Any]], chunk_size: int = 120, overlap: int = 15
+) -> Iterable[tuple[int, int, str]]:
+    """Split files at symbols/headings before falling back to overlapping windows.
+
+    This keeps high-value structural units together and avoids returning the same
+    rigid 120-line window for every nearby symbol in a file.
+    """
+    if not lines:
+        return
+    boundaries = {1, len(lines) + 1}
+    for node in nodes:
+        start_line = node.get("start_line")
+        if isinstance(start_line, int) and 1 <= start_line <= len(lines):
+            boundaries.add(start_line)
+    ordered = sorted(boundaries)
+    yielded = False
+    for left, right in zip(ordered, ordered[1:], strict=False):
+        if left >= right:
+            continue
+        segment = lines[left - 1 : right - 1]
+        if not any(line.strip() for line in segment):
+            continue
+        if len(segment) <= chunk_size:
+            text = "\n".join(segment).strip()
+            if text:
+                yielded = True
+                yield left, right - 1, text
+            continue
+        for start, end, text in chunk_lines(segment, chunk_size=chunk_size, overlap=overlap):
+            yielded = True
+            yield left + start - 1, left + end - 1, text
+    if not yielded:
+        yield from chunk_lines(lines, chunk_size=chunk_size, overlap=overlap)
+
+
 def markdown_headings(text: str, path: str, content_hash: str) -> list[dict[str, Any]]:
     lines = text.splitlines()
     headings: list[dict[str, Any]] = []
@@ -576,7 +613,7 @@ def index_file(conn: sqlite3.Connection, root: Path, path: Path, content_hash: s
             node["metadata"],
         )
 
-    for start_line, end_line, chunk_text in chunk_lines(lines):
+    for start_line, end_line, chunk_text in structure_aware_chunk_lines(lines, nodes):
         chunk_hash = sha256_bytes(chunk_text.encode("utf-8"))
         chunk_id = f"chunk:{rel}:{start_line}-{end_line}:{chunk_hash[:10]}"
         summary = summarize_text(chunk_text)
@@ -591,7 +628,7 @@ def index_file(conn: sqlite3.Connection, root: Path, path: Path, content_hash: s
         )
         conn.execute(
             "INSERT INTO chunks_fts(chunk_id, path, title, text, summary) VALUES (?, ?, ?, ?, ?)",
-            (chunk_id, rel, path.name, chunk_text, summary),
+            (chunk_id, rel, path.name, identifier_search_text(chunk_text), summary),
         )
 
 
@@ -645,6 +682,28 @@ def package_dependencies(text: str) -> dict[str, str]:
             for name, version in value.items():
                 deps[str(name)] = str(version)
     return deps
+
+
+def ensure_index_gitignore(root: Path) -> bool:
+    """Ensure the generated SQLite index directory is ignored by Git."""
+    gitignore_path = root / ".gitignore"
+    desired = ".plan/_index/"
+    try:
+        existing = gitignore_path.read_text(encoding="utf-8") if gitignore_path.exists() else ""
+    except OSError:
+        return False
+    lines = [line.strip() for line in existing.splitlines()]
+    if desired in lines or desired.rstrip("/") in lines:
+        return False
+
+    addition = desired + "\n"
+    if existing and not existing.endswith("\n"):
+        addition = "\n" + addition
+    try:
+        gitignore_path.write_text(existing + addition, encoding="utf-8")
+    except OSError:
+        return False
+    return True
 
 
 def rebuild_edges(conn: sqlite3.Connection, root: Path, paths: list[Path]) -> int:
@@ -738,6 +797,7 @@ def rebuild_edges(conn: sqlite3.Connection, root: Path, paths: list[Path]) -> in
 
 def index_project(args: argparse.Namespace) -> None:
     root = find_project_root(Path(args.root)) if args.git_root else Path(args.root).resolve()
+    gitignore_updated = ensure_index_gitignore(root)
     db_path = root / DEFAULT_DB_REL
     manifest_path = root / DEFAULT_MANIFEST_REL
     conn = connect(db_path)
@@ -795,6 +855,7 @@ def index_project(args: argparse.Namespace) -> None:
         "files_skipped_unchanged": skipped,
         "files_removed": len(removed),
         "edges_rebuilt": edges,
+        "gitignore_updated": gitignore_updated,
         "counts": counts,
         "settings": settings,
     }
@@ -844,6 +905,87 @@ def fts_query(topic: str, mode: str = "AND") -> str:
         return '""'
     joiner = " AND " if mode.upper() == "AND" and len(tokens) > 1 else " OR "
     return joiner.join(f"{token}*" for token in tokens)
+
+
+def split_identifier(value: str) -> list[str]:
+    """Return lowercase lexical and camel/snake-case parts for code identifiers."""
+    parts: list[str] = []
+    for token in re.findall(r"[A-Za-z_][A-Za-z0-9_]*|[0-9]+", value):
+        pieces = re.sub(r"([a-z0-9])([A-Z])", r"\1 \2", token.replace("_", " ")).split()
+        parts.extend(piece.lower() for piece in pieces if piece)
+        parts.append(token.lower())
+    return [part for part in parts if part and part not in STOP_WORDS]
+
+
+def identifier_search_text(text: str) -> str:
+    """Append identifier parts so FTS can match camelCase/snake_case by concept."""
+    parts = split_identifier(text)
+    return text if not parts else f"{text}\n{' '.join(parts)}"
+
+
+def identifier_query_tokens(topic: str) -> list[str]:
+    tokens: list[str] = []
+    for raw in re.findall(r"[A-Za-z0-9_]{2,}", topic):
+        tokens.extend(split_identifier(raw))
+    seen: set[str] = set()
+    unique: list[str] = []
+    for token in tokens:
+        if token not in seen:
+            seen.add(token)
+            unique.append(token)
+    return unique[:16]
+
+
+def exact_token_count(tokens: list[str], text: str) -> int:
+    if not tokens or not text:
+        return 0
+    haystack = {part.lower() for part in re.findall(r"[A-Za-z0-9_]+", text)}
+    haystack.update(split_identifier(text))
+    return sum(1 for token in tokens if token in haystack)
+
+
+def normalized_chunk_signature(text: str) -> str:
+    normalized = re.sub(r"\s+", " ", text.lower()).strip()
+    normalized = re.sub(r"[^a-z0-9_ ]+", "", normalized)
+    return hashlib.sha256(normalized.encode("utf-8")).hexdigest()[:16]
+
+
+def verification_for_match(path: str, start_line: int, end_line: int, tokens: list[str]) -> dict[str, Any]:
+    rg_terms = [token for token in tokens if len(token) >= 2][:5]
+    return {
+        "read": {"path": path, "start_line": start_line, "end_line": end_line},
+        "rg": [f"rg -n --fixed-strings {shlex.quote(term)} -- {shlex.quote(path)}" for term in rg_terms],
+    }
+
+
+def structural_matches_for_chunk(
+    conn: sqlite3.Connection, path: str, start_line: int, end_line: int, tokens: list[str]
+) -> list[dict[str, Any]]:
+    rows = conn.execute(
+        """
+        SELECT id, type, title, path, start_line, end_line
+        FROM nodes
+        WHERE path = ?
+          AND type IN ('symbol', 'doc-section')
+          AND start_line BETWEEN ? AND ?
+        ORDER BY start_line ASC
+        LIMIT 8
+        """,
+        (path, start_line, end_line),
+    ).fetchall()
+    matches: list[dict[str, Any]] = []
+    for row in rows:
+        title_hits = exact_token_count(tokens, row["title"] or "")
+        matches.append(
+            {
+                "node_id": row["id"],
+                "node_type": row["type"],
+                "title": row["title"],
+                "reference": f"{row['path']}:{row['start_line']}",
+                "token_hits": title_hits,
+            }
+        )
+    return matches
 
 
 def parse_multi_arg(values: Any) -> list[str]:
@@ -915,22 +1057,27 @@ def query_index(args: argparse.Namespace) -> list[dict[str, Any]]:
     conn = connect(db_path)
     ensure_schema(conn)
 
+    candidate_limit = max(args.limit * 20, args.limit, 60)
+
     def run_search(query: str) -> list[sqlite3.Row]:
         return conn.execute(
             """
-            SELECT c.id AS chunk_id, c.path, c.start_line, c.end_line, c.summary,
+            SELECT c.id AS chunk_id, c.node_id, c.path, c.start_line, c.end_line,
+                   c.summary, c.text, files.language,
                    snippet(chunks_fts, 3, '[', ']', '…', 24) AS snippet,
                    bm25(chunks_fts) AS rank
             FROM chunks_fts
             JOIN chunks c ON chunks_fts.chunk_id = c.id
+            JOIN files ON files.path = c.path
             WHERE chunks_fts MATCH ?
             ORDER BY rank ASC
             LIMIT ?
             """,
-            (query, max(args.limit * 8, args.limit)),
+            (query, candidate_limit),
         ).fetchall()
 
     tokens = fts_tokens(args.topic)
+    identifier_tokens = identifier_query_tokens(args.topic) or tokens
     eligible_paths = eligible_paths_for_types(conn, args)
     search_rows: list[tuple[sqlite3.Row, str]] = []
     seen_chunks: set[str] = set()
@@ -940,10 +1087,10 @@ def query_index(args: argparse.Namespace) -> list[dict[str, Any]]:
             seen_chunks.add(row["chunk_id"])
             search_rows.append((row, "all_terms"))
         # Topic queries should favor precision, but not at the expense of recall.
-        # If the all-terms query returns fewer files than requested, blend in
-        # any-term matches and keep all-term hits boosted in the final ranking.
-        and_paths = {row["path"] for row in and_rows}
-        if len(tokens) > 1 and len(and_paths) < args.limit:
+        # Blend any-term matches into a larger candidate pool, then let scoring,
+        # identifier weighting, structural matches, and deduplication choose the
+        # final compact result set.
+        if len(tokens) > 1:
             for row in run_search(fts_query(args.topic, "OR")):
                 if row["chunk_id"] in seen_chunks:
                     continue
@@ -951,35 +1098,98 @@ def query_index(args: argparse.Namespace) -> list[dict[str, Any]]:
                 search_rows.append((row, "any_terms"))
 
     grouped: dict[str, dict[str, Any]] = {}
+    seen_signatures: dict[str, str] = {}
     for row, match_type in search_rows:
-        if not path_is_allowed(row["path"], args):
+        path = row["path"]
+        if not path_is_allowed(path, args):
             continue
-        if eligible_paths is not None and row["path"] not in eligible_paths:
+        if eligible_paths is not None and path not in eligible_paths:
             continue
+
+        rank = float(row["rank"])
+        text = row["text"] or ""
+        structural_matches = structural_matches_for_chunk(
+            conn, path, int(row["start_line"]), int(row["end_line"]), identifier_tokens
+        )
+        path_hits = exact_token_count(identifier_tokens, path)
+        text_hits = exact_token_count(identifier_tokens, text)
+        title_hits = exact_token_count(identifier_tokens, Path(path).name)
+        structural_hits = sum(match.get("token_hits", 0) for match in structural_matches)
+        signature = normalized_chunk_signature(text)
+        duplicate_of = seen_signatures.get(signature)
+        if duplicate_of is None:
+            seen_signatures[signature] = path
+
+        match_score = 5.0 if match_type == "all_terms" else 1.5
+        # FTS5 bm25() is lower-is-better and often a small negative value. Keep it
+        # as a light tie-breaker rather than letting it dominate identifier hits.
+        match_score += 1.0 / (1.0 + abs(rank))
+        match_score += min(path_hits, 4) * 1.5
+        match_score += min(title_hits, 3) * 1.0
+        match_score += min(text_hits, 6) * 0.45
+        match_score += min(structural_hits, 4) * 1.25
+        if structural_matches:
+            match_score += 0.75
+        if duplicate_of and duplicate_of != path:
+            match_score *= 0.35
+
         item = grouped.setdefault(
-            row["path"],
+            path,
             {
-                "path": row["path"],
+                "path": path,
+                "candidate": True,
                 "score": 0.0,
-                "best_rank": float(row["rank"]),
+                "best_rank": rank,
                 "matches": [],
                 "match_types": [],
+                "deduplicated_matches": 0,
             },
         )
-        item["score"] += 3.0 if match_type == "all_terms" else 1.0
-        item["best_rank"] = min(item["best_rank"], float(row["rank"]))
+        item["score"] += match_score
+        item["best_rank"] = min(item["best_rank"], rank)
+        if duplicate_of and duplicate_of != path and "duplicate_of" not in item:
+            item["duplicate_of"] = duplicate_of
         if match_type not in item["match_types"]:
             item["match_types"].append(match_type)
-        if len(item["matches"]) < 3:
-            item["matches"].append(
-                {
-                    "reference": f"{row['path']}:{row['start_line']}",
-                    "start_line": row["start_line"],
-                    "end_line": row["end_line"],
-                    "match_type": match_type,
-                    "snippet": row["snippet"] or row["summary"],
-                }
-            )
+        if duplicate_of and duplicate_of != path:
+            item["deduplicated_matches"] += 1
+
+        match_record = {
+            "node_id": row["node_id"],
+            "reference": f"{path}:{row['start_line']}",
+            "start_line": row["start_line"],
+            "end_line": row["end_line"],
+            "match_type": match_type,
+            "selection": "structure" if structural_matches else "chunk",
+            "score": round(match_score, 4),
+            "rank": rank,
+            "identifier_hits": {
+                "path": path_hits,
+                "title": title_hits,
+                "text": text_hits,
+                "structure": structural_hits,
+            },
+            "dedupe_key": signature,
+            "duplicate_of": duplicate_of if duplicate_of and duplicate_of != path else None,
+            "structural_matches": structural_matches,
+            "snippet": row["snippet"] or row["summary"],
+            "verification": verification_for_match(
+                path, int(row["start_line"]), int(row["end_line"]), identifier_tokens
+            ),
+        }
+        match_record = {key: value for key, value in match_record.items() if value not in (None, [], {})}
+        existing_keys = {match.get("dedupe_key") for match in item["matches"]}
+        if len(item["matches"]) < 5 and match_record.get("dedupe_key") not in existing_keys:
+            item["matches"].append(match_record)
+
+    for item in grouped.values():
+        item["score"] = round(float(item["score"]), 4)
+        item["matches"] = sorted(
+            item["matches"],
+            key=lambda match: (-float(match.get("score", 0.0)), float(match.get("rank", 0.0)), match["reference"]),
+        )[:3]
+        if item["matches"]:
+            item["verification"] = item["matches"][0].get("verification", {})
 
     results = sorted(grouped.values(), key=lambda item: (-item["score"], item["best_rank"], item["path"]))[: args.limit]
     add_graph_neighbors(conn, results, args.neighbors)
@@ -1044,13 +1254,24 @@ def add_graph_neighbors(conn: sqlite3.Connection, results: list[dict[str, Any]],
 
 def format_query_results(topic: str, results: list[dict[str, Any]]) -> str:
     if not results:
-        return f"No indexed matches for topic: {topic}"
-    lines = [f"Indexed matches for topic: {topic}"]
+        return f"No indexed candidate matches for topic: {topic}"
+    lines = [
+        f"Indexed candidate matches for topic: {topic}",
+        "Verify candidates with read/rg before citing or editing.",
+    ]
     for index, item in enumerate(results, start=1):
-        lines.append(f"\n{index}. {item['path']}  score={item['score']:.3f}")
+        duplicate = f" duplicate_of={item['duplicate_of']}" if item.get("duplicate_of") else ""
+        lines.append(f"\n{index}. {item['path']}  score={item['score']:.3f}{duplicate}")
         for match in item.get("matches", []):
             snippet = re.sub(r"\s+", " ", match.get("snippet") or "").strip()
-            lines.append(f"   - {match['reference']}: {snippet[:220]}")
+            selector = match.get("selection", "chunk")
+            lines.append(f"   - {match['reference']} [{selector}]: {snippet[:220]}")
+            verification = match.get("verification", {})
+            read_hint = verification.get("read", {}) if isinstance(verification, dict) else {}
+            if read_hint:
+                lines.append(
+                    f"     verify: read {read_hint.get('path')} lines {read_hint.get('start_line')}-{read_hint.get('end_line')}"
+                )
         for neighbor in item.get("neighbors", [])[:3]:
             ref = neighbor.get("reference") or neighbor.get("path") or neighbor.get("node_id")
             lines.append(f"   - {neighbor['type']} -> {ref} ({neighbor['title']})")
@@ -1090,35 +1311,54 @@ def build_slice_payload(args: argparse.Namespace) -> tuple[Path, dict[str, Any]]
         | {n.get("path") for item in results for n in item.get("neighbors", []) if n.get("path")}
     )
     paths = [path for path in paths if path and path_is_allowed(path, args)]
+    selected_node_ids = (
+        {f"file:{path}" for path in paths}
+        | {match["node_id"] for item in results for match in item.get("matches", []) if match.get("node_id")}
+        | {n["node_id"] for item in results for n in item.get("neighbors", []) if n.get("node_id")}
+    )
     nodes: list[dict[str, Any]] = []
     edges: list[dict[str, Any]] = []
-    if paths:
-        placeholders = ",".join("?" for _ in paths)
+    if selected_node_ids:
+        conn.execute("CREATE TEMP TABLE IF NOT EXISTS temp_selected_nodes(id TEXT PRIMARY KEY)")
+        conn.execute("DELETE FROM temp_selected_nodes")
+        conn.executemany(
+            "INSERT OR IGNORE INTO temp_selected_nodes(id) VALUES (?)", [(node_id,) for node_id in selected_node_ids]
+        )
+        conn.execute("CREATE TEMP TABLE IF NOT EXISTS temp_selected_types(type TEXT PRIMARY KEY)")
+        conn.execute("DELETE FROM temp_selected_types")
         node_types = parse_multi_arg(getattr(args, "node_types", []))
-        type_clause = ""
-        params: list[Any] = list(paths)
-        if node_types:
-            type_placeholders = ",".join("?" for _ in node_types)
-            type_clause = f" AND type IN ({type_placeholders})"
-            params.extend(node_types)
+        conn.executemany(
+            "INSERT OR IGNORE INTO temp_selected_types(type) VALUES (?)", [(node_type,) for node_type in node_types]
+        )
         node_rows = conn.execute(
-            f"SELECT id, type, title, description, path, start_line, end_line, metadata FROM nodes WHERE path IN ({placeholders}){type_clause} ORDER BY path, type, start_line",
-            params,
+            """
+            SELECT id, type, title, description, path, start_line, end_line, metadata
+            FROM nodes
+            WHERE id IN (SELECT id FROM temp_selected_nodes)
+              AND (
+                NOT EXISTS (SELECT 1 FROM temp_selected_types)
+                OR type IN (SELECT type FROM temp_selected_types)
+              )
+            ORDER BY path, type, start_line
+            """
         ).fetchall()
         node_ids = [row["id"] for row in node_rows]
         nodes = [dict(row) for row in node_rows]
         for node in nodes:
             node["metadata"] = load_metadata(node.get("metadata"))
         if node_ids:
-            placeholders = ",".join("?" for _ in node_ids)
+            conn.execute("DELETE FROM temp_selected_nodes")
+            conn.executemany(
+                "INSERT OR IGNORE INTO temp_selected_nodes(id) VALUES (?)", [(node_id,) for node_id in node_ids]
+            )
             edge_rows = conn.execute(
-                f"""
+                """
                 SELECT from_id, to_id, type, evidence_path, evidence_line, confidence, metadata
                 FROM edges
-                WHERE from_id IN ({placeholders}) OR to_id IN ({placeholders})
+                WHERE from_id IN (SELECT id FROM temp_selected_nodes)
+                  AND to_id IN (SELECT id FROM temp_selected_nodes)
                 ORDER BY type, evidence_path, evidence_line
-                """,
-                [*node_ids, *node_ids],
+                """
             ).fetchall()
             edges = [dict(row) for row in edge_rows]
             for edge in edges:
@@ -1158,7 +1398,8 @@ def slice_jsonl_index(args: argparse.Namespace) -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
 
     graph_path = out_dir / "map.graph.json"
-    graph_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    if getattr(args, "include_raw_slice", False):
+        graph_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
     topic_id = f"topic:{slugify(args.topic)}"
     node_records: list[dict[str, Any]] = [
@@ -1217,6 +1458,8 @@ def slice_jsonl_index(args: argparse.Namespace) -> None:
                 "evidence": result.get("matches", [{}])[0].get("snippet") if result.get("matches") else None,
                 "reference": result.get("matches", [{}])[0].get("reference") if result.get("matches") else None,
                 "score": result.get("score"),
+                "candidate": result.get("candidate", True),
+                "verification": result.get("verification"),
                 "source": "index-query",
             }
         )
@@ -1242,9 +1485,186 @@ def slice_jsonl_index(args: argparse.Namespace) -> None:
     edges_path = out_dir / "map.edges.jsonl"
     write_jsonl(nodes_path, node_records)
     write_jsonl(edges_path, edge_records)
-    print(f"Wrote topic graph slice: {graph_path}")
+    if getattr(args, "include_raw_slice", False):
+        print(f"Wrote topic graph slice: {graph_path}")
     print(f"Wrote topic map nodes: {nodes_path}")
     print(f"Wrote topic map edges: {edges_path}")
+
+
+def detect_staleness(root: Path, max_bytes: int) -> dict[str, Any]:
+    """Return a cheap freshness report for the shared index."""
+    db_path = root / DEFAULT_DB_REL
+    manifest_path = root / DEFAULT_MANIFEST_REL
+    report: dict[str, Any] = {
+        "root": str(root),
+        "database": str(db_path),
+        "manifest": str(manifest_path),
+        "exists": db_path.exists(),
+        "stale": False,
+        "missing": [],
+        "changed": [],
+        "deleted": [],
+        "files_seen": 0,
+        "indexed_files": 0,
+    }
+    if not db_path.exists():
+        report["stale"] = True
+        report["reason"] = "missing-index"
+        return report
+
+    conn = connect(db_path)
+    existing_schema_version = int(conn.execute("PRAGMA user_version").fetchone()[0])
+    ensure_schema(conn)
+    if existing_schema_version < SCHEMA_VERSION:
+        report["stale"] = True
+        report["reason"] = "indexer-version-changed"
+        report["force_reindex"] = True
+    paths = scan_files(root, max_bytes)
+    seen: dict[str, str] = {}
+    for path in paths:
+        try:
+            seen[rel_path(root, path)] = sha256_bytes(path.read_bytes())
+        except OSError:
+            continue
+    existing = {row["path"]: row["hash"] for row in conn.execute("SELECT path, hash FROM files")}
+    report["files_seen"] = len(seen)
+    report["indexed_files"] = len(existing)
+    report["missing"] = sorted(set(seen) - set(existing))
+    report["deleted"] = sorted(set(existing) - set(seen))
+    report["changed"] = sorted(path for path, digest in seen.items() if existing.get(path) not in (None, digest))
+    file_stale = bool(report["missing"] or report["changed"] or report["deleted"])
+    report["stale"] = bool(report["stale"] or file_stale)
+    if file_stale:
+        report["reason"] = "file-set-or-hash-changed"
+    elif report["stale"]:
+        report["reason"] = report.get("reason", "index-settings-changed")
+    else:
+        report["reason"] = "fresh"
+    return report
+
+
+def ensure_index(args: argparse.Namespace) -> None:
+    root = find_project_root(Path(args.root)) if args.git_root else Path(args.root).resolve()
+    gitignore_updated = ensure_index_gitignore(root)
+    report = detect_staleness(root, args.max_bytes)
+    if report["stale"] or args.force:
+        index_args = argparse.Namespace(
+            root=str(root),
+            git_root=False,
+            max_bytes=args.max_bytes,
+            rebuild=False,
+            force=bool(args.force or report.get("force_reindex")),
+            json=True,
+        )
+        original_stdout = sys.stdout
+        with open(os.devnull, "w", encoding="utf-8") as devnull:
+            try:
+                sys.stdout = devnull
+                index_project(index_args)
+            finally:
+                sys.stdout = original_stdout
+        refreshed = detect_staleness(root, args.max_bytes)
+        payload = {"action": "reindexed", "before": report, "after": refreshed, "gitignore_updated": gitignore_updated}
+    else:
+        payload = {"action": "fresh", "before": report, "after": report, "gitignore_updated": gitignore_updated}
+    if args.json:
+        print(json.dumps(payload, indent=2, sort_keys=True))
+    else:
+        after = payload["after"]
+        print(f"Index {payload['action']}: {after['database']}")
+        print(f"  files seen: {after['files_seen']}")
+        print(f"  indexed files: {after['indexed_files']}")
+        print(f"  stale: {after['stale']}")
+
+
+def rows_to_dicts(rows: Iterable[sqlite3.Row]) -> list[dict[str, Any]]:
+    records = [dict(row) for row in rows]
+    for record in records:
+        if "metadata" in record:
+            record["metadata"] = load_metadata(record.get("metadata"))
+    return records
+
+
+def read_index(args: argparse.Namespace) -> None:
+    root = find_project_root(Path(args.root)) if args.git_root else Path(args.root).resolve()
+    db_path = root / DEFAULT_DB_REL
+    if not db_path.exists():
+        raise SystemExit(f"Index database not found: {db_path}. Run the ensure or index command first.")
+    conn = connect(db_path)
+    ensure_schema(conn)
+
+    if args.path:
+        rel = args.path.strip().lstrip("/")
+        file_row = conn.execute("SELECT * FROM files WHERE path = ?", (rel,)).fetchone()
+        nodes = rows_to_dicts(
+            conn.execute(
+                "SELECT id, type, title, description, path, start_line, end_line, metadata FROM nodes WHERE path = ? ORDER BY type, start_line LIMIT ?",
+                (rel, args.limit),
+            )
+        )
+        node_ids = [node["id"] for node in nodes]
+    elif args.node_id:
+        nodes = rows_to_dicts(
+            conn.execute(
+                "SELECT id, type, title, description, path, start_line, end_line, metadata FROM nodes WHERE id = ?",
+                (args.node_id,),
+            )
+        )
+        file_row = None
+        node_ids = [args.node_id] if nodes else []
+    else:
+        raise SystemExit("read requires --path or --node-id")
+
+    edges: list[dict[str, Any]] = []
+    chunks: list[dict[str, Any]] = []
+    if node_ids:
+        placeholders = ",".join("?" for _ in node_ids)
+        edges = rows_to_dicts(
+            conn.execute(
+                f"""
+                SELECT from_id, to_id, type, evidence_path, evidence_line, confidence, metadata
+                FROM edges
+                WHERE from_id IN ({placeholders}) OR to_id IN ({placeholders})
+                ORDER BY type, evidence_path, evidence_line
+                LIMIT ?
+                """,
+                [*node_ids, *node_ids, args.limit],
+            )
+        )
+        chunks = rows_to_dicts(
+            conn.execute(
+                f"""
+                SELECT id, node_id, path, start_line, end_line, summary, token_count
+                FROM chunks
+                WHERE node_id IN ({placeholders}) OR path = COALESCE(?, path)
+                ORDER BY path, start_line
+                LIMIT ?
+                """,
+                [*node_ids, args.path, args.limit],
+            )
+        )
+
+    payload = {
+        "root": str(root),
+        "database": str(db_path),
+        "file": dict(file_row) if file_row else None,
+        "nodes": nodes,
+        "edges": edges,
+        "chunks": chunks,
+    }
+    if args.json:
+        print(json.dumps(payload, indent=2, sort_keys=True))
+    else:
+        print(f"Index read: {db_path}")
+        if payload["file"]:
+            print(f"File: {payload['file']['path']} ({payload['file']['language']}, {payload['file']['size']} bytes)")
+        for node in nodes:
+            ref = f":{node['start_line']}" if node.get("start_line") else ""
+            print(f"- {node['id']} [{node['type']}] {node.get('path') or ''}{ref} — {node['title']}")
+        if edges:
+            print("Edges:")
+            for edge in edges[: args.limit]:
+                print(f"- {edge['from_id']} --{edge['type']}--> {edge['to_id']}")
 
 
 def status(args: argparse.Namespace) -> None:
@@ -1350,12 +1770,12 @@ def build_parser() -> argparse.ArgumentParser:
     slice_p.set_defaults(func=slice_index)
 
     slice_jsonl_p = sub.add_parser(
-        "slice-jsonl", help="Export a topic graph slice plus map.nodes.jsonl and map.edges.jsonl."
+        "slice-jsonl", help="Export topic map.nodes.jsonl and map.edges.jsonl from the shared index."
     )
     add_common_args(slice_jsonl_p)
     slice_jsonl_p.add_argument("--topic", required=True, help="Topic or search phrase.")
     slice_jsonl_p.add_argument(
-        "--out-dir", required=True, help="Output directory for map.graph.json, map.nodes.jsonl, and map.edges.jsonl."
+        "--out-dir", required=True, help="Output directory for map.nodes.jsonl and map.edges.jsonl."
     )
     slice_jsonl_p.add_argument(
         "--limit", type=int, default=30, help="Maximum file results before graph expansion. Default: 30."
@@ -1364,7 +1784,30 @@ def build_parser() -> argparse.ArgumentParser:
         "--neighbors", type=int, default=8, help="Maximum graph neighbors per result. Default: 8."
     )
     add_filter_args(slice_jsonl_p)
+    slice_jsonl_p.add_argument(
+        "--include-raw-slice",
+        action="store_true",
+        help="Also write map.graph.json as a portable raw JSON snapshot. By default the SQLite index remains the raw source of truth.",
+    )
     slice_jsonl_p.set_defaults(func=slice_jsonl_index)
+
+    ensure_p = sub.add_parser("ensure", help="Check freshness and re-index if files changed or the index is missing.")
+    add_common_args(ensure_p)
+    ensure_p.add_argument(
+        "--max-bytes", type=int, default=1_500_000, help="Skip files larger than this many bytes. Default: 1500000."
+    )
+    ensure_p.add_argument("--force", action="store_true", help="Re-index even when the freshness check passes.")
+    ensure_p.add_argument("--json", action="store_true", help="Print JSON freshness report.")
+    ensure_p.set_defaults(func=ensure_index)
+
+    read_p = sub.add_parser("read", help="Read indexed file/node context from the SQLite project graph.")
+    add_common_args(read_p)
+    target = read_p.add_mutually_exclusive_group(required=True)
+    target.add_argument("--path", help="Project-relative file path to read from the index.")
+    target.add_argument("--node-id", help="Indexed node ID to read, such as file:src/app.ts.")
+    read_p.add_argument("--limit", type=int, default=50, help="Maximum nodes/edges/chunks to return. Default: 50.")
+    read_p.add_argument("--json", action="store_true", help="Print JSON index context.")
+    read_p.set_defaults(func=read_index)
 
     status_p = sub.add_parser("status", help="Print index status.")
     add_common_args(status_p)

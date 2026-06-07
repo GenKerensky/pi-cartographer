@@ -1,9 +1,9 @@
 ---
 name: "plan"
 description: "Pi Cartographer planning workflow: generate .plan/<topic>/plan.md from a proposal plus index-project, map, and research graphs with ordered phases, dependencies, checklists, and validation criteria."
-version: 3
+version: 4
 created: "2026-06-06"
-updated: "2026-06-06"
+updated: "2026-06-07"
 ---
 # Pi Cartographer Plan
 
@@ -34,7 +34,6 @@ Use or create/update these supporting artifacts when needed:
 - `.plan/_index/project-graph.sqlite`
 - `.plan/_index/project-graph-manifest.json`
 - `.plan/{topic}/proposal.md` when it already exists or when the user provides enough scope to summarize
-- `.plan/{topic}/map.graph.json`
 - `.plan/{topic}/map.nodes.jsonl`
 - `.plan/{topic}/map.edges.jsonl`
 - `.plan/{topic}/facts.nodes.jsonl`
@@ -49,7 +48,6 @@ Use or create/update these supporting artifacts when needed:
    - Create `.plan/{topic}/` if needed.
    - Check for existing artifacts:
      - `.plan/{topic}/proposal.md`
-     - `.plan/{topic}/map.graph.json`
      - `.plan/{topic}/map.nodes.jsonl`
      - `.plan/{topic}/map.edges.jsonl`
      - `.plan/{topic}/facts.nodes.jsonl`
@@ -62,7 +60,7 @@ Use or create/update these supporting artifacts when needed:
 2. **Inspect available subagents and choose execution mode**
    - Call the subagent list action before delegating whenever the subagent tool is available.
    - Preferred agents:
-     - `scout` for codebase/index verification
+     - `scout` for codebase/index verification only when deterministic Cartographer index/map tools plus focused `rg`/grep checks are insufficient
      - `planner` for phase planning and final plan validation
      - `oracle` for phase-by-phase dependency and scope checks
      - `reviewer` for final plan review
@@ -76,22 +74,25 @@ Use or create/update these supporting artifacts when needed:
 
 3. **Refresh the shared project index**
    - Load and use the `index-project` skill. This planning skill is usually installed next to `index-project`; read `../index-project/SKILL.md` relative to this `SKILL.md` when available.
-   - Run the index-project workflow to create or update:
-     - `.plan/_index/project-graph.sqlite`
-     - `.plan/_index/project-graph-manifest.json`
-   - Query the index for `{topic}` and export/update the topic graph slice:
+   - Run `ensure` from the index-project workflow to create the index or re-index only when stale:
 
      ```bash
-     python <index-project-skill-dir>/scripts/index_project.py slice --root "$PWD" --topic "{topic}" --out ".plan/{topic}/map.graph.json" --limit 30
+     python <index-project-skill-dir>/scripts/index_project.py ensure --root "$PWD" --json
      ```
 
+   - This creates or updates:
+     - `.plan/_index/project-graph.sqlite`
+     - `.plan/_index/project-graph-manifest.json`
+   - The indexer must ensure `.plan/_index/` is present in the target project's `.gitignore`; planning Markdown/JSONL artifacts remain commit-worthy source-of-truth unless the user decides otherwise.
+   - Query the index for `{topic}` when concise handoff context is needed.
+   - Do not create `.plan/{topic}/map.graph.json` by default; it duplicates the shared SQLite index. Only request a raw JSON slice for explicit debugging or offline review.
    - When supported, prefer the JSONL starter export if `map.nodes.jsonl` or `map.edges.jsonl` are missing/thin:
 
      ```bash
      python <index-project-skill-dir>/scripts/index_project.py slice-jsonl --root "$PWD" --topic "{topic}" --out-dir ".plan/{topic}" --limit 30
      ```
 
-   - If indexing fails, alert the user with the error and ask whether to continue with manual file discovery. Do not silently skip the index.
+   - If indexing fails, alert the user with the error and ask whether to continue with manual file discovery using `rg`/grep and selective reads. Do not silently skip the index.
 
 4. **Load and validate planning inputs**
    - Read `.plan/{topic}/proposal.md` if it exists. Extract:
@@ -101,28 +102,27 @@ Use or create/update these supporting artifacts when needed:
      - design steps
      - background and viability claims
    - Parse these JSON/JSONL artifacts if they exist:
-     - `.plan/{topic}/map.graph.json`
      - `.plan/{topic}/map.nodes.jsonl`
      - `.plan/{topic}/map.edges.jsonl`
      - `.plan/{topic}/facts.nodes.jsonl`
      - `.plan/{topic}/facts.edges.jsonl`
-   - If map JSONL artifacts are missing or thin, ask `scout` to derive/update `map.nodes.jsonl` and `map.edges.jsonl` from `map.graph.json`, the shared index, and verified manual inspection.
+   - If map JSONL artifacts are missing or thin, first regenerate them with `cartographer_index({"action":"slice-jsonl", ...})` or `index_project.py slice-jsonl`, then validate with `cartographer_jsonl({"action":"validate-topic", ...})`. Use focused `rg`/grep to verify high-impact files. Ask `scout` to derive/update map JSONL only when deterministic generation plus lexical verification returns no useful context or the topic spans complex architecture the index cannot summarize.
    - If research fact graph artifacts are missing or insufficient for dependency/tool choices, ask `researcher` to append source-backed nodes/edges to `facts.nodes.jsonl` and `facts.edges.jsonl`. Every source-backed fact must have a `fact` node, a `source` node, and a `supported_by` edge.
    - In serial mode, perform the scout/researcher roles yourself after user approval.
 
-5. **Scout plan-relevant context**
-   - Ask `scout`, or in approved serial mode inspect the indexed graph yourself, to identify plan-relevant context:
+5. **Gather plan-relevant context**
+   - Prefer existing map JSONL, `cartographer_index query/read`, focused `rg`/grep, and selective reads to identify plan-relevant context. Use lexical search first for exact identifiers, filenames, tests, scripts, commands, and error strings. Ask `scout`, or in approved serial mode inspect manually, only when this context is insufficient:
      - files likely to change
      - files that constrain the work
      - existing tests or validation commands
      - config/build/package manifests
      - generated artifacts or scripts that must run in order
      - cross-file dependencies and import/reference relationships
-   - Start from `.plan/{topic}/map.graph.json`, `map.nodes.jsonl`, `map.edges.jsonl`, and the shared SQLite index. Use manual inspection only to verify, refine, or add relevant context.
+   - Start from `map.nodes.jsonl`, `map.edges.jsonl`, and the shared SQLite index. Use focused lexical search/manual inspection to verify, refine, or add relevant context.
    - Update the map graph JSONL only if necessary, preserving stable IDs and valid JSONL.
 
 6. **Draft ordered phases with `planner`**
-   - Ask `planner`, or in approved serial mode act as planner, to produce a phase plan from:
+   - Ask `planner`, or in approved serial mode act as planner, to produce a phase plan from concise inputs. Pass artifact paths plus short summaries instead of inlining large map/fact/research/scout outputs; use `outputMode: "file-only"` for large planner outputs.
      - the user's request
      - proposal scope and design, if available
      - indexed project graph results
@@ -265,9 +265,10 @@ Use or create/update these supporting artifacts when needed:
 
    - If validation fails, correct `plan.md`, `plan.nodes.jsonl`, `plan.edges.jsonl`, map/fact graph files, or citations before finalizing.
 
-11. **Final validation with planner/reviewer**
-   - Call `planner` one more time, or in approved serial mode perform a distinct validation pass yourself, to validate the complete plan.
-   - Prefer a final `reviewer` pass when available.
+11. **Final validation with reviewer/oracle**
+   - Prefer a final `reviewer` pass to validate plan artifacts, references, graph consistency, checklist/validation coverage, and handoff readiness.
+   - Use `oracle` for scope, dependency, and decision-consistency concerns, especially when phase ordering or assumptions are questionable.
+   - Do not use `planner` for final validation unless no reviewer/oracle substitute is available. In approved serial mode, perform a distinct validation pass yourself.
    - The validation pass must check:
      - `.plan/{topic}/plan.md` exists
      - `.plan/{topic}/plan.nodes.jsonl` and `.plan/{topic}/plan.edges.jsonl` exist and parse as valid JSONL
@@ -277,7 +278,7 @@ Use or create/update these supporting artifacts when needed:
      - validation item IDs are unique and scoped to their phase
      - validation commands are declared and appear valid for the project, or are clearly marked as manual checks
      - referenced project files exist in the current checkout
-     - referenced indexed node IDs exist in `.plan/{topic}/map.graph.json`, `map.nodes.jsonl`, or `.plan/_index/project-graph.sqlite`
+     - referenced indexed node IDs exist in `map.nodes.jsonl`, or `.plan/_index/project-graph.sqlite`
      - referenced fact IDs exist as `fact` nodes in `facts.nodes.jsonl`
      - every cited source-backed fact has a `supported_by` edge to a `source` node
      - the plan respects proposal goals and non-goals
@@ -292,7 +293,6 @@ Use or create/update these supporting artifacts when needed:
    - Mention the source artifacts used:
      - `.plan/_index/project-graph.sqlite`
      - `.plan/{topic}/proposal.md` if present
-     - `.plan/{topic}/map.graph.json`
      - `.plan/{topic}/map.nodes.jsonl`
      - `.plan/{topic}/map.edges.jsonl`
      - `.plan/{topic}/facts.nodes.jsonl`
@@ -301,19 +301,41 @@ Use or create/update these supporting artifacts when needed:
 
 ## Delegation Guidance
 
-Keep the current agent responsible for orchestration, artifact integrity, and final validation. Use subagents to improve coverage and reduce planning drift.
+Keep the current agent responsible for orchestration, artifact integrity, and final validation. Use deterministic Cartographer tools for index/map/JSONL validation before launching subagents. Use subagents to improve judgment and reduce planning drift, not to perform routine file discovery.
+
+Performance rules:
+
+- Do not read entire large source/docs/artifact files into parent or child context when `cartographer_index query/read`, focused `rg`/grep searches, or selective reads can provide targeted context.
+- Use the shared index and map JSONL as durable planning context; use `rg`/grep as the fast path for verifying concrete identifiers, filenames, scripts, tests, commands, and error strings.
+- Do not inline large child outputs into subsequent prompts. Use `outputMode: "file-only"` for researcher, optional scout, planner, reviewer, or any child likely to produce more than a concise answer.
+- Run `cartographer_jsonl validate-topic` and the planning graph validator before reviewer/oracle validation so children reason about a deterministic report rather than hand-checking raw JSONL.
+- Use `scout` only as an exception for missing/ambiguous context or complex architecture; never ask it to dump SQLite, perform broad repo rediscovery, or rewrite generated maps.
+- Seed/reuse existing fact JSONL for local Pi/package/subagent docs with `cartographer_jsonl({"action":"seed-pi-facts", ...})`; do not repeat local-doc research each plan.
+
+Cartographer tool access for every delegated agent in this workflow (`scout`, `researcher`, `planner`, `oracle`, and `reviewer`):
+
+```bash
+cartographer_index({"action":"ensure","root":"$PWD"})
+cartographer_index({"action":"query","root":"$PWD","topic":"{topic}","limit":10})
+cartographer_index({"action":"read","root":"$PWD","path":"<project-relative-path>"})
+cartographer_index({"action":"read","root":"$PWD","nodeId":"<indexed-node-id>"})
+cartographer_jsonl({"action":"seed-pi-facts","root":"$PWD","topic":"{topic}"})
+cartographer_jsonl({"action":"validate-topic","root":"$PWD","topic":"{topic}"})
+```
+
+When launching delegated agents through pi-subagents, include the package extension path `extensions/cartographer-tools.ts` in the child tool/extension configuration when supported so these tools are callable. Tell each delegated agent it may run `cartographer_index` with `action: "ensure"` before reading the index; if it reports `action: "reindexed"`, it should continue from the refreshed index and mention that in its handoff. If custom tools are unavailable in the child, use the equivalent `python <index-project-skill-dir>/scripts/index_project.py ...` and `node --experimental-strip-types <plan-skill-dir>/scripts/manage_jsonl.ts ...` CLI commands via bash.
 
 Recommended delegated-role prompts:
 
-- `scout`: "Using `.plan/_index/project-graph.sqlite`, `.plan/{topic}/map.graph.json`, `map.nodes.jsonl`, and `map.edges.jsonl`, identify plan-relevant files, constraints, dependencies, tests, scripts, and generated artifacts. Verify references and suggest any map graph additions as JSONL records."
-- `researcher`: "Only if research facts are missing or insufficient: append source-backed JSONL nodes to `.plan/{topic}/facts.nodes.jsonl` and edges to `.plan/{topic}/facts.edges.jsonl`. Every source-backed claim needs a fact node, source node, and `supported_by` edge. Focus on dependencies/tools/validation needed for planning."
-- `planner`: "Create `.plan/{topic}/plan.md`, `.plan/{topic}/plan.nodes.jsonl`, and `.plan/{topic}/plan.edges.jsonl` with topologically ordered phases, explicit dependencies, phase statuses, checklist task IDs, validation item IDs, exit criteria, risks, and source references from the proposal, index, map graph, and fact graph."
-- `oracle`: "Review this phase before finalization. Check scope fit, dependency ordering, missing prerequisites, validation adequacy, reference validity, and whether this phase leaves the project in a coherent state. Return required corrections."
-- `reviewer`: "Review the complete plan and plan graph artifacts for acyclic phase dependencies, complete checklist/validation coverage, valid references, alignment with proposal goals/non-goals, and readiness for handoff to an execution agent."
+- Optional `scout`: "Start from `cartographer_index query/read` outputs plus `map.nodes.jsonl` and `map.edges.jsonl`, then use focused `rg`/grep searches to verify exact identifiers, filenames, scripts, tests, generated artifacts, commands, error strings, or contradictions. Identify only missing plan-relevant context. Do not rediscover the repo broadly or read whole large files unless indexed snippets and lexical hits are insufficient. Return concise suggested map additions as JSONL records."
+- `researcher`: "Only if research facts are missing, stale, or insufficient: propose source-backed JSONL nodes for `.plan/{topic}/facts.nodes.jsonl` and edges for `.plan/{topic}/facts.edges.jsonl`. Inspect existing facts first and reuse valid local-doc facts. You have read access to Cartographer tools; run index/query/read to ground research in current project context. Every source-backed claim needs a fact node, source node, and `supported_by` edge. Focus on dependencies/tools/validation needed for planning."
+- `planner`: "Create `.plan/{topic}/plan.md`, `.plan/{topic}/plan.nodes.jsonl`, and `.plan/{topic}/plan.edges.jsonl` with topologically ordered phases, explicit dependencies, phase statuses, checklist task IDs, validation item IDs, exit criteria, risks, and source references from concise proposal/index/map/fact summaries and artifact paths. You have read access to Cartographer tools and may run targeted reads before citing indexed context. Do not ask for or inline full raw artifacts."
+- `oracle`: "Review this phase before finalization. Check scope fit, dependency ordering, missing prerequisites, validation adequacy, reference validity, and whether this phase leaves the project in a coherent state. You have read access to the index tool commands and may run `ensure`/`read` if freshness or references are uncertain. Return required corrections."
+- `reviewer`: "Review the complete plan and deterministic validation reports for acyclic phase dependencies, complete checklist/validation coverage, valid references, alignment with proposal goals/non-goals, and readiness for handoff to an execution agent. Use Cartographer tools for targeted checks if freshness or references are uncertain; do not manually re-parse large JSONL when a validation report is available."
 
 Serial-mode role prompts:
 
-- Scout pass: inspect the index and map graph yourself; verify likely changed files, constraints, scripts, tests, and generated artifacts.
+- Context pass: inspect the index and map JSONL yourself; verify likely changed files, constraints, scripts, tests, and generated artifacts with focused `rg`/grep and selective reads. Use scout only for complex or missing context.
 - Research pass: only if needed, append source-backed JSONL research graph records before using claims in the plan.
 - Planner pass: draft phases and checklists.
 - Oracle pass: challenge each phase before finalization.
@@ -339,7 +361,8 @@ Before finalizing, verify:
 - `.plan/{topic}/plan.md` exists.
 - `.plan/{topic}/plan.nodes.jsonl` and `.plan/{topic}/plan.edges.jsonl` exist and parse as valid JSONL.
 - `.plan/_index/project-graph.sqlite` and `.plan/_index/project-graph-manifest.json` exist or indexing failure was explicitly approved by the user.
-- `map.graph.json`, `map.nodes.jsonl`, and `map.edges.jsonl` were read or intentionally regenerated.
+- `.gitignore` contains `.plan/_index/` when indexing succeeded.
+- `map.nodes.jsonl` and `map.edges.jsonl` were read or intentionally regenerated.
 - `facts.nodes.jsonl` and `facts.edges.jsonl` were read when research-backed claims are used.
 - Every phase has:
   - phase ID
@@ -355,4 +378,4 @@ Before finalizing, verify:
 - Every referenced fact ID exists.
 - Every validation command is valid for the project or clearly marked manual.
 - `scripts/validate_planning_graph.py --root "$PWD" --topic "{topic}"` passes.
-- Final planner/reviewer validation was completed and corrections were applied.
+- Final reviewer/oracle validation was completed and corrections were applied.

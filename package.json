@@ -2,6 +2,7 @@
   "name": "pi-cartographer",
   "version": "0.1.0",
   "description": "Pi skills for mapping codebases into graph-grounded proposals, plans, and implementation routes.",
+  "type": "module",
   "keywords": [
     "pi-package",
     "pi",
@@ -19,28 +20,44 @@
     "url": "https://github.com/GenKerensky/pi-cartographer/issues"
   },
   "homepage": "https://github.com/GenKerensky/pi-cartographer#readme",
+  "dependencies": {
+    "typebox": "^1.1.24"
+  },
   "files": [
     "README.md",
     "LICENSE",
     "assets",
+    "extensions",
     "skills",
     "!**/__pycache__/**",
     "!**/*.pyc",
     "requirements-dev.txt",
-    "pyproject.toml"
+    "pyproject.toml",
+    "tsconfig.json"
   ],
   "pi": {
+    "extensions": [
+      "extensions/cartographer-tools.ts"
+    ],
     "skills": [
       "skills"
     ],
     "image": "assets/pi-cartographer.png"
   },
+  "devDependencies": {
+    "@types/node": "^22.15.30",
+    "typescript": "^5.8.3",
+    "vitest": "^4.1.8"
+  },
   "scripts": {
-    "check:scripts": "python -m py_compile skills/index-project/scripts/index_project.py skills/plan/scripts/validate_planning_graph.py",
+    "typecheck": "tsc --noEmit",
+    "check:scripts": "python -m py_compile skills/index-project/scripts/index_project.py skills/plan/scripts/validate_planning_graph.py && node --experimental-strip-types --check skills/plan/scripts/manage_jsonl.ts && node --experimental-strip-types --check extensions/cartographer-tools.ts",
     "lint:py": "ruff check skills tests",
     "format:check": "ruff format --check skills tests",
     "format:py": "ruff format skills tests",
-    "test": "python -m unittest discover tests",
-    "check": "npm run check:scripts && npm run lint:py && npm run format:check && npm run test"
+    "test": "npm run test:py && npm run test:ts",
+    "check": "npm run check:scripts && npm run typecheck && npm run lint:py && npm run format:check && npm run test",
+    "test:ts": "vitest run",
+    "test:py": "python -m unittest discover tests"
   }
 }

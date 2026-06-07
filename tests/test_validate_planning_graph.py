@@ -24,10 +24,6 @@ class PlanningGraphValidatorTests(unittest.TestCase):
         topic_dir.mkdir(parents=True)
         (root / "src").mkdir()
         (root / "src/app.ts").write_text("export const value = 1;\n", encoding="utf-8")
-        (topic_dir / "map.graph.json").write_text(
-            json.dumps({"nodes": [{"id": "file:src/app.ts"}], "edges": []}),
-            encoding="utf-8",
-        )
         (topic_dir / "map.nodes.jsonl").write_text(
             "\n".join(
                 [
