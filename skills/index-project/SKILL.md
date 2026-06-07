@@ -20,6 +20,8 @@ The index lives in the current project:
 
 The indexer also ensures `.plan/_index/` is present in the target project's `.gitignore`, creating `.gitignore` if needed. Topic planning artifacts remain text/JSONL source-of-truth files and are not automatically ignored.
 
+Committed `.plan/<topic>/proposal.md`, `.plan/<topic>/plan.md`, and related JSONL rationale artifacts are indexed in the explicit `plans` retrieval scope. They are excluded from the default `code` scope and `.plan/_index/` cache files are never indexed.
+
 Do not place topic-specific proposal content inside `.plan/_index/`; proposals should query this shared artifact and write their own slices under `.plan/{topic}/`.
 
 ## Procedure
@@ -51,16 +53,22 @@ Do not place topic-specific proposal content inside `.plan/_index/`; proposals s
    - The script scans source, config, documentation, and data files; excludes dependency/build/runtime directories and low-signal lockfiles; computes content hashes; updates changed files; removes deleted files; rebuilds graph edges; and ensures `.plan/_index/` is listed in `.gitignore`.
 
 3. **Query the index for a topic**
-   - Run:
+   - Run source-code retrieval with the default `code` scope:
 
      ```bash
      python <skill-dir>/scripts/index_project.py query --root "$PWD" --topic "<topic>" --limit 20
      ```
 
-   - Use `--json` for machine-readable output:
+   - Use explicit rationale retrieval only when prior planning artifacts are relevant:
 
      ```bash
-     python <skill-dir>/scripts/index_project.py query --root "$PWD" --topic "<topic>" --limit 20 --json
+     python <skill-dir>/scripts/index_project.py query --root "$PWD" --scope plans --topic "<topic>" --limit 20
+     ```
+
+   - Use `--scope all` only for deliberate source+rationale review. Use `--json` for machine-readable output:
+
+     ```bash
+     python <skill-dir>/scripts/index_project.py query --root "$PWD" --scope code --topic "<topic>" --limit 20 --json
      ```
 
 4. **Read indexed file or node context**
@@ -71,7 +79,25 @@ Do not place topic-specific proposal content inside `.plan/_index/`; proposals s
      python <skill-dir>/scripts/index_project.py read --root "$PWD" --node-id "file:src/app.ts" --json
      ```
 
-5. **Export starter JSONL map graph artifacts when useful**
+5. **Build compact context blocks when useful**
+   - Use `context` when an agent needs a concise package of candidate snippets instead of full query output:
+
+     ```bash
+     python <skill-dir>/scripts/index_project.py context --root "$PWD" --scope code --topic "<topic>" --limit 8 --max-tokens 3000 --json
+     ```
+
+   - Context blocks merge adjacent/overlapping snippets, deduplicate repeated match intervals, include `candidate`/`verified` labels, and carry verification hints. Treat `verified: false` output as a candidate until direct reads, focused `rg`, or validation commands support it.
+
+6. **Log material retrieval misses when they change the workflow**
+   - Append concise miss records with `log-miss`:
+
+     ```bash
+     python <skill-dir>/scripts/index_project.py log-miss --root "$PWD" --workflow plan --topic "<topic>" --original-query "<query>" --failure-type vocabulary_mismatch --eventual-hit "src/example.ts:42" --resolution query_expansion
+     ```
+
+   - This writes `.plan/_retrieval/misses.jsonl`. Do not log secrets, raw proprietary snippets, or routine empty searches.
+
+7. **Export starter JSONL map graph artifacts when useful**
    - Run:
 
      ```bash
@@ -84,14 +110,14 @@ Do not place topic-specific proposal content inside `.plan/_index/`; proposals s
    - Treat these JSONL files as starter graph artifacts. Scout/planner passes should still verify, prune, and enrich them for the specific topic.
    - Do **not** write `.plan/<topic>/map.graph.json` by default. The shared SQLite database is the raw source of truth. Only run `slice --out ".plan/<topic>/map.graph.json"` or pass `slice-jsonl --include-raw-slice` when a portable raw snapshot is explicitly useful for debugging or review.
 
-6. **Filter query/slice results when needed**
-   - `query`, `slice`, and `slice-jsonl` support:
+8. **Filter query/slice results when needed**
+   - `query`, `context`, `slice`, and `slice-jsonl` support:
      - `--path-prefix <prefix>` to include only paths under a project-relative prefix such as `src` or `docs`
      - `--exclude <glob-or-prefix>` to exclude paths such as `plan/*` or `public/data`
      - `--type <node-type>` to limit graph node types such as `file`, `symbol`, or `doc-section`
    - Options may be repeated or comma-separated.
 
-7. **Use index results during planning**
+9. **Use index results during planning**
    - Prefer files and nodes returned by FTS/graph queries as the durable starting point for proposal and plan mapping.
    - Use focused `rg`/grep alongside the index to verify exact identifiers, filenames, scripts, tests, commands, and error strings, or to fill targeted lexical gaps.
    - Expand from high-scoring matches through graph edges such as `imports`, `references`, `defines`, `declares_dependency`, and `contains`.
@@ -123,9 +149,9 @@ Cartographer separates retrieval into three planned scopes:
 - `plans` — explicit rationale retrieval over committed `.plan/<topic>/proposal.md`, `.plan/<topic>/plan.md`, map/fact/plan JSONL, and retrieval miss logs.
 - `all` — explicit combined retrieval for architecture review, migration, or reasoning across source and rationale.
 
-The scoped query CLI (`--scope code|plans|all`) is a retrieval-workflow plan item; until implemented, agents should preserve the same behavior manually by excluding `.plan/**` for code retrieval and searching `.plan/` only for explicit rationale retrieval.
+The scoped query CLI (`--scope code|plans|all`) is implemented for `query`, `context`, `slice`, and `slice-jsonl`. `code` is the default; use `plans` only for explicit rationale retrieval.
 
-`query` performs FTS5 search over indexed chunks and returns file-level **candidate** matches with representative snippets and verification hints. Treat query results as candidates: verify high-impact hits with direct file reads and/or the returned `rg` commands before citing them in proposal/plan prose or editing code.
+`query` performs FTS5 search over indexed chunks and returns file-level **candidate** matches with representative snippets, scope labels, generic-query warnings, and verification hints. Treat query results as candidates: verify high-impact hits with direct file reads and/or the returned `rg` commands before citing them in proposal/plan prose or editing code.
 
 Candidate/verified metadata uses these fields where applicable:
 
@@ -173,7 +199,7 @@ For small and medium repositories, this should usually complete in seconds. Embe
 
 - Do not index dependency directories such as `node_modules`, `.venv`, `venv`, build outputs, or `.git`.
 - Do not index low-signal lockfiles such as `package-lock.json`, `pnpm-lock.yaml`, `yarn.lock`, or `bun.lockb`; use manifest files like `package.json` for dependency discovery.
-- Do not index `.plan/` except for the shared `.plan/_index` output; proposal artifacts should not feed back into the project graph.
+- Do not mix `.plan/` rationale into default source-code retrieval; use `--scope plans` for explicit rationale retrieval. `.plan/_index/` cache files remain excluded.
 - Do not rely only on top FTS matches. Check graph neighbors and high-level config/docs too.
 - Do not treat this index as authoritative for dynamic behavior; it is a static planning aid.
 - Do not cite a file in a proposal unless it exists in the current checkout.

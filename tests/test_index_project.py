@@ -67,7 +67,7 @@ class IndexProjectTests(unittest.TestCase):
 
             index_result = self.run_script("index", "--root", str(project), "--no-git-root", "--json")
             summary = json.loads(index_result.stdout)
-            self.assertEqual(summary["files_seen"], 6)
+            self.assertEqual(summary["files_seen"], 7)
             self.assertTrue(summary["gitignore_updated"])
             self.assertIn(".plan/_index/", (project / ".gitignore").read_text(encoding="utf-8"))
             self.assertTrue((project / ".plan/_index/project-graph.sqlite").exists())
@@ -77,9 +77,19 @@ class IndexProjectTests(unittest.TestCase):
             files = [row[0] for row in conn.execute("SELECT path FROM files ORDER BY path")]
             self.assertEqual(
                 files,
-                ["README.md", "docs/guide.md", "package.json", "src/index.ts", "src/settings.ts", "src/util.ts"],
+                [
+                    ".plan/old/proposal.md",
+                    "README.md",
+                    "docs/guide.md",
+                    "package.json",
+                    "src/index.ts",
+                    "src/settings.ts",
+                    "src/util.ts",
+                ],
             )
-            self.assertFalse(any(path.startswith("node_modules/") or path.startswith(".plan/") for path in files))
+            self.assertFalse(
+                any(path.startswith("node_modules/") or path.startswith(".plan/_index/") for path in files)
+            )
             self.assertNotIn("package-lock.json", files)
             imports = list(conn.execute("SELECT from_id, to_id, type FROM edges WHERE type = 'imports'"))
             references = list(conn.execute("SELECT from_id, to_id, type FROM edges WHERE type = 'references'"))
@@ -151,6 +161,107 @@ class IndexProjectTests(unittest.TestCase):
             self.assertTrue(filtered)
             self.assertTrue(all(item["path"].startswith("docs/") for item in filtered))
 
+            code_scope_result = self.run_script(
+                "query",
+                "--root",
+                str(project),
+                "--no-git-root",
+                "--topic",
+                "ignored plan",
+                "--scope",
+                "code",
+                "--limit",
+                "5",
+                "--json",
+            )
+            code_scope = json.loads(code_scope_result.stdout)
+            self.assertFalse(any(item["path"].startswith(".plan/") for item in code_scope))
+            plans_scope_result = self.run_script(
+                "query",
+                "--root",
+                str(project),
+                "--no-git-root",
+                "--topic",
+                "ignored plan",
+                "--scope",
+                "plans",
+                "--limit",
+                "5",
+                "--json",
+            )
+            plans_scope = json.loads(plans_scope_result.stdout)
+            self.assertTrue(any(item["path"] == ".plan/old/proposal.md" for item in plans_scope))
+
+            generic_result = self.run_script(
+                "query",
+                "--root",
+                str(project),
+                "--no-git-root",
+                "--topic",
+                "helper",
+                "--limit",
+                "3",
+                "--json",
+            )
+            generic_query = json.loads(generic_result.stdout)
+            self.assertTrue(any("Generic query" in warning for item in generic_query for warning in item["warnings"]))
+
+            context_result = self.run_script(
+                "context",
+                "--root",
+                str(project),
+                "--no-git-root",
+                "--scope",
+                "code",
+                "--topic",
+                "helper function",
+                "--limit",
+                "5",
+                "--max-tokens",
+                "1000",
+                "--json",
+            )
+            context_payload = json.loads(context_result.stdout)
+            self.assertEqual(context_payload["scope"], "code")
+            self.assertTrue(context_payload["blocks"])
+            self.assertTrue(all(block["candidate"] for block in context_payload["blocks"]))
+            self.assertTrue(all(block["verified"] is False for block in context_payload["blocks"]))
+            self.assertTrue(all(block.get("verification", {}).get("read") for block in context_payload["blocks"]))
+            self.assertFalse(any(block["path"].startswith(".plan/") for block in context_payload["blocks"]))
+
+            miss_result = self.run_script(
+                "log-miss",
+                "--root",
+                str(project),
+                "--no-git-root",
+                "--workflow",
+                "plan",
+                "--topic",
+                "settings config",
+                "--original-query",
+                "config loader",
+                "--expanded-query",
+                "load user settings",
+                "--retrieval-mode",
+                "cartographer_index",
+                "--failure-type",
+                "vocabulary_mismatch",
+                "--expected-term",
+                "loadUserSettings",
+                "--eventual-hit",
+                "src/settings.ts:1",
+                "--resolution",
+                "query_expansion",
+                "--json",
+            )
+            miss_payload = json.loads(miss_result.stdout)
+            miss_path = project / ".plan/_retrieval/misses.jsonl"
+            self.assertEqual(Path(miss_payload["path"]), miss_path)
+            miss_records = [json.loads(line) for line in miss_path.read_text(encoding="utf-8").splitlines()]
+            self.assertEqual(len(miss_records), 1)
+            self.assertEqual(miss_records[0]["failure_type"], "vocabulary_mismatch")
+            self.assertNotIn("text", miss_records[0])
+
             out_dir = project / ".plan/helper-function"
             self.run_script(
                 "slice-jsonl",
@@ -193,8 +304,12 @@ class IndexProjectTests(unittest.TestCase):
 
             ensure_result = self.run_script("ensure", "--root", str(project), "--no-git-root", "--json")
             ensure_payload = json.loads(ensure_result.stdout)
-            self.assertEqual(ensure_payload["action"], "fresh")
+            self.assertEqual(ensure_payload["action"], "reindexed")
+            self.assertFalse(ensure_payload["after"]["stale"])
             self.assertFalse(ensure_payload["gitignore_updated"])
+            fresh_result = self.run_script("ensure", "--root", str(project), "--no-git-root", "--json")
+            fresh_payload = json.loads(fresh_result.stdout)
+            self.assertEqual(fresh_payload["action"], "fresh")
             (project / "src/util.ts").write_text("export function helper() { return 'changed'; }\n", encoding="utf-8")
             stale_result = self.run_script("ensure", "--root", str(project), "--no-git-root", "--json")
             stale_payload = json.loads(stale_result.stdout)
@@ -208,7 +323,7 @@ class IndexProjectTests(unittest.TestCase):
             self.run_script("index", "--root", str(project), "--no-git-root", "--json")
             second = json.loads(self.run_script("index", "--root", str(project), "--no-git-root", "--json").stdout)
             self.assertEqual(second["files_indexed"], 0)
-            self.assertEqual(second["files_skipped_unchanged"], 6)
+            self.assertEqual(second["files_skipped_unchanged"], 7)
 
             (project / "src/index.ts").unlink()
             third = json.loads(self.run_script("index", "--root", str(project), "--no-git-root", "--json").stdout)

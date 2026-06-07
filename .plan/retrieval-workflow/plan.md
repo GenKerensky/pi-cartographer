@@ -80,26 +80,26 @@ Validation:
 
 ### Phase P2 — Add index/query support for scopes, context packing, and miss logging
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P0
 - **Objective:** Extend index-project tooling so callers can intentionally search code, planning rationale, or both; request compact verified context; and record material retrieval misses.
 - **Source references:** `skills/index-project/scripts/index_project.py`, `skills/index-project/SKILL.md`, `tests/test_index_project.py`, `.plan/retrieval-workflow/proposal.md`
 
 Checklist:
 
-- [ ] **P2.T1** Add `--scope code|plans|all` to query and context-related commands, with `code` as the default.
-- [ ] **P2.T2** Index committed `.plan/<topic>/proposal.md`, `.plan/<topic>/plan.md`, and JSONL rationale artifacts into a separate plan/rationale scope without mixing them into default code results.
-- [ ] **P2.T3** Add a compact context command or option that merges adjacent snippets, deduplicates overlaps, prefers symbols/headings, and labels candidate vs verified context.
-- [ ] **P2.T4** Add generic-token safeguards and warnings for ambiguous terms such as `config`, `run`, `init`, `handler`, and `process` [F3].
-- [ ] **P2.T5** Add miss-log support for `.plan/_retrieval/misses.jsonl` with append-only structured records.
-- [ ] **P2.T6** Ensure generated/cache artifacts under `.plan/_index/` remain ignored while committed rationale artifacts remain visible to explicit plan-scope retrieval.
+- [x] **P2.T1** Add `--scope code|plans|all` to query and context-related commands, with `code` as the default.
+- [x] **P2.T2** Index committed `.plan/<topic>/proposal.md`, `.plan/<topic>/plan.md`, and JSONL rationale artifacts into a separate plan/rationale scope without mixing them into default code results.
+- [x] **P2.T3** Add a compact context command or option that merges adjacent snippets, deduplicates overlaps, prefers symbols/headings, and labels candidate vs verified context.
+- [x] **P2.T4** Add generic-token safeguards and warnings for ambiguous terms such as `config`, `run`, `init`, `handler`, and `process` [F3].
+- [x] **P2.T5** Add miss-log support for `.plan/_retrieval/misses.jsonl` with append-only structured records.
+- [x] **P2.T6** Ensure generated/cache artifacts under `.plan/_index/` remain ignored while committed rationale artifacts remain visible to explicit plan-scope retrieval.
 
 Validation:
 
-- [ ] **P2.V1** `python skills/index-project/scripts/index_project.py query --root "$PWD" --scope code --topic "retrieval" --json` excludes `.plan/` rationale artifacts.
-- [ ] **P2.V2** `python skills/index-project/scripts/index_project.py query --root "$PWD" --scope plans --topic "retrieval" --json` can return `.plan/retrieval-workflow/proposal.md` or related rationale artifacts.
-- [ ] **P2.V3** Context output includes merged/deduplicated snippets with candidate/verified labels and verification hints.
-- [ ] **P2.V4** A material retrieval miss can be appended to `.plan/_retrieval/misses.jsonl` without logging raw snippets or secrets.
+- [x] **P2.V1** `python skills/index-project/scripts/index_project.py query --root "$PWD" --scope code --topic "retrieval" --json` excludes `.plan/` rationale artifacts.
+- [x] **P2.V2** `python skills/index-project/scripts/index_project.py query --root "$PWD" --scope plans --topic "retrieval" --json` can return `.plan/retrieval-workflow/proposal.md` or related rationale artifacts.
+- [x] **P2.V3** Context output includes merged/deduplicated snippets with candidate/verified labels and verification hints.
+- [x] **P2.V4** A material retrieval miss can be appended to `.plan/_retrieval/misses.jsonl` without logging raw snippets or secrets.
 
 ### Phase P3 — Add JSONL validation and lifecycle tooling
 

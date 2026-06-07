@@ -23,9 +23,24 @@ from collections.abc import Iterable
 from pathlib import Path
 from typing import Any
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 DEFAULT_DB_REL = ".plan/_index/project-graph.sqlite"
 DEFAULT_MANIFEST_REL = ".plan/_index/project-graph-manifest.json"
+DEFAULT_MISS_LOG_REL = ".plan/_retrieval/misses.jsonl"
+QUERY_SCOPES = {"code", "plans", "all"}
+GENERIC_QUERY_TOKENS = {
+    "config",
+    "data",
+    "handler",
+    "helper",
+    "index",
+    "init",
+    "main",
+    "process",
+    "run",
+    "test",
+    "util",
+}
 
 EXCLUDED_DIRS = {
     ".git",
@@ -272,6 +287,47 @@ def scan_files(root: Path, max_bytes: int) -> list[Path]:
             if should_include(path, root, max_bytes):
                 files.append(path)
     return sorted(files)
+
+
+def should_include_plan_artifact(path: Path, root: Path, max_bytes: int) -> bool:
+    try:
+        rel = path.relative_to(root)
+    except ValueError:
+        return False
+    if not rel.parts or rel.parts[0] != ".plan":
+        return False
+    if len(rel.parts) > 1 and rel.parts[1] == "_index":
+        return False
+    if path.suffix.lower() not in {".md", ".jsonl"}:
+        return False
+    try:
+        stat = path.stat()
+    except OSError:
+        return False
+    return 0 < stat.st_size <= max_bytes
+
+
+def scan_plan_files(root: Path, max_bytes: int) -> list[Path]:
+    plan_dir = root / ".plan"
+    if not plan_dir.exists():
+        return []
+    return sorted(
+        path for path in plan_dir.rglob("*") if path.is_file() and should_include_plan_artifact(path, root, max_bytes)
+    )
+
+
+def scan_indexable_files(root: Path, max_bytes: int) -> list[Path]:
+    return sorted({*scan_files(root, max_bytes), *scan_plan_files(root, max_bytes)})
+
+
+def retrieval_scope_for_path(path: str) -> str:
+    return "plans" if path.startswith(".plan/") else "code"
+
+
+def path_in_scope(path: str, scope: str) -> bool:
+    if scope == "all":
+        return True
+    return retrieval_scope_for_path(path) == scope
 
 
 def connect(db_path: Path) -> sqlite3.Connection:
@@ -591,7 +647,7 @@ def index_file(conn: sqlite3.Connection, root: Path, path: Path, content_hash: s
         1,
         max(1, len(lines)),
         content_hash,
-        {"language": language, "size": size},
+        {"language": language, "size": size, "scope": retrieval_scope_for_path(rel)},
     )
 
     nodes: list[dict[str, Any]] = []
@@ -806,7 +862,7 @@ def index_project(args: argparse.Namespace) -> None:
     else:
         ensure_schema(conn)
 
-    paths = scan_files(root, args.max_bytes)
+    paths = scan_indexable_files(root, args.max_bytes)
     seen_rel = {rel_path(root, path) for path in paths}
     existing = {row["path"]: row["hash"] for row in conn.execute("SELECT path, hash FROM files")}
 
@@ -837,6 +893,7 @@ def index_project(args: argparse.Namespace) -> None:
         "excluded_dirs": sorted(EXCLUDED_DIRS),
         "excluded_filenames": sorted(EXCLUDED_FILENAMES),
         "included_extensions": sorted(INCLUDED_EXTENSIONS),
+        "included_plan_artifacts": True,
     }
     conn.execute(
         "INSERT INTO runs(created_at, root, files_seen, files_indexed, files_removed, settings) VALUES (?, ?, ?, ?, ?, ?)",
@@ -958,6 +1015,23 @@ def verification_for_match(path: str, start_line: int, end_line: int, tokens: li
     }
 
 
+def query_warnings(tokens: list[str], scope: str, args: argparse.Namespace) -> list[str]:
+    if not tokens:
+        return []
+    generic = [token for token in tokens if token in GENERIC_QUERY_TOKENS]
+    constrained = bool(
+        parse_multi_arg(getattr(args, "path_prefix", [])) or parse_multi_arg(getattr(args, "node_types", []))
+    )
+    if generic and len(generic) == len(tokens) and not constrained:
+        return [
+            "Generic query; constrain with path/type/symbol terms before trusting results.",
+            f"Scope is {scope!r}; use --scope plans only for explicit rationale retrieval.",
+        ]
+    if generic and len(generic) >= max(1, len(tokens) // 2) and not constrained:
+        return ["Query contains high-frequency generic terms; verify candidates carefully."]
+    return []
+
+
 def structural_matches_for_chunk(
     conn: sqlite3.Connection, path: str, start_line: int, end_line: int, tokens: list[str]
 ) -> list[dict[str, Any]]:
@@ -1009,6 +1083,11 @@ def path_matches_prefix(path: str, prefix: str) -> bool:
 
 
 def path_is_allowed(path: str, args: argparse.Namespace) -> bool:
+    scope = getattr(args, "scope", "code")
+    if scope not in QUERY_SCOPES:
+        raise SystemExit(f"Invalid scope {scope!r}; expected one of: {', '.join(sorted(QUERY_SCOPES))}")
+    if not path_in_scope(path, scope):
+        return False
     prefixes = parse_multi_arg(getattr(args, "path_prefix", []))
     excludes = parse_multi_arg(getattr(args, "exclude", []))
     if prefixes and not any(path_matches_prefix(path, prefix) for prefix in prefixes):
@@ -1078,6 +1157,8 @@ def query_index(args: argparse.Namespace) -> list[dict[str, Any]]:
 
     tokens = fts_tokens(args.topic)
     identifier_tokens = identifier_query_tokens(args.topic) or tokens
+    scope = getattr(args, "scope", "code")
+    warnings = query_warnings(identifier_tokens, scope, args)
     eligible_paths = eligible_paths_for_types(conn, args)
     search_rows: list[tuple[sqlite3.Row, str]] = []
     seen_chunks: set[str] = set()
@@ -1128,6 +1209,12 @@ def query_index(args: argparse.Namespace) -> list[dict[str, Any]]:
         match_score += min(title_hits, 3) * 1.0
         match_score += min(text_hits, 6) * 0.45
         match_score += min(structural_hits, 4) * 1.25
+        generic_hits = exact_token_count([token for token in identifier_tokens if token in GENERIC_QUERY_TOKENS], text)
+        specific_hits = exact_token_count(
+            [token for token in identifier_tokens if token not in GENERIC_QUERY_TOKENS], text + " " + path
+        )
+        if generic_hits and not specific_hits:
+            match_score *= 0.65
         if structural_matches:
             match_score += 0.75
         if duplicate_of and duplicate_of != path:
@@ -1142,6 +1229,8 @@ def query_index(args: argparse.Namespace) -> list[dict[str, Any]]:
                 "best_rank": rank,
                 "matches": [],
                 "match_types": [],
+                "warnings": warnings,
+                "scope": scope,
                 "deduplicated_matches": 0,
             },
         )
@@ -1196,7 +1285,7 @@ def query_index(args: argparse.Namespace) -> list[dict[str, Any]]:
     if args.json:
         print(json.dumps(results, indent=2, sort_keys=True))
     else:
-        print(format_query_results(args.topic, results))
+        print(format_query_results(args.topic, results, warnings))
     return results
 
 
@@ -1252,13 +1341,15 @@ def add_graph_neighbors(conn: sqlite3.Connection, results: list[dict[str, Any]],
         item["neighbors"] = by_path.get(item["path"], [])
 
 
-def format_query_results(topic: str, results: list[dict[str, Any]]) -> str:
+def format_query_results(topic: str, results: list[dict[str, Any]], warnings: list[str] | None = None) -> str:
     if not results:
         return f"No indexed candidate matches for topic: {topic}"
     lines = [
         f"Indexed candidate matches for topic: {topic}",
         "Verify candidates with read/rg before citing or editing.",
     ]
+    for warning in warnings or []:
+        lines.append(f"Warning: {warning}")
     for index, item in enumerate(results, start=1):
         duplicate = f" duplicate_of={item['duplicate_of']}" if item.get("duplicate_of") else ""
         lines.append(f"\n{index}. {item['path']}  score={item['score']:.3f}{duplicate}")
@@ -1296,6 +1387,7 @@ def build_slice_payload(args: argparse.Namespace) -> tuple[Path, dict[str, Any]]
         path_prefix=getattr(args, "path_prefix", []),
         exclude=getattr(args, "exclude", []),
         node_types=getattr(args, "node_types", []),
+        scope=getattr(args, "scope", "code"),
     )
     # Avoid printing query output while still reusing query logic.
     original_stdout = sys.stdout
@@ -1491,6 +1583,117 @@ def slice_jsonl_index(args: argparse.Namespace) -> None:
     print(f"Wrote topic map edges: {edges_path}")
 
 
+def query_results_silent(args: argparse.Namespace) -> list[dict[str, Any]]:
+    original_stdout = sys.stdout
+    with open(os.devnull, "w", encoding="utf-8") as devnull:
+        try:
+            sys.stdout = devnull
+            return query_index(args)
+        finally:
+            sys.stdout = original_stdout
+
+
+def context_index(args: argparse.Namespace) -> list[dict[str, Any]]:
+    root = find_project_root(Path(args.root)) if args.git_root else Path(args.root).resolve()
+    query_args = argparse.Namespace(
+        root=str(root),
+        git_root=False,
+        topic=args.topic,
+        limit=args.limit,
+        neighbors=0,
+        json=False,
+        path_prefix=getattr(args, "path_prefix", []),
+        exclude=getattr(args, "exclude", []),
+        node_types=getattr(args, "node_types", []),
+        scope=getattr(args, "scope", "code"),
+    )
+    results = query_results_silent(query_args)
+    intervals_by_path: dict[str, list[tuple[int, int, dict[str, Any]]]] = {}
+    for result in results:
+        for match in result.get("matches", []):
+            intervals_by_path.setdefault(result["path"], []).append(
+                (int(match["start_line"]), int(match["end_line"]), match)
+            )
+
+    blocks: list[dict[str, Any]] = []
+    approximate_tokens = 0
+    for path, intervals in sorted(intervals_by_path.items()):
+        project_path = root / path
+        try:
+            lines = read_text(project_path).splitlines()
+        except OSError:
+            continue
+        merged: list[tuple[int, int, list[dict[str, Any]]]] = []
+        for start, end, match in sorted(intervals):
+            if merged and start <= merged[-1][1] + 5:
+                previous_start, previous_end, previous_matches = merged[-1]
+                merged[-1] = (previous_start, max(previous_end, end), [*previous_matches, match])
+            else:
+                merged.append((start, end, [match]))
+        for start, end, matches in merged:
+            text = "\n".join(lines[start - 1 : end]).strip()
+            token_count = max(1, len(text) // 4)
+            if approximate_tokens + token_count > args.max_tokens and blocks:
+                break
+            approximate_tokens += token_count
+            blocks.append(
+                {
+                    "path": path,
+                    "start_line": start,
+                    "end_line": end,
+                    "reference": f"{path}:{start}",
+                    "candidate": True,
+                    "verified": False,
+                    "verification": matches[0].get("verification", {}),
+                    "sources": [match.get("reference") for match in matches],
+                    "text": text,
+                    "token_count": token_count,
+                }
+            )
+        if approximate_tokens >= args.max_tokens:
+            break
+    payload = {"topic": args.topic, "scope": args.scope, "blocks": blocks, "token_count": approximate_tokens}
+    if args.json:
+        print(json.dumps(payload, indent=2, sort_keys=True))
+    else:
+        for block in blocks:
+            print(
+                f"\n{block['reference']} lines {block['start_line']}-{block['end_line']} candidate={block['candidate']}"
+            )
+            print(block["text"][:1200])
+    return blocks
+
+
+def append_retrieval_miss(args: argparse.Namespace) -> dict[str, Any]:
+    root = find_project_root(Path(args.root)) if args.git_root else Path(args.root).resolve()
+    miss_path = root / DEFAULT_MISS_LOG_REL
+    miss_path.parent.mkdir(parents=True, exist_ok=True)
+    timestamp = utc_now()
+    topic = args.topic or "retrieval"
+    record = {
+        "id": f"miss:{timestamp}:{slugify(topic)}",
+        "created_at": timestamp,
+        "workflow": args.workflow,
+        "topic": topic,
+        "original_query": args.original_query,
+        "expanded_queries": parse_multi_arg(args.expanded_query),
+        "retrieval_modes": parse_multi_arg(args.retrieval_mode),
+        "failure_type": args.failure_type,
+        "expected_terms": parse_multi_arg(args.expected_term),
+        "eventual_hit": args.eventual_hit,
+        "resolution": args.resolution,
+        "notes": args.notes,
+    }
+    record = {key: value for key, value in record.items() if value not in (None, [], "")}
+    with miss_path.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(record, ensure_ascii=False, sort_keys=True) + "\n")
+    if args.json:
+        print(json.dumps({"path": str(miss_path), "record": record}, indent=2, sort_keys=True))
+    else:
+        print(f"Wrote retrieval miss: {miss_path}")
+    return record
+
+
 def detect_staleness(root: Path, max_bytes: int) -> dict[str, Any]:
     """Return a cheap freshness report for the shared index."""
     db_path = root / DEFAULT_DB_REL
@@ -1519,7 +1722,7 @@ def detect_staleness(root: Path, max_bytes: int) -> dict[str, Any]:
         report["stale"] = True
         report["reason"] = "indexer-version-changed"
         report["force_reindex"] = True
-    paths = scan_files(root, max_bytes)
+    paths = scan_indexable_files(root, max_bytes)
     seen: dict[str, str] = {}
     for path in paths:
         try:
@@ -1715,6 +1918,12 @@ def add_common_args(parser: argparse.ArgumentParser) -> None:
 
 def add_filter_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
+        "--scope",
+        choices=sorted(QUERY_SCOPES),
+        default="code",
+        help="Retrieval scope: code (default), plans, or all.",
+    )
+    parser.add_argument(
         "--path-prefix",
         action="append",
         default=[],
@@ -1790,6 +1999,49 @@ def build_parser() -> argparse.ArgumentParser:
         help="Also write map.graph.json as a portable raw JSON snapshot. By default the SQLite index remains the raw source of truth.",
     )
     slice_jsonl_p.set_defaults(func=slice_jsonl_index)
+
+    context_p = sub.add_parser("context", help="Build compact candidate context blocks for a topic.")
+    add_common_args(context_p)
+    context_p.add_argument("--topic", required=True, help="Topic or search phrase.")
+    context_p.add_argument("--limit", type=int, default=8, help="Maximum file results before context packing.")
+    context_p.add_argument("--max-tokens", type=int, default=3000, help="Approximate output token budget.")
+    add_filter_args(context_p)
+    context_p.add_argument("--json", action="store_true", help="Print JSON context payload.")
+    context_p.set_defaults(func=context_index)
+
+    miss_p = sub.add_parser("log-miss", help="Append a material retrieval miss to .plan/_retrieval/misses.jsonl.")
+    add_common_args(miss_p)
+    miss_p.add_argument("--topic", help="Topic or concept for the miss.")
+    miss_p.add_argument("--workflow", default="manual", choices=["proposal", "plan", "implement", "manual"])
+    miss_p.add_argument("--original-query", required=True, help="Original query that missed or was insufficient.")
+    miss_p.add_argument(
+        "--expanded-query", action="append", default=[], help="Expanded query attempted. Repeatable or comma-separated."
+    )
+    miss_p.add_argument(
+        "--retrieval-mode", action="append", default=[], help="Retrieval mode used, such as cartographer_index or rg."
+    )
+    miss_p.add_argument(
+        "--failure-type",
+        required=True,
+        choices=[
+            "vocabulary_mismatch",
+            "generic_noise",
+            "missing_context",
+            "stale_artifact",
+            "ranking_failure",
+            "tool_failure",
+        ],
+    )
+    miss_p.add_argument("--expected-term", action="append", default=[], help="Expected term that eventually mattered.")
+    miss_p.add_argument("--eventual-hit", help="Reference that eventually resolved the miss.")
+    miss_p.add_argument(
+        "--resolution",
+        choices=["query_expansion", "path_constraint", "manual_read", "user_hint", "unresolved"],
+        default="unresolved",
+    )
+    miss_p.add_argument("--notes", help="Concise non-sensitive notes.")
+    miss_p.add_argument("--json", action="store_true", help="Print JSON result.")
+    miss_p.set_defaults(func=append_retrieval_miss)
 
     ensure_p = sub.add_parser("ensure", help="Check freshness and re-index if files changed or the index is missing.")
     add_common_args(ensure_p)
