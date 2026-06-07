@@ -226,6 +226,51 @@ Finish the feature.
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("lacks Redaction status", result.stdout)
 
+    def test_receipt_and_context_pack_validation(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            topic_dir = self.write_valid_project(project)
+            (topic_dir / "receipts.jsonl").write_text(
+                json.dumps(
+                    {
+                        "id": "receipt:P0",
+                        "type": "validation-receipt",
+                        "status": "passed",
+                        "phase_id": "P0",
+                        "commands": [{"command": "manual", "result": "passed"}],
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (topic_dir / "context-packs.jsonl").write_text(
+                json.dumps(
+                    {
+                        "id": "context:P0",
+                        "type": "context-pack",
+                        "phase_id": "P0",
+                        "summary": "Focused context",
+                        "budget_tokens": 1000,
+                        "references": ["src/app.ts:1"],
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            result = self.run_validator(project)
+            self.assertEqual(result.returncode, 0, result.stdout)
+
+            (topic_dir / "receipts.jsonl").write_text(
+                json.dumps(
+                    {"id": "receipt:timeout", "type": "subagent-receipt", "status": "timed-out", "phase_id": "P0"}
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            result = self.run_validator(project)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("timeout receipt lacks fallback decision", result.stdout)
+
     def test_private_reference_and_secret_pattern_fail(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)

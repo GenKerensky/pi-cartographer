@@ -133,6 +133,34 @@ describe("manage_jsonl CLI", () => {
 		expect(invalidMisses.payload.errors.join("\n")).toContain("Raw snippet");
 	});
 
+	it("validates receipt and context pack files", () => {
+		const root = tempDir();
+		const receipts = path.join(root, "receipts.jsonl");
+		fs.writeFileSync(
+			receipts,
+			`${JSON.stringify({ id: "receipt:P1", type: "validation-receipt", status: "passed", phase_id: "P1", commands: [{ command: "npm run test", result: "passed" }] })}\n`,
+			"utf8",
+		);
+		expect(runJson(["validate-file", "--file", receipts]).ok).toBe(true);
+
+		const contextPacks = path.join(root, "context-packs.jsonl");
+		fs.writeFileSync(
+			contextPacks,
+			`${JSON.stringify({ id: "context:P1", type: "context-pack", phase_id: "P1", summary: "Focused context", budget_tokens: 1000, references: ["README.md:1"] })}\n`,
+			"utf8",
+		);
+		expect(runJson(["validate-file", "--file", contextPacks]).ok).toBe(true);
+
+		fs.writeFileSync(
+			receipts,
+			`${JSON.stringify({ id: "receipt:timeout", type: "subagent-receipt", status: "timed-out", phase_id: "P1" })}\n`,
+			"utf8",
+		);
+		const invalid = runJsonUnchecked(["validate-file", "--file", receipts]);
+		expect(invalid.status).not.toBe(0);
+		expect(invalid.payload.errors.join("\n")).toContain("timeout receipt lacks fallback decision");
+	});
+
 	it("validates topic fact citations and support edges", () => {
 		const root = tempDir();
 		const topicDir = path.join(root, ".plan", "demo");

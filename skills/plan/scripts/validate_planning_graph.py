@@ -192,6 +192,64 @@ def validate_lifecycle_and_retrieval_metadata(
                 warnings.append(f"Implementation guidance uses stale/unverified rationale in {label} record {index}")
 
 
+def has_validation_evidence(record: dict[str, Any]) -> bool:
+    verification = record.get("verification")
+    validation = verification.get("validation") if isinstance(verification, dict) else None
+    return isinstance(record.get("commands"), list) or (isinstance(validation, list) and bool(validation))
+
+
+def validate_receipt_records(records: list[dict[str, Any]], label: str, errors: list[str]) -> None:
+    for index, record in enumerate(records, start=1):
+        for field in ("id", "type", "status"):
+            if not record.get(field):
+                errors.append(f"Missing {field} in {label} record {index}")
+        if record.get("type") == "validation-receipt" and not has_validation_evidence(record):
+            errors.append(f"validation-receipt lacks commands or validation evidence in {label} record {index}")
+        if record.get("truncated") is True:
+            if not record.get("full_output_path"):
+                errors.append(f"truncated receipt lacks full_output_path in {label} record {index}")
+            if not (record.get("maxOutputChars") or record.get("max_output_chars")):
+                errors.append(f"truncated receipt lacks maxOutputChars in {label} record {index}")
+            if not record.get("token_estimate"):
+                errors.append(f"truncated receipt lacks token_estimate in {label} record {index}")
+        timed_out = record.get("timedOut") is True or record.get("status") in {"timed-out", "timeout"}
+        if timed_out and not any(
+            record.get(field) for field in ("narrowed_retry", "serial_fallback", "user_escalation", "decision")
+        ):
+            errors.append(f"timeout receipt lacks fallback decision in {label} record {index}")
+
+
+def validate_context_pack_records(records: list[dict[str, Any]], label: str, errors: list[str]) -> None:
+    for index, record in enumerate(records, start=1):
+        for field in ("id", "type", "phase_id", "summary"):
+            if not record.get(field):
+                errors.append(f"Missing {field} in {label} record {index}")
+        if record.get("type") != "context-pack":
+            errors.append(f"Context pack record {index} has type {record.get('type')!r}")
+        if record.get("budget_tokens") is not None and not isinstance(record.get("budget_tokens"), (int, float)):
+            errors.append(f"context-pack budget_tokens must be numeric in {label} record {index}")
+        if record.get("references") is not None and not isinstance(record.get("references"), list):
+            errors.append(f"context-pack references must be an array in {label} record {index}")
+
+
+def warn_missing_workflow_state(
+    plan_nodes: list[dict[str, Any]],
+    receipts: list[dict[str, Any]],
+    context_packs: list[dict[str, Any]],
+    warnings: list[str],
+) -> None:
+    receipt_phases = {str(record.get("phase_id")) for record in receipts if record.get("phase_id")}
+    context_phases = {str(record.get("phase_id")) for record in context_packs if record.get("phase_id")}
+    for phase in [record for record in plan_nodes if record.get("type") == "phase"]:
+        phase_id = str(phase.get("phase_id") or "")
+        if not phase_id or str(phase.get("status")) not in {"complete", "implemented"}:
+            continue
+        if phase_id not in context_phases:
+            warnings.append(f"Completed phase {phase_id} lacks a context-pack record")
+        if phase_id not in receipt_phases:
+            warnings.append(f"Completed phase {phase_id} lacks a receipt record")
+
+
 def validate_miss_records(records: list[dict[str, Any]], label: str, errors: list[str]) -> None:
     for index, record in enumerate(records, start=1):
         for field in ("id", "created_at", "original_query", "failure_type", "resolution"):
@@ -413,6 +471,8 @@ def main() -> int:
     fact_edges = read_jsonl(topic_dir / "facts.edges.jsonl", errors)
     plan_nodes = read_jsonl(topic_dir / "plan.nodes.jsonl", errors, required=True)
     plan_edges = read_jsonl(topic_dir / "plan.edges.jsonl", errors, required=True)
+    receipts = read_jsonl(topic_dir / "receipts.jsonl", errors)
+    context_packs = read_jsonl(topic_dir / "context-packs.jsonl", errors)
     retrieval_misses = read_jsonl(root / ".plan/_retrieval/misses.jsonl", errors)
     graph = read_json(topic_dir / "map.graph.json", errors) or {}
 
@@ -440,6 +500,11 @@ def main() -> int:
     validate_no_private_artifact_refs(fact_edges, "facts.edges.jsonl", errors)
     validate_no_private_artifact_refs(plan_nodes, "plan.nodes.jsonl", errors)
     validate_no_private_artifact_refs(plan_edges, "plan.edges.jsonl", errors)
+    validate_no_private_artifact_refs(receipts, "receipts.jsonl", errors)
+    validate_no_private_artifact_refs(context_packs, "context-packs.jsonl", errors)
+    validate_receipt_records(receipts, "receipts.jsonl", errors)
+    validate_context_pack_records(context_packs, "context-packs.jsonl", errors)
+    warn_missing_workflow_state(plan_nodes, receipts, context_packs, warnings)
     validate_miss_records(retrieval_misses, "misses.jsonl", errors)
     evidence_file_count = validate_evidence_artifacts(root, topic_dir, fact_nodes, errors)
 
@@ -476,6 +541,8 @@ def main() -> int:
             "fact_edges": len(fact_edges),
             "plan_nodes": len(plan_nodes),
             "plan_edges": len(plan_edges),
+            "receipts": len(receipts),
+            "context_packs": len(context_packs),
             "evidence_files": evidence_file_count,
             "retrieval_misses": len(retrieval_misses),
         },

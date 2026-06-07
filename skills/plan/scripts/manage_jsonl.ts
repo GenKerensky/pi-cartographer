@@ -492,6 +492,65 @@ function retrievalMissPath(root: string): string {
 	return path.join(root, ".plan", "_retrieval", "misses.jsonl");
 }
 
+function hasValidationEvidence(record: JsonRecord): boolean {
+	const verification = record.verification;
+	return (
+		Array.isArray(record.commands) ||
+		(Array.isArray((verification as JsonRecord | undefined)?.validation) &&
+			((verification as JsonRecord).validation as unknown[]).length > 0)
+	);
+}
+
+function validateReceiptRecords(records: JsonRecord[], label: string, errors: string[]): void {
+	for (const [index, record] of records.entries()) {
+		for (const field of ["id", "type", "status"]) {
+			if (!record[field]) errors.push(`Missing ${field} in ${label} record ${index + 1}`);
+		}
+		if (record.type === "validation-receipt" && !hasValidationEvidence(record))
+			errors.push(`validation-receipt lacks commands or validation evidence in ${label} record ${index + 1}`);
+		if (record.truncated === true) {
+			if (!record.full_output_path)
+				errors.push(`truncated receipt lacks full_output_path in ${label} record ${index + 1}`);
+			if (!record.maxOutputChars && !record.max_output_chars)
+				errors.push(`truncated receipt lacks maxOutputChars in ${label} record ${index + 1}`);
+			if (!record.token_estimate)
+				errors.push(`truncated receipt lacks token_estimate in ${label} record ${index + 1}`);
+		}
+		const timedOut = record.timedOut === true || record.status === "timed-out" || record.status === "timeout";
+		if (timedOut && !record.narrowed_retry && !record.serial_fallback && !record.user_escalation && !record.decision)
+			errors.push(`timeout receipt lacks fallback decision in ${label} record ${index + 1}`);
+	}
+}
+
+function validateContextPackRecords(records: JsonRecord[], label: string, errors: string[]): void {
+	for (const [index, record] of records.entries()) {
+		for (const field of ["id", "type", "phase_id", "summary"]) {
+			if (!record[field]) errors.push(`Missing ${field} in ${label} record ${index + 1}`);
+		}
+		if (record.type !== "context-pack") errors.push(`Context pack record ${index + 1} has type ${JSON.stringify(record.type)}`);
+		if (record.budget_tokens !== undefined && typeof record.budget_tokens !== "number")
+			errors.push(`context-pack budget_tokens must be numeric in ${label} record ${index + 1}`);
+		if (record.references !== undefined && !Array.isArray(record.references))
+			errors.push(`context-pack references must be an array in ${label} record ${index + 1}`);
+	}
+}
+
+function warnMissingWorkflowState(
+	planNodes: JsonRecord[],
+	receipts: JsonRecord[],
+	contextPacks: JsonRecord[],
+	warnings: string[],
+): void {
+	const receiptPhases = new Set(receipts.map((record) => String(record.phase_id || "")).filter(Boolean));
+	const contextPhases = new Set(contextPacks.map((record) => String(record.phase_id || "")).filter(Boolean));
+	for (const phase of planNodes.filter((record) => record.type === "phase")) {
+		const phaseId = String(phase.phase_id || "");
+		if (!phaseId || !["complete", "implemented"].includes(String(phase.status))) continue;
+		if (!contextPhases.has(phaseId)) warnings.push(`Completed phase ${phaseId} lacks a context-pack record`);
+		if (!receiptPhases.has(phaseId)) warnings.push(`Completed phase ${phaseId} lacks a receipt record`);
+	}
+}
+
 function validateTopic(
 	options: Record<string, string | boolean | string[]>,
 ): ValidateReport {
@@ -511,6 +570,10 @@ function validateTopic(
 	const factEdges = read("facts.edges.jsonl");
 	const planNodes = read("plan.nodes.jsonl");
 	const planEdges = read("plan.edges.jsonl");
+	const receiptResult = readJsonl(path.join(dir, "receipts.jsonl"));
+	errors.push(...receiptResult.errors);
+	const contextPackResult = readJsonl(path.join(dir, "context-packs.jsonl"));
+	errors.push(...contextPackResult.errors);
 	const missResult = readJsonl(retrievalMissPath(root));
 	errors.push(...missResult.errors);
 
@@ -545,6 +608,11 @@ function validateTopic(
 	validateNoPrivateArtifactRefs(factEdges, "facts.edges.jsonl", errors);
 	validateNoPrivateArtifactRefs(planNodes, "plan.nodes.jsonl", errors);
 	validateNoPrivateArtifactRefs(planEdges, "plan.edges.jsonl", errors);
+	validateNoPrivateArtifactRefs(receiptResult.records, "receipts.jsonl", errors);
+	validateNoPrivateArtifactRefs(contextPackResult.records, "context-packs.jsonl", errors);
+	validateReceiptRecords(receiptResult.records, "receipts.jsonl", errors);
+	validateContextPackRecords(contextPackResult.records, "context-packs.jsonl", errors);
+	warnMissingWorkflowState(planNodes, receiptResult.records, contextPackResult.records, warnings);
 	validateMissRecords(missResult.records, "misses.jsonl", errors);
 	const evidenceFileCount = validateEvidenceArtifacts(root, topic, factNodes, errors);
 
@@ -589,6 +657,8 @@ function validateTopic(
 			fact_edges: factEdges.length,
 			plan_nodes: planNodes.length,
 			plan_edges: planEdges.length,
+			receipts: receiptResult.records.length,
+			context_packs: contextPackResult.records.length,
 			evidence_files: evidenceFileCount,
 			retrieval_misses: missResult.records.length,
 		},
@@ -606,6 +676,8 @@ function validateFile(
 	validateLifecycleAndRetrievalMetadata(result.records, label, result.errors, warnings);
 	if (filePath.endsWith(path.join("_retrieval", "misses.jsonl")) || label === "misses.jsonl")
 		validateMissRecords(result.records, label, result.errors);
+	if (label === "receipts.jsonl") validateReceiptRecords(result.records, label, result.errors);
+	if (label === "context-packs.jsonl") validateContextPackRecords(result.records, label, result.errors);
 	return {
 		ok: result.errors.length === 0,
 		file: filePath,

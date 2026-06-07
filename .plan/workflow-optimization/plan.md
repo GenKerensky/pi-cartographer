@@ -264,7 +264,7 @@ Use temporary mock projects for tests. Do not write generated slices or run logs
 
 ### Phase P4 — Receipts and validators
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P0, P2
 - **Unlocks:** P5, P6
 - **Primary references:** `file:skills/plan/scripts/manage_jsonl.ts`, `file:skills/plan/scripts/validate_planning_graph.py`, `file:skills/plan/SKILL.md`, `file:skills/implement/SKILL.md`, [F012], [F018], [F020]
@@ -283,18 +283,18 @@ Turn workflow hygiene into durable records and validation rules instead of relyi
 
 #### Checklist
 
-- [ ] **P4.T1** Extend `manage_jsonl.ts` with list/upsert/validate support for receipt and context-pack files.
-- [ ] **P4.T2** Extend `validate_planning_graph.py` and/or JSONL validation to warn when completed phases lack validation receipts or context packs.
-- [ ] **P4.T3** Add validation for LLM-facing oversized-output receipts that lack `full_output_path`, `truncated`, or budget metadata.
-- [ ] **P4.T4** Add validation for subagent timeout receipts that lack narrowed retry, serial fallback, or user-escalation decisions.
-- [ ] **P4.T5** Update `skills/plan/SKILL.md` and `skills/implement/SKILL.md` to create/read receipts and context packs at phase boundaries.
+- [x] **P4.T1** Extend `manage_jsonl.ts` with list/upsert/validate support for receipt and context-pack files.
+- [x] **P4.T2** Extend `validate_planning_graph.py` and/or JSONL validation to warn when completed phases lack validation receipts or context packs.
+- [x] **P4.T3** Add validation for LLM-facing oversized-output receipts that lack `full_output_path`, `truncated`, or budget metadata.
+- [x] **P4.T4** Add validation for subagent timeout receipts that lack narrowed retry, serial fallback, or user-escalation decisions.
+- [x] **P4.T5** Update `skills/plan/SKILL.md` and `skills/implement/SKILL.md` to create/read receipts and context packs at phase boundaries.
 
 #### Validation
 
-- [ ] **P4.V1** Run `node --experimental-strip-types skills/plan/scripts/manage_jsonl.ts validate-topic --root <tmp-project> --topic <fixture> --json` against valid and invalid receipt fixtures.
-- [ ] **P4.V2** Run `python skills/plan/scripts/validate_planning_graph.py --root <tmp-project> --topic <fixture> --json` against receipt/context-pack fixtures.
-- [ ] **P4.V3** Run `npm run test:py` and `npm run test:ts`.
-- [ ] **P4.V4** Run `cartographer_jsonl validate-topic --root "$PWD" --topic workflow-optimization` after adding this plan's receipt-aware artifacts.
+- [x] **P4.V1** Run `node --experimental-strip-types skills/plan/scripts/manage_jsonl.ts validate-topic --root <tmp-project> --topic <fixture> --json` against valid and invalid receipt fixtures.
+- [x] **P4.V2** Run `python skills/plan/scripts/validate_planning_graph.py --root <tmp-project> --topic <fixture> --json` against receipt/context-pack fixtures.
+- [x] **P4.V3** Run `npm run test:py` and `npm run test:ts`.
+- [x] **P4.V4** Run `cartographer_jsonl validate-topic --root "$PWD" --topic workflow-optimization` after adding this plan's receipt-aware artifacts.
 
 #### Exit Criteria
 
