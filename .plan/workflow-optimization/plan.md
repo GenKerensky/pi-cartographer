@@ -169,7 +169,7 @@ Keep this as a CLI-first phase. Extension wiring can happen in P2 after shared o
 
 ### Phase P2 — Output shaping
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P0
 - **Unlocks:** P3, P4
 - **Primary references:** `file:extensions/cartographer-tools.ts`, `symbol:extensions/cartographer-tools.ts#runCommand`, `symbol:skills/index-project/scripts/index_project.py#query_index`, `file:package.json`, [F003], [F016], [F020]
@@ -189,18 +189,18 @@ Make Pi extension tool responses budget-aware by default while preserving raw CL
 
 #### Checklist
 
-- [ ] **P2.T1** Add a shared output-shaping helper that returns `summary`, `counts`, `truncated`, `full_output_path`, and `next_actions` when stdout/stderr exceeds budget.
-- [ ] **P2.T2** Extend `cartographer_index` schema for `maxOutputChars`, `outputPath`, and raw/summary behavior without breaking existing actions.
-- [ ] **P2.T3** Ensure `query` summaries list top paths, counts, warnings, and follow-up `context`/`read` actions instead of full JSON by default.
-- [ ] **P2.T4** Ensure `slice-jsonl`, `ensure`, `status`, JSONL validation, evidence, and session-analyzer actions return concise path/count receipts.
-- [ ] **P2.T5** Add TypeScript tests for under-budget output, over-budget output, explicit `outputPath`, and failure-output summarization.
+- [x] **P2.T1** Add a shared output-shaping helper that returns `summary`, `counts`, `truncated`, `full_output_path`, and `next_actions` when stdout/stderr exceeds budget.
+- [x] **P2.T2** Extend `cartographer_index` schema for `maxOutputChars`, `outputPath`, and raw/summary behavior without breaking existing actions.
+- [x] **P2.T3** Ensure `query` summaries list top paths, counts, warnings, and follow-up `context`/`read` actions instead of full JSON by default.
+- [x] **P2.T4** Ensure `slice-jsonl`, `ensure`, `status`, JSONL validation, evidence, and session-analyzer actions return concise path/count receipts.
+- [x] **P2.T5** Add TypeScript tests for under-budget output, over-budget output, explicit `outputPath`, and failure-output summarization.
 
 #### Validation
 
-- [ ] **P2.V1** Run `node --experimental-strip-types --check extensions/cartographer-tools.ts`.
-- [ ] **P2.V2** Run `npm run test:ts` and confirm output-shaping tests pass.
-- [ ] **P2.V3** Run `npm run check:scripts` and confirm Python and TypeScript helpers parse.
-- [ ] **P2.V4** Manually exercise or unit-test a large synthetic command result and confirm inline content stays within the configured budget and includes a full-output path.
+- [x] **P2.V1** Run `node --experimental-strip-types --check extensions/cartographer-tools.ts`.
+- [x] **P2.V2** Run `npm run test:ts` and confirm output-shaping tests pass.
+- [x] **P2.V3** Run `npm run check:scripts` and confirm Python and TypeScript helpers parse.
+- [x] **P2.V4** Manually exercise or unit-test a large synthetic command result and confirm inline content stays within the configured budget and includes a full-output path.
 
 #### Exit Criteria
 

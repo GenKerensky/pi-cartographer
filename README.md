@@ -63,6 +63,7 @@ pi -e /path/to/pi-cartographer   # one-off local use
 | `cartographer_index` | Extension tool | Wraps index actions such as `ensure`, `query`, `context`, `read`, `slice-jsonl`, `status`, and `log-miss`. |
 | `cartographer_jsonl` | Extension tool | Wraps JSONL actions such as `validate-topic`, `validate-file`, `validate-misses`, `list-misses`, `list`, `upsert`, and `seed-pi-facts`. |
 | `cartographer_evidence` | Extension tool | Imports/list private proposal artifacts under `.plan/_private/<topic>/` without exposing raw contents and writes commit-safe evidence manifests. |
+| `cartographer_session` | Extension tool | Analyzes authorized Pi session JSONL into compact Markdown/JSON reports without exposing raw transcript contents. |
 
 Skill commands are available as `/skill:<name>` when pi skill commands are enabled.
 

@@ -1,5 +1,7 @@
 import { execFile } from "node:child_process";
 import type { ExecFileException } from "node:child_process";
+import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
@@ -12,7 +14,13 @@ type ToolResult = {
 	isError?: boolean;
 };
 
-type CartographerIndexParams = {
+type OutputShapeParams = {
+	maxOutputChars?: number;
+	outputPath?: string;
+	raw?: boolean;
+};
+
+type CartographerIndexParams = OutputShapeParams & {
 	action: "ensure" | "query" | "context" | "read" | "slice-jsonl" | "status" | "log-miss";
 	root?: string;
 	topic?: string;
@@ -45,7 +53,7 @@ type CartographerIndexParams = {
 	notes?: string;
 };
 
-type CartographerJsonlParams = {
+type CartographerJsonlParams = OutputShapeParams & {
 	action:
 		| "validate-topic"
 		| "validate-file"
@@ -64,7 +72,7 @@ type CartographerJsonlParams = {
 	merge?: boolean;
 };
 
-type CartographerEvidenceParams = {
+type CartographerEvidenceParams = OutputShapeParams & {
 	action: "import" | "list";
 	root?: string;
 	topic?: string;
@@ -76,6 +84,13 @@ type CartographerEvidenceParams = {
 	inboxId?: string;
 	sensitivity?: "unknown" | "low" | "medium" | "high";
 	limit?: number;
+};
+
+type CartographerSessionParams = OutputShapeParams & {
+	action: "analyze";
+	input?: string;
+	out?: string;
+	jsonOut?: string;
 };
 
 type ToolRegistration = {
@@ -120,6 +135,13 @@ const evidenceScript = path.join(
 	"scripts",
 	"private_artifacts.py",
 );
+const sessionScript = path.join(
+	packageRoot,
+	"skills",
+	"plan",
+	"scripts",
+	"analyze_session.py",
+);
 
 function isExecFileException(error: unknown): error is ExecFileException & {
 	stdout?: string;
@@ -128,10 +150,123 @@ function isExecFileException(error: unknown): error is ExecFileException & {
 	return typeof error === "object" && error !== null;
 }
 
+type OutputShapeOptions = {
+	maxOutputChars?: number;
+	outputPath?: string;
+	raw?: boolean;
+	summaryMode?: "query" | "receipt";
+	nextActions?: string[];
+	label?: string;
+	exitCode?: number;
+	isError?: boolean;
+};
+
+type ShapedOutput = {
+	text: string;
+	details: Record<string, unknown>;
+};
+
+function defaultOutputPath(label = "tool-output"): string {
+	const dir = path.join(os.tmpdir(), "pi-cartographer-runs");
+	fs.mkdirSync(dir, { recursive: true });
+	const safeLabel = label.replace(/[^A-Za-z0-9_.-]+/g, "-").slice(0, 48) || "tool-output";
+	return path.join(dir, `${safeLabel}-${Date.now()}.log`);
+}
+
+function resolveOutputPath(outputPath: string | undefined, label?: string): string {
+	if (!outputPath) return defaultOutputPath(label);
+	return path.isAbsolute(outputPath) ? outputPath : path.resolve(process.cwd(), outputPath);
+}
+
+function querySummary(stdout: string): Record<string, unknown> | undefined {
+	try {
+		const parsed = JSON.parse(stdout) as unknown;
+		if (!Array.isArray(parsed)) return undefined;
+		const top = parsed.slice(0, 5).map((item) => {
+			if (!item || typeof item !== "object") return item;
+			const record = item as Record<string, unknown>;
+			return {
+				path: record.path,
+				score: record.score,
+				matches: Array.isArray(record.matches) ? record.matches.length : undefined,
+				candidate: record.candidate,
+				verified: record.verified,
+			};
+		});
+		return {
+			summary: `cartographer_index query returned ${parsed.length} result(s).`,
+			counts: { results: parsed.length },
+			top_results: top,
+			next_actions: [
+				"Use cartographer_index context for compact snippets.",
+				"Use cartographer_index read for a specific path or node before citing/editing.",
+			],
+		};
+	} catch {
+		return undefined;
+	}
+}
+
+export function shapeToolOutput(stdout: string, stderr = "", options: OutputShapeOptions = {}): ShapedOutput {
+	const combined = stdout || stderr || "OK\n";
+	const maxOutputChars = options.maxOutputChars ?? 8000;
+	const tokenEstimate = Math.ceil(combined.length / 4);
+	const queryReceipt = options.summaryMode === "query" && !options.raw ? querySummary(stdout) : undefined;
+	const shouldSummarize = Boolean(queryReceipt) || (!options.raw && combined.length > maxOutputChars);
+	if (!shouldSummarize) {
+		return {
+			text: combined,
+			details: {
+				stdout,
+				stderr,
+				exitCode: options.exitCode ?? 0,
+				truncated: false,
+				token_estimate: tokenEstimate,
+			},
+		};
+	}
+
+	const fullOutputPath = resolveOutputPath(options.outputPath, options.label);
+	fs.mkdirSync(path.dirname(fullOutputPath), { recursive: true });
+	fs.writeFileSync(fullOutputPath, combined, "utf8");
+	const receipt = {
+		summary:
+			(queryReceipt?.summary as string | undefined) ||
+			`${options.label || "Tool command"} produced ${combined.length} character(s); full output was saved to a file.`,
+		counts: {
+			outputChars: combined.length,
+			stdoutChars: stdout.length,
+			stderrChars: stderr.length,
+			omittedChars: Math.max(0, combined.length - maxOutputChars),
+			...((queryReceipt?.counts as Record<string, unknown> | undefined) || {}),
+		},
+		token_estimate: tokenEstimate,
+		truncated: true,
+		maxOutputChars,
+		full_output_path: fullOutputPath,
+		exitCode: options.exitCode ?? 0,
+		isError: options.isError || undefined,
+		top_results: queryReceipt?.top_results,
+		next_actions: options.nextActions || queryReceipt?.next_actions || [],
+	};
+	return {
+		text: JSON.stringify(receipt, null, 2),
+		details: {
+			stdout: options.raw ? stdout : undefined,
+			stderr: options.raw ? stderr : undefined,
+			exitCode: options.exitCode ?? 0,
+			truncated: true,
+			fullOutputPath,
+			receipt,
+		},
+	};
+}
+
 async function runCommand(
 	command: string,
 	args: string[],
 	signal?: AbortSignal,
+	shapeOptions: OutputShapeOptions = {},
 ): Promise<ToolResult> {
 	try {
 		const result = await execFileAsync(command, args, {
@@ -139,21 +274,20 @@ async function runCommand(
 			signal,
 			maxBuffer: 10 * 1024 * 1024,
 		});
+		const shaped = shapeToolOutput(result.stdout, result.stderr, { ...shapeOptions, exitCode: 0 });
 		return {
-			content: [
-				{ type: "text", text: result.stdout || result.stderr || "OK\n" },
-			],
-			details: { stdout: result.stdout, stderr: result.stderr, exitCode: 0 },
+			content: [{ type: "text", text: shaped.text }],
+			details: shaped.details,
 		};
 	} catch (error: unknown) {
-		const stdout =
-			isExecFileException(error) && error.stdout ? error.stdout : "";
-		const stderr =
-			isExecFileException(error) && error.stderr ? error.stderr : String(error);
-		const exitCode = isExecFileException(error) && error.code ? error.code : 1;
+		const stdout = isExecFileException(error) && error.stdout ? error.stdout : "";
+		const stderr = isExecFileException(error) && error.stderr ? error.stderr : String(error);
+		const rawExitCode = isExecFileException(error) && error.code ? error.code : 1;
+		const exitCode = typeof rawExitCode === "number" ? rawExitCode : 1;
+		const shaped = shapeToolOutput(stdout, stderr, { ...shapeOptions, exitCode, isError: true });
 		return {
-			content: [{ type: "text", text: stdout + stderr || String(error) }],
-			details: { stdout, stderr, exitCode },
+			content: [{ type: "text", text: shaped.text }],
+			details: shaped.details,
 			isError: true,
 		};
 	}
@@ -265,6 +399,11 @@ export default function cartographerTools(pi: PiApi): void {
 					description: "Also write map.graph.json for slice-jsonl.",
 				}),
 			),
+			maxOutputChars: Type.Optional(
+				Type.Number({ description: "Inline output budget before saving a full-output receipt." }),
+			),
+			outputPath: Type.Optional(Type.String({ description: "Optional full-output path for oversized output." })),
+			raw: Type.Optional(Type.Boolean({ description: "Return raw command output instead of a compact receipt." })),
 		}),
 		async execute(_toolCallId, rawParams, signal) {
 			const params = rawParams as CartographerIndexParams;
@@ -333,7 +472,13 @@ export default function cartographerTools(pi: PiApi): void {
 				if (params.eventualHit) args.push("--eventual-hit", params.eventualHit);
 				if (params.notes) args.push("--notes", params.notes);
 			}
-			return runCommand("python", [indexScript, ...args], signal);
+			return runCommand("python", [indexScript, ...args], signal, {
+				maxOutputChars: params.maxOutputChars,
+				outputPath: params.outputPath,
+				raw: params.raw,
+				summaryMode: params.action === "query" ? "query" : undefined,
+				label: `cartographer-index-${params.action}`,
+			});
 		},
 	});
 
@@ -380,6 +525,11 @@ export default function cartographerTools(pi: PiApi): void {
 				Type.Union([Type.Literal("unknown"), Type.Literal("low"), Type.Literal("medium"), Type.Literal("high")]),
 			),
 			limit: Type.Optional(Type.Number({ description: "Record limit for list." })),
+			maxOutputChars: Type.Optional(
+				Type.Number({ description: "Inline output budget before saving a full-output receipt." }),
+			),
+			outputPath: Type.Optional(Type.String({ description: "Optional full-output path for oversized output." })),
+			raw: Type.Optional(Type.Boolean({ description: "Return raw command output instead of a compact receipt." })),
 		}),
 		async execute(_toolCallId, rawParams, signal) {
 			const params = rawParams as CartographerEvidenceParams;
@@ -402,7 +552,54 @@ export default function cartographerTools(pi: PiApi): void {
 				args.push("--limit", String(optionalNumber(params.limit, 20)));
 			}
 			args.push("--json");
-			return runCommand("python", [evidenceScript, ...args], signal);
+			return runCommand("python", [evidenceScript, ...args], signal, {
+				maxOutputChars: params.maxOutputChars,
+				outputPath: params.outputPath,
+				raw: params.raw,
+				label: `cartographer-evidence-${params.action}`,
+			});
+		},
+	});
+
+	pi.registerTool({
+		name: "cartographer_session",
+		label: "Cartographer Session",
+		description: "Analyze authorized Pi session JSONL into compact reports.",
+		promptSnippet: "Summarize authorized Pi session JSONL without exposing raw transcript contents",
+		promptGuidelines: [
+			"Use cartographer_session only for authorized Pi session JSONL files.",
+			"For private sessions, import or stage them through cartographer_evidence/private_artifacts first and write sanitized reports under .plan/<topic>/evidence/.",
+			"Do not paste raw transcript contents into prompts; cite the generated report path and compact receipt instead.",
+		],
+		parameters: Type.Object({
+			action: Type.Literal("analyze"),
+			input: Type.Optional(Type.String({ description: "Authorized input Pi session JSONL file." })),
+			out: Type.Optional(Type.String({ description: "Markdown report output path." })),
+			jsonOut: Type.Optional(Type.String({ description: "Optional JSON summary output path." })),
+			maxOutputChars: Type.Optional(
+				Type.Number({ description: "Inline output budget before saving a full-output receipt." }),
+			),
+			outputPath: Type.Optional(Type.String({ description: "Optional full-output path for oversized output." })),
+			raw: Type.Optional(Type.Boolean({ description: "Return raw command output instead of a compact receipt." })),
+		}),
+		async execute(_toolCallId, rawParams, signal) {
+			const params = rawParams as CartographerSessionParams;
+			const args = [
+				"--input",
+				requireString(params.input, "cartographer_session analyze requires input"),
+				"--out",
+				requireString(params.out, "cartographer_session analyze requires out"),
+				"--max-output-chars",
+				String(optionalNumber(params.maxOutputChars, 8000)),
+				"--json",
+			];
+			if (params.jsonOut) args.push("--json-out", params.jsonOut);
+			return runCommand("python", [sessionScript, ...args], signal, {
+				maxOutputChars: params.maxOutputChars,
+				outputPath: params.outputPath,
+				raw: params.raw,
+				label: "cartographer-session-analyze",
+			});
 		},
 	});
 
@@ -461,6 +658,11 @@ export default function cartographerTools(pi: PiApi): void {
 					description: "Merge with existing record on upsert. Defaults true.",
 				}),
 			),
+			maxOutputChars: Type.Optional(
+				Type.Number({ description: "Inline output budget before saving a full-output receipt." }),
+			),
+			outputPath: Type.Optional(Type.String({ description: "Optional full-output path for oversized output." })),
+			raw: Type.Optional(Type.Boolean({ description: "Return raw command output instead of a compact receipt." })),
 		}),
 		async execute(_toolCallId, rawParams, signal) {
 			const params = rawParams as CartographerJsonlParams;
@@ -526,6 +728,12 @@ export default function cartographerTools(pi: PiApi): void {
 				"node",
 				["--experimental-strip-types", jsonlScript, ...args],
 				signal,
+				{
+					maxOutputChars: params.maxOutputChars,
+					outputPath: params.outputPath,
+					raw: params.raw,
+					label: `cartographer-jsonl-${params.action}`,
+				},
 			);
 		},
 	});
