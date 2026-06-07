@@ -316,6 +316,55 @@ class IndexProjectTests(unittest.TestCase):
             self.assertEqual(stale_payload["action"], "reindexed")
             self.assertFalse(stale_payload["after"]["stale"])
 
+    def test_duplicate_downranking_and_adjacent_context_packing(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            (project / "src").mkdir()
+            (project / "docs").mkdir()
+            duplicate = 'export const duplicateHelper = "needle";\n'
+            (project / "src/a.ts").write_text(duplicate, encoding="utf-8")
+            (project / "src/b.ts").write_text(duplicate, encoding="utf-8")
+            (project / "docs/alpha.md").write_text(
+                "# Alpha One\n\nAlpha first paragraph.\n\n## Alpha Two\n\nAlpha second paragraph.\n",
+                encoding="utf-8",
+            )
+            self.run_script("index", "--root", str(project), "--no-git-root", "--json")
+
+            duplicate_query = json.loads(
+                self.run_script(
+                    "query",
+                    "--root",
+                    str(project),
+                    "--no-git-root",
+                    "--topic",
+                    "duplicateHelper",
+                    "--limit",
+                    "5",
+                    "--json",
+                ).stdout
+            )
+            self.assertTrue(any(item.get("duplicate_of") == "src/a.ts" for item in duplicate_query))
+            self.assertTrue(any(item.get("deduplicated_matches", 0) > 0 for item in duplicate_query))
+
+            context_payload = json.loads(
+                self.run_script(
+                    "context",
+                    "--root",
+                    str(project),
+                    "--no-git-root",
+                    "--topic",
+                    "alpha",
+                    "--limit",
+                    "5",
+                    "--json",
+                ).stdout
+            )
+            alpha_blocks = [block for block in context_payload["blocks"] if block["path"] == "docs/alpha.md"]
+            self.assertEqual(len(alpha_blocks), 1)
+            self.assertEqual(alpha_blocks[0]["start_line"], 1)
+            self.assertEqual(alpha_blocks[0]["end_line"], 7)
+            self.assertGreaterEqual(len(alpha_blocks[0]["sources"]), 2)
+
     def test_incremental_update_removes_deleted_files(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)

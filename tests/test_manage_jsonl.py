@@ -82,6 +82,30 @@ class ManageJsonlTests(unittest.TestCase):
                 + "\n",
                 encoding="utf-8",
             )
+            valid_lifecycle = root / "valid-lifecycle.jsonl"
+            valid_lifecycle.write_text(
+                "\n".join(
+                    [
+                        json.dumps({"id": "A1", "type": "artifact", "lifecycle": "implemented"}),
+                        json.dumps(
+                            {
+                                "id": "A2",
+                                "type": "artifact",
+                                "lifecycle": "superseded",
+                                "used_as": "implementation_guidance",
+                            }
+                        ),
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            lifecycle_report = json.loads(
+                self.run_script("validate-file", "--file", str(valid_lifecycle), "--json").stdout
+            )
+            self.assertTrue(lifecycle_report["ok"])
+            self.assertTrue(any("stale/unverified rationale" in warning for warning in lifecycle_report["warnings"]))
+
             miss_report = json.loads(self.run_script("validate-misses", "--root", str(root), "--json").stdout)
             self.assertTrue(miss_report["ok"])
             listed = json.loads(self.run_script("list-misses", "--root", str(root), "--json").stdout)

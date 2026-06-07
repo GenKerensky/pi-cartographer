@@ -125,24 +125,24 @@ Validation:
 
 ### Phase P4 — Add retrieval-quality and lifecycle tests
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P1, P2, P3
 - **Objective:** Add regression coverage for the retrieval behaviors and artifact lifecycle rules that motivated this proposal.
 - **Source references:** `tests/test_index_project.py`, `tests/test_validate_planning_graph.py`, `tests/test_manage_jsonl.py`, `tests/manage_jsonl.test.ts`, `.plan/retrieval-workflow/facts.nodes.jsonl`
 
 Checklist:
 
-- [ ] **P4.T1** Add index tests for identifier expansion, generic-token downranking/warnings, duplicate chunk handling, and adjacent snippet context packing.
-- [ ] **P4.T2** Add query-scope tests proving `code` excludes `.plan/` and `plans` includes committed rationale artifacts.
-- [ ] **P4.T3** Add miss-log tests for append, list, validation, and malformed record handling.
-- [ ] **P4.T4** Add lifecycle validation tests for stale, superseded, implemented, and missing-verification cases.
-- [ ] **P4.T5** Add workflow documentation tests or snapshot-style assertions where practical for retrieval/rationale prompt guidance.
+- [x] **P4.T1** Add index tests for identifier expansion, generic-token downranking/warnings, duplicate chunk handling, and adjacent snippet context packing.
+- [x] **P4.T2** Add query-scope tests proving `code` excludes `.plan/` and `plans` includes committed rationale artifacts.
+- [x] **P4.T3** Add miss-log tests for append, list, validation, and malformed record handling.
+- [x] **P4.T4** Add lifecycle validation tests for stale, superseded, implemented, and missing-verification cases.
+- [x] **P4.T5** Add workflow documentation tests or snapshot-style assertions where practical for retrieval/rationale prompt guidance.
 
 Validation:
 
-- [ ] **P4.V1** `npm run test:py` passes.
-- [ ] **P4.V2** `npm run test:ts` passes.
-- [ ] **P4.V3** Tests fail before the relevant implementation changes and pass after them, demonstrating real coverage.
+- [x] **P4.V1** `npm run test:py` passes.
+- [x] **P4.V2** `npm run test:ts` passes.
+- [x] **P4.V3** Tests fail before the relevant implementation changes and pass after them, demonstrating real coverage.
 
 ### Phase P5 — Update extension guidance and user-facing docs
 
