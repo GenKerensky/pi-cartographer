@@ -346,6 +346,14 @@ python skills/index-project/scripts/index_project.py slice --root "$PWD" --topic
 # Log a material retrieval miss
 python skills/index-project/scripts/index_project.py log-miss --root "$PWD" --workflow plan --topic "search UI" --original-query "search component" --failure-type vocabulary_mismatch --resolution unresolved --json
 
+# Import/list private proposal artifacts without parent-context inspection
+python skills/plan/scripts/private_artifacts.py import --root "$PWD" --topic "support-case" --input "/tmp/private-log.txt" --json
+python skills/plan/scripts/private_artifacts.py list --root "$PWD" --topic "support-case" --json
+
+# Analyze an authorized Pi session JSONL into commit-safe summaries.
+# Private sessions should be imported through private_artifacts.py first, then analyzed into .plan/<topic>/evidence/ or another commit-safe report path.
+python skills/plan/scripts/analyze_session.py --input "/tmp/session.jsonl" --out ".plan/support-case/evidence/session-analysis.md" --json-out ".plan/support-case/evidence/session-analysis.json" --json
+
 # Validate planning artifacts
 node --experimental-strip-types skills/plan/scripts/manage_jsonl.ts validate-topic --root "$PWD" --topic "search-ui" --json
 python skills/plan/scripts/validate_planning_graph.py --root "$PWD" --topic "search-ui" --json

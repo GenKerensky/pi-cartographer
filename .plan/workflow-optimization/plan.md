@@ -124,7 +124,7 @@ Do not implement output shaping or receipt validators in this phase. Make only c
 
 ### Phase P1 — Session analyzer
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P0
 - **Unlocks:** P7
 - **Primary references:** `file:.plan/workflow-optimization/session-analysis.md`, `file:extensions/cartographer-tools.ts`, `file:skills/plan/scripts/manage_jsonl.ts`, [F015], [F016], [F017], [F018]
@@ -143,16 +143,16 @@ Add a deterministic session analyzer so future workflow retrospectives can cite 
 
 #### Checklist
 
-- [ ] **P1.T1** Implement the analyzer CLI with `--input`, `--out`, `--json-out`, `--max-output-chars`, and `--json` receipt options.
-- [ ] **P1.T2** Add report sections that reproduce the dogfooding analysis categories without depending on exact private session contents.
-- [ ] **P1.T3** Add tests for counts, largest outputs, compaction detection, timeout detection, and redaction/no-raw-content behavior using synthetic fixtures.
-- [ ] **P1.T4** Document how proposal authors should import private sessions through the sensitive-evidence workflow before analyzing them.
+- [x] **P1.T1** Implement the analyzer CLI with `--input`, `--out`, `--json-out`, `--max-output-chars`, and `--json` receipt options.
+- [x] **P1.T2** Add report sections that reproduce the dogfooding analysis categories without depending on exact private session contents.
+- [x] **P1.T3** Add tests for counts, largest outputs, compaction detection, timeout detection, and redaction/no-raw-content behavior using synthetic fixtures.
+- [x] **P1.T4** Document how proposal authors should import private sessions through the sensitive-evidence workflow before analyzing them.
 
 #### Validation
 
-- [ ] **P1.V1** Run `python -m py_compile skills/plan/scripts/analyze_session.py`.
-- [ ] **P1.V2** Run `python -m unittest tests.test_analyze_session`.
-- [ ] **P1.V3** Run a synthetic analyzer command and verify stdout contains only a compact receipt and report paths, not raw fixture payload text.
+- [x] **P1.V1** Run `python -m py_compile skills/plan/scripts/analyze_session.py`.
+- [x] **P1.V2** Run `python -m unittest discover tests -p "test_analyze_session.py"`.
+- [x] **P1.V3** Run a synthetic analyzer command and verify stdout contains only a compact receipt and report paths, not raw fixture payload text.
 
 #### Exit Criteria
 
@@ -244,7 +244,7 @@ Add compact retrieval products that reduce raw search/query output while preserv
 
 #### Validation
 
-- [ ] **P3.V1** Run `python -m unittest tests.test_index_project`.
+- [ ] **P3.V1** Run `python -m unittest discover tests -p "test_index_project.py"`.
 - [ ] **P3.V2** Run `python skills/index-project/scripts/index_project.py repo-map --root "$PWD" --topic "workflow optimization" --max-tokens 1500 --json` and confirm output is compact and relevant.
 - [ ] **P3.V3** Run a safe-search fixture for a pattern that begins with `-` and confirm it is treated as a pattern, not an `rg` flag.
 - [ ] **P3.V4** Run `npm run check:scripts` after extension schema updates.
@@ -339,7 +339,7 @@ Reduce repeated full-suite validation while preserving a final full gate and dur
 #### Validation
 
 - [ ] **P5.V1** Run `python -m py_compile skills/plan/scripts/validation_runner.py`.
-- [ ] **P5.V2** Run `python -m unittest tests.test_validation_runner`.
+- [ ] **P5.V2** Run `python -m unittest discover tests -p "test_validation_runner.py"`.
 - [ ] **P5.V3** Run `npm run check` and confirm final full-suite validation still passes.
 - [ ] **P5.V4** Inspect a generated validation receipt from a synthetic repeated command and confirm it records skip reason, hash set, and previous receipt reference without hiding failures.
 
