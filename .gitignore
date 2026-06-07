@@ -24,3 +24,6 @@ pnpm-debug.log*
 
 # Local private planning inputs (raw/sensitive; never commit)
 .plan/_private/
+
+# Optional local run/output logs (raw command output; never commit)
+.plan/_runs/

@@ -162,6 +162,52 @@ Evidence analyses should summarize useful findings, relationships, counts, timel
 
 The private manifest `.plan/_private/<topic>/manifest.private.jsonl` may contain detailed provenance and optional hashes, but it is ignored. The commit-safe `evidence/manifest.jsonl` may store safe basenames by default; use redacted or opaque IDs when names are sensitive or collide. Raw file hashes are opt-in for reproducibility and should not be written by default.
 
+### Clean Context Contract
+
+Cartographer tools and skills should keep the chat as a control surface, not as the workflow database. LLM-facing tool results and subagent handoffs should use a compact Clean Context Contract:
+
+```json
+{
+  "summary": "Short human-readable result.",
+  "references": [{"path": "skills/example.md", "start_line": 1, "end_line": 20}],
+  "counts": {"matches": 12, "omitted": 9},
+  "token_estimate": 1200,
+  "truncated": true,
+  "full_output_path": "/tmp/pi-cartographer-runs/<id>.log",
+  "verification": {"read": [], "rg": [], "validation": []},
+  "next_actions": ["read skills/example.md:1", "run targeted validation"]
+}
+```
+
+Defaults:
+
+- Normal LLM-facing output should fit within about **8KB**.
+- Expanded diagnostics should fit within about **16KB**.
+- Larger command/query output should be written to `/tmp/pi-cartographer-runs/` by default and represented inline by a compact receipt.
+- `.plan/_runs/` may be used only as an explicitly ignored local replay area; raw run logs, full command output, raw sessions, and private artifacts must not be committed.
+- Direct CLI commands may remain raw/debug-friendly for humans and scripts, but Pi extension tool responses should summarize by default unless a caller explicitly requests raw output or an `outputPath`.
+
+Workflow state should be checkpointed in small JSONL records instead of relying on transcript continuity:
+
+```text
+.plan/<topic>/receipts.jsonl
+.plan/<topic>/context-packs.jsonl
+```
+
+Example receipt:
+
+```jsonl
+{"id":"receipt:P2:validation:2026-06-07T05:40:00Z","type":"validation-receipt","phase_id":"P2","status":"passed","changed_files":["skills/index-project/scripts/index_project.py"],"commands":[{"command":"npm run test:py","result":"passed","duration_ms":1516}],"summary":"Targeted Python tests passed.","full_output_path":"/tmp/pi-cartographer-runs/p2-test.log","verified":true,"verification":{"validation":["npm run test:py"]}}
+```
+
+Example context pack:
+
+```jsonl
+{"id":"context:P2:implementation","type":"context-pack","phase_id":"P2","budget_tokens":3000,"references":["skills/index-project/scripts/index_project.py:949"],"summary":"Only index output shaping and related tests are needed for this phase.","candidate_files":["extensions/cartographer-tools.ts"],"verified_files":["skills/index-project/scripts/index_project.py"],"open_questions":[]}
+```
+
+Oversized-output receipts should include `summary`, `counts`, `truncated`, `maxOutputChars`, `token_estimate`, `full_output_path`, and `next_actions`. Validation receipts should include the command, exit code/result, duration, changed-file hash set when available, summarized output or first failure block, and the validation IDs satisfied.
+
 ### JSONL graph artifacts
 
 The `.jsonl` files are graph artifacts written as one JSON object per line. Cartographer creates them while it plans:

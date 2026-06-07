@@ -308,6 +308,9 @@ Keep the current agent responsible for orchestration, artifact integrity, and fi
 
 Performance rules:
 
+- Follow the Clean Context Contract: normal LLM-facing outputs should stay near 8KB, expanded diagnostics near 16KB, and larger outputs should be represented by compact receipts with `summary`, `references`, `counts`, `token_estimate`, `truncated`, `full_output_path`, `verification`, and `next_actions`.
+- Write planning checkpoints to `.plan/{topic}/receipts.jsonl` and phase/scout/planner handoff context to `.plan/{topic}/context-packs.jsonl` when a planning step generates durable decisions, validation results, large output, or implementation context.
+- Keep raw command/search/session output in `/tmp/pi-cartographer-runs/` by default; use ignored `.plan/_runs/` only when explicitly useful for local replay, and never cite or commit raw run logs.
 - Do not read entire large source/docs/artifact files into parent or child context when `cartographer_index query/read`, focused `rg`/grep searches, or selective reads can provide targeted context.
 - Use the shared index and map JSONL as durable planning context; use `rg`/grep as the fast path for verifying concrete identifiers, filenames, scripts, tests, commands, and error strings.
 - Do not inline large child outputs into subsequent prompts. Use `outputMode: "file-only"` for researcher, optional scout, planner, reviewer, or any child likely to produce more than a concise answer.

@@ -269,6 +269,9 @@ Keep the parent agent responsible for orchestration, artifact integrity, index f
 
 Performance rules:
 
+- Follow the Clean Context Contract: normal LLM-facing outputs should stay near 8KB, expanded diagnostics near 16KB, and larger outputs should be represented by compact receipts with `summary`, `references`, `counts`, `token_estimate`, `truncated`, `full_output_path`, `verification`, and `next_actions`.
+- Write proposal workflow checkpoints to `.plan/{topic}/receipts.jsonl` and compact handoff context to `.plan/{topic}/context-packs.jsonl` when a proposal step generates durable decisions, validation results, large research output, or subagent handoff context.
+- Keep raw command/search/session output in `/tmp/pi-cartographer-runs/` by default; use ignored `.plan/_runs/` only when explicitly useful for local replay, and never cite or commit raw run logs.
 - Do not read entire large files (`draft.md`, local Pi docs, raw README files, generated artifacts) unless targeted indexed reads or focused lexical searches are insufficient. Use `cartographer_index query/read` for durable planning context and `rg`/grep for exact identifiers, filenames, scripts, tests, and error strings.
 - Treat lexical search as the fast verification path for concrete code evidence; treat the shared index as a reusable planning/map cache, not the only discovery mechanism.
 - Do not inline large subagent outputs into later prompts. Use `outputMode: "file-only"` for researcher, optional scout, planner, reviewer, or any child expected to produce more than a short answer.

@@ -316,6 +316,10 @@ If the plan is missing, ask the user whether to generate it first with the `plan
 
 Performance rules:
 
+- Follow the Clean Context Contract: normal LLM-facing outputs should stay near 8KB, expanded diagnostics near 16KB, and larger outputs should be represented by compact receipts with `summary`, `references`, `counts`, `token_estimate`, `truncated`, `full_output_path`, `verification`, and `next_actions`.
+- Before each phase handoff, write or update a compact `.plan/{topic}/context-packs.jsonl` record with the phase ID, budget, relevant references, verified files, candidate files, open questions, and validation commands.
+- After each significant command, subagent handoff, timeout, or phase decision, append a `.plan/{topic}/receipts.jsonl` record instead of relying on transcript continuity. Validation receipts should include commands, exit codes/results, durations, changed-file hashes when available, and validation IDs satisfied.
+- Keep raw command/search/session output in `/tmp/pi-cartographer-runs/` by default; use ignored `.plan/_runs/` only when explicitly useful for local replay, and never cite or commit raw run logs.
 - Do not inline large scout/research/planner outputs into worker/reviewer prompts; pass artifact paths and concise summaries. Use `outputMode: "file-only"` for large child outputs.
 - Prefer `cartographer_index query/read`, `cartographer_jsonl validate-topic`, focused `rg`/grep, and selective reads before launching optional scout.
 - Do not ask child agents to dump SQLite schemas, grep entire large drafts, or read whole local docs unless targeted indexed reads and focused lexical searches are insufficient.
