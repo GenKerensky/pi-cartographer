@@ -146,24 +146,24 @@ Validation:
 
 ### Phase P5 — Update extension guidance and user-facing docs
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P1, P2, P3
 - **Objective:** Expose the retrieval contract, scopes, miss logging, and lifecycle behavior to agents and users through tool registration metadata and README/skill documentation.
 - **Source references:** `extensions/cartographer-tools.ts`, `README.md`, `skills/index-project/SKILL.md`, `skills/proposal/SKILL.md`, `skills/plan/SKILL.md`, `skills/implement/SKILL.md`
 
 Checklist:
 
-- [ ] **P5.T1** Update `cartographer_index` tool parameters and prompt guidelines for `scope`, context output, and candidate verification.
-- [ ] **P5.T2** Add miss-log tool guidance or `cartographer_jsonl` support for retrieval miss records.
-- [ ] **P5.T3** Document lifecycle states and rationale retrieval policy in README and relevant skills.
-- [ ] **P5.T4** Document that `.plan/_index/` is generated/cache and ignored, while topic Markdown/JSONL artifacts are committed rationale.
-- [ ] **P5.T5** Document that final concise ADR generation to `docs/` is deferred to a separate proposal.
+- [x] **P5.T1** Update `cartographer_index` tool parameters and prompt guidelines for `scope`, context output, and candidate verification.
+- [x] **P5.T2** Add miss-log tool guidance or `cartographer_jsonl` support for retrieval miss records.
+- [x] **P5.T3** Document lifecycle states and rationale retrieval policy in README and relevant skills.
+- [x] **P5.T4** Document that `.plan/_index/` is generated/cache and ignored, while topic Markdown/JSONL artifacts are committed rationale.
+- [x] **P5.T5** Document that final concise ADR generation to `docs/` is deferred to a separate proposal.
 
 Validation:
 
-- [ ] **P5.V1** `npm run typecheck` passes after extension parameter updates.
-- [ ] **P5.V2** README and skill docs describe `code`, `plans`, and `all` scopes consistently.
-- [ ] **P5.V3** Tool prompt guidelines tell agents to verify candidates and use explicit rationale retrieval rather than broad hidden-directory search.
+- [x] **P5.V1** `npm run typecheck` passes after extension parameter updates.
+- [x] **P5.V2** README and skill docs describe `code`, `plans`, and `all` scopes consistently.
+- [x] **P5.V3** Tool prompt guidelines tell agents to verify candidates and use explicit rationale retrieval rather than broad hidden-directory search.
 
 ### Phase P6 — Final integration validation and migration notes
 

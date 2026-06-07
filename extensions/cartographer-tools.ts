@@ -13,20 +13,44 @@ type ToolResult = {
 };
 
 type CartographerIndexParams = {
-	action: "ensure" | "query" | "read" | "slice-jsonl" | "status";
+	action: "ensure" | "query" | "context" | "read" | "slice-jsonl" | "status" | "log-miss";
 	root?: string;
 	topic?: string;
 	path?: string;
 	nodeId?: string;
 	outDir?: string;
 	limit?: number;
+	maxTokens?: number;
+	scope?: "code" | "plans" | "all";
 	includeRawSlice?: boolean;
+	workflow?: "proposal" | "plan" | "implement" | "manual";
+	originalQuery?: string;
+	expandedQuery?: string[];
+	retrievalMode?: string[];
+	failureType?:
+		| "vocabulary_mismatch"
+		| "generic_noise"
+		| "missing_context"
+		| "stale_artifact"
+		| "ranking_failure"
+		| "tool_failure";
+	expectedTerm?: string[];
+	eventualHit?: string;
+	resolution?:
+		| "query_expansion"
+		| "path_constraint"
+		| "manual_read"
+		| "user_hint"
+		| "unresolved";
+	notes?: string;
 };
 
 type CartographerJsonlParams = {
 	action:
 		| "validate-topic"
 		| "validate-file"
+		| "validate-misses"
+		| "list-misses"
 		| "list"
 		| "upsert"
 		| "seed-pi-facts";
@@ -136,10 +160,11 @@ export default function cartographerTools(pi: PiApi): void {
 		promptSnippet: "Read or refresh the Pi Cartographer SQLite project index",
 		promptGuidelines: [
 			"Use cartographer_index before manual file discovery when Pi Cartographer index context is needed.",
-			"Treat cartographer_index query results as candidates; verify high-impact hits with read and focused rg/grep before citing or editing.",
-			"Use code/plans/all retrieval scopes as the documented contract: code is default source retrieval, plans is explicit .plan rationale retrieval, all is intentional combined retrieval.",
+			"Treat cartographer_index query/context results as candidates; verify high-impact hits with read and focused rg/grep before citing or editing.",
+			"Use scope=code for default source retrieval, scope=plans only for explicit .plan rationale retrieval, and scope=all for intentional combined review.",
+			"Use action=context for compact candidate snippets with verification hints instead of reading large raw files.",
+			"Use action=log-miss only for material retrieval misses; keep records concise and do not log secrets or raw snippets.",
 			"Use lifecycle states draft, accepted, planned, in-progress, implemented, superseded, and stale when reasoning about planning artifacts.",
-			"When retrieval materially misses, record concise miss evidence for .plan/_retrieval/misses.jsonl with failure_type, original_query, eventual_hit, and resolution when tooling supports it.",
 			"Use cartographer_index with action=ensure when the index may be stale; it re-indexes only when needed.",
 			"Use cartographer_index with action=read to inspect indexed file/node context instead of reading large raw graph dumps.",
 		],
@@ -147,9 +172,11 @@ export default function cartographerTools(pi: PiApi): void {
 			action: Type.Union([
 				Type.Literal("ensure"),
 				Type.Literal("query"),
+				Type.Literal("context"),
 				Type.Literal("read"),
 				Type.Literal("slice-jsonl"),
 				Type.Literal("status"),
+				Type.Literal("log-miss"),
 			]),
 			root: Type.Optional(
 				Type.String({
@@ -171,6 +198,47 @@ export default function cartographerTools(pi: PiApi): void {
 				Type.String({ description: "Output directory for slice-jsonl." }),
 			),
 			limit: Type.Optional(Type.Number({ description: "Result limit." })),
+			maxTokens: Type.Optional(
+				Type.Number({ description: "Approximate context token budget." }),
+			),
+			scope: Type.Optional(
+				Type.Union([Type.Literal("code"), Type.Literal("plans"), Type.Literal("all")], {
+					description: "Retrieval scope. Defaults to code.",
+				}),
+			),
+			workflow: Type.Optional(
+				Type.Union([
+					Type.Literal("proposal"),
+					Type.Literal("plan"),
+					Type.Literal("implement"),
+					Type.Literal("manual"),
+				]),
+			),
+			originalQuery: Type.Optional(Type.String({ description: "Missed original query for log-miss." })),
+			expandedQuery: Type.Optional(Type.Array(Type.String())),
+			retrievalMode: Type.Optional(Type.Array(Type.String())),
+			failureType: Type.Optional(
+				Type.Union([
+					Type.Literal("vocabulary_mismatch"),
+					Type.Literal("generic_noise"),
+					Type.Literal("missing_context"),
+					Type.Literal("stale_artifact"),
+					Type.Literal("ranking_failure"),
+					Type.Literal("tool_failure"),
+				]),
+			),
+			expectedTerm: Type.Optional(Type.Array(Type.String())),
+			eventualHit: Type.Optional(Type.String()),
+			resolution: Type.Optional(
+				Type.Union([
+					Type.Literal("query_expansion"),
+					Type.Literal("path_constraint"),
+					Type.Literal("manual_read"),
+					Type.Literal("user_hint"),
+					Type.Literal("unresolved"),
+				]),
+			),
+			notes: Type.Optional(Type.String()),
 			includeRawSlice: Type.Optional(
 				Type.Boolean({
 					description: "Also write map.graph.json for slice-jsonl.",
@@ -183,17 +251,21 @@ export default function cartographerTools(pi: PiApi): void {
 			addRoot(args, params.root);
 			if (params.action === "ensure" || params.action === "status") {
 				args.push("--json");
-			} else if (params.action === "query") {
+			} else if (params.action === "query" || params.action === "context") {
 				args.push(
 					"--topic",
 					requireString(
 						params.topic,
-						"cartographer_index query requires topic",
+						`cartographer_index ${params.action} requires topic`,
 					),
+					"--scope",
+					params.scope || "code",
 					"--limit",
-					String(optionalNumber(params.limit, 10)),
-					"--json",
+					String(optionalNumber(params.limit, params.action === "context" ? 8 : 10)),
 				);
+				if (params.action === "context")
+					args.push("--max-tokens", String(optionalNumber(params.maxTokens, 3000)));
+				args.push("--json");
 			} else if (params.action === "read") {
 				if (params.path) args.push("--path", params.path);
 				else if (params.nodeId) args.push("--node-id", params.nodeId);
@@ -217,8 +289,28 @@ export default function cartographerTools(pi: PiApi): void {
 					),
 					"--limit",
 					String(optionalNumber(params.limit, 30)),
+					"--scope",
+					params.scope || "code",
 				);
 				if (params.includeRawSlice) args.push("--include-raw-slice");
+			} else if (params.action === "log-miss") {
+				args.push(
+					"--workflow",
+					params.workflow || "manual",
+					"--original-query",
+					requireString(params.originalQuery, "cartographer_index log-miss requires originalQuery"),
+					"--failure-type",
+					requireString(params.failureType, "cartographer_index log-miss requires failureType"),
+					"--resolution",
+					params.resolution || "unresolved",
+					"--json",
+				);
+				if (params.topic) args.push("--topic", params.topic);
+				for (const query of params.expandedQuery || []) args.push("--expanded-query", query);
+				for (const mode of params.retrievalMode || []) args.push("--retrieval-mode", mode);
+				for (const term of params.expectedTerm || []) args.push("--expected-term", term);
+				if (params.eventualHit) args.push("--eventual-hit", params.eventualHit);
+				if (params.notes) args.push("--notes", params.notes);
 			}
 			return runCommand("python", [indexScript, ...args], signal);
 		},
@@ -233,18 +325,22 @@ export default function cartographerTools(pi: PiApi): void {
 			"Validate, list, or update Pi Cartographer JSONL graph artifacts",
 		promptGuidelines: [
 			"Use cartographer_jsonl to validate map/fact/plan JSONL instead of writing ad-hoc validation scripts.",
-			"Use cartographer_jsonl upsert to add or update individual JSONL nodes or edges safely.",
+			"Use cartographer_jsonl validate-misses/list-misses for .plan/_retrieval/misses.jsonl records.",
+			"Use cartographer_jsonl upsert to add or update individual JSONL nodes, edges, or miss records safely.",
+			"Treat lifecycle and candidate-only warnings as review prompts even when validation succeeds.",
 		],
 		parameters: Type.Object({
 			action: Type.Union([
 				Type.Literal("validate-topic"),
 				Type.Literal("validate-file"),
+				Type.Literal("validate-misses"),
+				Type.Literal("list-misses"),
 				Type.Literal("list"),
 				Type.Literal("upsert"),
 				Type.Literal("seed-pi-facts"),
 			]),
 			root: Type.Optional(
-				Type.String({ description: "Project root for validate-topic." }),
+				Type.String({ description: "Project root for validate-topic, validate-misses, or list-misses." }),
 			),
 			topic: Type.Optional(
 				Type.String({
@@ -299,6 +395,12 @@ export default function cartographerTools(pi: PiApi): void {
 					"--json",
 				);
 				if (params.requireId) args.push("--require-id");
+			} else if (params.action === "validate-misses") {
+				addRoot(args, params.root);
+				args.push("--json");
+			} else if (params.action === "list-misses") {
+				addRoot(args, params.root);
+				args.push("--limit", String(optionalNumber(params.limit, 20)), "--json");
 			} else if (params.action === "list") {
 				args.push(
 					"--file",

@@ -124,9 +124,9 @@ Cartographer separates source-code retrieval from rationale retrieval:
 - **Plans retrieval** searches committed `.plan/` proposal, plan, map, fact, and plan graph artifacts as historical rationale.
 - **All retrieval** intentionally combines code and plan scopes for architectural review or migration tasks.
 
-These scopes are documented as `--scope code`, `--scope plans`, and `--scope all`; implementing the scoped query CLI is part of the retrieval-workflow plan, with `code` as the default.
+These scopes are implemented as `--scope code`, `--scope plans`, and `--scope all` for indexed query/context/slice commands, with `code` as the default.
 
-Index results are candidates until verified. Candidate/verified metadata uses fields such as `candidate`, `verified`, and `verification` with `read`, `rg`, or validation-command evidence. Retrieval misses that materially change the workflow should be logged to `.plan/_retrieval/misses.jsonl` with fields such as `failure_type`, `original_query`, `eventual_hit`, and `resolution`.
+Index results are candidates until verified. Candidate/verified metadata uses fields such as `candidate`, `verified`, and `verification` with `read`, `rg`, or validation-command evidence. Use compact `context` output when an agent needs merged snippets with verification hints instead of broad file reads. Retrieval misses that materially change the workflow should be logged with `log-miss` to `.plan/_retrieval/misses.jsonl` with fields such as `failure_type`, `original_query`, `eventual_hit`, and `resolution`.
 
 Final concise ADR generation into `docs/` is intentionally out of scope for retrieval-workflow and should be handled by a later proposal.
 
@@ -146,10 +146,14 @@ Builds and queries a shared project graph. The package also registers `cartograp
 
 ```bash
 python skills/index-project/scripts/index_project.py ensure --root "$PWD"
-python skills/index-project/scripts/index_project.py query --root "$PWD" --topic "project goals" --limit 5
+python skills/index-project/scripts/index_project.py query --root "$PWD" --scope code --topic "project goals" --limit 5
+python skills/index-project/scripts/index_project.py query --root "$PWD" --scope plans --topic "prior rationale" --limit 5
+python skills/index-project/scripts/index_project.py context --root "$PWD" --scope code --topic "project goals" --json
 python skills/index-project/scripts/index_project.py read --root "$PWD" --path "README.md" --json
 python skills/index-project/scripts/index_project.py slice-jsonl --root "$PWD" --topic "search UI" --out-dir ".plan/search-ui"
+python skills/index-project/scripts/index_project.py log-miss --root "$PWD" --workflow plan --topic "search UI" --original-query "query" --failure-type vocabulary_mismatch --resolution query_expansion
 node --experimental-strip-types skills/plan/scripts/manage_jsonl.ts validate-topic --root "$PWD" --topic "search-ui" --json
+node --experimental-strip-types skills/plan/scripts/manage_jsonl.ts validate-misses --root "$PWD" --json
 ```
 
 ### `proposal`
