@@ -1,0 +1,42 @@
+{"evidence": "packages.md describes package.json pi manifest resources.", "from": "F900", "source": "local_pi_docs_seed", "to": "S900", "type": "supported_by"}
+{"evidence": "packages.md documents gallery image metadata.", "from": "F901", "source": "local_pi_docs_seed", "to": "S900", "type": "supported_by"}
+{"evidence": "skills.md describes skill structure and frontmatter.", "from": "F902", "source": "local_pi_docs_seed", "to": "S901", "type": "supported_by"}
+{"evidence": "extensions.md documents pi.registerTool.", "from": "F903", "source": "local_pi_docs_seed", "to": "S902", "type": "supported_by"}
+{"evidence": "prompt-templates.md documents packaged prompt templates.", "from": "F904", "source": "local_pi_docs_seed", "to": "S903", "type": "supported_by"}
+{"evidence": "pi-subagents guidance emphasizes concrete role-specific child tasks and parent orchestration.", "from": "F905", "source": "local_pi_docs_seed", "to": "S904", "type": "supported_by"}
+{"confidence": "high", "evidence": "The README philosophy section says Pi is aggressively extensible, has no built-in sub-agents, and has no built-in plan mode.", "from": "F001", "to": "S001", "type": "supported_by"}
+{"confidence": "high", "evidence": "The compaction docs explicitly say compaction is lossy and summarize older content to free context.", "from": "F002", "to": "S002", "type": "supported_by"}
+{"confidence": "high", "evidence": "The extension docs state tools MUST truncate output and document 50KB/2000-line defaults.", "from": "F003", "to": "S003", "type": "supported_by"}
+{"confidence": "high", "evidence": "The paper reports ripgrep at approximately 0.40s for diffusers and about 1/35th the time cost for FloatingPoint.", "from": "F004", "to": "S004", "type": "supported_by"}
+{"confidence": "high", "evidence": "The paper names keyword ambiguity, redundancy, fragmentation, identifier-weighted re-ranking, and structure-aware deduplication.", "from": "F005", "to": "S004", "type": "supported_by"}
+{"confidence": "high", "evidence": "Aider docs say it selects the most relevant repo-map portions using graph ranking and a token budget.", "from": "F006", "to": "S005", "type": "supported_by"}
+{"confidence": "high", "evidence": "SWE-agent docs list a special file viewer, linter on edit, and concise full-directory search output.", "from": "F007", "to": "S006", "type": "supported_by"}
+{"confidence": "high", "evidence": "The Building Effective Agents post says to find the simplest solution and only increase complexity when needed.", "from": "F008", "to": "S007", "type": "supported_by"}
+{"confidence": "high", "evidence": "The multi-agent research post reports 15x token cost and says most coding tasks involve fewer truly parallelizable tasks than research.", "from": "F009", "to": "S008", "type": "supported_by"}
+{"confidence": "high", "evidence": "The docs say context is the most important resource to manage and recommend /clear, /compact, and scoped subagents.", "from": "F010", "to": "S009", "type": "supported_by"}
+{"confidence": "high", "evidence": "Codex docs list Goal, Context, Constraints, and Done when as a good default prompt structure.", "from": "F011", "to": "S010", "type": "supported_by"}
+{"confidence": "high", "evidence": "Context7 LangGraph docs show StateGraph compiled with a checkpointer and human interrupt/resume examples.", "from": "F012", "to": "S011", "type": "supported_by"}
+{"confidence": "high", "evidence": "Context7 LlamaIndex snippets show query transforms before retrieval and collecting response.source_nodes.", "from": "F013", "to": "S012", "type": "supported_by"}
+{"confidence": "high", "evidence": "Context7 DSPy docs describe optimizers taking a program, metric, and training inputs.", "from": "F014", "to": "S013", "type": "supported_by"}
+{"confidence": "high", "evidence": "The generated session analysis records these counts and compaction metadata.", "from": "F015", "to": "S014", "type": "supported_by"}
+{"confidence": "high", "evidence": "Session analysis largest-output table lists these payloads.", "from": "F016", "to": "S014", "type": "supported_by"}
+{"confidence": "high", "evidence": "Session analysis subagent outcomes list reviewer/worker timeout results.", "from": "F017", "to": "S014", "type": "supported_by"}
+{"confidence": "high", "evidence": "Session analysis longest-turn table records these durations, tool counts, and output sizes.", "from": "F018", "to": "S014", "type": "supported_by"}
+{"confidence": "high", "evidence": "README sections What gets written, JSONL graph artifacts, Retrieval scopes, and Artifact lifecycle document this split.", "from": "F019", "to": "S015", "type": "supported_by"}
+{"confidence": "high", "evidence": "Skill delegation guidance includes these rules; session analysis shows they were insufficiently enforced by tools/workflow gates.", "from": "F020", "to": "S016", "type": "supported_by"}
+{"confidence": "high", "evidence": "Session-derived fact informs workflow-optimization design.", "from": "F015", "to": "file:.plan/workflow-optimization/session-analysis.md", "type": "applies_to"}
+{"confidence": "high", "evidence": "Session-derived fact informs workflow-optimization design.", "from": "F016", "to": "file:.plan/workflow-optimization/session-analysis.md", "type": "applies_to"}
+{"confidence": "high", "evidence": "Session-derived fact informs workflow-optimization design.", "from": "F017", "to": "file:.plan/workflow-optimization/session-analysis.md", "type": "applies_to"}
+{"confidence": "high", "evidence": "Session-derived fact informs workflow-optimization design.", "from": "F018", "to": "file:.plan/workflow-optimization/session-analysis.md", "type": "applies_to"}
+{"confidence": "high", "evidence": "Fact affects Cartographer tool output defaults and interface design.", "from": "F003", "to": "file:extensions/cartographer-tools.ts", "type": "applies_to"}
+{"confidence": "high", "evidence": "Fact affects Cartographer tool output defaults and interface design.", "from": "F016", "to": "file:extensions/cartographer-tools.ts", "type": "applies_to"}
+{"confidence": "high", "evidence": "Fact affects Cartographer tool output defaults and interface design.", "from": "F020", "to": "file:extensions/cartographer-tools.ts", "type": "applies_to"}
+{"confidence": "high", "evidence": "Fact affects implementation workflow and handoff design.", "from": "F008", "to": "file:skills/implement/SKILL.md", "type": "applies_to"}
+{"confidence": "high", "evidence": "Fact affects implementation workflow and handoff design.", "from": "F009", "to": "file:skills/implement/SKILL.md", "type": "applies_to"}
+{"confidence": "high", "evidence": "Fact affects implementation workflow and handoff design.", "from": "F010", "to": "file:skills/implement/SKILL.md", "type": "applies_to"}
+{"confidence": "high", "evidence": "Fact affects implementation workflow and handoff design.", "from": "F011", "to": "file:skills/implement/SKILL.md", "type": "applies_to"}
+{"confidence": "high", "evidence": "Fact affects implementation workflow and handoff design.", "from": "F020", "to": "file:skills/implement/SKILL.md", "type": "applies_to"}
+{"confidence": "high", "evidence": "Fact affects retrieval/index/context packing behavior.", "from": "F004", "to": "file:skills/index-project/scripts/index_project.py", "type": "applies_to"}
+{"confidence": "high", "evidence": "Fact affects retrieval/index/context packing behavior.", "from": "F005", "to": "file:skills/index-project/scripts/index_project.py", "type": "applies_to"}
+{"confidence": "high", "evidence": "Fact affects retrieval/index/context packing behavior.", "from": "F006", "to": "file:skills/index-project/scripts/index_project.py", "type": "applies_to"}
+{"confidence": "high", "evidence": "Fact affects retrieval/index/context packing behavior.", "from": "F013", "to": "file:skills/index-project/scripts/index_project.py", "type": "applies_to"}
