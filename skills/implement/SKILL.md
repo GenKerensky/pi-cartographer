@@ -127,8 +127,8 @@ If the plan is missing, ask the user whether to generate it first with the `plan
 
 6. **Create a bounded retrieval plan and gather phase context; use `scout` only when needed**
    - Before phase context gathering or optional scout, write a short retrieval plan with 5-10 targeted probes derived from the selected phase. Include exact identifiers, filenames, tests, scripts, commands, config keys, generated artifacts, error strings, and constrained generic terms.
-   - Run bounded rationale retrieval in `.plan/` for the active topic and explicitly related topics only. Treat retrieved rationale as historical evidence requiring freshness checks before it influences implementation.
-   - Keep source-code retrieval and rationale retrieval separate: code probes should exclude `.plan/**`; rationale probes should explicitly target `.plan/`.
+   - Run bounded rationale retrieval in `.plan/` for the active topic and explicitly related topics only, including sanitized `evidence/` docs when they inform the active plan. Treat retrieved rationale as historical evidence requiring freshness checks before it influences implementation.
+   - Keep source-code retrieval and rationale retrieval separate: code probes should exclude `.plan/**`; rationale probes should explicitly target `.plan/` and must never include raw `.plan/_private/**` inputs.
    - First use `.plan/{topic}/plan.md`, map JSONL, fact JSONL, deterministic validation reports, `cartographer_index query/read`, focused `rg`/grep searches, and selective file reads to gather phase context. For concrete code evidence, search exact identifiers, filenames, scripts, tests, commands, and error strings before relying on broad indexed snippets. Do not read entire large files or raw generated artifacts when targeted indexed context or lexical hits are enough.
    - Delegate to `scout`, or approved serial scout role, only if this index/map plus lexical context is missing, contradictory, or too broad for a safe worker handoff. If using scout, provide:
      - the selected phase text
@@ -326,7 +326,7 @@ Retrieval and lifecycle contract for implementation:
 - Lifecycle states are `draft`, `accepted`, `planned`, `in-progress`, `implemented`, `superseded`, and `stale`. Implement only from active `planned`/`in-progress` artifacts; treat `superseded` or `stale` artifacts as historical rationale requiring user or oracle confirmation before use.
 - Candidate/verified metadata uses `candidate`, `verified`, and `verification` fields. Worker handoffs should not rely on candidate-only files for edit instructions unless the worker is explicitly told to verify first.
 - Retrieval misses that materially change implementation should be appended to `.plan/_retrieval/misses.jsonl` with `failure_type`, `original_query`, `expanded_queries`, `retrieval_modes`, `expected_terms`, `eventual_hit`, and `resolution`.
-- Retrieval scopes are `code`, `plans`, and `all`, with `code` as the default. Implementation source-code retrieval should exclude `.plan/**`; rationale retrieval should search `.plan/` only through bounded probes for the active or explicitly related topics.
+- Retrieval scopes are `code`, `plans`, and `all`, with `code` as the default. Implementation source-code retrieval should exclude `.plan/**`; rationale retrieval should search `.plan/` only through bounded probes for the active or explicitly related topics, including sanitized evidence docs when relevant. Raw `.plan/_private/**` inputs are off limits during implementation unless a phase explicitly tests private intake with synthetic fixtures.
 - Final concise ADR generation into `docs/` is out of scope for this plan and should be handled by a later proposal.
 
 Cartographer tool access for every delegated agent in this workflow (`scout`, `worker`, `reviewer`, and optional `oracle`/`planner`):
@@ -337,9 +337,10 @@ cartographer_index({"action":"query","root":"$PWD","topic":"{topic}","limit":10}
 cartographer_index({"action":"read","root":"$PWD","path":"<project-relative-path>"})
 cartographer_index({"action":"read","root":"$PWD","nodeId":"<indexed-node-id>"})
 cartographer_jsonl({"action":"validate-topic","root":"$PWD","topic":"{topic}"})
+cartographer_evidence({"action":"list","root":"$PWD","topic":"{topic}"})
 ```
 
-When launching delegated agents through pi-subagents, include the package extension path `extensions/cartographer-tools.ts` in the child tool/extension configuration when supported so these tools are callable. Tell each delegated agent it may run `cartographer_index` with `action: "ensure"` before reading the index; if it reports `action: "reindexed"`, it should continue from the refreshed index and mention that in its handoff. If custom tools are unavailable in the child, use the equivalent `python <index-project-skill-dir>/scripts/index_project.py ...` and `node --experimental-strip-types <plan-skill-dir>/scripts/manage_jsonl.ts ...` CLI commands via bash. Do not ask agents to inspect the SQLite file manually when the index tool can answer the question.
+When launching delegated agents through pi-subagents, include the package extension path `extensions/cartographer-tools.ts` in the child tool/extension configuration when supported so these tools are callable. Tell each delegated agent it may run `cartographer_index` with `action: "ensure"` before reading the index; if it reports `action: "reindexed"`, it should continue from the refreshed index and mention that in its handoff. If custom tools are unavailable in the child, use the equivalent `python <index-project-skill-dir>/scripts/index_project.py ...`, `python <plan-skill-dir>/scripts/private_artifacts.py ...`, and `node --experimental-strip-types <plan-skill-dir>/scripts/manage_jsonl.ts ...` CLI commands via bash. Do not ask agents to inspect the SQLite file manually when the index tool can answer the question. Do not ask agents to read raw `.plan/_private/**` inputs; use sanitized `.plan/{topic}/evidence/` docs instead.
 
 ### Optional Scout
 

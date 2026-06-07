@@ -38,6 +38,15 @@ const RAW_MISS_FIELDS = new Set([
 	"content",
 	"raw_content",
 ]);
+const SECRET_PATTERNS: Array<[string, RegExp]> = [
+	["private-key", /-----BEGIN [A-Z ]*PRIVATE KEY-----/],
+	["github-token", /\b(?:github_pat|gh[pousr])_[A-Za-z0-9_]{20,}\b/],
+	["aws-access-key", /\bAKIA[0-9A-Z]{16}\b/],
+	["jwt", /\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b/],
+	["bearer-token", /\bBearer\s+[A-Za-z0-9._~+/=-]{24,}\b/i],
+	["connection-string", /\b(?:postgres|postgresql|mysql|mongodb):\/\/[^\s`"']+/i],
+];
+const ACTUAL_PRIVATE_PATH_RE = /\.plan\/_private\/(?!<topic>|_inbox\/<)[^\s`"')\]]+/g;
 
 type JsonRecord = Record<string, unknown>;
 type ValidateReport = {
@@ -397,6 +406,88 @@ function validateMissRecords(
 	});
 }
 
+function collectStrings(value: unknown, output: string[] = []): string[] {
+	if (typeof value === "string") output.push(value);
+	else if (Array.isArray(value)) for (const item of value) collectStrings(item, output);
+	else if (value && typeof value === "object")
+		for (const item of Object.values(value as JsonRecord)) collectStrings(item, output);
+	return output;
+}
+
+function validateNoPrivateArtifactRefs(records: JsonRecord[], label: string, errors: string[]): void {
+	const checkedFields = ["reference", "evidence", "url", "path", "raw_archive_path", "source_path", "private_path_hint"];
+	records.forEach((record, index) => {
+		for (const field of checkedFields) {
+			for (const text of collectStrings(record[field])) {
+				for (const match of text.matchAll(ACTUAL_PRIVATE_PATH_RE)) {
+					if (String(record.id || "").startsWith("private:")) continue;
+					errors.push(
+						`Direct private artifact reference ${JSON.stringify(match[0])} in ${label} record ${index + 1} field ${field}`,
+					);
+				}
+			}
+		}
+	});
+}
+
+function validateSecretPatterns(text: string, label: string, errors: string[]): void {
+	for (const [name, pattern] of SECRET_PATTERNS)
+		if (pattern.test(text)) errors.push(`Potential secret pattern ${name} in ${label}`);
+}
+
+function evidenceFiles(dir: string): string[] {
+	if (!fs.existsSync(dir)) return [];
+	const files: string[] = [];
+	const walk = (current: string) => {
+		for (const entry of fs.readdirSync(current, { withFileTypes: true })) {
+			const full = path.join(current, entry.name);
+			if (entry.isDirectory()) walk(full);
+			else if (entry.isFile() && /\.(md|jsonl)$/i.test(entry.name)) files.push(full);
+		}
+	};
+	walk(dir);
+	return files.sort();
+}
+
+function referencePath(root: string, reference: unknown): string | undefined {
+	if (typeof reference !== "string") return undefined;
+	const match = reference.match(/([^:]+):(\d+)$/);
+	if (!match) return undefined;
+	const refPath = match[1];
+	if (refPath.startsWith("http://") || refPath.startsWith("https://")) return undefined;
+	return path.isAbsolute(refPath) ? refPath : path.join(root, refPath);
+}
+
+function validateEvidenceArtifacts(
+	root: string,
+	topic: string,
+	factNodes: JsonRecord[],
+	errors: string[],
+): number {
+	const dir = path.join(root, ".plan", topic, "evidence");
+	const files = evidenceFiles(dir);
+	for (const file of files) {
+		const text = fs.readFileSync(file, "utf8");
+		validateSecretPatterns(text, path.relative(root, file), errors);
+		if (path.basename(file) !== "manifest.jsonl") {
+			for (const match of text.matchAll(ACTUAL_PRIVATE_PATH_RE))
+				errors.push(`Direct private artifact reference ${JSON.stringify(match[0])} in ${path.relative(root, file)}`);
+		}
+	}
+	for (const source of factNodes) {
+		if (source.type !== "source" || source.source_kind !== "sanitized_evidence") continue;
+		const sourcePath = referencePath(root, source.reference);
+		if (!sourcePath || !fs.existsSync(sourcePath)) {
+			errors.push(`Sanitized evidence source ${String(source.id)} lacks a valid evidence file reference`);
+			continue;
+		}
+		const text = fs.readFileSync(sourcePath, "utf8");
+		if (!/Redaction status:/i.test(text))
+			errors.push(`Sanitized evidence source ${String(source.id)} lacks Redaction status in ${path.relative(root, sourcePath)}`);
+	}
+	return files.length;
+}
+
 function retrievalMissPath(root: string): string {
 	return path.join(root, ".plan", "_retrieval", "misses.jsonl");
 }
@@ -448,7 +539,14 @@ function validateTopic(
 	validateLifecycleAndRetrievalMetadata(factEdges, "facts.edges.jsonl", errors, warnings);
 	validateLifecycleAndRetrievalMetadata(planNodes, "plan.nodes.jsonl", errors, warnings);
 	validateLifecycleAndRetrievalMetadata(planEdges, "plan.edges.jsonl", errors, warnings);
+	validateNoPrivateArtifactRefs(mapNodes, "map.nodes.jsonl", errors);
+	validateNoPrivateArtifactRefs(mapEdges, "map.edges.jsonl", errors);
+	validateNoPrivateArtifactRefs(factNodes, "facts.nodes.jsonl", errors);
+	validateNoPrivateArtifactRefs(factEdges, "facts.edges.jsonl", errors);
+	validateNoPrivateArtifactRefs(planNodes, "plan.nodes.jsonl", errors);
+	validateNoPrivateArtifactRefs(planEdges, "plan.edges.jsonl", errors);
 	validateMissRecords(missResult.records, "misses.jsonl", errors);
+	const evidenceFileCount = validateEvidenceArtifacts(root, topic, factNodes, errors);
 
 	const factById = new Map(
 		factNodes.filter((item) => item.id).map((item) => [String(item.id), item]),
@@ -491,6 +589,7 @@ function validateTopic(
 			fact_edges: factEdges.length,
 			plan_nodes: planNodes.length,
 			plan_edges: planEdges.length,
+			evidence_files: evidenceFileCount,
 			retrieval_misses: missResult.records.length,
 		},
 	};

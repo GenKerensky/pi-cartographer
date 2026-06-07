@@ -25,6 +25,12 @@ Create or update these topic-specific proposal files in the current project:
 - `.plan/{topic}/map.edges.jsonl` — curated topic-map graph edges connecting relevant files, symbols, docs, dependencies, constraints, and design context.
 - `.plan/{topic}/facts.nodes.jsonl` — append-only research graph nodes: facts, sources, tools, examples, risks, constraints.
 - `.plan/{topic}/facts.edges.jsonl` — append-only research graph edges connecting facts to sources, project context, goals, risks, and design steps.
+- `.plan/{topic}/evidence/` — sanitized, commit-safe analysis documents when the proposal uses private artifacts.
+
+Create or update ignored private-input files only when the user explicitly provides private artifacts:
+
+- `.plan/_private/{topic}/` — raw private proposal inputs; never commit, index, or cite directly.
+- `.plan/_private/_inbox/<id>/` — optional temporary staging when a topic must be confirmed before final placement.
 
 `{topic}` is a concise summary of the user's requested topic in **3 words or less**. Prefer a filesystem-safe lowercase kebab-case topic for paths, and use the same topic in the proposal heading exactly as `# {topic} Proposal`.
 
@@ -55,7 +61,17 @@ Create or update these topic-specific proposal files in the current project:
      ```
 
    - Create empty or initialized `.plan/{topic}/map.nodes.jsonl`, `.plan/{topic}/map.edges.jsonl`, `.plan/{topic}/facts.nodes.jsonl`, and `.plan/{topic}/facts.edges.jsonl`.
+   - If the user provided private logs, errors, transcripts, screenshots, exports, or documents, create `.plan/{topic}/evidence/` and run the private-artifact intake preflight before reading or analyzing those files.
    - If any topic artifact already exists, do not blindly truncate it. Preserve useful content, continue stable ID sequences, and reconcile existing records with new indexed/researched context.
+
+1a. **Run private-artifact intake preflight when needed**
+   - Trigger this preflight when the initial request includes private artifact paths, attachments, or phrases such as "use these logs", "consider this error dump", or "review this private document".
+   - Derive or confirm `{topic}` from the request text before reading raw private contents. If the topic is ambiguous, ask one concise topic/scope question.
+   - Import authorized files with `cartographer_evidence({"action":"import", ...})` when available, or the equivalent `python <plan-skill-dir>/scripts/private_artifacts.py import ... --json` CLI.
+   - Copy external files into `.plan/_private/{topic}/`. Move untracked in-repo sensitive files only when safe. If a referenced file is tracked by git, stop and ask before moving or rewriting it.
+   - Preserve safe basenames by default. Use sanitized or opaque names only when a basename is sensitive, collides, or the user/project policy requires it. Raw hashes are opt-in only.
+   - Store detailed provenance in ignored `.plan/_private/{topic}/manifest.private.jsonl`; commit-safe `evidence/manifest.jsonl` may include safe basenames, redaction status, and analysis paths.
+   - Do not read, grep, summarize, index, quote, or paste raw private artifact contents in the parent session. The next step is redactor-only analysis.
 
 2. **Inspect available subagents and choose execution mode**
    - Call the subagent list action before delegating whenever the subagent tool is available.
@@ -86,7 +102,7 @@ Create or update these topic-specific proposal files in the current project:
    - This creates or updates:
      - `.plan/_index/project-graph.sqlite`
      - `.plan/_index/project-graph-manifest.json`
-   - The indexer must ensure `.plan/_index/` is present in the target project's `.gitignore`; do not commit the generated SQLite index/cache unless the user explicitly asks.
+   - The indexer must ensure `.plan/_index/` and `.plan/_private/` are present in the target project's `.gitignore`; do not commit the generated SQLite index/cache or raw private inputs unless the user explicitly asks.
    - Query the index for `{topic}` and capture concise query output for handoffs when useful. Do not read whole large files into parent context when `cartographer_index read`, focused `rg`/grep searches, or selective reads can return relevant context.
    - When the `index-project` skill supports it and the curated map graph files are missing or thin, prefer `slice-jsonl --out-dir ".plan/{topic}"` to initialize `.plan/{topic}/map.nodes.jsonl` and `.plan/{topic}/map.edges.jsonl` before any optional scout/review pass. Do not overwrite useful existing curated map JSONL without reconciling it.
    - Do not create `.plan/{topic}/map.graph.json` by default; it duplicates the SQLite index. Only request a raw JSON slice for explicit debugging or offline review.
@@ -105,8 +121,8 @@ Create or update these topic-specific proposal files in the current project:
 
 5. **Create a bounded retrieval plan, then map project files**
    - Before map generation or optional scouting, write a short retrieval plan with 5-10 targeted probes derived from the request. Include exact identifiers, filenames, commands, tests, config keys, error strings, and constrained generic terms to verify after index lookup.
-   - Run a bounded rationale retrieval pass in `.plan/` for related prior proposals, plans, facts, superseded work, and non-goals. Treat results as historical evidence requiring freshness checks, not current source truth.
-   - Keep source-code retrieval and rationale retrieval separate: code probes should exclude `.plan/**`; rationale probes should explicitly target `.plan/`.
+   - Run a bounded rationale retrieval pass in `.plan/` for related prior proposals, plans, facts, sanitized `evidence/` docs, superseded work, and non-goals. Treat results as historical evidence requiring freshness checks, not current source truth.
+   - Keep source-code retrieval and rationale retrieval separate: code probes should exclude `.plan/**`; rationale probes should explicitly target `.plan/` and must never include `.plan/_private/**`.
    - Prefer deterministic map generation over delegated scouting:
 
      ```bash
@@ -166,6 +182,8 @@ Create or update these topic-specific proposal files in the current project:
      ```
 
    - Reuse still-valid local docs facts. Do not re-read and re-summarize Pi docs or pi-subagents docs when equivalent source/fact nodes already exist.
+   - If private artifacts were imported, launch `cartographer-redactor` before ordinary research. Pass only explicit `.plan/_private/{topic}/...` paths from the private manifest, require `outputMode: "file-only"`, and require sanitized analyses under `.plan/{topic}/evidence/` with `Redaction status`. The parent must inspect only the sanitized analysis docs and JSONL suggestions, never raw private contents.
+   - Facts derived from private artifacts must cite a source node with `source_kind: "sanitized_evidence"` and a `reference` to `.plan/{topic}/evidence/*.md`; do not cite `.plan/_private/**` as a source.
    - Ask `researcher`, or in approved serial mode research yourself, only for missing, stale, or genuinely external facts about tooling, documentation, similar projects, examples, prior art, and implementation constraints related to the topic.
    - Use indexed project context to narrow research questions to this repository's actual architecture and constraints. Pass concise index/query summaries and artifact paths, not full raw draft/docs content.
    - Treat research as an append-only JSONL graph, not YAML.
@@ -227,6 +245,8 @@ Create or update these topic-specific proposal files in the current project:
      - `facts.nodes.jsonl` and `facts.edges.jsonl` parse as valid JSONL
      - facts cited in `proposal.md` exist as `fact` nodes in `facts.nodes.jsonl`
      - every cited source-backed fact has a `supported_by` edge to a `source` node
+     - private-derived facts cite sanitized evidence docs, not `.plan/_private/**`
+     - evidence docs referenced as `source_kind: "sanitized_evidence"` include a redaction status
      - indexed nodes cited in `proposal.md`, `map.nodes.jsonl`, or `map.edges.jsonl` exist in `.plan/_index/project-graph.sqlite`
      - the plan respects `## Goals` and `## Non-Goals`
    - Apply any necessary corrections to `proposal.md`, `map.nodes.jsonl`, `map.edges.jsonl`, `facts.nodes.jsonl`, or `facts.edges.jsonl`.
@@ -240,6 +260,7 @@ Create or update these topic-specific proposal files in the current project:
      - `.plan/{topic}/map.edges.jsonl`
      - `.plan/{topic}/facts.nodes.jsonl`
      - `.plan/{topic}/facts.edges.jsonl`
+     - `.plan/{topic}/evidence/` when private artifacts were analyzed
    - Briefly summarize what each delegated or serial role contributed and mention any residual risks or unresolved decisions.
 
 ## Delegation Guidance
@@ -254,6 +275,7 @@ Performance rules:
 - Parallelize independent read-only roles where practical: scope writing and missing research can run after deterministic map generation without waiting for optional scout. Keep oracle/reviewer validation after design.
 - Seed/cache local Pi docs and pi-subagents facts with `cartographer_jsonl({"action":"seed-pi-facts", ...})`; do not ask researcher to re-summarize the same local docs every proposal.
 - Use `cartographer_jsonl validate-topic` for artifact checks before asking reviewer/oracle to reason about higher-level quality.
+- Use `cartographer_evidence import` for user-provided private artifacts before any raw-content analysis. Keep `.plan/_private/**` out of prompts except as explicit paths for `cartographer-redactor`, and cite only sanitized `.plan/{topic}/evidence/` outputs.
 
 Use subagents only where they add judgment: scope wording, missing research, design synthesis, oracle consistency review, and reviewer validation.
 

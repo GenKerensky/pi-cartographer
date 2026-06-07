@@ -21,3 +21,6 @@ pnpm-debug.log*
 
 # Local planning/index artifacts if someone tests inside this repo
 .plan/_index/
+
+# Local private planning inputs (raw/sensitive; never commit)
+.plan/_private/

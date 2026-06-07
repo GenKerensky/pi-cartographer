@@ -59,6 +59,12 @@ class IndexProjectTests(unittest.TestCase):
         )
         (root / "node_modules/pkg/index.js").write_text("ignored dependency\n", encoding="utf-8")
         (root / ".plan/old/proposal.md").write_text("ignored plan\n", encoding="utf-8")
+        (root / ".plan/old/evidence").mkdir(parents=True)
+        (root / ".plan/old/evidence/session-analysis.md").write_text(
+            "# Evidence\n\nSanitized evidence\n", encoding="utf-8"
+        )
+        (root / ".plan/_private/old").mkdir(parents=True)
+        (root / ".plan/_private/old/raw-log.txt").write_text("private raw log\n", encoding="utf-8")
 
     def test_index_query_and_slice_jsonl(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -67,9 +73,11 @@ class IndexProjectTests(unittest.TestCase):
 
             index_result = self.run_script("index", "--root", str(project), "--no-git-root", "--json")
             summary = json.loads(index_result.stdout)
-            self.assertEqual(summary["files_seen"], 7)
+            self.assertEqual(summary["files_seen"], 8)
             self.assertTrue(summary["gitignore_updated"])
-            self.assertIn(".plan/_index/", (project / ".gitignore").read_text(encoding="utf-8"))
+            gitignore_text = (project / ".gitignore").read_text(encoding="utf-8")
+            self.assertIn(".plan/_index/", gitignore_text)
+            self.assertIn(".plan/_private/", gitignore_text)
             self.assertTrue((project / ".plan/_index/project-graph.sqlite").exists())
             self.assertTrue((project / ".plan/_index/project-graph-manifest.json").exists())
 
@@ -78,6 +86,7 @@ class IndexProjectTests(unittest.TestCase):
             self.assertEqual(
                 files,
                 [
+                    ".plan/old/evidence/session-analysis.md",
                     ".plan/old/proposal.md",
                     "README.md",
                     "docs/guide.md",
@@ -88,7 +97,12 @@ class IndexProjectTests(unittest.TestCase):
                 ],
             )
             self.assertFalse(
-                any(path.startswith("node_modules/") or path.startswith(".plan/_index/") for path in files)
+                any(
+                    path.startswith("node_modules/")
+                    or path.startswith(".plan/_index/")
+                    or path.startswith(".plan/_private/")
+                    for path in files
+                )
             )
             self.assertNotIn("package-lock.json", files)
             imports = list(conn.execute("SELECT from_id, to_id, type FROM edges WHERE type = 'imports'"))
@@ -372,7 +386,7 @@ class IndexProjectTests(unittest.TestCase):
             self.run_script("index", "--root", str(project), "--no-git-root", "--json")
             second = json.loads(self.run_script("index", "--root", str(project), "--no-git-root", "--json").stdout)
             self.assertEqual(second["files_indexed"], 0)
-            self.assertEqual(second["files_skipped_unchanged"], 7)
+            self.assertEqual(second["files_skipped_unchanged"], 8)
 
             (project / "src/index.ts").unlink()
             third = json.loads(self.run_script("index", "--root", str(project), "--no-git-root", "--json").stdout)

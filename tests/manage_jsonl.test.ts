@@ -170,4 +170,50 @@ describe("manage_jsonl CLI", () => {
 		expect(report.ok).toBe(true);
 		expect(report.counts.fact_nodes).toBe(2);
 	});
+
+	it("validates sanitized evidence sources", () => {
+		const root = tempDir();
+		const topicDir = path.join(root, ".plan", "demo");
+		const evidenceDir = path.join(topicDir, "evidence");
+		fs.mkdirSync(evidenceDir, { recursive: true });
+		fs.writeFileSync(path.join(root, "README.md"), "hello\n", "utf8");
+		fs.writeFileSync(path.join(topicDir, "proposal.md"), "# Demo\n\nUses [F001].\n", "utf8");
+		fs.writeFileSync(path.join(topicDir, "map.nodes.jsonl"), `${JSON.stringify({ id: "topic:demo", type: "topic", title: "Demo" })}\n`, "utf8");
+		fs.writeFileSync(path.join(topicDir, "map.edges.jsonl"), "", "utf8");
+		fs.writeFileSync(path.join(evidenceDir, "artifact-analysis.md"), "# Evidence Analysis: artifact\n\n## Source Handling\n- Redaction status: passed\n", "utf8");
+		fs.writeFileSync(
+			path.join(topicDir, "facts.nodes.jsonl"),
+			`${JSON.stringify({ id: "S001", type: "source", title: "Evidence", source_kind: "sanitized_evidence", reference: ".plan/demo/evidence/artifact-analysis.md:1" })}\n${JSON.stringify({ id: "F001", type: "fact", title: "Fact" })}\n`,
+			"utf8",
+		);
+		fs.writeFileSync(path.join(topicDir, "facts.edges.jsonl"), `${JSON.stringify({ from: "F001", to: "S001", type: "supported_by" })}\n`, "utf8");
+
+		const report = runJson(["validate-topic", "--root", root, "--topic", "demo"]);
+		expect(report.ok).toBe(true);
+		expect(report.counts.evidence_files).toBe(1);
+	});
+
+	it("rejects unsafe evidence artifacts", () => {
+		const root = tempDir();
+		const topicDir = path.join(root, ".plan", "demo");
+		const evidenceDir = path.join(topicDir, "evidence");
+		fs.mkdirSync(evidenceDir, { recursive: true });
+		fs.writeFileSync(path.join(topicDir, "proposal.md"), "# Demo\n\nUses [F001].\n", "utf8");
+		fs.writeFileSync(path.join(topicDir, "map.nodes.jsonl"), `${JSON.stringify({ id: "topic:demo", type: "topic", title: "Demo" })}\n`, "utf8");
+		fs.writeFileSync(path.join(topicDir, "map.edges.jsonl"), "", "utf8");
+		const fakeToken = `ghp_${"123456789012345678901234567890123456"}`;
+		fs.writeFileSync(path.join(evidenceDir, "artifact-analysis.md"), `# Evidence Analysis: artifact\n\n${fakeToken}\n`, "utf8");
+		fs.writeFileSync(
+			path.join(topicDir, "facts.nodes.jsonl"),
+			`${JSON.stringify({ id: "S001", type: "source", title: "Evidence", source_kind: "sanitized_evidence", reference: ".plan/demo/evidence/artifact-analysis.md:1" })}\n${JSON.stringify({ id: "F001", type: "fact", title: "Fact", raw_archive_path: ".plan/_private/demo/raw.log" })}\n`,
+			"utf8",
+		);
+		fs.writeFileSync(path.join(topicDir, "facts.edges.jsonl"), `${JSON.stringify({ from: "F001", to: "S001", type: "supported_by" })}\n`, "utf8");
+
+		const report = runJsonUnchecked(["validate-topic", "--root", root, "--topic", "demo"]);
+		expect(report.status).not.toBe(0);
+		expect(report.payload.errors.join("\n")).toContain("Potential secret pattern");
+		expect(report.payload.errors.join("\n")).toContain("Direct private artifact reference");
+		expect(report.payload.errors.join("\n")).toContain("lacks Redaction status");
+	});
 });

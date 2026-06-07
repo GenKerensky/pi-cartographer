@@ -27,6 +27,7 @@ SCHEMA_VERSION = 3
 DEFAULT_DB_REL = ".plan/_index/project-graph.sqlite"
 DEFAULT_MANIFEST_REL = ".plan/_index/project-graph-manifest.json"
 DEFAULT_MISS_LOG_REL = ".plan/_retrieval/misses.jsonl"
+PRIVATE_PLAN_DIR = "_private"
 QUERY_SCOPES = {"code", "plans", "all"}
 GENERIC_QUERY_TOKENS = {
     "config",
@@ -296,7 +297,7 @@ def should_include_plan_artifact(path: Path, root: Path, max_bytes: int) -> bool
         return False
     if not rel.parts or rel.parts[0] != ".plan":
         return False
-    if len(rel.parts) > 1 and rel.parts[1] == "_index":
+    if len(rel.parts) > 1 and rel.parts[1] in {"_index", PRIVATE_PLAN_DIR}:
         return False
     if path.suffix.lower() not in {".md", ".jsonl"}:
         return False
@@ -741,18 +742,19 @@ def package_dependencies(text: str) -> dict[str, str]:
 
 
 def ensure_index_gitignore(root: Path) -> bool:
-    """Ensure the generated SQLite index directory is ignored by Git."""
+    """Ensure local generated/private planning directories are ignored by Git."""
     gitignore_path = root / ".gitignore"
-    desired = ".plan/_index/"
+    desired_entries = [".plan/_index/", ".plan/_private/"]
     try:
         existing = gitignore_path.read_text(encoding="utf-8") if gitignore_path.exists() else ""
     except OSError:
         return False
-    lines = [line.strip() for line in existing.splitlines()]
-    if desired in lines or desired.rstrip("/") in lines:
+    lines = {line.strip() for line in existing.splitlines()}
+    missing = [entry for entry in desired_entries if entry not in lines and entry.rstrip("/") not in lines]
+    if not missing:
         return False
 
-    addition = desired + "\n"
+    addition = "".join(f"{entry}\n" for entry in missing)
     if existing and not existing.endswith("\n"):
         addition = "\n" + addition
     try:

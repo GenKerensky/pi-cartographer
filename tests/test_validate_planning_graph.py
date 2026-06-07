@@ -207,6 +207,54 @@ Finish the feature.
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("Missing plan graph node task:P1.T1", result.stdout)
 
+    def test_sanitized_evidence_source_requires_redaction_status(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            topic_dir = self.write_valid_project(project)
+            evidence_dir = topic_dir / "evidence"
+            evidence_dir.mkdir()
+            (evidence_dir / "artifact-analysis.md").write_text("# Evidence Analysis: artifact\n", encoding="utf-8")
+            facts = [
+                json.loads(line) for line in (topic_dir / "facts.nodes.jsonl").read_text(encoding="utf-8").splitlines()
+            ]
+            facts[0]["source_kind"] = "sanitized_evidence"
+            facts[0]["reference"] = ".plan/demo/evidence/artifact-analysis.md:1"
+            (topic_dir / "facts.nodes.jsonl").write_text(
+                "\n".join(json.dumps(fact) for fact in facts) + "\n", encoding="utf-8"
+            )
+            result = self.run_validator(project)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("lacks Redaction status", result.stdout)
+
+    def test_private_reference_and_secret_pattern_fail(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            topic_dir = self.write_valid_project(project)
+            evidence_dir = topic_dir / "evidence"
+            evidence_dir.mkdir()
+            fake_token = "gh" + "p_" + "".join(["123456", "789012", "345678", "901234", "567890", "123456"])
+            (evidence_dir / "artifact-analysis.md").write_text(
+                f"# Evidence Analysis: artifact\n\n{fake_token}\n",
+                encoding="utf-8",
+            )
+            nodes_path = topic_dir / "facts.nodes.jsonl"
+            with nodes_path.open("a", encoding="utf-8") as handle:
+                handle.write(
+                    json.dumps(
+                        {
+                            "id": "S002",
+                            "type": "source",
+                            "title": "Raw",
+                            "raw_archive_path": ".plan/_private/demo/raw.log",
+                        }
+                    )
+                    + "\n"
+                )
+            result = self.run_validator(project)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("Potential secret pattern", result.stdout)
+            self.assertIn("Direct private artifact reference", result.stdout)
+
 
 if __name__ == "__main__":
     unittest.main()

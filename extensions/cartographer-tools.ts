@@ -64,6 +64,20 @@ type CartographerJsonlParams = {
 	merge?: boolean;
 };
 
+type CartographerEvidenceParams = {
+	action: "import" | "list";
+	root?: string;
+	topic?: string;
+	input?: string[];
+	move?: boolean;
+	basenameMode?: "preserve" | "sanitize" | "opaque";
+	hash?: boolean;
+	inbox?: boolean;
+	inboxId?: string;
+	sensitivity?: "unknown" | "low" | "medium" | "high";
+	limit?: number;
+};
+
 type ToolRegistration = {
 	name: string;
 	label: string;
@@ -98,6 +112,13 @@ const jsonlScript = path.join(
 	"plan",
 	"scripts",
 	"manage_jsonl.ts",
+);
+const evidenceScript = path.join(
+	packageRoot,
+	"skills",
+	"plan",
+	"scripts",
+	"private_artifacts.py",
 );
 
 function isExecFileException(error: unknown): error is ExecFileException & {
@@ -313,6 +334,75 @@ export default function cartographerTools(pi: PiApi): void {
 				if (params.notes) args.push("--notes", params.notes);
 			}
 			return runCommand("python", [indexScript, ...args], signal);
+		},
+	});
+
+	pi.registerTool({
+		name: "cartographer_evidence",
+		label: "Cartographer Evidence",
+		description:
+			"Import or list private proposal artifacts without exposing raw contents.",
+		promptSnippet:
+			"Safely import private artifacts into .plan/_private/<topic>/ and write evidence manifests",
+		promptGuidelines: [
+			"Use cartographer_evidence before reading user-provided private logs, transcripts, errors, screenshots, exports, or documents for a proposal.",
+			"Derive or confirm the proposal topic before import when possible; use inbox only for explicit pre-topic staging.",
+			"Do not read or quote raw private artifact contents in the parent context; let cartographer-redactor analyze imported artifacts and write sanitized evidence docs.",
+			"Facts and proposal prose should cite .plan/<topic>/evidence/ analysis docs, not .plan/_private/ raw inputs.",
+		],
+		parameters: Type.Object({
+			action: Type.Union([Type.Literal("import"), Type.Literal("list")]),
+			root: Type.Optional(
+				Type.String({ description: "Project root. Defaults to current working directory." }),
+			),
+			topic: Type.Optional(
+				Type.String({ description: "Proposal topic slug for private/evidence directories." }),
+			),
+			input: Type.Optional(
+				Type.Array(Type.String(), { description: "Private artifact file path(s) to import." }),
+			),
+			move: Type.Optional(
+				Type.Boolean({ description: "Move instead of copy. Tracked repo files are refused." }),
+			),
+			basenameMode: Type.Optional(
+				Type.Union([Type.Literal("preserve"), Type.Literal("sanitize"), Type.Literal("opaque")], {
+					description: "Destination basename strategy. Defaults to preserve.",
+				}),
+			),
+			hash: Type.Optional(
+				Type.Boolean({ description: "Opt-in sha256 recording in the private manifest only." }),
+			),
+			inbox: Type.Optional(
+				Type.Boolean({ description: "Use temporary .plan/_private/_inbox/<id>/ staging." }),
+			),
+			inboxId: Type.Optional(Type.String({ description: "Inbox id when inbox is true." })),
+			sensitivity: Type.Optional(
+				Type.Union([Type.Literal("unknown"), Type.Literal("low"), Type.Literal("medium"), Type.Literal("high")]),
+			),
+			limit: Type.Optional(Type.Number({ description: "Record limit for list." })),
+		}),
+		async execute(_toolCallId, rawParams, signal) {
+			const params = rawParams as CartographerEvidenceParams;
+			const args: string[] = [params.action];
+			addRoot(args, params.root);
+			if (params.action === "import") {
+				if (!params.inbox)
+					args.push("--topic", requireString(params.topic, "cartographer_evidence import requires topic unless inbox is true"));
+				for (const input of params.input || []) args.push("--input", input);
+				if (!params.input || params.input.length === 0)
+					throw new Error("cartographer_evidence import requires at least one input");
+				if (params.move) args.push("--move");
+				args.push("--basename-mode", params.basenameMode || "preserve");
+				if (params.hash) args.push("--hash");
+				if (params.inbox) args.push("--inbox");
+				if (params.inboxId) args.push("--inbox-id", params.inboxId);
+				if (params.sensitivity) args.push("--sensitivity", params.sensitivity);
+			} else if (params.action === "list") {
+				args.push("--topic", requireString(params.topic, "cartographer_evidence list requires topic"));
+				args.push("--limit", String(optionalNumber(params.limit, 20)));
+			}
+			args.push("--json");
+			return runCommand("python", [evidenceScript, ...args], signal);
 		},
 	});
 

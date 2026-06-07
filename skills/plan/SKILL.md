@@ -112,8 +112,8 @@ Use or create/update these supporting artifacts when needed:
 
 5. **Create a bounded retrieval plan and gather plan-relevant context**
    - Before gathering context or launching optional scout, write a short retrieval plan with 5-10 targeted probes derived from the proposal/request. Include exact identifiers, filenames, tests, scripts, commands, config keys, generated artifacts, error strings, and constrained generic terms.
-   - Run bounded rationale retrieval in `.plan/` for related prior proposals, plans, facts, superseded work, validation decisions, and non-goals that may constrain the new plan. Treat retrieved rationale as historical evidence requiring freshness checks.
-   - Keep source-code retrieval and rationale retrieval separate: code probes should exclude `.plan/**`; rationale probes should explicitly target `.plan/`.
+   - Run bounded rationale retrieval in `.plan/` for related prior proposals, plans, facts, sanitized `evidence/` docs, superseded work, validation decisions, and non-goals that may constrain the new plan. Treat retrieved rationale as historical evidence requiring freshness checks.
+   - Keep source-code retrieval and rationale retrieval separate: code probes should exclude `.plan/**`; rationale probes should explicitly target `.plan/` and must never include raw `.plan/_private/**` inputs.
    - Prefer existing map JSONL, `cartographer_index query/read`, focused `rg`/grep, and selective reads to identify plan-relevant context. Use lexical search first for exact identifiers, filenames, tests, scripts, commands, and error strings. Ask `scout`, or in approved serial mode inspect manually, only when this context is insufficient:
      - files likely to change
      - files that constrain the work
@@ -320,7 +320,7 @@ Retrieval and lifecycle contract for plan artifacts:
 - Lifecycle states are `draft`, `accepted`, `planned`, `in-progress`, `implemented`, `superseded`, and `stale`. Plans should become `planned` only after graph validation; implementation phases later move to `in-progress` and `implemented`.
 - Candidate/verified metadata uses `candidate`, `verified`, and `verification` fields. `verified: true` requires direct read, focused `rg`, or deterministic validation evidence.
 - Retrieval misses that materially change planning should be appended to `.plan/_retrieval/misses.jsonl` with `failure_type`, `original_query`, `expanded_queries`, `retrieval_modes`, `expected_terms`, `eventual_hit`, and `resolution`.
-- Retrieval scopes are `code`, `plans`, and `all`, with `code` as the default. Planning should use bounded rationale retrieval in `.plan/` for prior decisions while keeping source-code retrieval separate.
+- Retrieval scopes are `code`, `plans`, and `all`, with `code` as the default. Planning should use bounded rationale retrieval in `.plan/` for prior decisions and sanitized evidence docs while keeping source-code retrieval separate. Raw `.plan/_private/**` inputs are off limits and must not be cited.
 - Final concise ADR generation into `docs/` is out of scope for this plan and should be handled by a later proposal.
 
 Cartographer tool access for every delegated agent in this workflow (`scout`, `researcher`, `planner`, `oracle`, and `reviewer`):
@@ -332,9 +332,10 @@ cartographer_index({"action":"read","root":"$PWD","path":"<project-relative-path
 cartographer_index({"action":"read","root":"$PWD","nodeId":"<indexed-node-id>"})
 cartographer_jsonl({"action":"seed-pi-facts","root":"$PWD","topic":"{topic}"})
 cartographer_jsonl({"action":"validate-topic","root":"$PWD","topic":"{topic}"})
+cartographer_evidence({"action":"list","root":"$PWD","topic":"{topic}"})
 ```
 
-When launching delegated agents through pi-subagents, include the package extension path `extensions/cartographer-tools.ts` in the child tool/extension configuration when supported so these tools are callable. Tell each delegated agent it may run `cartographer_index` with `action: "ensure"` before reading the index; if it reports `action: "reindexed"`, it should continue from the refreshed index and mention that in its handoff. If custom tools are unavailable in the child, use the equivalent `python <index-project-skill-dir>/scripts/index_project.py ...` and `node --experimental-strip-types <plan-skill-dir>/scripts/manage_jsonl.ts ...` CLI commands via bash.
+When launching delegated agents through pi-subagents, include the package extension path `extensions/cartographer-tools.ts` in the child tool/extension configuration when supported so these tools are callable. Tell each delegated agent it may run `cartographer_index` with `action: "ensure"` before reading the index; if it reports `action: "reindexed"`, it should continue from the refreshed index and mention that in its handoff. If custom tools are unavailable in the child, use the equivalent `python <index-project-skill-dir>/scripts/index_project.py ...`, `python <plan-skill-dir>/scripts/private_artifacts.py ...`, and `node --experimental-strip-types <plan-skill-dir>/scripts/manage_jsonl.ts ...` CLI commands via bash. Do not let planning agents read raw `.plan/_private/**` contents; they may read sanitized `.plan/{topic}/evidence/` docs in `plans` scope.
 
 Recommended delegated-role prompts:
 

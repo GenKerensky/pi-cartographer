@@ -18,9 +18,9 @@ The index lives in the current project:
 - `.plan/_index/project-graph.sqlite` — SQLite database with file inventory, graph nodes/edges, chunks, and FTS5 search.
 - `.plan/_index/project-graph-manifest.json` — scan summary, root path, generated timestamp, counts, and index settings.
 
-The indexer also ensures `.plan/_index/` is present in the target project's `.gitignore`, creating `.gitignore` if needed. Topic planning artifacts remain text/JSONL source-of-truth files and are not automatically ignored.
+The indexer also ensures `.plan/_index/` and `.plan/_private/` are present in the target project's `.gitignore`, creating `.gitignore` if needed. Topic planning artifacts remain text/JSONL source-of-truth files and are not automatically ignored.
 
-Committed `.plan/<topic>/proposal.md`, `.plan/<topic>/plan.md`, and related JSONL rationale artifacts are indexed in the explicit `plans` retrieval scope. They are excluded from the default `code` scope and `.plan/_index/` cache files are never indexed.
+Committed `.plan/<topic>/proposal.md`, `.plan/<topic>/plan.md`, related JSONL rationale artifacts, and sanitized `.plan/<topic>/evidence/` analyses are indexed in the explicit `plans` retrieval scope. They are excluded from the default `code` scope. `.plan/_index/` cache files and raw `.plan/_private/` inputs are never indexed.
 
 Do not place topic-specific proposal content inside `.plan/_index/`; proposals should query this shared artifact and write their own slices under `.plan/{topic}/`.
 
@@ -146,7 +146,7 @@ Node IDs are stable and typed, for example:
 Cartographer separates retrieval into three planned scopes:
 
 - `code` — default source-code retrieval over project code/docs/config. This scope excludes committed `.plan/` rationale artifacts and never treats `.plan/_index/` cache files as source.
-- `plans` — explicit rationale retrieval over committed `.plan/<topic>/proposal.md`, `.plan/<topic>/plan.md`, map/fact/plan JSONL, and retrieval miss logs.
+- `plans` — explicit rationale retrieval over committed `.plan/<topic>/proposal.md`, `.plan/<topic>/plan.md`, map/fact/plan JSONL, sanitized `.plan/<topic>/evidence/` analyses, and retrieval miss logs.
 - `all` — explicit combined retrieval for architecture review, migration, or reasoning across source and rationale.
 
 The scoped query CLI (`--scope code|plans|all`) is implemented for `query`, `context`, `slice`, and `slice-jsonl`. `code` is the default; use `plans` only for explicit rationale retrieval.
@@ -162,6 +162,8 @@ Candidate/verified metadata uses these fields where applicable:
 - `verification.validation`: deterministic validation command evidence.
 
 Retrieval misses that materially slow or change the workflow should be captured as concise JSONL records in `.plan/_retrieval/misses.jsonl`. Miss records should include `failure_type`, `original_query`, `expanded_queries`, `retrieval_modes`, `expected_terms`, `eventual_hit`, `resolution`, and `notes` when known. Do not log secrets, proprietary raw snippets, or routine empty searches.
+
+Raw private proposal inputs under `.plan/_private/**` are excluded from every retrieval scope. If private artifacts are needed for planning, first generate sanitized analysis documents under `.plan/<topic>/evidence/`; those evidence docs can then be retrieved with `scope=plans`.
 
 ## Query Semantics
 
@@ -199,7 +201,7 @@ For small and medium repositories, this should usually complete in seconds. Embe
 
 - Do not index dependency directories such as `node_modules`, `.venv`, `venv`, build outputs, or `.git`.
 - Do not index low-signal lockfiles such as `package-lock.json`, `pnpm-lock.yaml`, `yarn.lock`, or `bun.lockb`; use manifest files like `package.json` for dependency discovery.
-- Do not mix `.plan/` rationale into default source-code retrieval; use `--scope plans` for explicit rationale retrieval. `.plan/_index/` cache files remain excluded.
+- Do not mix `.plan/` rationale into default source-code retrieval; use `--scope plans` for explicit rationale retrieval. `.plan/_index/` cache files and `.plan/_private/` raw inputs remain excluded.
 - Do not rely only on top FTS matches. Check graph neighbors and high-level config/docs too.
 - Do not treat this index as authoritative for dynamic behavior; it is a static planning aid.
 - Do not cite a file in a proposal unless it exists in the current checkout.
@@ -220,7 +222,7 @@ Success means:
 
 - `.plan/_index/project-graph.sqlite` exists
 - `.plan/_index/project-graph-manifest.json` exists
-- `.gitignore` contains `.plan/_index/`
+- `.gitignore` contains `.plan/_index/` and `.plan/_private/`
 - `ensure` reports the index is fresh after any needed re-index
 - FTS5 queries return relevant chunks/files
 - `read` returns indexed file/node context from SQLite

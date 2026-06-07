@@ -31,6 +31,15 @@ MISS_FAILURE_TYPES = {
 }
 MISS_RESOLUTIONS = {"query_expansion", "path_constraint", "manual_read", "user_hint", "unresolved"}
 RAW_MISS_FIELDS = {"text", "snippet", "raw_snippet", "content", "raw_content"}
+SECRET_PATTERNS = [
+    ("private-key", re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----")),
+    ("github-token", re.compile(r"\b(?:github_pat|gh[pousr])_[A-Za-z0-9_]{20,}\b")),
+    ("aws-access-key", re.compile(r"\bAKIA[0-9A-Z]{16}\b")),
+    ("jwt", re.compile(r"\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b")),
+    ("bearer-token", re.compile(r"\bBearer\s+[A-Za-z0-9._~+/=-]{24,}\b", re.IGNORECASE)),
+    ("connection-string", re.compile(r"\b(?:postgres|postgresql|mysql|mongodb)://[^\s`\"']+", re.IGNORECASE)),
+]
+ACTUAL_PRIVATE_PATH_RE = re.compile(r"\.plan/_private/(?!<topic>|_inbox/<)[^\s`\"')\]]+")
 
 
 def read_jsonl(path: Path, errors: list[str], required: bool = False) -> list[dict[str, Any]]:
@@ -197,6 +206,88 @@ def validate_miss_records(records: list[dict[str, Any]], label: str, errors: lis
                 errors.append(f"Raw snippet/content field {field} is not allowed in {label} record {index}")
 
 
+def collect_strings(value: Any, output: list[str] | None = None) -> list[str]:
+    if output is None:
+        output = []
+    if isinstance(value, str):
+        output.append(value)
+    elif isinstance(value, list):
+        for item in value:
+            collect_strings(item, output)
+    elif isinstance(value, dict):
+        for item in value.values():
+            collect_strings(item, output)
+    return output
+
+
+def validate_no_private_artifact_refs(records: list[dict[str, Any]], label: str, errors: list[str]) -> None:
+    checked_fields = ("reference", "evidence", "url", "path", "raw_archive_path", "source_path", "private_path_hint")
+    for index, record in enumerate(records, start=1):
+        for field in checked_fields:
+            for text in collect_strings(record.get(field)):
+                for match in ACTUAL_PRIVATE_PATH_RE.finditer(text):
+                    if str(record.get("id", "")).startswith("private:"):
+                        continue
+                    errors.append(
+                        f"Direct private artifact reference {match.group(0)!r} in {label} record {index} field {field}"
+                    )
+
+
+def validate_secret_patterns(text: str, label: str, errors: list[str]) -> None:
+    for name, pattern in SECRET_PATTERNS:
+        if pattern.search(text):
+            errors.append(f"Potential secret pattern {name} in {label}")
+
+
+def evidence_files(topic_dir: Path) -> list[Path]:
+    evidence_dir = topic_dir / "evidence"
+    if not evidence_dir.exists():
+        return []
+    return sorted(
+        path for path in evidence_dir.rglob("*") if path.is_file() and path.suffix.lower() in {".md", ".jsonl"}
+    )
+
+
+def reference_path(root: Path, reference: Any) -> Path | None:
+    if not isinstance(reference, str):
+        return None
+    match = re.match(r"(.+):(\d+)$", reference)
+    if not match:
+        return None
+    rel = match.group(1)
+    if rel.startswith(("http://", "https://")):
+        return None
+    path = Path(rel)
+    return path if path.is_absolute() else root / path
+
+
+def validate_evidence_artifacts(
+    root: Path, topic_dir: Path, fact_nodes: list[dict[str, Any]], errors: list[str]
+) -> int:
+    files = evidence_files(topic_dir)
+    for file in files:
+        text = file.read_text(encoding="utf-8")
+        validate_secret_patterns(text, file.relative_to(root).as_posix(), errors)
+        if file.name != "manifest.jsonl":
+            for match in ACTUAL_PRIVATE_PATH_RE.finditer(text):
+                errors.append(
+                    f"Direct private artifact reference {match.group(0)!r} in {file.relative_to(root).as_posix()}"
+                )
+    for source in fact_nodes:
+        if source.get("type") != "source" or source.get("source_kind") != "sanitized_evidence":
+            continue
+        source_path = reference_path(root, source.get("reference"))
+        if not source_path or not source_path.exists():
+            errors.append(f"Sanitized evidence source {source.get('id')} lacks a valid evidence file reference")
+            continue
+        text = source_path.read_text(encoding="utf-8")
+        if not re.search(r"Redaction status:", text, re.IGNORECASE):
+            errors.append(
+                f"Sanitized evidence source {source.get('id')} lacks Redaction status in {source_path.relative_to(root).as_posix()}"
+            )
+    return len(files)
+
+
 def phase_blocks(plan_text: str) -> list[tuple[str, str]]:
     matches = list(PHASE_RE.finditer(plan_text))
     blocks: list[tuple[str, str]] = []
@@ -343,7 +434,14 @@ def main() -> int:
     validate_lifecycle_and_retrieval_metadata(fact_edges, "facts.edges.jsonl", errors, warnings)
     validate_lifecycle_and_retrieval_metadata(plan_nodes, "plan.nodes.jsonl", errors, warnings)
     validate_lifecycle_and_retrieval_metadata(plan_edges, "plan.edges.jsonl", errors, warnings)
+    validate_no_private_artifact_refs(map_nodes, "map.nodes.jsonl", errors)
+    validate_no_private_artifact_refs(map_edges, "map.edges.jsonl", errors)
+    validate_no_private_artifact_refs(fact_nodes, "facts.nodes.jsonl", errors)
+    validate_no_private_artifact_refs(fact_edges, "facts.edges.jsonl", errors)
+    validate_no_private_artifact_refs(plan_nodes, "plan.nodes.jsonl", errors)
+    validate_no_private_artifact_refs(plan_edges, "plan.edges.jsonl", errors)
     validate_miss_records(retrieval_misses, "misses.jsonl", errors)
+    evidence_file_count = validate_evidence_artifacts(root, topic_dir, fact_nodes, errors)
 
     fact_nodes_by_id = {str(node.get("id")): node for node in fact_nodes if node.get("id")}
     source_ids = {node_id for node_id, node in fact_nodes_by_id.items() if node.get("type") == "source"}
@@ -378,6 +476,7 @@ def main() -> int:
             "fact_edges": len(fact_edges),
             "plan_nodes": len(plan_nodes),
             "plan_edges": len(plan_edges),
+            "evidence_files": evidence_file_count,
             "retrieval_misses": len(retrieval_misses),
         },
     }

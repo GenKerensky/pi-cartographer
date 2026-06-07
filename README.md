@@ -62,6 +62,7 @@ pi -e /path/to/pi-cartographer   # one-off local use
 | `implement` | Skill | Executes an existing plan phase-by-phase with context gathering, worker edits, quality gates, reviewer approval, plan updates, and conventional commits. |
 | `cartographer_index` | Extension tool | Wraps index actions such as `ensure`, `query`, `context`, `read`, `slice-jsonl`, `status`, and `log-miss`. |
 | `cartographer_jsonl` | Extension tool | Wraps JSONL actions such as `validate-topic`, `validate-file`, `validate-misses`, `list-misses`, `list`, `upsert`, and `seed-pi-facts`. |
+| `cartographer_evidence` | Extension tool | Imports/list private proposal artifacts under `.plan/_private/<topic>/` without exposing raw contents and writes commit-safe evidence manifests. |
 
 Skill commands are available as `/skill:<name>` when pi skill commands are enabled.
 
@@ -138,6 +139,29 @@ Cartographer writes planning artifacts under `.plan/` in your project. Depending
 
 These topic artifacts are intentional rationale. Review and commit them when they explain the work.
 
+### Private inputs and sanitized evidence
+
+Some proposals need private logs, error dumps, transcripts, screenshots, exports, or documents as source material. Raw private inputs belong under the ignored private area, not in committed proposal artifacts:
+
+```text
+.plan/_private/<topic>/
+.plan/_private/_inbox/<id>/
+```
+
+Use `.plan/_private/<topic>/` after the topic is known. Use `_inbox` only as temporary pre-topic staging. These files are raw/sensitive, should not be committed, and must not be indexed or cited as direct fact sources.
+
+Commit-safe summaries of private inputs belong under the topic evidence folder:
+
+```text
+.plan/<topic>/evidence/
+.plan/<topic>/evidence/manifest.jsonl
+.plan/<topic>/evidence/<artifact-id>-analysis.md
+```
+
+Evidence analyses should summarize useful findings, relationships, counts, timelines, and redacted examples while omitting secrets, PII, raw stack traces, request/response bodies, private document text, and enough adjacent context to reconstruct sensitive values. Facts derived from these analyses should cite source nodes with `source_kind: sanitized_evidence` and references to `.plan/<topic>/evidence/*.md`, never raw `.plan/_private/**` files.
+
+The private manifest `.plan/_private/<topic>/manifest.private.jsonl` may contain detailed provenance and optional hashes, but it is ignored. The commit-safe `evidence/manifest.jsonl` may store safe basenames by default; use redacted or opaque IDs when names are sensitive or collide. Raw file hashes are opt-in for reproducibility and should not be written by default.
+
 ### JSONL graph artifacts
 
 The `.jsonl` files are graph artifacts written as one JSON object per line. Cartographer creates them while it plans:
@@ -189,6 +213,8 @@ Cartographer treats the index as a fast lookup aid, not as durable rationale:
 - They use it to find candidate files, symbols, docs, tests, commands, and prior plan artifacts.
 - Important candidates still need verification with direct reads, focused `rg`, or validation commands.
 - `.plan/_index/` is generated, ignored, and should not be committed. The indexer attempts to add it to the target project's `.gitignore`.
+- `.plan/_private/` is raw/private input storage, ignored, excluded from all retrieval scopes, and should not be committed. The indexer attempts to keep it ignored alongside `.plan/_index/`.
+- `.plan/<topic>/evidence/` contains sanitized, commit-safe evidence and is included in explicit `plans` scope retrieval.
 
 Retrieval miss notes may be written here:
 
@@ -205,7 +231,7 @@ Cartographer keeps source-code search separate from planning-rationale search.
 | Scope | Meaning | Use when |
 |---|---|---|
 | `code` | Project code/docs/config, excluding `.plan/` rationale | Default for implementation and code discovery. |
-| `plans` | Committed `.plan/` proposals, plans, facts, maps, and miss logs | Checking prior decisions or historical rationale. |
+| `plans` | Committed `.plan/` proposals, plans, facts, maps, sanitized `evidence/`, and miss logs | Checking prior decisions, sanitized evidence, or historical rationale. |
 | `all` | Both code and planning rationale | Architecture review or migration work. |
 
 Index results are **candidates**, not proof. Important matches should be verified with direct reads, focused `rg`, or validation commands before they are cited or edited.
