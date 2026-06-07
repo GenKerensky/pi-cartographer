@@ -21,10 +21,3 @@ pnpm-debug.log*
 
 # Local planning/index artifacts if someone tests inside this repo
 .plan/_index/
-.plan/*/map.graph.json
-.plan/*/map.nodes.jsonl
-.plan/*/map.edges.jsonl
-.plan/*/facts.nodes.jsonl
-.plan/*/facts.edges.jsonl
-.plan/*/plan.nodes.jsonl
-.plan/*/plan.edges.jsonl
