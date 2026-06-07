@@ -312,6 +312,14 @@ Performance rules:
 - Use `scout` only as an exception for missing/ambiguous context or complex architecture; never ask it to dump SQLite, perform broad repo rediscovery, or rewrite generated maps.
 - Seed/reuse existing fact JSONL for local Pi/package/subagent docs with `cartographer_jsonl({"action":"seed-pi-facts", ...})`; do not repeat local-doc research each plan.
 
+Retrieval and lifecycle contract for plan artifacts:
+
+- Lifecycle states are `draft`, `accepted`, `planned`, `in-progress`, `implemented`, `superseded`, and `stale`. Plans should become `planned` only after graph validation; implementation phases later move to `in-progress` and `implemented`.
+- Candidate/verified metadata uses `candidate`, `verified`, and `verification` fields. `verified: true` requires direct read, focused `rg`, or deterministic validation evidence.
+- Retrieval misses that materially change planning should be appended to `.plan/_retrieval/misses.jsonl` with `failure_type`, `original_query`, `expanded_queries`, `retrieval_modes`, `expected_terms`, `eventual_hit`, and `resolution`.
+- Retrieval scopes are `code`, `plans`, and `all`, with `code` as the default. Planning should use bounded rationale retrieval in `.plan/` for prior decisions while keeping source-code retrieval separate.
+- Final concise ADR generation into `docs/` is out of scope for this plan and should be handled by a later proposal.
+
 Cartographer tool access for every delegated agent in this workflow (`scout`, `researcher`, `planner`, `oracle`, and `reviewer`):
 
 ```bash

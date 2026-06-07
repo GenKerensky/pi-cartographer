@@ -1,0 +1,10 @@
+{"from":"F1","to":"S1","type":"supported_by","description":"Paper abstract and RQ1 compare Naive GrepRAG to baselines."}
+{"from":"F2","to":"S1","type":"supported_by","description":"Section 4.2.2 analyzes retrieval patterns."}
+{"from":"F3","to":"S1","type":"supported_by","description":"Section 4.3.3 identifies keyword ambiguity as a reranking failure."}
+{"from":"F4","to":"S1","type":"supported_by","description":"Section 4.3.3 identifies fragmentation and redundancy."}
+{"from":"F5","to":"S1","type":"supported_by","description":"Sections 5.2-5.4 describe and ablate reranking/deduplication."}
+{"from":"F6","to":"S1","type":"supported_by","description":"Section 6 discusses command generation overhead mitigation."}
+{"from":"F2","to":"topic:retrieval-workflow","type":"informs","description":"Identifier-oriented query families shape the proposed retrieval plan."}
+{"from":"F3","to":"topic:retrieval-workflow","type":"informs","description":"Generic keyword failures shape query constraints and verification."}
+{"from":"F4","to":"topic:retrieval-workflow","type":"informs","description":"Fragmentation motivates snippet merging and context budgets."}
+{"from":"F5","to":"topic:retrieval-workflow","type":"informs","description":"GrepRAG post-processing motivates ranking and dedupe improvements."}

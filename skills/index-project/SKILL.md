@@ -115,9 +115,29 @@ Node IDs are stable and typed, for example:
 - `doc:AGENTS.md#project-goals`
 - `dependency:npm:astro`
 
-## Query Semantics
+## Retrieval Contract
+
+Cartographer separates retrieval into three planned scopes:
+
+- `code` — default source-code retrieval over project code/docs/config. This scope excludes committed `.plan/` rationale artifacts and never treats `.plan/_index/` cache files as source.
+- `plans` — explicit rationale retrieval over committed `.plan/<topic>/proposal.md`, `.plan/<topic>/plan.md`, map/fact/plan JSONL, and retrieval miss logs.
+- `all` — explicit combined retrieval for architecture review, migration, or reasoning across source and rationale.
+
+The scoped query CLI (`--scope code|plans|all`) is a retrieval-workflow plan item; until implemented, agents should preserve the same behavior manually by excluding `.plan/**` for code retrieval and searching `.plan/` only for explicit rationale retrieval.
 
 `query` performs FTS5 search over indexed chunks and returns file-level **candidate** matches with representative snippets and verification hints. Treat query results as candidates: verify high-impact hits with direct file reads and/or the returned `rg` commands before citing them in proposal/plan prose or editing code.
+
+Candidate/verified metadata uses these fields where applicable:
+
+- `candidate`: `true` when a result is plausible but not authoritative.
+- `verified`: `true` only when supporting evidence has been recorded.
+- `verification.read`: direct file and line-range evidence.
+- `verification.rg`: focused lexical commands that support the match.
+- `verification.validation`: deterministic validation command evidence.
+
+Retrieval misses that materially slow or change the workflow should be captured as concise JSONL records in `.plan/_retrieval/misses.jsonl`. Miss records should include `failure_type`, `original_query`, `expanded_queries`, `retrieval_modes`, `expected_terms`, `eventual_hit`, `resolution`, and `notes` when known. Do not log secrets, proprietary raw snippets, or routine empty searches.
+
+## Query Semantics
 
 Ranking is lexical-first and GrepRAG-inspired:
 

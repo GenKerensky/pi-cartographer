@@ -318,6 +318,14 @@ Performance rules:
 - Do not ask child agents to dump SQLite schemas, grep entire large drafts, or read whole local docs unless targeted indexed reads and focused lexical searches are insufficient.
 - Use reviewer for code/artifact validation and oracle only for decision/scope consistency.
 
+Retrieval and lifecycle contract for implementation:
+
+- Lifecycle states are `draft`, `accepted`, `planned`, `in-progress`, `implemented`, `superseded`, and `stale`. Implement only from active `planned`/`in-progress` artifacts; treat `superseded` or `stale` artifacts as historical rationale requiring user or oracle confirmation before use.
+- Candidate/verified metadata uses `candidate`, `verified`, and `verification` fields. Worker handoffs should not rely on candidate-only files for edit instructions unless the worker is explicitly told to verify first.
+- Retrieval misses that materially change implementation should be appended to `.plan/_retrieval/misses.jsonl` with `failure_type`, `original_query`, `expanded_queries`, `retrieval_modes`, `expected_terms`, `eventual_hit`, and `resolution`.
+- Retrieval scopes are `code`, `plans`, and `all`, with `code` as the default. Implementation source-code retrieval should exclude `.plan/**`; rationale retrieval should search `.plan/` only through bounded probes for the active or explicitly related topics.
+- Final concise ADR generation into `docs/` is out of scope for this plan and should be handled by a later proposal.
+
 Cartographer tool access for every delegated agent in this workflow (`scout`, `worker`, `reviewer`, and optional `oracle`/`planner`):
 
 ```bash

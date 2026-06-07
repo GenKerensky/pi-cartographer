@@ -137,6 +137,9 @@ export default function cartographerTools(pi: PiApi): void {
 		promptGuidelines: [
 			"Use cartographer_index before manual file discovery when Pi Cartographer index context is needed.",
 			"Treat cartographer_index query results as candidates; verify high-impact hits with read and focused rg/grep before citing or editing.",
+			"Use code/plans/all retrieval scopes as the documented contract: code is default source retrieval, plans is explicit .plan rationale retrieval, all is intentional combined retrieval.",
+			"Use lifecycle states draft, accepted, planned, in-progress, implemented, superseded, and stale when reasoning about planning artifacts.",
+			"When retrieval materially misses, record concise miss evidence for .plan/_retrieval/misses.jsonl with failure_type, original_query, eventual_hit, and resolution when tooling supports it.",
 			"Use cartographer_index with action=ensure when the index may be stale; it re-indexes only when needed.",
 			"Use cartographer_index with action=read to inspect indexed file/node context instead of reading large raw graph dumps.",
 		],

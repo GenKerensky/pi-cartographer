@@ -254,6 +254,14 @@ Performance rules:
 
 Use subagents only where they add judgment: scope wording, missing research, design synthesis, oracle consistency review, and reviewer validation.
 
+Retrieval and lifecycle contract for proposal artifacts:
+
+- Lifecycle states are `draft`, `accepted`, `planned`, `in-progress`, `implemented`, `superseded`, and `stale`. New proposal artifacts start as `draft` and become `accepted` only after validation or explicit user acceptance.
+- Index/map/query results are candidates until verified. Use `candidate`, `verified`, and `verification` metadata where useful; `verified: true` requires direct read, focused `rg`, or deterministic validation evidence.
+- Retrieval miss records belong in `.plan/_retrieval/misses.jsonl` and should include `failure_type`, `original_query`, `expanded_queries`, `retrieval_modes`, `expected_terms`, `eventual_hit`, `resolution`, and concise notes when known.
+- Retrieval scopes are `code`, `plans`, and `all`, with `code` as the default. Proposal code discovery should exclude `.plan/**`; rationale retrieval should search `.plan/` only through explicit bounded probes.
+- Final concise ADR generation into `docs/` is out of scope for this workflow and belongs to a later proposal.
+
 After choosing delegated or approved serial execution mode, use the `index-project` skill to create/update `.plan/_index/project-graph.sqlite` before scope, mapping, research, or planning passes. When this proposal skill is installed alongside `index-project`, prefer the direct sibling reference `../index-project/SKILL.md` to avoid ambiguity with another discovered skill of the same name. Pass concise query results, map JSONL paths, index artifact paths, and the index tool commands into subagent prompts. Subagents should use the index-derived graph as their starting context for proposal artifacts, then use `rg`/grep and selective file reads to verify exact code evidence or fill obvious lexical gaps.
 
 Cartographer tool access for every delegated agent in this workflow (`delegate`, `scout`, `researcher`, `planner`, `oracle`, and `reviewer`):

@@ -90,6 +90,46 @@ Topic artifacts:
 .plan/<topic>/plan.edges.jsonl
 ```
 
+Retrieval learning artifacts:
+
+```text
+.plan/_retrieval/misses.jsonl
+```
+
+Generated index/cache artifacts under `.plan/_index/` are ignored. Topic Markdown/JSONL artifacts and retrieval miss logs are source-of-truth rationale that may be committed.
+
+## Planning Artifact Lifecycle
+
+Cartographer planning artifacts use these lifecycle states:
+
+```text
+draft -> accepted -> planned -> in-progress -> implemented -> superseded/stale
+```
+
+- `draft` — artifact is being created and is not yet validated.
+- `accepted` — proposal rationale has passed validation or been explicitly accepted.
+- `planned` — plan artifacts are generated and validation-ready.
+- `in-progress` — implementation has started for a plan or phase.
+- `implemented` — planned work has completed and should record implementation evidence such as commit SHAs when available.
+- `superseded` — a newer artifact replaces this rationale.
+- `stale` — referenced code, facts, or external context may no longer match current reality.
+
+Lifecycle metadata may appear in JSONL records as `status`, `created_at`, `last_verified_at`, `implemented_by`, `superseded_by`, and `stale_reason`.
+
+## Retrieval Contract
+
+Cartographer separates source-code retrieval from rationale retrieval:
+
+- **Code retrieval** is the default and searches project code/docs/config without `.plan/` rationale artifacts.
+- **Plans retrieval** searches committed `.plan/` proposal, plan, map, fact, and plan graph artifacts as historical rationale.
+- **All retrieval** intentionally combines code and plan scopes for architectural review or migration tasks.
+
+These scopes are documented as `--scope code`, `--scope plans`, and `--scope all`; implementing the scoped query CLI is part of the retrieval-workflow plan, with `code` as the default.
+
+Index results are candidates until verified. Candidate/verified metadata uses fields such as `candidate`, `verified`, and `verification` with `read`, `rg`, or validation-command evidence. Retrieval misses that materially change the workflow should be logged to `.plan/_retrieval/misses.jsonl` with fields such as `failure_type`, `original_query`, `eventual_hit`, and `resolution`.
+
+Final concise ADR generation into `docs/` is intentionally out of scope for retrieval-workflow and should be handled by a later proposal.
+
 ## Design principles
 
 - **Graph first:** project context, map data, facts, and plans are represented with node/edge artifacts where useful.
