@@ -1,0 +1,295 @@
+{
+  "bytes": 9272219,
+  "compactions": [
+    {
+      "line": 174,
+      "role": "unknown",
+      "tool": null
+    },
+    {
+      "line": 617,
+      "role": "unknown",
+      "tool": null
+    },
+    {
+      "line": 1103,
+      "role": "unknown",
+      "tool": null
+    },
+    {
+      "line": 1763,
+      "role": "unknown",
+      "tool": null
+    }
+  ],
+  "cost_totals": {
+    "cost": 55.37621000000002
+  },
+  "entries": 2035,
+  "input_basename": "adr-session.jsonl",
+  "invalid_lines": 0,
+  "largest_outputs": [
+    {
+      "chars": 166878,
+      "line": 36,
+      "role": "toolResult",
+      "tool": "cartographer_index"
+    },
+    {
+      "chars": 124364,
+      "line": 255,
+      "role": "toolResult",
+      "tool": "cartographer_index"
+    },
+    {
+      "chars": 108918,
+      "line": 407,
+      "role": "toolResult",
+      "tool": "cartographer_index"
+    },
+    {
+      "chars": 101373,
+      "line": 52,
+      "role": "toolResult",
+      "tool": "bash"
+    },
+    {
+      "chars": 101287,
+      "line": 20,
+      "role": "toolResult",
+      "tool": "read"
+    },
+    {
+      "chars": 101252,
+      "line": 98,
+      "role": "toolResult",
+      "tool": "bash"
+    },
+    {
+      "chars": 66374,
+      "line": 647,
+      "role": "toolResult",
+      "tool": "cartographer_index"
+    },
+    {
+      "chars": 63280,
+      "line": 42,
+      "role": "toolResult",
+      "tool": "cartographer_index"
+    },
+    {
+      "chars": 59844,
+      "line": 646,
+      "role": "toolResult",
+      "tool": "cartographer_index"
+    },
+    {
+      "chars": 48664,
+      "line": 22,
+      "role": "toolResult",
+      "tool": "read"
+    }
+  ],
+  "longest_turns": [
+    {
+      "duration_ms": 600018,
+      "line": 1478,
+      "role": "toolResult",
+      "tool": "subagent"
+    },
+    {
+      "duration_ms": 565697,
+      "line": 1408,
+      "role": "toolResult",
+      "tool": "subagent"
+    },
+    {
+      "duration_ms": 300015,
+      "line": 1646,
+      "role": "toolResult",
+      "tool": "subagent"
+    },
+    {
+      "duration_ms": 300010,
+      "line": 1811,
+      "role": "toolResult",
+      "tool": "subagent"
+    },
+    {
+      "duration_ms": 264956,
+      "line": 1526,
+      "role": "toolResult",
+      "tool": "subagent"
+    },
+    {
+      "duration_ms": 241628,
+      "line": 1718,
+      "role": "toolResult",
+      "tool": "subagent"
+    },
+    {
+      "duration_ms": 240013,
+      "line": 609,
+      "role": "toolResult",
+      "tool": "subagent"
+    },
+    {
+      "duration_ms": 238870,
+      "line": 1552,
+      "role": "toolResult",
+      "tool": "subagent"
+    },
+    {
+      "duration_ms": 236867,
+      "line": 1743,
+      "role": "toolResult",
+      "tool": "subagent"
+    },
+    {
+      "duration_ms": 223291,
+      "line": 1702,
+      "role": "toolResult",
+      "tool": "subagent"
+    }
+  ],
+  "max_output_chars": 6000,
+  "repeated_commands": [
+    {
+      "command_chars": 80,
+      "command_id": "command-001",
+      "count": 25
+    },
+    {
+      "command_chars": 18,
+      "command_id": "command-002",
+      "count": 15
+    },
+    {
+      "command_chars": 58,
+      "command_id": "command-003",
+      "count": 15
+    },
+    {
+      "command_chars": 13,
+      "command_id": "command-004",
+      "count": 10
+    },
+    {
+      "command_chars": 293,
+      "command_id": "command-005",
+      "count": 7
+    },
+    {
+      "command_chars": 124,
+      "command_id": "command-006",
+      "count": 5
+    },
+    {
+      "command_chars": 1723,
+      "command_id": "command-007",
+      "count": 5
+    },
+    {
+      "command_chars": 104,
+      "command_id": "command-008",
+      "count": 4
+    },
+    {
+      "command_chars": 38,
+      "command_id": "command-009",
+      "count": 4
+    },
+    {
+      "command_chars": 55,
+      "command_id": "command-010",
+      "count": 4
+    }
+  ],
+  "roles": {
+    "assistant": 892,
+    "toolResult": 1105,
+    "unknown": 9,
+    "user": 29
+  },
+  "subagent_timeouts": [
+    {
+      "agent": null,
+      "line": 22,
+      "role": "toolResult",
+      "tool": "read"
+    },
+    {
+      "agent": null,
+      "line": 50,
+      "role": "toolResult",
+      "tool": "bash"
+    },
+    {
+      "agent": null,
+      "line": 52,
+      "role": "toolResult",
+      "tool": "bash"
+    },
+    {
+      "agent": null,
+      "line": 54,
+      "role": "toolResult",
+      "tool": "bash"
+    },
+    {
+      "agent": null,
+      "line": 56,
+      "role": "toolResult",
+      "tool": "bash"
+    },
+    {
+      "agent": null,
+      "line": 107,
+      "role": "toolResult",
+      "tool": "bash"
+    },
+    {
+      "agent": "delegate",
+      "line": 114,
+      "role": "toolResult",
+      "tool": "subagent"
+    },
+    {
+      "agent": null,
+      "line": 127,
+      "role": "toolResult",
+      "tool": "cartographer_index"
+    },
+    {
+      "agent": null,
+      "line": 140,
+      "role": "toolResult",
+      "tool": "read"
+    },
+    {
+      "agent": null,
+      "line": 155,
+      "role": "assistant",
+      "tool": "write"
+    }
+  ],
+  "token_totals": {},
+  "tool_errors": {
+    "bash": 25,
+    "cartographer_jsonl": 1,
+    "edit": 13,
+    "subagent": 17
+  },
+  "tools": {
+    "ask_user_question": 6,
+    "bash": 788,
+    "cartographer_index": 54,
+    "cartographer_jsonl": 122,
+    "edit": 430,
+    "query-docs": 6,
+    "read": 389,
+    "resolve-library-id": 6,
+    "subagent": 107,
+    "write": 58
+  }
+}

@@ -1,0 +1,1 @@
+{"analysis": "evidence/adr-session-analysis.md", "basename": "adr-session.jsonl", "id": "private-artifact:subagent-reliability:adr-session", "kind": "session-log", "private_path_hint": ".plan/_private/subagent-reliability/adr-session.jsonl", "redaction_status": "pending", "sensitivity": "high", "status": "imported", "type": "private-artifact"}

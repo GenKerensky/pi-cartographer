@@ -1,0 +1,473 @@
+{
+  "entries": 2035,
+  "examples": {
+    "acceptance_contract": [
+      {
+        "fingerprint": "3b9212c73e73",
+        "line": 6,
+        "snippet": "s start as `draft` and become `accepted` only after validation or explicit user acceptance. - Index/map/query results are candidates until verified. Use `candidate`, `verified`, and `verification` metadata wher",
+        "tool": "read"
+      },
+      {
+        "fingerprint": "09d9bb984729",
+        "line": 54,
+        "snippet": "the source of truth. Do not commit. Report changed files and commands run.\", \"acceptance\": { \"criteria\": [ \"P0.T1-P0.T5 contract definitions are present in relevant docs/skill guidance\", \"No i",
+        "tool": "bash"
+      },
+      {
+        "fingerprint": "1bd00b10df78",
+        "line": 95,
+        "snippet": "it for grading outputs. We used an LLM judge that evaluated each output against criteria in a rubric: factual accuracy (do claims match sources?), citation accuracy (do the cited sources match the claims?), c",
+        "tool": "bash"
+      },
+      {
+        "fingerprint": "75d0cf5f822c",
+        "line": 96,
+        "snippet": "ge. * Writing an outline of a document, checking that the outline meets certain criteria, then writing the document based on the outline. ### Workflow: Routing Routing classifies an input and directs it to",
+        "tool": "bash"
+      },
+      {
+        "fingerprint": "a795a67bf43d",
+        "line": 98,
+        "snippet": "elines succeeded. We conduct a quantitative census of all samples meeting these criteria (362 Python and 281 Java cases). 268- 269:We focus on the actual retrieval pipeline of Naive GrepRAG. Following the cla",
+        "tool": "bash"
+      }
+    ],
+    "auditor_or_review_gate": [
+      {
+        "fingerprint": "9ee904b3028b",
+        "line": 6,
+        "snippet": "efer the exact agents named `delegate`, `researcher`, `planner`, `oracle`, and `reviewer` when available. - Treat `scout` as optional. Use deterministic Cartographer index/map tools plus focused `rg`/grep",
+        "tool": "read"
+      },
+      {
+        "fingerprint": "b7fb80126169",
+        "line": 8,
+        "snippet": "ss --root \"$PWD\" --workflow plan --topic \"<topic>\" --original-query \"<query>\" --failure-type vocabulary_mismatch --eventual-hit \"src/example.ts:42\" --resolution query_expansion ``` - This writes",
+        "tool": "read"
+      },
+      {
+        "fingerprint": "ce3aa66f136a",
+        "line": 10,
+        "snippet": "eb researcher \u2014 searches, evaluates, and synthesizes a focused research brief - reviewer (builtin): Versatile review specialist for code diffs, plans, proposed solutions, codebase health, and PR/issue validat",
+        "tool": "subagent"
+      },
+      {
+        "fingerprint": "3cf73dd55cdc",
+        "line": 16,
+        "snippet": "Constraints - Do not call either tool more than 3 times per question. - Do not pass API keys, passwords, credentials, personal data, or proprietary code as the `query` argument \u2014 it is sent to the Contex",
+        "tool": "read"
+      },
+      {
+        "fingerprint": "a27091269382",
+        "line": 20,
+        "snippet": "\u2502 \u251c\u2500\u25ba (extension commands checked first, bypass if found) \u2502 \u251c\u2500\u25ba input (can intercept, transform, or handle) \u2502 \u251c\u2500\u25ba (skill/template expansion if not handle",
+        "tool": "read"
+      }
+    ],
+    "cartographer_tools": [
+      {
+        "fingerprint": "67335bfe7de4",
+        "line": 6,
+        "snippet": "ex only when stale: ```bash python <index-project-skill-dir>/scripts/index_project.py ensure --root \"$PWD\" --json ``` - This creates or updates: - `.plan/_index/project-graph.sqlite`",
+        "tool": "read"
+      },
+      {
+        "fingerprint": "96e1a8a922f9",
+        "line": 8,
+        "snippet": "repository. 2. **Ensure the index exists and is fresh** - Resolve `scripts/index_project.py` relative to this `SKILL.md`. - Prefer `ensure` before reading the database. It checks file hashes and re-indexes",
+        "tool": "read"
+      },
+      {
+        "fingerprint": "bfc47285d189",
+        "line": 36,
+        "snippet": "match_type\": \"any_terms\", \"node_id\": \"file:skills/index-project/scripts/index_project.py\", \"rank\": -8.424485990309252, \"reference\": \"skills/index-project/scripts/index_project.py:1594\",",
+        "tool": "cartographer_index"
+      },
+      {
+        "fingerprint": "815887c43c8a",
+        "line": 42,
+        "snippet": "`[scout]`, `[researcher]`, `planner`, `oracle`, and `reviewer`):\\\\n\\\\n```bash\\\\ncartographer_index({\\\\\\\"action\\u2026\", \"start_line\": 1, \"verification\": { \"read\": { \"end_line\": 37,",
+        "tool": "cartographer_index"
+      },
+      {
+        "fingerprint": "09c67fe036b2",
+        "line": 48,
+        "snippet": "name Counter({'bash': 115, 'edit': 79, 'read': 66, 'subagent': 8, 'write': 7, 'cartographer_jsonl': 6, 'cartographer_index': 5, 'ask_user_question': 1}) tool results 287 Counter({'bash': 115, 'edit': 79, 'read': 66, '",
+        "tool": "bash"
+      }
+    ],
+    "command_not_found": [
+      {
+        "fingerprint": "adc4cac08959",
+        "line": 60,
+        "snippet": "*.md skills/*/SKILL.md', 'timeout': 10}) /bin/bash: line 1: cartographer_index: command not found /bin/bash: line 1: Prefer: command not found rg: skills/*.md: No such file or directory (os error 2) skills/proposal/SK",
+        "tool": "bash"
+      },
+      {
+        "fingerprint": "edb3c8a13506",
+        "line": 140,
+        "snippet": "ms.` ## Error patterns - Line 69, bash: /bin/bash: line 1: cartographer_index: command not found /bin/bash: line 1: Prefer: command not found rg: skills/*.md: No such file or directory (os error 2) skills/proposal/SK",
+        "tool": "read"
+      },
+      {
+        "fingerprint": "5ef925962055",
+        "line": 174,
+        "snippet": "d error: shell quoting/backticks caused `/bin/bash: line 1: cartographer_index: command not found` and `/bin/bash: line 1: Prefer: command not found`. - Key prior-art takeaways: - SWE-agent recommends LM-centric too",
+        "tool": null
+      },
+      {
+        "fingerprint": "1eb2255b0ea6",
+        "line": 617,
+        "snippet": "edits for an implementation task.` - `/bin/bash: line 1: cartographer_index: command not found` - `/bin/bash: line 1: Prefer: command not found` - `Run timed out (reviewer): Timed out after 180000ms.` - Workflo",
+        "tool": null
+      }
+    ],
+    "custom_script_created": [
+      {
+        "fingerprint": "103cbbaf927b",
+        "line": 6,
+        "snippet": "jsonl --root \"$PWD\" --topic \"{topic}\" --out-dir \".plan/{topic}\" --limit 30 node --experimental-strip-types <plan-skill-dir>/scripts/manage_jsonl.ts validate-topic --root \"$PWD\" --topic \"{topic}\" --json ``` - Use `cart",
+        "tool": "read"
+      },
+      {
+        "fingerprint": "aae6c7a632bf",
+        "line": 50,
+        "snippet": "ig.json`\\n- Validation commands that passed earlier:\\n - `npm run check`\\n - `node --experimental-strip-types skills/plan/scripts/manage_jsonl.ts validate-topic --root \"$PWD\" --topic retrieval-workflow --json`\\n - `python skills",
+        "tool": "bash"
+      },
+      {
+        "fingerprint": "e88222fb1b0f",
+        "line": 54,
+        "snippet": "Ms\": 10000 }, { \"id\": \"validate-topic\", \"command\": \"node --experimental-strip-types skills/plan/scripts/manage_jsonl.ts validate-topic --root \\\"$PWD\\\" --topic retrieval-workflow --json\", \"timeout",
+        "tool": "bash"
+      },
+      {
+        "fingerprint": "49ec94510868",
+        "line": 56,
+        "snippet": "dur 6.915 call 601 result 602 tool bash err False chars 1355 args {'command': 'python - <<\\'PY\\'\\nfrom pathlib import Path\\nimport json\\ncommits={\\n \\'P0\\':\\'1427332\\',\\n \\'P1\\':\\'b9b7553\\',\\n \\'P2\\':\\'1b0b5ac\\",
+        "tool": "bash"
+      },
+      {
+        "fingerprint": "89d4b2daad65",
+        "line": 58,
+        "snippet": "), (\"python -m unittest discover tests -p 'test_index_project.py'\", 1), ('tmp=$(mktemp -d); python - <<\\'PY\\' \"$tmp\"\\nfrom pathlib import Path\\nimport sys,jso', 1), ('npm test', 1), ('python skills/index-pr",
+        "tool": "bash"
+      }
+    ],
+    "exact_edit_failure": [
+      {
+        "fingerprint": "3b2dd55e12b0",
+        "line": 22,
+        "snippet": "= await readFile(absolutePath, \"utf8\"); const next = current.replace(params.oldText, params.newText); await writeFile(absolutePath, next, \"utf8\"); return { content: [{ type: \"text\", text:",
+        "tool": "read"
+      },
+      {
+        "fingerprint": "2a883988906d",
+        "line": 60,
+        "snippet": ", 'edit', {'path': 'skills/index-project/scripts/index_project.py', 'edits': [{'oldText': 'SCHEMA_VERSION = 1\\nDEFAULT_DB_REL = \".plan/_index/project-graph.sqlite\"', 'newText': 'SCHEMA_VERSION = 2\\nDEFAULT_D",
+        "tool": "bash"
+      },
+      {
+        "fingerprint": "f8cb4f1dbc47",
+        "line": 140,
+        "snippet": ": Could not find edits[3] in skills/index-project/scripts/index_project.py. The oldText must match exactly including all whitespace and newlines. - Line 165, bash: > pi-cartographer@0.1.0 check > npm run ch",
+        "tool": "read"
+      },
+      {
+        "fingerprint": "fb4077b4785b",
+        "line": 324,
+        "snippet": "Could not find the exact text in .gitignore. The old text must match exactly including all whitespace and newlines.",
+        "tool": "edit"
+      },
+      {
+        "fingerprint": "815f5293c832",
+        "line": 755,
+        "snippet": "Could not find the exact text in README.md. The old text must match exactly including all whitespace and newlines.",
+        "tool": "edit"
+      }
+    ],
+    "missing_file_or_dir": [
+      {
+        "fingerprint": "1c346b37b39b",
+        "line": 54,
+        "snippet": "28:58.653Z { \"action\": \"status\", \"id\": \"worker\" } result chars 39 Async run not found. Provide id or dir. ---END PREVIEW--- === subagent result line 360 ts 2026-06-07T05:31:04.017Z isError False call line",
+        "tool": "bash"
+      },
+      {
+        "fingerprint": "8fd3200a2e8d",
+        "line": 60,
+        "snippet": "lls/*/SKILL.md', 'timeout': 10}) /bin/bash: line 1: cartographer_index: command not found /bin/bash: line 1: Prefer: command not found rg: skills/*.md: No such file or directory (os error 2) skills/proposal/SK",
+        "tool": "bash"
+      },
+      {
+        "fingerprint": "93e967a4e35f",
+        "line": 70,
+        "snippet": "T_DB_REL if not db_path.exists(): raise SystemExit(f\"Index database not found: {db_path}. Run the index command first.\") conn = connect(db_path) ensure_schema(conn) candidate_limit = m",
+        "tool": "read"
+      },
+      {
+        "fingerprint": "f8c38dd5ea2d",
+        "line": 117,
+        "snippet": "Async run not found. Provide id or dir.",
+        "tool": "subagent"
+      },
+      {
+        "fingerprint": "d0aa7e488e6e",
+        "line": 140,
+        "snippet": "5:28:59.125Z: {'action': 'status', 'id': 'worker'}; result 39 chars: `Async run not found. Provide id or dir.` - Line 360 at 2026-06-07T05:31:04.017Z: {'agent': 'reviewer', 'context': 'fresh', 'task': 'Review",
+        "tool": "read"
+      }
+    ],
+    "permission_denied": [],
+    "timeout": [
+      {
+        "fingerprint": "7dda621465af",
+        "line": 4,
+        "snippet": "l for improvement of this package based on anything that went wrong (researcher timed out), anything that was slow, uneccessary, polluted the context or produced lackluster results. This extension needs to fol",
+        "tool": null
+      },
+      {
+        "fingerprint": "acc4e2563087",
+        "line": 20,
+        "snippet": "(isToolCallEventType(\"bash\", event)) { // event.input is { command: string; timeout?: number } event.input.command = `source ~/.profile\\n${event.input.command}`; if (event.input.command.includes",
+        "tool": "read"
+      },
+      {
+        "fingerprint": "c5ca515478fa",
+        "line": 22,
+        "snippet": "mmand. ```typescript const result = await pi.exec(\"git\", [\"status\"], { signal, timeout: 5000 }); // result.stdout, result.stderr, result.code, result.killed ``` ### pi.getActiveTools() / pi.getAllTools() /",
+        "tool": "read"
+      },
+      {
+        "fingerprint": "ceee0812b670",
+        "line": 28,
+        "snippet": "/skills/pi-skills/brave-search/content.js https://arxiv.org/html/2601.23254v2\",\"timeout\":30}}],\"api\":\"openai-codex-responses\",\"provider\":\"openai-codex\",\"model\":\"gpt-5.5\",\"usage\":{\"input\":827,\"output\":103,\"ca",
+        "tool": "read"
+      },
+      {
+        "fingerprint": "a56060b82f46",
+        "line": 50,
+        "snippet": "generated.\\n\\n### Blocked\\n- None. Note: one delegated `reviewer` subagent run timed out during proposal review, but deterministic validation passed afterward.\\n\\n## Key Decisions\\n- **`rg` vs index split**:",
+        "tool": "bash"
+      }
+    ],
+    "tool_schema_validation": [],
+    "tool_unavailable_or_unknown": [
+      {
+        "fingerprint": "e0f3f8908089",
+        "line": 174,
+        "snippet": "arly Progress - Checked subagent status with `subagent(status, id=\"7d7e0d48\")`; tool returned `Async run not found`. - Continued the main proposal work rather than interrupting further. - Read `.plan/workflow-optimization/researcher-b",
+        "tool": null
+      },
+      {
+        "fingerprint": "66daa19c736e",
+        "line": 255,
+        "snippet": "\"text\": \"## Longest turns\\n| start line | duration s | tools | assistant msgs | tool chars | token sum | errors | user request |\\n|---:|---:|---:|---:|---:|---:|---:|---|\\n| 327 | 774.7 | 55 | 45 | 144,554 | 11,093,982 | 2 | implement the \u2026",
+        "tool": "cartographer_index"
+      }
+    ]
+  },
+  "longest_subagent_durations": [
+    {
+      "agent": "cartographer-pathfinder",
+      "duration_ms": 600018,
+      "error": true,
+      "line": 1478
+    },
+    {
+      "agent": "cartographer-pathfinder",
+      "duration_ms": 565697,
+      "error": true,
+      "line": 1408
+    },
+    {
+      "agent": "cartographer-auditor",
+      "duration_ms": 300015,
+      "error": true,
+      "line": 1646
+    },
+    {
+      "agent": "cartographer-auditor",
+      "duration_ms": 300010,
+      "error": true,
+      "line": 1811
+    },
+    {
+      "agent": "cartographer-auditor",
+      "duration_ms": 264956,
+      "error": false,
+      "line": 1526
+    },
+    {
+      "agent": "cartographer-auditor",
+      "duration_ms": 241628,
+      "error": false,
+      "line": 1718
+    },
+    {
+      "agent": "reviewer",
+      "duration_ms": 240013,
+      "error": true,
+      "line": 609
+    },
+    {
+      "agent": "cartographer-auditor",
+      "duration_ms": 238870,
+      "error": false,
+      "line": 1552
+    },
+    {
+      "agent": "cartographer-auditor",
+      "duration_ms": 236867,
+      "error": false,
+      "line": 1743
+    },
+    {
+      "agent": "cartographer-auditor",
+      "duration_ms": 223291,
+      "error": false,
+      "line": 1702
+    },
+    {
+      "agent": "cartographer-auditor",
+      "duration_ms": 213453,
+      "error": false,
+      "line": 1600
+    },
+    {
+      "agent": "cartographer-auditor",
+      "duration_ms": 207133,
+      "error": false,
+      "line": 1774
+    }
+  ],
+  "parent_tool_records_within_12_records_after_subagent": {
+    "bash": 441,
+    "cartographer_index": 50,
+    "cartographer_jsonl": 75,
+    "edit": 179,
+    "read": 267,
+    "write": 50
+  },
+  "pattern_by_tool": {
+    "acceptance_contract": {
+      "bash": 12,
+      "cartographer_index": 3,
+      "read": 48,
+      "subagent": 38,
+      "unknown": 7,
+      "write": 10
+    },
+    "auditor_or_review_gate": {
+      "bash": 101,
+      "cartographer_index": 8,
+      "cartographer_jsonl": 2,
+      "query-docs": 1,
+      "read": 129,
+      "subagent": 47,
+      "unknown": 26,
+      "write": 22
+    },
+    "cartographer_tools": {
+      "bash": 102,
+      "cartographer_index": 12,
+      "cartographer_jsonl": 1,
+      "edit": 18,
+      "read": 103,
+      "subagent": 20,
+      "unknown": 25,
+      "write": 13
+    },
+    "command_not_found": {
+      "bash": 1,
+      "read": 1,
+      "unknown": 2
+    },
+    "custom_script_created": {
+      "bash": 67,
+      "cartographer_index": 5,
+      "cartographer_jsonl": 1,
+      "read": 40,
+      "subagent": 24,
+      "write": 3
+    },
+    "exact_edit_failure": {
+      "bash": 1,
+      "edit": 12,
+      "read": 4
+    },
+    "missing_file_or_dir": {
+      "bash": 2,
+      "cartographer_index": 1,
+      "read": 6,
+      "subagent": 3,
+      "unknown": 3
+    },
+    "timeout": {
+      "bash": 18,
+      "cartographer_index": 3,
+      "read": 21,
+      "subagent": 17,
+      "unknown": 11,
+      "write": 6
+    },
+    "tool_unavailable_or_unknown": {
+      "cartographer_index": 1,
+      "unknown": 1
+    }
+  },
+  "pattern_counts": {
+    "acceptance_contract": 118,
+    "auditor_or_review_gate": 337,
+    "cartographer_tools": 294,
+    "command_not_found": 4,
+    "custom_script_created": 140,
+    "exact_edit_failure": 17,
+    "missing_file_or_dir": 15,
+    "timeout": 76,
+    "tool_unavailable_or_unknown": 2
+  },
+  "subagent_agents": {
+    "<unknown>": 36,
+    "cartographer-auditor": 36,
+    "cartographer-pathfinder": 4,
+    "cartographer-redactor": 1,
+    "delegate": 2,
+    "planner": 2,
+    "researcher": 1,
+    "reviewer": 24,
+    "scout": 1
+  },
+  "subagent_calls": 107,
+  "subagent_errors_by_agent": {
+    "cartographer-auditor": 5,
+    "cartographer-pathfinder": 2,
+    "delegate": 1,
+    "planner": 1,
+    "reviewer": 8
+  },
+  "subagent_param_counts": {
+    "acceptance": 36,
+    "outputMode": 20,
+    "timeout": 34
+  },
+  "tool_counts_top": {
+    "ask_user_question": 6,
+    "bash": 788,
+    "cartographer_index": 54,
+    "cartographer_jsonl": 122,
+    "edit": 430,
+    "query-docs": 6,
+    "read": 389,
+    "resolve-library-id": 6,
+    "subagent": 107,
+    "write": 58
+  },
+  "tool_errors": {
+    "bash": 25,
+    "cartographer_jsonl": 1,
+    "edit": 13,
+    "subagent": 17
+  }
+}
