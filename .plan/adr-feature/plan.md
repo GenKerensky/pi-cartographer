@@ -125,7 +125,7 @@ Do not expose the Pi extension tool yet. Keep this phase focused on reusable Pyt
 
 ### Phase P1 — ADR graph validation and lookup
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P0
 - **Unlocks:** P2
 - **Primary references:** `artifact:docs-adr-graph`, `file:skills/plan/scripts/manage_jsonl.ts`, `file:skills/plan/scripts/validate_planning_graph.py`, `file:tests/test_validate_planning_graph.py`, `file:tests/manage_jsonl.test.ts`, [F003], [F009], [F013], [F014]
@@ -145,17 +145,17 @@ Add deterministic ADR graph validation and current-decision lookup before writin
 
 #### Checklist
 
-- [ ] **P1.T1** Implement ADR graph read/write helpers and deterministic validation error reporting in `adr_records.py`.
-- [ ] **P1.T2** Implement currentness derivation from `supersedes` edges and warnings for `depends_on` targets that are no longer current.
-- [ ] **P1.T3** Implement `list`, `query`, and `show` actions with current-first output and optional superseded inclusion.
-- [ ] **P1.T4** Add tests for missing endpoints, path mismatch, invalid edge types, cycles, supersession currentness, stale dependencies, and private-reference rejection.
-- [ ] **P1.T5** Add tests for legacy ADR validation without receipts only when explicitly marked legacy.
+- [x] **P1.T1** Implement ADR graph read/write helpers and deterministic validation error reporting in `adr_records.py`.
+- [x] **P1.T2** Implement currentness derivation from `supersedes` edges and warnings for `depends_on` targets that are no longer current.
+- [x] **P1.T3** Implement `list`, `query`, and `show` actions with current-first output and optional superseded inclusion.
+- [x] **P1.T4** Add tests for missing endpoints, path mismatch, invalid edge types, cycles, supersession currentness, stale dependencies, and private-reference rejection.
+- [x] **P1.T5** Add tests for legacy ADR validation without receipts only when explicitly marked legacy.
 
 #### Validation
 
-- [ ] **P1.V1** Run `python -m unittest discover tests -p "test_adr_records.py"` and expect graph validation/currentness tests to pass.
-- [ ] **P1.V2** Run a mock `adr_records.py validate --root <tmp-root> --json` command and confirm it reports compact counts/errors without raw JSONL dumps.
-- [ ] **P1.V3** Run `npm run check:scripts` and expect no script syntax/type regressions.
+- [x] **P1.V1** Run `python -m unittest discover tests -p "test_adr_records.py"` and expect graph validation/currentness tests to pass.
+- [x] **P1.V2** Run a mock `adr_records.py validate --root <tmp-root> --json` command and confirm it reports compact counts/errors without raw JSONL dumps.
+- [x] **P1.V3** Run `npm run check:scripts` and expect no script syntax/type regressions.
 
 #### Exit Criteria
 

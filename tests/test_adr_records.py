@@ -63,6 +63,84 @@ class AdrRecordsTests(unittest.TestCase):
             validation="Implemented and validated by the auth-system Cartographer topic.",
         )
 
+    def record_for(
+        self,
+        number: int,
+        title: str,
+        *,
+        status: str = "accepted",
+        decision_date: str = "2026-06-08",
+        receipts: list[str] | None = None,
+        legacy: bool = False,
+    ) -> adr_records.AdrRecord:
+        return adr_records.AdrRecord(
+            adr_id=adr_records.format_adr_id(number),
+            title=title,
+            status=status,
+            decision_date=decision_date,
+            generated_from_topic="demo-topic",
+            adr_required_source="proposal" if not legacy else "legacy-import",
+            legacy_import=legacy,
+            source_commits=[] if legacy else ["abc1234"],
+            validation_receipts=[] if receipts is None else receipts,
+            domains=["authentication"],
+            keywords=["auth", title.lower().split()[1] if len(title.split()) > 1 else "decision"],
+            decision_kind="feature-architecture",
+            confidence="high",
+            decision=f"Decision for {title}.",
+            context=f"Context for {title}.",
+            considered_options=[title, "Alternative option"],
+            rationale=f"Rationale for {title}.",
+            consequences=[f"Consequence for {title}."],
+            usage=f"Use {title} when relevant.",
+            validation="Validation evidence is recorded in receipts." if receipts else "Imported legacy ADR.",
+        )
+
+    def write_adr(self, project: Path, record: adr_records.AdrRecord) -> Path:
+        adr_dir = project / "docs/adr"
+        adr_dir.mkdir(parents=True, exist_ok=True)
+        number = adr_records.number_from_adr_id(record.adr_id)
+        assert number is not None
+        path = adr_dir / adr_records.format_adr_filename(number, record.title)
+        path.write_text(adr_records.render_adr_markdown(record), encoding="utf-8")
+        return path
+
+    def node_for(
+        self,
+        project: Path,
+        path: Path,
+        record: adr_records.AdrRecord,
+        *,
+        current: bool = True,
+        import_note: str | None = None,
+    ) -> dict[str, object]:
+        number = adr_records.number_from_adr_id(record.adr_id)
+        assert number is not None
+        node: dict[str, object] = {
+            "id": adr_records.format_adr_node_id(number),
+            "type": "adr",
+            "adr_id": record.adr_id,
+            "title": record.title,
+            "path": path.relative_to(project).as_posix(),
+            "status": record.status,
+            "decision_date": record.decision_date,
+            "domains": record.domains,
+            "keywords": record.keywords,
+            "summary": record.decision,
+            "generated_from_topic": record.generated_from_topic,
+            "adr_required_source": record.adr_required_source,
+            "legacy_import": record.legacy_import,
+            "source_commits": record.source_commits,
+            "validation_receipts": record.validation_receipts,
+            "current": current,
+        }
+        if import_note is not None:
+            node["import_note"] = import_note
+        return node
+
+    def write_graph(self, project: Path, nodes: list[dict[str, object]], edges: list[dict[str, object]]) -> None:
+        adr_records.save_adr_graph(project / "docs/adr", nodes, edges)
+
     def test_discovery_selects_single_existing_convention(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp) / "project"
@@ -250,6 +328,185 @@ class AdrRecordsTests(unittest.TestCase):
             self.assertFalse(payload["ok"])
             self.assertTrue(payload["ambiguous"])
             self.assertEqual(payload["existing_candidates"], ["docs/adr", "adr"])
+
+    def test_validate_graph_derives_currentness_and_lookup_is_current_first(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp) / "project"
+            old = self.record_for(1, "Use Auth0", decision_date="2026-06-01", receipts=["receipt:old"])
+            new = self.record_for(2, "Use Internal OIDC", decision_date="2026-06-08", receipts=["receipt:new"])
+            old_path = self.write_adr(project, old)
+            new_path = self.write_adr(project, new)
+            self.write_graph(
+                project,
+                [
+                    self.node_for(project, old_path, old, current=False),
+                    self.node_for(project, new_path, new, current=True),
+                ],
+                [{"from": "adr:0002", "to": "adr:0001", "type": "supersedes", "reason": "Provider changed."}],
+            )
+
+            validate_result = self.run_script("validate", "--root", str(project))
+            validate_payload = json.loads(validate_result.stdout)
+            self.assertTrue(validate_payload["ok"])
+            self.assertEqual(validate_payload["counts"]["current"], 1)
+            self.assertEqual(validate_payload["current_adr_ids"], ["ADR-0002"])
+            self.assertEqual(validate_payload["superseded_adr_ids"], ["ADR-0001"])
+
+            list_payload = json.loads(self.run_script("list", "--root", str(project)).stdout)
+            self.assertEqual(list_payload["count"], 1)
+            self.assertEqual(list_payload["records"][0]["adr_id"], "ADR-0002")
+
+            query_payload = json.loads(self.run_script("query", "auth", "--root", str(project)).stdout)
+            self.assertEqual(query_payload["count"], 1)
+            self.assertEqual(query_payload["records"][0]["adr_id"], "ADR-0002")
+
+            show_old = self.run_script("show", "ADR-0001", "--root", str(project), check=False)
+            self.assertNotEqual(show_old.returncode, 0)
+            self.assertIn("not current", json.loads(show_old.stdout)["errors"][0])
+
+            show_payload = json.loads(
+                self.run_script("show", "ADR-0001", "--root", str(project), "--include-superseded").stdout
+            )
+            self.assertTrue(show_payload["ok"])
+            self.assertEqual(show_payload["record"]["adr_id"], "ADR-0001")
+            self.assertEqual(show_payload["relationships"]["incoming"][0]["type"], "supersedes")
+
+    def test_validate_graph_reports_endpoint_edge_type_cycle_and_path_errors(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp) / "project"
+            first = self.record_for(1, "Use Auth0", decision_date="2026-06-01", receipts=["receipt:first"])
+            second = self.record_for(2, "Use OIDC", decision_date="2026-06-02", receipts=["receipt:second"])
+            first_path = self.write_adr(project, first)
+            second_path = self.write_adr(project, second)
+            bad_path_node = self.node_for(project, first_path, first, current=True)
+            bad_path_node["path"] = "docs/adr/0003-wrong-number.md"
+            self.write_graph(
+                project,
+                [bad_path_node, self.node_for(project, second_path, second, current=True)],
+                [
+                    {"from": "adr:0001", "to": "adr:9999", "type": "related_to"},
+                    {"from": "adr:0001", "to": "adr:0002", "type": "invalid_edge"},
+                    {"from": "adr:0001", "to": "adr:0002", "type": "child_of"},
+                    {"from": "adr:0002", "to": "adr:0001", "type": "child_of"},
+                ],
+            )
+
+            result = self.run_script("validate", "--root", str(project), check=False)
+            payload = json.loads(result.stdout)
+            errors = "\n".join(payload["errors"])
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("path does not exist", errors)
+            self.assertIn("Unresolved to endpoint 'adr:9999'", errors)
+            self.assertIn("Invalid ADR edge type 'invalid_edge'", errors)
+            self.assertIn("Cycle detected for child_of ADR edges", errors)
+
+    def test_validate_graph_warns_when_dependency_target_is_superseded(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp) / "project"
+            old = self.record_for(1, "Use Auth0", decision_date="2026-06-01", receipts=["receipt:old"])
+            dependent = self.record_for(2, "Use OIDC Sessions", decision_date="2026-06-02", receipts=["receipt:dep"])
+            replacement = self.record_for(3, "Use Internal OIDC", decision_date="2026-06-03", receipts=["receipt:new"])
+            old_path = self.write_adr(project, old)
+            dep_path = self.write_adr(project, dependent)
+            replacement_path = self.write_adr(project, replacement)
+            self.write_graph(
+                project,
+                [
+                    self.node_for(project, old_path, old, current=False),
+                    self.node_for(project, dep_path, dependent, current=True),
+                    self.node_for(project, replacement_path, replacement, current=True),
+                ],
+                [
+                    {"from": "adr:0003", "to": "adr:0001", "type": "supersedes"},
+                    {"from": "adr:0002", "to": "adr:0001", "type": "depends_on"},
+                ],
+            )
+
+            payload = json.loads(self.run_script("validate", "--root", str(project)).stdout)
+            self.assertTrue(payload["ok"])
+            self.assertIn("depends_on target is not current", "\n".join(payload["warnings"]))
+
+    def test_validate_graph_rejects_private_references_in_markdown_and_graph(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp) / "project"
+            record = self.record_for(1, "Use Auth0", receipts=["receipt:first"])
+            path = self.write_adr(project, record)
+            text = path.read_text(encoding="utf-8") + "\n.plan/_private/demo/raw.log\n"
+            path.write_text(text, encoding="utf-8")
+            node = self.node_for(project, path, record, current=True)
+            node["summary"] = "Do not cite .plan/_private/demo/raw.log"
+            self.write_graph(project, [node], [])
+
+            result = self.run_script("validate", "--root", str(project), check=False)
+            payload = json.loads(result.stdout)
+            self.assertFalse(payload["ok"])
+            self.assertIn("Direct private artifact reference", "\n".join(payload["errors"]))
+
+    def test_legacy_adrs_may_omit_receipts_only_with_legacy_marker_and_note(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp) / "project"
+            legacy = self.record_for(1, "Use Legacy Auth", status="accepted-legacy", receipts=[], legacy=True)
+            legacy_path = self.write_adr(project, legacy)
+            self.write_graph(
+                project,
+                [self.node_for(project, legacy_path, legacy, current=True, import_note="Imported from existing docs.")],
+                [],
+            )
+            ok_payload = json.loads(self.run_script("validate", "--root", str(project)).stdout)
+            self.assertTrue(ok_payload["ok"])
+
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp) / "project"
+            generated = self.record_for(1, "Use Auth0", receipts=[])
+            generated_path = self.write_adr(project, generated)
+            self.write_graph(project, [self.node_for(project, generated_path, generated, current=True)], [])
+            result = self.run_script("validate", "--root", str(project), check=False)
+            payload = json.loads(result.stdout)
+            self.assertFalse(payload["ok"])
+            self.assertIn("missing validation receipts", "\n".join(payload["errors"]))
+
+    def test_default_lookup_excludes_non_current_rejected_graph_and_markdown_records(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp) / "project"
+            rejected = self.record_for(1, "Reject Auth0", status="rejected", receipts=["receipt:reject"])
+            rejected_path = self.write_adr(project, rejected)
+            self.write_graph(project, [self.node_for(project, rejected_path, rejected, current=False)], [])
+
+            default_list = json.loads(self.run_script("list", "--root", str(project)).stdout)
+            include_list = json.loads(self.run_script("list", "--root", str(project), "--include-superseded").stdout)
+            default_query = json.loads(self.run_script("query", "auth0", "--root", str(project)).stdout)
+
+            self.assertEqual(default_list["count"], 0)
+            self.assertEqual(default_query["count"], 0)
+            self.assertEqual(include_list["count"], 1)
+            self.assertEqual(include_list["records"][0]["adr_id"], "ADR-0001")
+
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp) / "project"
+            rejected = self.record_for(1, "Reject Auth0", status="rejected", receipts=["receipt:reject"])
+            self.write_adr(project, rejected)
+
+            default_list = json.loads(self.run_script("list", "--root", str(project)).stdout)
+            include_list = json.loads(self.run_script("list", "--root", str(project), "--include-superseded").stdout)
+
+            self.assertEqual(default_list["count"], 0)
+            self.assertEqual(include_list["count"], 1)
+
+    def test_validate_graph_requires_source_mode_metadata(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp) / "project"
+            generated = self.record_for(1, "Use Auth0", receipts=["receipt:first"])
+            generated_path = self.write_adr(project, generated)
+            node = self.node_for(project, generated_path, generated, current=True)
+            for field in ["generated_from_topic", "adr_required_source", "source", "source_mode", "legacy_import"]:
+                node.pop(field, None)
+            self.write_graph(project, [node], [])
+
+            result = self.run_script("validate", "--root", str(project), check=False)
+            payload = json.loads(result.stdout)
+            self.assertFalse(payload["ok"])
+            self.assertIn("lacks source metadata", "\n".join(payload["errors"]))
 
 
 if __name__ == "__main__":
