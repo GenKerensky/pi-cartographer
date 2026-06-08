@@ -1,0 +1,187 @@
+{
+  "ok": true,
+  "topic": "subagent-reliability",
+  "count": 7,
+  "counts": {
+    "by_phase": {
+      "proposal": 2,
+      "planning": 1,
+      "P0": 1,
+      "P1": 1,
+      "P2": 1,
+      "P3": 1
+    }
+  },
+  "context_packs": [
+    {
+      "id": "context:subagent-reliability:proposal-final",
+      "type": "context-pack",
+      "phase_id": "proposal",
+      "summary": "Final proposal audit context: sanitized session analysis, user issue summary facts, curated map for workflow skills/agents/session analyzer, and validation receipt passed.",
+      "budget_tokens": 2500,
+      "references": [
+        ".plan/subagent-reliability/proposal.md",
+        ".plan/subagent-reliability/map.nodes.jsonl",
+        ".plan/subagent-reliability/map.edges.jsonl",
+        ".plan/subagent-reliability/facts.nodes.jsonl",
+        ".plan/subagent-reliability/facts.edges.jsonl",
+        ".plan/subagent-reliability/evidence/adr-session-analysis.md",
+        ".plan/subagent-reliability/receipts.jsonl"
+      ],
+      "verified_files": [
+        "skills/proposal/SKILL.md",
+        "skills/plan/SKILL.md",
+        "skills/implement/SKILL.md",
+        ".pi/agents/cartographer-pathfinder.md",
+        ".pi/agents/cartographer-auditor.md",
+        "skills/plan/scripts/analyze_session.py"
+      ]
+    },
+    {
+      "id": "context:subagent-reliability:tooling-audit",
+      "type": "context-pack",
+      "phase_id": "proposal",
+      "summary": "Audit context for least-privilege subagent tool-access update: proposal, facts F014-F016, sanitized tooling evidence, validation receipt, and prior proposal artifacts.",
+      "budget_tokens": 2500,
+      "references": [
+        ".plan/subagent-reliability/proposal.md",
+        ".plan/subagent-reliability/facts.nodes.jsonl",
+        ".plan/subagent-reliability/facts.edges.jsonl",
+        ".plan/subagent-reliability/evidence/subagent-tooling-analysis.md",
+        ".plan/subagent-reliability/receipts.jsonl"
+      ],
+      "verified_files": [
+        ".pi/agents/cartographer-auditor.md",
+        ".pi/agents/cartographer-pathfinder.md",
+        ".pi/agents/cartographer-compass.md",
+        ".pi/agents/cartographer-drafter.md",
+        ".pi/agents/cartographer-archivist.md",
+        ".pi/agents/cartographer-redactor.md"
+      ]
+    },
+    {
+      "id": "context:subagent-reliability:plan-final-audit",
+      "type": "context-pack",
+      "phase_id": "planning",
+      "summary": "Final plan audit context: proposal, plan, plan graph, map/fact graphs, sanitized evidence, and deterministic plan validation receipt.",
+      "budget_tokens": 3000,
+      "references": [
+        ".plan/subagent-reliability/proposal.md",
+        ".plan/subagent-reliability/plan.md",
+        ".plan/subagent-reliability/plan.nodes.jsonl",
+        ".plan/subagent-reliability/plan.edges.jsonl",
+        ".plan/subagent-reliability/map.nodes.jsonl",
+        ".plan/subagent-reliability/map.edges.jsonl",
+        ".plan/subagent-reliability/facts.nodes.jsonl",
+        ".plan/subagent-reliability/facts.edges.jsonl",
+        ".plan/subagent-reliability/evidence/adr-session-analysis.md",
+        ".plan/subagent-reliability/evidence/subagent-tooling-analysis.md",
+        ".plan/subagent-reliability/receipts.jsonl"
+      ],
+      "verified_files": [
+        "skills/proposal/SKILL.md",
+        "skills/plan/SKILL.md",
+        "skills/implement/SKILL.md",
+        "skills/plan/scripts/analyze_session.py",
+        "skills/plan/scripts/manage_jsonl.ts",
+        "extensions/cartographer-tools.ts",
+        ".pi/agents/cartographer-auditor.md",
+        ".pi/agents/cartographer-pathfinder.md"
+      ]
+    },
+    {
+      "id": "context:subagent-reliability:P0",
+      "type": "context-pack",
+      "phase_id": "P0",
+      "summary": "P0 workflow contracts phase: update proposal/plan/implement workflow docs, README, and workflow docs tests to require deterministic-then-auditor gates, structured acceptance, timeout/fallback receipts, compass escalation, and least-privilege child tool policy. No extension implementation or agent tool changes in this phase.",
+      "budget_tokens": 3000,
+      "references": [
+        ".plan/subagent-reliability/plan.md#Phase P0",
+        "skills/proposal/SKILL.md",
+        "skills/plan/SKILL.md",
+        "skills/implement/SKILL.md",
+        "README.md",
+        "tests/test_workflow_docs.py"
+      ],
+      "verified_files": [
+        "skills/proposal/SKILL.md",
+        "skills/plan/SKILL.md",
+        "skills/implement/SKILL.md",
+        "README.md",
+        "tests/test_workflow_docs.py"
+      ]
+    },
+    {
+      "id": "context:subagent-reliability:P1",
+      "type": "context-pack",
+      "phase_id": "P1",
+      "summary": "P1 session telemetry phase: update skills/plan/scripts/analyze_session.py and tests/test_analyze_session.py so true subagent timeouts are separated from timeout mentions, per-agent outcomes/durations are reported, acceptance/timeout/async/control usage is counted, and sanitized tooling-friction categories are produced without raw payload leakage.",
+      "budget_tokens": 3000,
+      "references": [
+        ".plan/subagent-reliability/plan.md#Phase P1",
+        "skills/plan/scripts/analyze_session.py",
+        "tests/test_analyze_session.py",
+        ".plan/subagent-reliability/evidence/subagent-tooling-analysis.md",
+        ".plan/subagent-reliability/evidence/adr-session-analysis.md"
+      ],
+      "verified_files": [
+        "skills/plan/scripts/analyze_session.py",
+        "tests/test_analyze_session.py"
+      ]
+    },
+    {
+      "id": "context:subagent-reliability:P2",
+      "type": "context-pack",
+      "phase_id": "P2",
+      "summary": "P2 read-only artifact helper phase: implement a child-safe read-only artifact/JSONL summary surface in manage_jsonl.ts and cartographer-tools extension. Actions should include record lookup/listing, validate-topic summary, fact citation summary, receipt summary, context-pack summary, and evidence manifest summary without exposing raw private paths. No upsert/mutation actions should be added to this helper.",
+      "budget_tokens": 3500,
+      "references": [
+        ".plan/subagent-reliability/plan.md#Phase P2",
+        "skills/plan/scripts/manage_jsonl.ts",
+        "extensions/cartographer-tools.ts",
+        "tests/manage_jsonl.test.ts",
+        "tests/cartographer_tools.test.ts",
+        "skills/plan/scripts/validate_planning_graph.py"
+      ],
+      "verified_files": [
+        "skills/plan/scripts/manage_jsonl.ts",
+        "extensions/cartographer-tools.ts",
+        "tests/manage_jsonl.test.ts",
+        "tests/cartographer_tools.test.ts"
+      ]
+    },
+    {
+      "id": "context:subagent-reliability:P3",
+      "type": "context-pack",
+      "phase_id": "P3",
+      "summary": "P3 agent tool integration phase: update Cartographer agent frontmatter/prompts and workflow handoff templates to use least-privilege cartographer_artifacts/cartographer_index/cartographer_session helper access where appropriate. Preserve read-only roles, parent orchestration, structured acceptance, async/control, outputMode file-only, and timeout/fallback receipts. Do not implement new helper code in this phase.",
+      "budget_tokens": 3500,
+      "references": [
+        ".plan/subagent-reliability/plan.md#Phase P3",
+        ".pi/agents/cartographer-auditor.md",
+        ".pi/agents/cartographer-compass.md",
+        ".pi/agents/cartographer-drafter.md",
+        ".pi/agents/cartographer-archivist.md",
+        ".pi/agents/cartographer-pathfinder.md",
+        ".pi/agents/cartographer-redactor.md",
+        "skills/proposal/SKILL.md",
+        "skills/plan/SKILL.md",
+        "skills/implement/SKILL.md",
+        "extensions/cartographer-tools.ts"
+      ],
+      "verified_files": [
+        ".pi/agents/cartographer-auditor.md",
+        ".pi/agents/cartographer-compass.md",
+        ".pi/agents/cartographer-drafter.md",
+        ".pi/agents/cartographer-archivist.md",
+        ".pi/agents/cartographer-pathfinder.md",
+        ".pi/agents/cartographer-redactor.md",
+        "skills/proposal/SKILL.md",
+        "skills/plan/SKILL.md",
+        "skills/implement/SKILL.md"
+      ]
+    }
+  ],
+  "errors": [],
+  "truncated": false
+}

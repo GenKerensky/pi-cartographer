@@ -1,0 +1,21 @@
+{
+  "ok": true,
+  "topic": "subagent-reliability",
+  "counts": {
+    "map_nodes": 13,
+    "map_edges": 18,
+    "fact_nodes": 36,
+    "fact_edges": 24,
+    "plan_nodes": 64,
+    "plan_edges": 149,
+    "receipts": 23,
+    "context_packs": 7,
+    "evidence_files": 3,
+    "retrieval_misses": 0
+  },
+  "error_count": 0,
+  "warning_count": 0,
+  "errors": [],
+  "warnings": [],
+  "truncated": false
+}

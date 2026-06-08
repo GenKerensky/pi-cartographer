@@ -381,7 +381,23 @@ cartographer_adr({"action":"draft","root":"$PWD","topic":"{topic}","maxOutputCha
 cartographer_adr({"action":"validate","root":"$PWD","maxOutputChars":8000})
 ```
 
-When launching delegated agents through pi-subagents, include the package extension path `extensions/cartographer-tools.ts` in the child tool/extension configuration when supported so needed tools are callable. Apply a least-privilege child tool policy: do not grant every child full mutable JSONL/private/ADR/receipt authority, raw `.plan/_private/**` access, ADR write actions, or broad receipt append authority. The parent owns canonical plan/checkoff/receipt/ADR writes unless a structured acceptance contract explicitly scopes a pathfinder edit. Tell each delegated agent it may run `cartographer_index` with `action: "ensure"` before reading the index when freshness is uncertain; if it reports `action: "reindexed"`, it should continue from the refreshed index and mention that in its handoff. If custom tools are unavailable in the child, use the equivalent `python <index-project-skill-dir>/scripts/index_project.py ...`, `python <plan-skill-dir>/scripts/private_artifacts.py ...`, and `node --experimental-strip-types <plan-skill-dir>/scripts/manage_jsonl.ts ...` CLI commands via bash, then write fallback receipts for substituted validation/audit paths. Do not ask agents to inspect the SQLite file manually when the index tool can answer the question. Do not ask agents to read raw `.plan/_private/**` inputs; use sanitized `.plan/{topic}/evidence/` docs instead.
+When launching delegated agents through pi-subagents, include the package extension path `extensions/cartographer-tools.ts` in the child tool/extension configuration when supported so needed tools are callable. Apply a least-privilege child tool policy: do not grant every child full mutable JSONL/private/ADR/receipt authority, raw `.plan/_private/**` access, ADR write actions, or broad receipt append authority. The parent owns canonical plan/checkoff/receipt/ADR writes unless a structured acceptance contract explicitly scopes a pathfinder edit. Prefer `cartographer_artifacts` summaries (`context-pack-summary`, `receipt-summary`, `validate-topic-summary`, `fact-citation-summary`) and `cartographer_index` query/read/context summaries for child handoffs; use `cartographer_session` only for explicitly authorized session/evidence redaction work. If custom helper tools are unavailable in the child, generate equivalent helper summaries in the parent/CLI first, pass their paths, and write fallback receipts for substituted validation/audit paths. Do not ask agents to inspect the SQLite file manually when the index tool can answer the question. Do not ask agents to read raw `.plan/_private/**` inputs; use sanitized `.plan/{topic}/evidence/` docs instead.
+
+Structured handoff contract fields should be explicit in the `subagent(...)` call when supported, or copied into the prompt when not supported:
+
+```json
+{
+  "acceptance": {
+    "criteria": ["exact checklist IDs complete", "validation IDs addressed", "scope boundaries honored"],
+    "evidenceRequired": ["changed-files", "commands-run", "validation-output", "residual-risks", "diff-summary", "no-staged-files"]
+  },
+  "async": {"enabled": true, "timeoutMs": 600000},
+  "control": {"stopRules": ["product/scope decision", "dependency conflict", "repeated tool failure", "out-of-scope file change"], "maxFinalizationTurns": 3},
+  "outputMode": "file-only",
+  "helperSummaries": [".plan/{topic}/context-packs.jsonl:<context-id>", ".plan/{topic}/receipts.jsonl:<receipt-ids>"],
+  "timeoutFallbackReceipt": ".plan/{topic}/receipts.jsonl"
+}
+```
 
 ### Optional Scout
 
@@ -396,15 +412,17 @@ Do not edit files.
 
 ```text
 Implement phase <PHASE_ID> from .plan/{topic}/plan.md as cartographer-pathfinder, the default phase writer.
-Use the deterministic context summary, optional scout findings, source artifacts, and context-pack path provided. You have read access to Cartographer tools; run ensure/read if you need fresh indexed context, and use focused `rg`/grep for exact code evidence before editing. Complete only the listed unchecked checklist items for this phase. Make code/config/doc/test changes as needed. Do not commit. Avoid unrelated changes. Run targeted checks if practical and write/report validation receipt information.
+Use the deterministic context summary, optional scout findings, source artifacts, context-pack path, and helper summary paths provided. Prefer `cartographer_artifacts` context-pack/receipt/validation summaries and `cartographer_index` query/read summaries; if custom tools are unavailable, cite the parent-generated summaries. Complete only the listed unchecked checklist items for this phase. Make code/config/doc/test changes as needed. Do not commit or stage files. Avoid unrelated changes. Run targeted checks if practical and write/report validation receipt information.
 Structured acceptance (mandatory for non-trivial phase handoffs):
 - Complete checklist IDs: <P?.T?>
 - Address validation IDs: <P?.V?>
 - Stay within scope and allowed files: <paths/scope>
-- Provide changed-files summary, commands run, receipt paths/IDs, and residual risks.
+- Cite helper summary paths: <context/receipt/artifact/index summaries>
+- Provide changed-files summary, commands run, receipt paths/IDs, validation evidence, acceptance criteria status, no-staged-files evidence, and residual risks.
 - Do not modify files outside the phase scope unless explicitly justified.
 - Report residual risks/blockers and stop for unknown design/product decisions, repeated tool failures, or changes outside the phase.
-Report changed files, commands run, checklist items completed, validation status, and residual risks/blockers.
+Suggested subagent controls: `acceptance` with the bullets above, `async: {"enabled": true, "timeoutMs": 600000}`, `control.stopRules` matching the stop bullets, `outputMode: "file-only"`, and `timeoutFallbackReceipt: ".plan/{topic}/receipts.jsonl"`.
+Report changed files, commands run, checklist items completed, acceptance status, validation status/evidence, no-staged-files evidence, and residual risks/blockers.
 ```
 
 ### Pathfinder Fix
@@ -416,13 +434,13 @@ Fix the failures found while validating phase <PHASE_ID>. Use the command output
 ### Compass
 
 ```text
-Evaluate this decision-level blocker for phase <PHASE_ID>. Do not review code line-by-line. You have read access to the index tool commands and may run ensure/read if freshness or references are uncertain. Determine whether the issue is within the approved plan, requires a phase/order/scope change, or should be escalated to the user. Consider proposal goals/non-goals, phase dependencies, current codebase constraints, quality-tool output, deterministic context, timeout/fallback receipts, and pathfinder/auditor/optional-scout findings. Return recommended options and any stop condition before substantial parent takeover.
+Evaluate this decision-level blocker for phase <PHASE_ID>. Do not review code line-by-line. Use provided read-only `cartographer_artifacts` receipt/context/validation summaries and `cartographer_index` query/read summaries, or parent-generated summary paths when helper tools are unavailable. Determine whether the issue is within the approved plan, requires a phase/order/scope change, or should be escalated to the user. Consider proposal goals/non-goals, phase dependencies, current codebase constraints, quality-tool output, deterministic context, timeout/fallback receipts with `control` fields, and pathfinder/auditor/optional-scout findings. Return recommended options and any stop condition before substantial parent takeover.
 ```
 
 ### Auditor
 
 ```text
-Review phase <PHASE_ID> implementation after deterministic validation receipts pass. Check the current diff, commands run, checked checklist items, unchecked validation items, structured acceptance criteria, receipt IDs/paths, and source artifacts. You have read access to the index tool commands and may run ensure/read if freshness or references are uncertain. Verify correctness, scope control, maintainability, and every validation item for this phase. If you can edit, check off passing validation items in .plan/{topic}/plan.md. If not, report exact validation items that may be checked off. Return PASS/FAIL and reject with required fixes for any issue.
+Review phase <PHASE_ID> implementation after deterministic validation receipts pass. Check the current diff, commands run, checked checklist items, unchecked validation items, structured acceptance criteria, receipt IDs/paths, helper summary paths, and source artifacts. Use `cartographer_artifacts` receipt/context/validation summaries and targeted `cartographer_index` reads when freshness or references are uncertain, or cite parent-generated summaries if helper tools are unavailable. Verify correctness, scope control, maintainability, no-staged-files evidence, and every validation item for this phase. Remain read-only: report exact validation items that may be checked off by the parent rather than editing them. Return PASS/FAIL and reject with required fixes for any issue.
 ```
 
 ## Stop Conditions

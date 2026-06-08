@@ -210,7 +210,7 @@ Do not add write/upsert actions to this helper. If implementation discovers Pi c
 
 ### Phase P3 — Agent tool integration
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P2
 - **Unlocks:** P5
 - **Primary references:** `file:.pi/agents/cartographer-auditor.md`, `file:.pi/agents/cartographer-compass.md`, `file:.pi/agents/cartographer-drafter.md`, `file:.pi/agents/cartographer-archivist.md`, `file:.pi/agents/cartographer-pathfinder.md`, `file:.pi/agents/cartographer-redactor.md`, `file:skills/implement/SKILL.md`, [F007], [F008], [F014], [F016]
@@ -230,18 +230,18 @@ Wire least-privilege helper access into Cartographer subagent definitions and ha
 
 #### Checklist
 
-- [ ] **P3.T1** Update `cartographer-auditor` to require artifact helper summaries and deterministic receipt paths before PASS/FAIL, while remaining read-only.
-- [ ] **P3.T2** Update `cartographer-compass` to use read-only artifact/index summaries for scope/dependency/repeated-failure decisions.
-- [ ] **P3.T3** Update `cartographer-drafter` and `cartographer-archivist` to cite existing facts/maps via read-only helper summaries and emit suggestions or assigned drafts only.
-- [ ] **P3.T4** Update `cartographer-pathfinder` to report acceptance criteria status, changed files, validation evidence, residual blockers, and no-staged-files evidence.
-- [ ] **P3.T5** Update `cartographer-redactor` to prefer `cartographer_session`/evidence summaries for session artifacts and keep sanitized output boundaries explicit.
-- [ ] **P3.T6** Update proposal/plan/implement handoff templates to pass structured acceptance, async/control settings, helper summary paths, and timeout fallback receipt requirements.
+- [x] **P3.T1** Update `cartographer-auditor` to require artifact helper summaries and deterministic receipt paths before PASS/FAIL, while remaining read-only.
+- [x] **P3.T2** Update `cartographer-compass` to use read-only artifact/index summaries for scope/dependency/repeated-failure decisions.
+- [x] **P3.T3** Update `cartographer-drafter` and `cartographer-archivist` to cite existing facts/maps via read-only helper summaries and emit suggestions or assigned drafts only.
+- [x] **P3.T4** Update `cartographer-pathfinder` to report acceptance criteria status, changed files, validation evidence, residual blockers, and no-staged-files evidence.
+- [x] **P3.T5** Update `cartographer-redactor` to prefer `cartographer_session`/evidence summaries for session artifacts and keep sanitized output boundaries explicit.
+- [x] **P3.T6** Update proposal/plan/implement handoff templates to pass structured acceptance, async/control settings, helper summary paths, and timeout fallback receipt requirements.
 
 #### Validation
 
-- [ ] **P3.V1** Run `subagent({ action: "list" })` manually or through documented verification and confirm the Cartographer agents remain discoverable.
-- [ ] **P3.V2** Run `rg -n "cartographer_artifacts|cartographer_jsonl_read|acceptance|control|outputMode|cartographer_session" .pi/agents skills` and confirm role prompts reference the new helper contracts.
-- [ ] **P3.V3** Run `python -m unittest discover tests -p "test_workflow_docs.py"` to ensure docs/tests capture the agent-tool policy.
+- [x] **P3.V1** Run `subagent({ action: "list" })` manually or through documented verification and confirm the Cartographer agents remain discoverable.
+- [x] **P3.V2** Run `rg -n "cartographer_artifacts|cartographer_jsonl_read|acceptance|control|outputMode|cartographer_session" .pi/agents skills` and confirm role prompts reference the new helper contracts.
+- [x] **P3.V3** Run `python -m unittest discover tests -p "test_workflow_docs.py"` to ensure docs/tests capture the agent-tool policy.
 
 #### Exit Criteria
 

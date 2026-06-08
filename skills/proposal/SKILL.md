@@ -306,7 +306,7 @@ Performance rules:
 
 Use subagents only where they add judgment: missing research (`cartographer-archivist`), design/proposal synthesis (`cartographer-drafter`), semantic audit (`cartographer-auditor`), and decision consistency (`cartographer-compass`). Built-in agents remain fallback substitutes only.
 
-Apply a least-privilege child tool policy. Do not grant every child full mutable JSONL/private/ADR/receipt authority: the parent owns canonical proposal/map/fact writes, receipt append decisions, ADR evaluation, and raw private intake. Give each child only the artifact paths, read-only Cartographer actions, sanitized evidence, and explicit output contract needed for its role; `cartographer-redactor` is the only child that should receive raw `.plan/_private/**` paths, and `cartographer-auditor` should normally receive deterministic receipts rather than mutable write authority.
+Apply a least-privilege child tool policy. Do not grant every child full mutable JSONL/private/ADR/receipt authority: the parent owns canonical proposal/map/fact writes, receipt append decisions, ADR evaluation, and raw private intake. Give each child only the artifact paths, read-only Cartographer actions, sanitized evidence, and explicit output contract needed for its role; `cartographer-redactor` is the only child that should receive raw `.plan/_private/**` paths, and `cartographer-auditor` should normally receive deterministic receipts rather than mutable write authority. For non-trivial delegated handoffs, pass structured `acceptance`, `async`/timeout expectations, `control` stop/escalation rules, `outputMode: "file-only"` for large outputs, helper summary paths, and timeout/fallback receipt requirements.
 
 Retrieval and lifecycle contract for proposal artifacts:
 
@@ -318,19 +318,36 @@ Retrieval and lifecycle contract for proposal artifacts:
 
 After choosing delegated or approved serial execution mode, use the `index-project` skill to create/update `.plan/_index/project-graph.sqlite` before scope, mapping, research, or planning passes. When this proposal skill is installed alongside `index-project`, prefer the direct sibling reference `../index-project/SKILL.md` to avoid ambiguity with another discovered skill of the same name. Pass concise query results, map JSONL paths, index artifact paths, and the index tool commands into subagent prompts. Subagents should use the index-derived graph as their starting context for proposal artifacts, then use `rg`/grep and selective file reads to verify exact code evidence or fill obvious lexical gaps.
 
-Role-scoped least-privilege Cartographer tool examples for delegated agents in this workflow (`delegate`, optional `scout`, `researcher`, `planner`, `cartographer-compass`/fallback `oracle`, and `cartographer-auditor`/fallback `reviewer`):
+Role-scoped least-privilege Cartographer helper examples for delegated agents in this workflow (`cartographer-archivist`, `cartographer-drafter`, `cartographer-compass`/fallback `oracle`, `cartographer-auditor`/fallback `reviewer`, and redactor-only private analysis):
 
 ```bash
-cartographer_index({"action":"ensure","root":"$PWD"})
+cartographer_artifacts({"action":"validate-topic-summary","root":"$PWD","topic":"{topic}"})
+cartographer_artifacts({"action":"fact-citation-summary","root":"$PWD","topic":"{topic}"})
+cartographer_artifacts({"action":"context-pack-summary","root":"$PWD","topic":"{topic}","id":"<context-id>"})
+cartographer_artifacts({"action":"receipt-summary","root":"$PWD","topic":"{topic}"})
+cartographer_artifacts({"action":"evidence-manifest-summary","root":"$PWD","topic":"{topic}"})
 cartographer_index({"action":"query","root":"$PWD","topic":"{topic}","limit":10})
 cartographer_index({"action":"read","root":"$PWD","path":"<project-relative-path>"})
-cartographer_index({"action":"read","root":"$PWD","nodeId":"<indexed-node-id>"})
-cartographer_jsonl({"action":"seed-pi-facts","root":"$PWD","topic":"{topic}"})
-cartographer_jsonl({"action":"validate-topic","root":"$PWD","topic":"{topic}"})
-cartographer_adr({"action":"evaluate","root":"$PWD","topic":"{topic}"})
+cartographer_session({"action":"analyze","input":"<authorized-session-jsonl>","out":".plan/{topic}/evidence/<session-analysis>.md"})
 ```
 
-When launching delegated agents through pi-subagents, include the package extension path `extensions/cartographer-tools.ts` in the child tool/extension configuration when supported so needed tools are callable. Grant only the actions needed by that role; do not hand every child mutable `cartographer_jsonl upsert`, raw private paths, ADR write actions, or receipt append authority by default. Tell each delegated agent it may run `cartographer_index` with `action: "ensure"` before reading the index when freshness is uncertain; if it reports `action: "reindexed"`, it should continue from the refreshed index and mention that in its handoff. If custom tools are unavailable in the child, use the equivalent `python <index-project-skill-dir>/scripts/index_project.py ...` and `node --experimental-strip-types <plan-skill-dir>/scripts/manage_jsonl.ts ...` CLI commands via bash, then write a fallback receipt for any validation or audit step that used CLI/manual substitutes.
+Use mutable helpers only in parent-owned deterministic steps unless a child contract explicitly scopes them: `cartographer_jsonl validate-topic` may produce validation output, `seed-pi-facts`/upserts remain parent-owned, `cartographer_adr` remains parent/finalization-owned, and raw private paths go only to `cartographer-redactor`. When launching delegated agents through pi-subagents, include the package extension path `extensions/cartographer-tools.ts` in the child tool/extension configuration when supported so needed tools are callable. Grant only the actions needed by that role; do not hand every child mutable `cartographer_jsonl upsert`, raw private paths, ADR write actions, or receipt append authority by default. If custom helper tools are unavailable in the child, generate the same `cartographer_artifacts`, `cartographer_index`, or `cartographer_session` summaries in the parent/CLI first, pass their paths in the prompt, and write a timeout/fallback receipt for any substituted validation or audit path.
+
+Structured handoff contract fields should be explicit in the `subagent(...)` call when supported, or copied into the prompt when not supported:
+
+```json
+{
+  "acceptance": {
+    "criteria": ["exact sections/checklist IDs", "helper summaries cited", "PASS/FAIL or draft receipt required"],
+    "evidenceRequired": ["changed-files when applicable", "commands-run", "validation-output", "residual-risks", "diff-summary"]
+  },
+  "async": {"enabled": true, "timeoutMs": 600000},
+  "control": {"stopRules": ["scope ambiguity", "missing helper summaries", "repeated tool failure"], "maxFinalizationTurns": 3},
+  "outputMode": "file-only",
+  "helperSummaries": [".plan/{topic}/context-packs.jsonl:<id>", ".plan/{topic}/receipts.jsonl:<ids>"],
+  "timeoutFallbackReceipt": ".plan/{topic}/receipts.jsonl"
+}
+```
 
 If no executable subagents are available, first alert the user and ask whether they want the current agent to run the same sequence as an internal serial workflow. Only continue serially after the user approves. If they decline, stop and report any initialized/index artifacts.
 
@@ -342,8 +359,8 @@ Recommended prompts for delegated mode:
 - Optional `scout`: "Start from `cartographer_index query/read` outputs and existing map JSONL for `{topic}`, then use focused `rg`/grep searches for exact identifiers, filenames, scripts, tests, commands, and error strings that may be missing or questionable. Do not rediscover the repo broadly or read whole large files unless index snippets and lexical hits are insufficient. Do not rewrite map JSONL and do not create `map.graph.json`; return concise suggested node/edge additions with evidence."
 - `researcher`: "Research only missing or stale facts for `{topic}` in light of indexed project context. First inspect existing fact JSONL summaries; do not re-summarize local Pi docs or pi-subagents docs when existing supported fact nodes cover them. You have read access to Cartographer tools; run `cartographer_index ensure` if freshness is uncertain and use `query`/`read` for project context. Return concise JSONL node/edge suggestions and Background/Viability prose citing fact IDs. Every source-backed claim needs a fact node, source node, and `supported_by` edge. Do not read whole large docs unless targeted facts are missing."
 - `planner`: "Using proposal scope, concise map/fact summaries, artifact paths, and the shared project index, create high-level design steps under `## Design`, then fill each step with details, citations, dependencies, diagrams, and tables as appropriate. Use Cartographer tools for targeted reads before citing indexed context. Do not request or inline full raw map/research/scout outputs when file paths plus concise summaries are sufficient."
-- `cartographer-compass`/fallback `oracle`: "Before the planner finalizes this step, check whether the step makes sense in context, fits the scope, respects goals/non-goals, aligns with facts, and references real project files or indexed nodes. You have read access to Cartographer tools and may run `cartographer_index`/`cartographer_jsonl` if freshness, references, or graph validity are uncertain. Return concerns and suggested corrections."
-- `cartographer-auditor`: "Final-validate the complete proposal artifacts after deterministic validation receipts pass. Use the provided `cartographer_jsonl validate-topic` receipt instead of manually re-parsing large JSONL; run targeted `cartographer_index` reads only when freshness or references are uncertain. Check required sections, fact citations/support, map/fact JSONL validity, file references, goals/non-goals alignment, ADR metadata, and handoff readiness. Do not create new design content; return `PASS`/`FAIL` with required corrections."
+- `cartographer-compass`/fallback `oracle`: "Before the planner finalizes this step, check whether the step makes sense in context, fits the scope, respects goals/non-goals, aligns with facts, and references real project files or indexed nodes. Use provided `cartographer_artifacts` fact/context/receipt summaries and `cartographer_index` query/read summaries, or parent-generated summary paths if helper tools are unavailable. Return concerns and suggested corrections only."
+- `cartographer-auditor`: "Final-validate the complete proposal artifacts after deterministic validation receipts pass. Use the provided `cartographer_jsonl validate-topic` receipt, `cartographer_artifacts` validate/fact/receipt summaries, helper summary paths, acceptance criteria, and deterministic auditor receipt path instead of manually re-parsing large JSONL. Run targeted `cartographer_index` reads only when freshness or references are uncertain. Check required sections, fact citations/support, map/fact JSONL validity, file references, goals/non-goals alignment, ADR metadata, and handoff readiness. Do not create new design content; return `PASS`/`FAIL` with required corrections."
 - Fallback `reviewer`/serial validator: "Use only when `cartographer-auditor` is unavailable or the user approved substitution. Review the same artifacts and deterministic receipts, then write or request an explicit fallback receipt with outcome and residual risk."
 
 Serial-mode confirmation prompt:
