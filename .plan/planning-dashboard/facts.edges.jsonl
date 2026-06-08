@@ -1,0 +1,30 @@
+{"from":"F001","to":"S001","type":"supported_by","evidence":"Vite docs show createServer, listen, printUrls, and bindCLIShortcuts."}
+{"from":"F001","to":"proposed:bin-cartographer-dashboard","type":"supports_goal","evidence":"The dashboard CLI needs a programmatic server lifecycle in development mode."}
+{"from":"F002","to":"S002","type":"supported_by","evidence":"React Flow overview example uses nodes/edges, custom types, MiniMap, Controls, Background, and fitView."}
+{"from":"F002","to":"proposed:dashboard-client","type":"supports_goal","evidence":"Graph explorer needs an interactive graph canvas with navigation controls."}
+{"from":"F003","to":"S003","type":"supported_by","evidence":"Shiki docs show codeToHtml and Markdown-It integration with themes and transformers."}
+{"from":"F003","to":"proposed:dashboard-client","type":"supports_goal","evidence":"Rendered docs and code viewer need accurate syntax highlighting."}
+{"from":"F004","to":"S004","type":"supported_by","evidence":"jsonl-graph README defines node id and edge from/to records and Graphviz rendering."}
+{"from":"F004","to":"proposed:dashboard-client","type":"informs_design","evidence":"Dashboard graph import/export should respect JSONL node/edge conventions."}
+{"from":"F005","to":"S005","type":"supported_by","evidence":"Pi skills docs describe SKILL.md, frontmatter, helper scripts, and /skill commands."}
+{"from":"F005","to":"proposed:skills-dashboard","type":"supports_goal","evidence":"The proposed start-dashboard skill should be a normal package skill."}
+{"from":"F006","to":"S006","type":"supported_by","evidence":"Pi packages docs describe pi manifest resources and npm install dependency behavior."}
+{"from":"F006","to":"file:package.json","type":"applies_to","evidence":"Package manifest changes are required for the CLI, skill, and runtime dependencies."}
+{"from":"F007","to":"S007","type":"supported_by","evidence":"README lists the topic artifact files written under .plan/<topic>/."}
+{"from":"F007","to":"proposed:dashboard-server","type":"applies_to","evidence":"Server scanner should use these artifact paths as the topic model."}
+{"from":"F008","to":"S008","type":"supported_by","evidence":"workflow_benchmark.py computes phase, receipt, validation, coverage, command, and session summary metrics."}
+{"from":"F008","to":"proposed:dashboard-server","type":"applies_to","evidence":"Overview and implementation metrics can start from this helper's computations."}
+{"from":"F009","to":"S009","type":"supported_by","evidence":"adr_records.py defines ADR graph constants, fields, statuses, edges, and validation routines."}
+{"from":"F009","to":"proposed:dashboard-server","type":"applies_to","evidence":"ADR metrics should consume existing ADR graph semantics."}
+{"from":"F010","to":"S010","type":"supported_by","evidence":"Taste profile states dark tactile UI, depth cues, feedback, motion, and color wayfinding preferences."}
+{"from":"F010","to":"proposed:dashboard-client","type":"constrains","evidence":"All dashboard UI states and interactions should follow the taste profile."}
+{"from":"F011","to":"S011","type":"supported_by","evidence":"manage_jsonl.ts defines citation regex, lifecycle states, JSONL validation, support-edge checks, and private path checks."}
+{"from":"F011","to":"proposed:dashboard-server","type":"applies_to","evidence":"Dashboard health checks and citation linkification should mirror validator semantics."}
+{"from":"F012","to":"S012","type":"supported_by","evidence":"Pi extension docs show commands/tools/UI capabilities and package resource loading."}
+{"from":"F012","to":"proposed:skills-dashboard","type":"informs_design","evidence":"A skill plus CLI is sufficient for start-dashboard; an extension command can be deferred."}
+{"from":"F900","to":"S900","type":"supported_by","evidence":"Seeded Pi packages fact."}
+{"from":"F901","to":"S900","type":"supported_by","evidence":"Seeded Pi packages gallery image fact."}
+{"from":"F902","to":"S901","type":"supported_by","evidence":"Seeded Pi skills fact."}
+{"from":"F903","to":"S902","type":"supported_by","evidence":"Seeded Pi extensions fact."}
+{"from":"F904","to":"S903","type":"supported_by","evidence":"Seeded Pi prompt templates fact."}
+{"from":"F905","to":"S904","type":"supported_by","evidence":"Seeded pi-subagents fact."}
