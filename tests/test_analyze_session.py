@@ -122,7 +122,9 @@ class AnalyzeSessionTests(unittest.TestCase):
             self.assertEqual(summary_payload["subagent_agent_stats"]["reviewer"]["calls"], 1)
             self.assertEqual(summary_payload["subagent_agent_stats"]["reviewer"]["timeouts"], 1)
             self.assertEqual(summary_payload["subagent_agent_stats"]["reviewer"]["longest_duration_ms"], 121000)
-            self.assertEqual(summary_payload["subagent_field_usage"], {"acceptance": 1, "async": 1, "control": 1, "timeout": 1})
+            self.assertEqual(
+                summary_payload["subagent_field_usage"], {"acceptance": 1, "async": 1, "control": 1, "timeout": 1}
+            )
             self.assertEqual(summary_payload["tooling_friction"]["command-not-found"], 1)
             self.assertEqual(summary_payload["tooling_friction"]["schema/tool-validation"], 1)
             self.assertEqual(summary_payload["tooling_friction"]["exact-edit-failure"], 1)

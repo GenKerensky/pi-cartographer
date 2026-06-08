@@ -1,0 +1,21 @@
+{
+  "ok": true,
+  "topic": "subagent-reliability",
+  "artifact": "receipts",
+  "file": ".plan/subagent-reliability/receipts.jsonl",
+  "id": "receipt:P5:validation:2026-06-08T21:54:23+00:00",
+  "errors": [],
+  "record": {
+    "id": "receipt:P5:validation:2026-06-08T21:54:23+00:00",
+    "type": "validation-receipt",
+    "status": "passed",
+    "phase_id": "P5",
+    "summary": "> pi-cartographer@0.2.0 check\n> npm run check:scripts && npm run typecheck && npm run lint:py && npm run format:check && npm run test\n\n\n> pi-cartographer@0.2.0 check:scripts\n> python -m py_compile skills/index-project/scripts/index_project.py skills/plan/scripts/validate_planning_graph.py skills/plan/scripts/private_artifacts.py skills/plan/scripts/analyze_session.py skills/plan/scripts/validation_runner.py skills/plan/scripts/workflow_benchmark.py skills/plan/scripts/adr_records.py && node --experimental-strip-types --check skills/plan/scripts/manage_jsonl.ts && node --experimental-strip-types --check extensions/cartographer-tools.ts\n\n\n> pi-cartographer@0.2.0 typecheck\n> tsc --noEmit\n\n\n> pi-cartographer@0.2.0 lint:py\n> ruff check skills tests\n\nAll checks passed!\n\n> pi-cartographer@0.2.0 format:check\n> ruff format --check skills tests\n\n16 files already formatted\n\n> pi-cartographer@0.2.0 test\n> npm run test:py && npm run test:ts\n\n\n> pi-cartographer@0.2.0 test:py\n> python -m unittest discover tests\n\n\n> pi-cartographer@0.2.0 test:ts\n> vitest run\n\n\n RUN  v4.1.8 /var/home/falco/code/pi-cartographer\n\n\n Test Files  2 passed (2)\n      Tests  23 passed (23)\n   Start at  17:54:21\n   Duration  1.49s (transform 71ms, setup 0ms, import 148ms, tests 1.62s, environment 0ms)\n\n............................................hint: Using 'master' as the name for the initial branch. This default branch name\nhint: will change to \"main\" in Git 3.0. To configure the initial branch name\nhint: to use in all of your new repositories, which will suppress this warning,\nhint: call:\nhint:\nhint: \tgit config --global init.defaultBranch <name>\nhint:\nhint: Names commonly chosen instead of 'master' are 'main', 'trunk' and\nhint: 'development'. The just-created branch can be renamed via this command:\nhint:\nhint: \tgit branch -m <name>\nhint:\nhint: Disable this message with \"git config set advice.defaultBranchName false\"\n........................\n----------------------------------------------------------------------\nRan 68 tests in 5.581s\n\nOK",
+    "commands": [
+      {
+        "command": "PATH=\"/tmp/pi-cartographer-dev-venv/bin:$PATH\" npm run check",
+        "result": "passed"
+      }
+    ]
+  }
+}

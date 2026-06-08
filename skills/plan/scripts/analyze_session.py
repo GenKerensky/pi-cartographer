@@ -173,9 +173,7 @@ def is_subagent_record(record: dict[str, Any], tool: str | None = None) -> bool:
     tool_name = (tool or tool_for(record) or "").lower()
     if tool_name in {"subagent", "pi-subagents"} or "subagent" in tool_name:
         return True
-    joined = " ".join(
-        str(record.get(key, "")) for key in ("type", "kind", "event", "action", "name")
-    ).lower()
+    joined = " ".join(str(record.get(key, "")) for key in ("type", "kind", "event", "action", "name")).lower()
     if "subagent" in joined:
         return True
     subagent_keys = ("timeout_ms", "timeoutMs", "timedOut", "timed_out", "acceptance", "acceptanceContract")
@@ -262,8 +260,10 @@ def tooling_friction_categories(record: dict[str, Any], tool: str, command: str 
                 if obj.get(key) == 127:
                     categories.add("command-not-found")
     schema_issue = (
-        "schema" in joined and ("invalid" in joined or "validation" in joined)
-    ) or "tool validation" in joined or "invalid tool" in joined
+        ("schema" in joined and ("invalid" in joined or "validation" in joined))
+        or "tool validation" in joined
+        or "invalid tool" in joined
+    )
     if schema_issue:
         categories.add("schema/tool-validation")
     if "oldtext" in joined or "exact text replacement" in joined or "must match" in joined:
@@ -475,11 +475,16 @@ def render_markdown(summary: dict[str, Any]) -> str:
         for item in summary["subagent_timeouts"]
     ]
     rows_timeout_mentions = [
-        [item["line"], item.get("role") or "", item.get("tool") or ""]
-        for item in summary["timeout_mentions"]
+        [item["line"], item.get("role") or "", item.get("tool") or ""] for item in summary["timeout_mentions"]
     ]
     rows_subagent_agents = [
-        [agent, stats.get("calls", 0), stats.get("errors", 0), stats.get("timeouts", 0), stats.get("longest_duration_ms", 0)]
+        [
+            agent,
+            stats.get("calls", 0),
+            stats.get("errors", 0),
+            stats.get("timeouts", 0),
+            stats.get("longest_duration_ms", 0),
+        ]
         for agent, stats in summary["subagent_agent_stats"].items()
     ]
     rows_subagent_longest = [

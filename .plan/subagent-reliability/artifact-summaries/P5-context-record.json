@@ -1,0 +1,32 @@
+{
+  "ok": true,
+  "topic": "subagent-reliability",
+  "artifact": "context-packs",
+  "file": ".plan/subagent-reliability/context-packs.jsonl",
+  "id": "context:subagent-reliability:P5",
+  "errors": [],
+  "record": {
+    "id": "context:subagent-reliability:P5",
+    "type": "context-pack",
+    "phase_id": "P5",
+    "summary": "P5 final integration: update README/examples as needed with final role/tool matrix and helper/acceptance examples, ensure proposal/plan/implement examples use helper summaries and structured acceptance, run full project checks, validate topic and planning graph, dispatch final auditor with deterministic receipts/helper summaries, and finalize ADR intent after validation receipts/source commits exist.",
+    "budget_tokens": 3500,
+    "references": [
+      ".plan/subagent-reliability/plan.md#Phase P5",
+      "README.md",
+      "skills/proposal/SKILL.md",
+      "skills/plan/SKILL.md",
+      "skills/implement/SKILL.md",
+      "package.json",
+      ".plan/subagent-reliability/receipts.jsonl",
+      "docs/adr/0001-record-adr-management-workflow.md"
+    ],
+    "verified_files": [
+      "README.md",
+      "skills/proposal/SKILL.md",
+      "skills/plan/SKILL.md",
+      "skills/implement/SKILL.md",
+      "package.json"
+    ]
+  }
+}

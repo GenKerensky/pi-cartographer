@@ -1,0 +1,29 @@
+{
+  "ok": true,
+  "topic": "subagent-reliability",
+  "artifact": "receipts",
+  "file": ".plan/subagent-reliability/receipts.jsonl",
+  "id": "receipt:subagent-reliability:P5-adr-evidence-correction:2026-06-08T22:20:00Z",
+  "errors": [],
+  "record": {
+    "id": "receipt:subagent-reliability:P5-adr-evidence-correction:2026-06-08T22:20:00Z",
+    "type": "adr-receipt",
+    "status": "corrected",
+    "phase_id": "P5",
+    "summary": "Final-state auditor found ADR validation receipt metadata stale. Parent rewrote ADR evidence to include final P5 validation receipts, removed the uncommitted duplicate ADR draft, restored the final decision as ADR-0002, and cartographer_adr validate passed.",
+    "commands": [
+      {
+        "action": "write",
+        "result": "passed",
+        "summary": "Updated ADR evidence; tool produced a temporary uncommitted duplicate that parent collapsed back to ADR-0002.",
+        "tool": "cartographer_adr",
+        "topic": "subagent-reliability"
+      },
+      {
+        "action": "validate",
+        "result": "passed",
+        "tool": "cartographer_adr"
+      }
+    ]
+  }
+}

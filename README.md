@@ -64,6 +64,8 @@ pi -e /path/to/pi-cartographer   # one-off local use
 | `cartographer_jsonl` | Extension tool | Wraps JSONL actions such as `validate-topic`, `validate-file`, `validate-misses`, `list-misses`, `list`, `upsert`, and `seed-pi-facts`. |
 | `cartographer_evidence` | Extension tool | Imports/list private proposal artifacts under `.plan/_private/<topic>/` without exposing raw contents and writes commit-safe evidence manifests. |
 | `cartographer_session` | Extension tool | Analyzes authorized Pi session JSONL into compact Markdown/JSON reports without exposing raw transcript contents. |
+| `cartographer_artifacts` | Extension tool | Provides read-only compact summaries for topic validation, fact citations, receipts, context packs, evidence manifests, and phase acceptance handoffs. |
+| `cartographer_validation` | Extension tool | Parent-owned wrapper for validation commands and compact receipt output; it does not replace semantic auditor review. |
 | `cartographer_adr` | Extension tool | Evaluates, drafts, creates, imports, validates, searches, and relates Architecture Decision Records. |
 
 Skill commands are available as `/skill:<name>` when pi skill commands are enabled.
@@ -89,6 +91,37 @@ Workflow contracts for delegated runs:
 - Use `cartographer-pathfinder` as the default phase writer for implementation. Every non-trivial phase handoff requires structured acceptance: exact checklist IDs, validation IDs, scope boundaries, changed-files evidence, commands/receipt requirements, residual risks, and stop rules.
 - Record timeout/fallback receipts for child timeouts, unavailable tools, fallback substitutions, and repeated unusable handoffs. After repeated child failures, ask `cartographer-compass` for an escalation recommendation before substantial parent takeover.
 - Apply a least-privilege child tool policy. Children receive only role-specific artifact paths and tool actions; the parent keeps canonical JSONL, private input, ADR, receipt, checkoff, commit, and orchestration authority unless a structured acceptance contract scopes a specific writer task.
+
+Final role/tool matrix:
+
+| Role | Default tools/context | Parent-owned boundaries | Example handoff evidence |
+|---|---|---|---|
+| `cartographer-archivist` / `cartographer-drafter` | `cartographer_artifacts` fact/context summaries, `cartographer_index` query/read, sanitized evidence docs | Canonical JSONL upserts and receipt writes unless explicitly scoped | Fact citation summary, context-pack path, draft JSONL suggestions |
+| `cartographer-pathfinder` | Focused context pack, helper summary paths, `cartographer_index` reads/searches, scoped edit tools | Commits, staging, final checkoff, ADR writes, unrelated phase files | Structured acceptance report with changed files, commands, validation IDs, no-staged-files evidence |
+| `cartographer-auditor` | Deterministic validation receipts, `cartographer_artifacts` receipt/context/validation summaries, targeted `cartographer_index` reads | Read-only: no plan edits, no checkoff, no receipt/ADR mutation | PASS/FAIL receipt at a deterministic path with required corrections if any |
+| `cartographer-compass` | Receipt/context summaries, proposal/plan references, validation failure summaries | Decision advice only; user/parent chooses scope/order changes | Escalation recommendation before parent takeover |
+| `cartographer-redactor` | Authorized raw private paths only when explicitly scoped; `cartographer_session` for authorized sessions | No proposal/plan decisions; sanitized outputs only | `.plan/<topic>/evidence/*-analysis.md` and safe manifest entries |
+
+Examples:
+
+```text
+Auditor gate: after `npm run check` and topic/graph validation receipts pass, ask `cartographer-auditor` to review the current diff using `.plan/<topic>/context-packs.jsonl:<context-id>`, `.plan/<topic>/receipts.jsonl:<validation-ids>`, and a deterministic output receipt such as `.plan/<topic>/auditor-final-receipt.md`. The auditor returns PASS/FAIL and remains read-only.
+```
+
+```text
+Pathfinder acceptance: include phase ID, exact checklist IDs, validation IDs, allowed files, context-pack path, helper summary paths, stop rules, and evidence fields (`changed-files`, `commands-run`, `validation-output`, `residual-risks`, `diff-summary`, `no-staged-files`). The pathfinder edits only the scoped phase and does not commit or stage.
+```
+
+```bash
+# Read-only artifact helper summaries for child handoffs; these summarize, not mutate.
+cartographer_artifacts({"action":"show-record","root":"$PWD","topic":"<topic>","artifact":"context-packs","id":"<context-id>"})
+cartographer_artifacts({"action":"receipt-summary","root":"$PWD","topic":"<topic>","limit":10})
+cartographer_artifacts({"action":"validate-topic-summary","root":"$PWD","topic":"<topic>"})
+```
+
+```jsonl
+{"id":"receipt:P2:timeout-fallback:2026-06-08T12:00:00Z","type":"fallback-receipt","phase_id":"P2","child":"cartographer-pathfinder","attempt_count":2,"failure":"timeout after 600000ms","control":{"async":true,"timeoutMs":600000},"fallback_approved":"user-approved serial repair","compass_recommendation":"safe to continue with scoped docs-only fix","outcome":"continued","residual_risk":"semantic auditor still required"}
+```
 
 ## Quick start
 
@@ -418,6 +451,13 @@ python skills/plan/scripts/adr_records.py validate --root "$PWD" --json
 # Validate planning artifacts
 node --experimental-strip-types skills/plan/scripts/manage_jsonl.ts validate-topic --root "$PWD" --topic "search-ui" --json
 python skills/plan/scripts/validate_planning_graph.py --root "$PWD" --topic "search-ui" --json
+
+# Produce read-only helper summaries for delegated handoffs
+node --experimental-strip-types skills/plan/scripts/manage_jsonl.ts validate-topic-summary --root "$PWD" --topic "search-ui" --json
+node --experimental-strip-types skills/plan/scripts/manage_jsonl.ts fact-citation-summary --root "$PWD" --topic "search-ui" --json
+node --experimental-strip-types skills/plan/scripts/manage_jsonl.ts context-pack-summary --root "$PWD" --topic "search-ui" --limit 5 --json
+node --experimental-strip-types skills/plan/scripts/manage_jsonl.ts receipt-summary --root "$PWD" --topic "search-ui" --limit 10 --json
+node --experimental-strip-types skills/plan/scripts/manage_jsonl.ts phase-summary --root "$PWD" --topic "search-ui" --phase-id "P2" --json
 
 # Inspect or update JSONL records
 node --experimental-strip-types skills/plan/scripts/manage_jsonl.ts list --file ".plan/search-ui/map.nodes.jsonl" --json

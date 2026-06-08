@@ -1,0 +1,55 @@
+{
+  "ok": true,
+  "topic": "subagent-reliability",
+  "counts": {
+    "facts": 22,
+    "sources": 14,
+    "supported_facts": 22,
+    "proposal_citations": 43,
+    "plan_citations": 47,
+    "unique_citations": 18
+  },
+  "citations": {
+    "proposal": [
+      "F001",
+      "F002",
+      "F003",
+      "F004",
+      "F005",
+      "F006",
+      "F007",
+      "F008",
+      "F009",
+      "F010",
+      "F011",
+      "F012",
+      "F013",
+      "F014",
+      "F015",
+      "F016",
+      "F905"
+    ],
+    "plan": [
+      "F001",
+      "F002",
+      "F003",
+      "F004",
+      "F005",
+      "F006",
+      "F007",
+      "F008",
+      "F009",
+      "F010",
+      "F011",
+      "F012",
+      "F013",
+      "F014",
+      "F015",
+      "F016",
+      "F903"
+    ]
+  },
+  "missing": [],
+  "unsupported": [],
+  "errors": []
+}

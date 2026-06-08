@@ -90,7 +90,7 @@ class ValidationRunnerTests(unittest.TestCase):
             result = self.run_runner(
                 project,
                 "--command",
-                f"{sys.executable} -c \"import time; time.sleep(2)\"",
+                f'{sys.executable} -c "import time; time.sleep(2)"',
                 "--phase-id",
                 "P4",
                 "--receipt-file",

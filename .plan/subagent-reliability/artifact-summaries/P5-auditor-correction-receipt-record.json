@@ -1,0 +1,15 @@
+{
+  "ok": true,
+  "topic": "subagent-reliability",
+  "artifact": "receipts",
+  "file": ".plan/subagent-reliability/receipts.jsonl",
+  "id": "receipt:subagent-reliability:P5-auditor-correction:2026-06-08T21:55:00Z",
+  "errors": [],
+  "record": {
+    "id": "receipt:subagent-reliability:P5-auditor-correction:2026-06-08T21:55:00Z",
+    "type": "audit-receipt",
+    "status": "corrected",
+    "phase_id": "P5",
+    "summary": "Initial P5 auditor retry failed because pathfinder-P5-receipt.md still described P5.V1 as blocked after parent resolved ruff via an ephemeral /tmp venv and recorded a passed npm run check receipt. Parent updated the receipt to reconcile the passed validation and will rerun auditor."
+  }
+}

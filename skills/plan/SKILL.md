@@ -342,7 +342,7 @@ Role-scoped least-privilege Cartographer helper examples for delegated agents in
 ```bash
 cartographer_artifacts({"action":"validate-topic-summary","root":"$PWD","topic":"{topic}"})
 cartographer_artifacts({"action":"fact-citation-summary","root":"$PWD","topic":"{topic}"})
-cartographer_artifacts({"action":"context-pack-summary","root":"$PWD","topic":"{topic}","id":"<context-id>"})
+cartographer_artifacts({"action":"show-record","root":"$PWD","topic":"{topic}","artifact":"context-packs","id":"<context-id>"})
 cartographer_artifacts({"action":"receipt-summary","root":"$PWD","topic":"{topic}"})
 cartographer_artifacts({"action":"evidence-manifest-summary","root":"$PWD","topic":"{topic}"})
 cartographer_index({"action":"query","root":"$PWD","topic":"{topic}","limit":10})

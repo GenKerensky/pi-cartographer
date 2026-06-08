@@ -183,7 +183,9 @@ def main() -> int:
     started = dt.datetime.now(dt.UTC)
     timed_out = False
     try:
-        result = subprocess.run(args.command, cwd=root, shell=True, text=True, capture_output=True, timeout=args.timeout_sec)
+        result = subprocess.run(
+            args.command, cwd=root, shell=True, text=True, capture_output=True, timeout=args.timeout_sec
+        )
         stdout = result.stdout
         stderr = result.stderr
         exit_code = result.returncode
@@ -210,11 +212,22 @@ def main() -> int:
         "validation_ids": args.validation_id,
         "status": "timed-out" if timed_out else ("passed" if exit_code == 0 else "failed"),
         "command": args.command,
-        "commands": [{"command": args.command, "result": "timed-out" if timed_out else ("passed" if exit_code == 0 else "failed")}],
+        "commands": [
+            {
+                "command": args.command,
+                "result": "timed-out" if timed_out else ("passed" if exit_code == 0 else "failed"),
+            }
+        ],
         "exit_code": exit_code,
         "duration_ms": int((ended - started).total_seconds() * 1000),
         "summary": summary.strip()
-        or ("Command passed with no output." if exit_code == 0 else "Command timed out with no output." if timed_out else "Command failed with no output."),
+        or (
+            "Command passed with no output."
+            if exit_code == 0
+            else "Command timed out with no output."
+            if timed_out
+            else "Command failed with no output."
+        ),
         "truncated": truncated,
         "maxOutputChars": args.max_output_chars,
         "token_estimate": max(1, (len(stdout) + len(stderr)) // 4),
@@ -226,7 +239,9 @@ def main() -> int:
         "verification": {"validation": args.validation_id or [args.command]},
     }
     if exit_code != 0:
-        receipt["decision"] = "parent-review-required-after-timeout" if timed_out else "parent-review-required-after-validation-failure"
+        receipt["decision"] = (
+            "parent-review-required-after-timeout" if timed_out else "parent-review-required-after-validation-failure"
+        )
         receipt["fallback_required"] = True
     receipt = {key: value for key, value in receipt.items() if value not in (None, [], {})}
     append_jsonl(receipt_file, receipt)

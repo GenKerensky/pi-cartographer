@@ -1,0 +1,15 @@
+{
+  "ok": true,
+  "topic": "subagent-reliability",
+  "artifact": "receipts",
+  "file": ".plan/subagent-reliability/receipts.jsonl",
+  "id": "receipt:subagent-reliability:P5-auditor-correction:2026-06-08T21:56:00Z",
+  "errors": [],
+  "record": {
+    "id": "receipt:subagent-reliability:P5-auditor-correction:2026-06-08T21:56:00Z",
+    "type": "audit-receipt",
+    "status": "corrected",
+    "phase_id": "P5",
+    "summary": "Second P5 auditor retry failed because proposal/plan skill examples used context-pack-summary with id. Parent corrected both examples to use cartographer_artifacts show-record for context-packs and reran deterministic validation."
+  }
+}

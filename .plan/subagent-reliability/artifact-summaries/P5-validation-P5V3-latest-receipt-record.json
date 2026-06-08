@@ -1,0 +1,21 @@
+{
+  "ok": true,
+  "topic": "subagent-reliability",
+  "artifact": "receipts",
+  "file": ".plan/subagent-reliability/receipts.jsonl",
+  "id": "receipt:P5:validation:2026-06-08T21:54:31+00:00",
+  "errors": [],
+  "record": {
+    "id": "receipt:P5:validation:2026-06-08T21:54:31+00:00",
+    "type": "validation-receipt",
+    "status": "passed",
+    "phase_id": "P5",
+    "summary": "{\n  \"counts\": {\n    \"context_packs\": 9,\n    \"evidence_files\": 3,\n    \"fact_edges\": 24,\n    \"fact_nodes\": 36,\n    \"map_edges\": 18,\n    \"map_nodes\": 13,\n    \"plan_edges\": 149,\n    \"plan_nodes\": 64,\n    \"receipts\": 35,\n    \"retrieval_misses\": 0\n  },\n  \"errors\": [],\n  \"ok\": true,\n  \"topic\": \"subagent-reliability\",\n  \"warnings\": []\n}",
+    "commands": [
+      {
+        "command": "python skills/plan/scripts/validate_planning_graph.py --root \"$PWD\" --topic subagent-reliability --json",
+        "result": "passed"
+      }
+    ]
+  }
+}

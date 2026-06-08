@@ -65,7 +65,7 @@ flowchart TD
 | 2 | P2 | Read-only artifact helper | P0 | P3, P4 | A child-safe read-only artifact/index helper exposes record lookup, citation, validation, receipt, context-pack, and evidence-manifest summaries with tests. |
 | 3 | P3 | Agent tool integration | P2 | P5 | Cartographer agent frontmatter/prompts and workflow handoffs use least-privilege helper access by role, not blanket mutable tools. |
 | 4 | P4 | Phase and validation helpers | P2 | P5 | Parent-owned phase/acceptance extraction and validation receipt helper paths reduce ad-hoc scripts while preserving validation trust boundaries. |
-| 5 | P5 | Final integration | P1, P3, P4 | none | Full checks, topic validation, planning graph validation, auditor pass, and ADR-deferred receipt are complete. |
+| 5 | P5 | Final integration | P1, P3, P4 | none | Full checks, topic validation, planning graph validation, auditor pass, and ADR finalization/validation are complete. |
 
 ## Phases
 
@@ -304,14 +304,14 @@ Respect AGENTS.md: tests must use temporary/mock project roots for plan/receipt 
 
 ### Phase P5 — Final integration
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P1, P3, P4
 - **Unlocks:** none
 - **Primary references:** `file:README.md`, `file:package.json`, `file:tests/test_workflow_docs.py`, `file:tests/test_analyze_session.py`, `file:tests/manage_jsonl.test.ts`, `file:tests/cartographer_tools.test.ts`, `.plan/subagent-reliability/proposal.md`, [F012], [F013], [F014], [F016]
 
 #### Objective
 
-Validate the complete subagent reliability workflow, update planning artifacts, and leave ADR finalization ready for implementation completion.
+Validate the complete subagent reliability workflow, update planning artifacts, and finalize the ADR required by the proposal metadata.
 
 #### Scope
 
@@ -323,28 +323,28 @@ Validate the complete subagent reliability workflow, update planning artifacts, 
 
 #### Checklist
 
-- [ ] **P5.T1** Update README with final role/tool matrix and examples for auditor gate, pathfinder acceptance, read-only artifact helper, and timeout fallback receipts.
-- [ ] **P5.T2** Ensure proposal/plan/implement skill examples use helper summaries and structured acceptance rather than vague child prompts.
-- [ ] **P5.T3** Run and record topic validation, planning graph validation, and full project checks.
-- [ ] **P5.T4** Dispatch `cartographer-auditor` with deterministic receipt paths and context-pack paths; apply required corrections before finalizing.
-- [ ] **P5.T5** Finalize ADR intent with `cartographer_adr` after validation receipts and implementation commits exist, or record an explicit user-deferred ADR receipt.
+- [x] **P5.T1** Update README with final role/tool matrix and examples for auditor gate, pathfinder acceptance, read-only artifact helper, and timeout fallback receipts.
+- [x] **P5.T2** Ensure proposal/plan/implement skill examples use helper summaries and structured acceptance rather than vague child prompts.
+- [x] **P5.T3** Run and record topic validation, planning graph validation, and full project checks.
+- [x] **P5.T4** Dispatch `cartographer-auditor` with deterministic receipt paths and context-pack paths; apply required corrections before finalizing.
+- [x] **P5.T5** Finalize ADR intent with `cartographer_adr` after validation receipts and implementation commits exist, or record an explicit user-deferred ADR receipt.
 
 #### Validation
 
-- [ ] **P5.V1** Run `npm run check`.
-- [ ] **P5.V2** Run `cartographer_jsonl validate-topic --topic subagent-reliability`.
-- [ ] **P5.V3** Run `python skills/plan/scripts/validate_planning_graph.py --root "$PWD" --topic subagent-reliability --json`.
-- [ ] **P5.V4** Run a final `cartographer-auditor` pass and confirm PASS with receipt/context-pack references.
-- [ ] **P5.V5** Run `cartographer_adr` draft/write/validate only when implementation validation receipts and source commits are available.
+- [x] **P5.V1** Run `npm run check`.
+- [x] **P5.V2** Run `cartographer_jsonl validate-topic --topic subagent-reliability`.
+- [x] **P5.V3** Run `python skills/plan/scripts/validate_planning_graph.py --root "$PWD" --topic subagent-reliability --json`.
+- [x] **P5.V4** Run a final `cartographer-auditor` pass and confirm PASS with receipt/context-pack references.
+- [x] **P5.V5** Run `cartographer_adr` draft/write/validate only when implementation validation receipts and source commits are available.
 
 #### Exit Criteria
 
-All subagent reliability changes are documented, tested, validated, audited, and ready for ADR finalization according to the proposal metadata.
+All subagent reliability changes are documented, tested, validated, audited, and captured in a validated ADR according to the proposal metadata.
 
 #### Risks and Mitigations
 
 - **Risk:** Full `npm run check` is slower than targeted checks. **Mitigation:** Use targeted checks per phase, but require full check in final integration.
-- **Risk:** ADR finalization lacks enough evidence before implementation commits. **Mitigation:** Keep ADR writing deferred until receipts/source commits exist, as the proposal requires.
+- **Risk:** ADR finalization lacks enough evidence before implementation commits. **Mitigation:** Write the ADR only after receipts/source commits exist, as the proposal requires.
 
 #### Notes for Execution Agent
 

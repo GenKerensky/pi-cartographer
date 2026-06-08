@@ -1,0 +1,896 @@
+{
+  "ok": true,
+  "topic": "subagent-reliability",
+  "count": 49,
+  "counts": {
+    "by_status": {
+      "passed": 40,
+      "timed-out": 1,
+      "blocked": 5,
+      "corrected": 3
+    },
+    "by_type": {
+      "evidence-analysis": 1,
+      "subagent-receipt": 4,
+      "validation-receipt": 21,
+      "audit-receipt": 14,
+      "proposal-update-receipt": 1,
+      "phase-completion-receipt": 6,
+      "adr-receipt": 2
+    },
+    "by_phase": {
+      "unknown": 7,
+      "planning": 2,
+      "P0": 6,
+      "P1": 4,
+      "P2": 3,
+      "P3": 4,
+      "P4": 4,
+      "P5": 19
+    }
+  },
+  "receipts": [
+    {
+      "id": "receipt:subagent-reliability:evidence-session-analysis:2026-06-08T13:51:59Z",
+      "type": "evidence-analysis",
+      "status": "passed",
+      "summary": "Imported authorized session log through private-artifact intake and generated sanitized Markdown/JSON session analysis without exposing raw transcript content."
+    },
+    {
+      "id": "receipt:subagent-reliability:redactor-timeout:2026-06-08T13:56:59Z",
+      "type": "subagent-receipt",
+      "status": "timed-out",
+      "summary": "A redactor follow-up analysis on the large session artifact timed out before producing additional evidence artifacts."
+    },
+    {
+      "id": "receipt:subagent-reliability:validate-topic:2026-06-08T14:14:00Z",
+      "type": "validation-receipt",
+      "status": "passed",
+      "summary": "cartographer_jsonl validate-topic passed with no errors or warnings after proposal map/fact/evidence curation.",
+      "commands": [
+        {
+          "action": "validate-topic",
+          "result": "passed",
+          "root": "/var/home/falco/code/pi-cartographer",
+          "tool": "cartographer_jsonl",
+          "topic": "subagent-reliability"
+        }
+      ]
+    },
+    {
+      "id": "receipt:subagent-reliability:auditor-pass:2026-06-08T14:18:00Z",
+      "type": "audit-receipt",
+      "status": "passed",
+      "summary": "cartographer-auditor returned PASS with no required corrections after reviewing proposal, map/fact JSONL, sanitized evidence, context pack, and validate-topic receipt."
+    },
+    {
+      "id": "receipt:subagent-reliability:validate-topic-tooling-update:2026-06-08T15:00:00Z",
+      "type": "validation-receipt",
+      "status": "passed",
+      "summary": "cartographer_jsonl validate-topic passed after adding focused tooling evidence facts and least-privilege tool-access proposal sections.",
+      "commands": [
+        {
+          "action": "validate-topic",
+          "result": "passed",
+          "root": "/var/home/falco/code/pi-cartographer",
+          "tool": "cartographer_jsonl",
+          "topic": "subagent-reliability"
+        }
+      ]
+    },
+    {
+      "id": "receipt:subagent-reliability:auditor-tooling-pass:2026-06-08T15:05:00Z",
+      "type": "audit-receipt",
+      "status": "passed",
+      "summary": "cartographer-auditor returned PASS for the least-privilege child tool-access proposal update after reviewing the validate-topic tooling-update receipt and context pack."
+    },
+    {
+      "id": "receipt:subagent-reliability:proposal-tool-feedback-update:2026-06-08T15:12:00Z",
+      "type": "proposal-update-receipt",
+      "status": "passed",
+      "summary": "Updated proposal to make the tool-access feedback explicit: selective least-privilege expansion, read-only JSONL/artifact helpers, no blanket mutable cartographer_jsonl/private/ADR/receipt authority, and helper tools to replace repeated custom scripts.",
+      "commands": [
+        {
+          "action": "validate-topic",
+          "result": "passed",
+          "tool": "cartographer_jsonl",
+          "topic": "subagent-reliability"
+        }
+      ]
+    },
+    {
+      "id": "receipt:subagent-reliability:plan-validation:2026-06-08T15:30:00Z",
+      "type": "validation-receipt",
+      "status": "passed",
+      "phase_id": "planning",
+      "summary": "Plan artifacts were created and deterministic validation passed with no errors or warnings.",
+      "commands": [
+        {
+          "action": "validate-topic",
+          "result": "passed",
+          "tool": "cartographer_jsonl",
+          "topic": "subagent-reliability"
+        },
+        {
+          "command": "python skills/plan/scripts/validate_planning_graph.py --root \"$PWD\" --topic subagent-reliability --json",
+          "result": "passed"
+        }
+      ]
+    },
+    {
+      "id": "receipt:subagent-reliability:plan-auditor-pass:2026-06-08T15:35:00Z",
+      "type": "audit-receipt",
+      "status": "passed",
+      "phase_id": "planning",
+      "summary": "cartographer-auditor returned PASS for the subagent-reliability implementation plan after deterministic topic and planning graph validation passed."
+    },
+    {
+      "id": "receipt:subagent-reliability:P0-pathfinder-provider-blocked:2026-06-08T15:45:00Z",
+      "type": "subagent-receipt",
+      "status": "blocked",
+      "phase_id": "P0",
+      "summary": "Attempted to delegate P0 implementation to cartographer-pathfinder, but subagent execution was rejected because no API key was found for openrouter."
+    },
+    {
+      "id": "receipt:subagent-reliability:P0-pathfinder-provider-blocked-retry:2026-06-08T15:55:00Z",
+      "type": "subagent-receipt",
+      "status": "blocked",
+      "phase_id": "P0",
+      "summary": "Retried P0 delegation to cartographer-pathfinder after user reported credentials were configured, but subagent execution was again rejected because no API key was found for openrouter."
+    },
+    {
+      "id": "receipt:subagent-reliability:P0-pathfinder-provider-blocked-retry2:2026-06-08T16:00:00Z",
+      "type": "subagent-receipt",
+      "status": "blocked",
+      "phase_id": "P0",
+      "summary": "Retried P0 delegation to cartographer-pathfinder after user refreshed provider login, but subagent execution was again rejected because no API key was found for openrouter."
+    },
+    {
+      "id": "receipt:subagent-reliability:P0-validation:2026-06-08T18:05:00Z",
+      "type": "validation-receipt",
+      "status": "passed",
+      "phase_id": "P0",
+      "summary": "P0 workflow contract documentation/tests validation passed after pathfinder updates.",
+      "commands": [
+        {
+          "command": "python -m unittest discover tests -p \"test_workflow_docs.py\"",
+          "result": "passed",
+          "validation_id": "P0.V1"
+        },
+        {
+          "command": "rg -n \"cartographer-auditor|structured acceptance|least-privilege|timeout/fallback|cartographer-pathfinder\" README.md skills tests/test_workflow_docs.py",
+          "result": "passed",
+          "summary": "108 matching lines found",
+          "validation_id": "P0.V2"
+        },
+        {
+          "command": "npm run check:scripts",
+          "result": "passed",
+          "validation_id": "P0.V3"
+        },
+        {
+          "action": "validate-topic",
+          "result": "passed",
+          "tool": "cartographer_jsonl",
+          "topic": "subagent-reliability"
+        },
+        {
+          "command": "python skills/plan/scripts/validate_planning_graph.py --root \"$PWD\" --topic subagent-reliability --json",
+          "result": "passed"
+        },
+        {
+          "command": "git diff --check",
+          "result": "passed"
+        }
+      ]
+    },
+    {
+      "id": "receipt:subagent-reliability:P0-auditor-pass:2026-06-08T18:10:00Z",
+      "type": "audit-receipt",
+      "status": "passed",
+      "phase_id": "P0",
+      "summary": "cartographer-auditor returned PASS for P0 workflow contracts after deterministic validation receipt was reviewed; no required corrections."
+    },
+    {
+      "id": "receipt:subagent-reliability:P0-complete:2026-06-08T18:12:00Z",
+      "type": "phase-completion-receipt",
+      "status": "passed",
+      "phase_id": "P0",
+      "summary": "P0 Workflow contracts completed: workflow docs/tests updated, P0 tasks and validations checked off, deterministic validations and auditor PASS recorded.",
+      "commands": [
+        {
+          "command": "python -m unittest discover tests -p \"test_workflow_docs.py\"",
+          "result": "passed"
+        },
+        {
+          "command": "npm run check:scripts",
+          "result": "passed"
+        },
+        {
+          "command": "python skills/plan/scripts/validate_planning_graph.py --root \"$PWD\" --topic subagent-reliability --json",
+          "result": "passed"
+        },
+        {
+          "action": "validate-topic",
+          "result": "passed",
+          "tool": "cartographer_jsonl",
+          "topic": "subagent-reliability"
+        },
+        {
+          "command": "git diff --check",
+          "result": "passed"
+        }
+      ]
+    },
+    {
+      "id": "receipt:subagent-reliability:P1-validation:2026-06-08T18:25:00Z",
+      "type": "validation-receipt",
+      "status": "passed",
+      "phase_id": "P1",
+      "summary": "P1 session telemetry validation passed after analyzer/test updates.",
+      "commands": [
+        {
+          "command": "python -m py_compile skills/plan/scripts/analyze_session.py",
+          "result": "passed",
+          "validation_id": "P1.V1"
+        },
+        {
+          "command": "python -m unittest discover tests -p \"test_analyze_session.py\"",
+          "result": "passed",
+          "validation_id": "P1.V2"
+        },
+        {
+          "command": "synthetic analyzer command in /tmp",
+          "result": "passed",
+          "summary": "Confirmed one true subagent timeout, one non-subagent timeout mention, field usage counts, and command-not-found tooling friction.",
+          "validation_id": "P1.V3"
+        },
+        {
+          "command": "git diff --check -- skills/plan/scripts/analyze_session.py tests/test_analyze_session.py",
+          "result": "passed"
+        }
+      ]
+    },
+    {
+      "id": "receipt:subagent-reliability:P1-validation-complete:2026-06-08T18:32:00Z",
+      "type": "validation-receipt",
+      "status": "passed",
+      "phase_id": "P1",
+      "summary": "Complete P1 validation receipt including analyzer/test checks, synthetic telemetry check, full diff check, topic validation, and planning graph validation after planning artifacts and receipts changed.",
+      "commands": [
+        {
+          "command": "python -m py_compile skills/plan/scripts/analyze_session.py",
+          "result": "passed",
+          "validation_id": "P1.V1"
+        },
+        {
+          "command": "python -m unittest discover tests -p \"test_analyze_session.py\"",
+          "result": "passed",
+          "validation_id": "P1.V2"
+        },
+        {
+          "command": "synthetic analyzer command in /tmp",
+          "result": "passed",
+          "summary": "Confirmed one true subagent timeout, one non-subagent timeout mention, field usage counts, and command-not-found tooling friction.",
+          "validation_id": "P1.V3"
+        },
+        {
+          "command": "git diff --check",
+          "result": "passed"
+        },
+        {
+          "action": "validate-topic",
+          "result": "passed",
+          "tool": "cartographer_jsonl",
+          "topic": "subagent-reliability"
+        },
+        {
+          "command": "python skills/plan/scripts/validate_planning_graph.py --root \"$PWD\" --topic subagent-reliability --json",
+          "result": "passed"
+        }
+      ]
+    },
+    {
+      "id": "receipt:subagent-reliability:P1-auditor-pass:2026-06-08T18:35:00Z",
+      "type": "audit-receipt",
+      "status": "passed",
+      "phase_id": "P1",
+      "summary": "cartographer-auditor returned PASS for P1 session telemetry after complete deterministic validation receipt was reviewed."
+    },
+    {
+      "id": "receipt:subagent-reliability:P1-complete:2026-06-08T18:36:00Z",
+      "type": "phase-completion-receipt",
+      "status": "passed",
+      "phase_id": "P1",
+      "summary": "P1 Session telemetry completed: analyzer/test updates implemented, P1 tasks and validations checked off, deterministic validations and auditor PASS recorded.",
+      "commands": [
+        {
+          "command": "python -m py_compile skills/plan/scripts/analyze_session.py",
+          "result": "passed"
+        },
+        {
+          "command": "python -m unittest discover tests -p \"test_analyze_session.py\"",
+          "result": "passed"
+        },
+        {
+          "command": "synthetic analyzer command in /tmp",
+          "result": "passed"
+        },
+        {
+          "command": "git diff --check",
+          "result": "passed"
+        },
+        {
+          "action": "validate-topic",
+          "result": "passed",
+          "tool": "cartographer_jsonl",
+          "topic": "subagent-reliability"
+        },
+        {
+          "command": "python skills/plan/scripts/validate_planning_graph.py --root \"$PWD\" --topic subagent-reliability --json",
+          "result": "passed"
+        }
+      ]
+    },
+    {
+      "id": "receipt:subagent-reliability:P2-validation:2026-06-08T18:45:00Z",
+      "type": "validation-receipt",
+      "status": "passed",
+      "phase_id": "P2",
+      "summary": "P2 read-only artifact helper validation passed. P2.V4 is treated as not applicable because no Python-side JSONL helper tests were added or changed.",
+      "commands": [
+        {
+          "command": "node --experimental-strip-types --check skills/plan/scripts/manage_jsonl.ts",
+          "result": "passed",
+          "validation_id": "P2.V1"
+        },
+        {
+          "command": "node --experimental-strip-types --check extensions/cartographer-tools.ts",
+          "result": "passed",
+          "validation_id": "P2.V2"
+        },
+        {
+          "command": "npm run test:ts",
+          "result": "passed",
+          "summary": "2 files / 18 tests passed",
+          "validation_id": "P2.V3"
+        },
+        {
+          "command": "python -m unittest discover tests -p \"test_manage_jsonl.py\"",
+          "result": "not-run",
+          "summary": "Not applicable; no Python-side JSONL helper tests added or changed.",
+          "validation_id": "P2.V4"
+        },
+        {
+          "command": "node manage_jsonl artifact summary smoke checks",
+          "result": "passed",
+          "summary": "fact-citation, receipt, context-pack, and evidence-manifest summaries returned ok and did not expose raw private paths."
+        },
+        {
+          "command": "npm run check:scripts",
+          "result": "passed"
+        },
+        {
+          "command": "git diff --check",
+          "result": "passed"
+        }
+      ]
+    },
+    {
+      "id": "receipt:subagent-reliability:P2-auditor-pass:2026-06-08T18:50:00Z",
+      "type": "audit-receipt",
+      "status": "passed",
+      "phase_id": "P2",
+      "summary": "cartographer-auditor returned PASS for P2 read-only artifact helper after deterministic validation receipt was reviewed; no required corrections."
+    },
+    {
+      "id": "receipt:subagent-reliability:P2-complete:2026-06-08T18:51:00Z",
+      "type": "phase-completion-receipt",
+      "status": "passed",
+      "phase_id": "P2",
+      "summary": "P2 Read-only artifact helper completed: helper actions, extension registration, tests, deterministic validation, and auditor PASS recorded.",
+      "commands": [
+        {
+          "command": "node --experimental-strip-types --check skills/plan/scripts/manage_jsonl.ts",
+          "result": "passed"
+        },
+        {
+          "command": "node --experimental-strip-types --check extensions/cartographer-tools.ts",
+          "result": "passed"
+        },
+        {
+          "command": "npm run test:ts",
+          "result": "passed"
+        },
+        {
+          "command": "artifact summary smoke checks",
+          "result": "passed"
+        },
+        {
+          "command": "npm run check:scripts",
+          "result": "passed"
+        },
+        {
+          "command": "git diff --check",
+          "result": "passed"
+        },
+        {
+          "action": "validate-topic",
+          "result": "passed",
+          "tool": "cartographer_jsonl",
+          "topic": "subagent-reliability"
+        },
+        {
+          "command": "python skills/plan/scripts/validate_planning_graph.py --root \"$PWD\" --topic subagent-reliability --json",
+          "result": "passed"
+        }
+      ]
+    },
+    {
+      "id": "receipt:subagent-reliability:P3-validation:2026-06-08T19:05:00Z",
+      "type": "validation-receipt",
+      "status": "passed",
+      "phase_id": "P3",
+      "summary": "P3 agent tool integration validation passed. Parent confirmed subagent discoverability, helper/control contract terms, workflow documentation tests, and diff check.",
+      "commands": [
+        {
+          "action": "list",
+          "result": "passed",
+          "summary": "All six Cartographer project agents were discoverable.",
+          "tool": "subagent",
+          "validation_id": "P3.V1"
+        },
+        {
+          "command": "rg -n \"cartographer_artifacts|cartographer_jsonl_read|acceptance|control|outputMode|cartographer_session\" .pi/agents skills",
+          "result": "passed",
+          "summary": "80 matching lines found.",
+          "validation_id": "P3.V2"
+        },
+        {
+          "command": "python -m unittest discover tests -p \"test_workflow_docs.py\"",
+          "result": "passed",
+          "validation_id": "P3.V3"
+        },
+        {
+          "command": "git diff --check",
+          "result": "passed"
+        }
+      ]
+    },
+    {
+      "id": "receipt:subagent-reliability:P3-auditor-needs-helper-summaries:2026-06-08T19:12:00Z",
+      "type": "audit-receipt",
+      "status": "blocked",
+      "phase_id": "P3",
+      "summary": "Initial P3 auditor attempt could not complete because cartographer_artifacts helper tools were not available in that child runtime and parent-generated helper summary paths were missing."
+    },
+    {
+      "id": "receipt:subagent-reliability:P3-auditor-pass:2026-06-08T19:15:00Z",
+      "type": "audit-receipt",
+      "status": "passed",
+      "phase_id": "P3",
+      "summary": "cartographer-auditor returned PASS for P3 agent tool integration after deterministic validation receipt and parent-generated helper summaries were reviewed."
+    },
+    {
+      "id": "receipt:subagent-reliability:P3-complete:2026-06-08T19:18:00Z",
+      "type": "phase-completion-receipt",
+      "status": "passed",
+      "phase_id": "P3",
+      "summary": "P3 Agent tool integration completed after parent-generated helper summaries enabled auditor PASS. Agent prompts and workflow handoffs now reference least-privilege helper summaries, structured acceptance, async/control/outputMode settings, and timeout/fallback receipts.",
+      "commands": [
+        {
+          "action": "list",
+          "result": "passed",
+          "tool": "subagent"
+        },
+        {
+          "command": "rg -n \"cartographer_artifacts|cartographer_jsonl_read|acceptance|control|outputMode|cartographer_session\" .pi/agents skills",
+          "result": "passed"
+        },
+        {
+          "command": "python -m unittest discover tests -p \"test_workflow_docs.py\"",
+          "result": "passed"
+        },
+        {
+          "command": "git diff --check",
+          "result": "passed"
+        },
+        {
+          "action": "validate-topic",
+          "result": "passed",
+          "tool": "cartographer_jsonl",
+          "topic": "subagent-reliability"
+        },
+        {
+          "command": "python skills/plan/scripts/validate_planning_graph.py --root \"$PWD\" --topic subagent-reliability --json",
+          "result": "passed"
+        }
+      ]
+    },
+    {
+      "id": "receipt:subagent-reliability:P4-validation:2026-06-08T19:30:00Z",
+      "type": "validation-receipt",
+      "status": "passed",
+      "phase_id": "P4",
+      "summary": "P4 phase and validation helpers validation passed, including phase-summary smoke check against current topic, validation runner/planning graph tests, TypeScript tests, check:scripts, topic validation, planning graph validation, and diff check.",
+      "commands": [
+        {
+          "command": "python -m unittest discover tests -p \"test_validation_runner.py\"",
+          "result": "passed",
+          "validation_id": "P4.V1"
+        },
+        {
+          "command": "python -m unittest discover tests -p \"test_validate_planning_graph.py\"",
+          "result": "passed",
+          "validation_id": "P4.V2"
+        },
+        {
+          "command": "npm run test:ts",
+          "result": "passed",
+          "summary": "2 files / 23 tests passed",
+          "validation_id": "P4.V3"
+        },
+        {
+          "command": "node --experimental-strip-types skills/plan/scripts/manage_jsonl.ts phase-summary --root \"$PWD\" --topic subagent-reliability --json",
+          "result": "passed",
+          "summary": "Returned P4 as executable phase with suggested subagent contract before checkoff.",
+          "validation_id": "P4.V4"
+        },
+        {
+          "command": "npm run check:scripts",
+          "result": "passed"
+        },
+        {
+          "action": "validate-topic",
+          "result": "passed",
+          "tool": "cartographer_jsonl",
+          "topic": "subagent-reliability"
+        },
+        {
+          "command": "python skills/plan/scripts/validate_planning_graph.py --root \"$PWD\" --topic subagent-reliability --json",
+          "result": "passed"
+        },
+        {
+          "command": "git diff --check",
+          "result": "passed"
+        }
+      ]
+    },
+    {
+      "id": "receipt:subagent-reliability:P4-auditor-needs-helper-summaries:2026-06-08T19:35:00Z",
+      "type": "audit-receipt",
+      "status": "blocked",
+      "phase_id": "P4",
+      "summary": "Initial P4 auditor attempt could not complete because cartographer_artifacts helper tools were not available in that child runtime and parent-generated helper summary paths were missing."
+    },
+    {
+      "id": "receipt:subagent-reliability:P4-auditor-pass:2026-06-08T19:40:00Z",
+      "type": "audit-receipt",
+      "status": "passed",
+      "phase_id": "P4",
+      "summary": "cartographer-auditor returned PASS for P4 phase and validation helpers after deterministic validation receipt and parent-generated helper summaries were reviewed."
+    },
+    {
+      "id": "receipt:subagent-reliability:P4-complete:2026-06-08T19:41:00Z",
+      "type": "phase-completion-receipt",
+      "status": "passed",
+      "phase_id": "P4",
+      "summary": "P4 Phase and validation helpers completed: phase-summary helper, validation wrapper, fallback receipt validation, tests, deterministic validation, and auditor PASS recorded.",
+      "commands": [
+        {
+          "command": "python -m unittest discover tests -p \"test_validation_runner.py\"",
+          "result": "passed"
+        },
+        {
+          "command": "python -m unittest discover tests -p \"test_validate_planning_graph.py\"",
+          "result": "passed"
+        },
+        {
+          "command": "npm run test:ts",
+          "result": "passed"
+        },
+        {
+          "command": "phase-summary helper smoke check",
+          "result": "passed"
+        },
+        {
+          "command": "npm run check:scripts",
+          "result": "passed"
+        },
+        {
+          "action": "validate-topic",
+          "result": "passed",
+          "tool": "cartographer_jsonl",
+          "topic": "subagent-reliability"
+        },
+        {
+          "command": "python skills/plan/scripts/validate_planning_graph.py --root \"$PWD\" --topic subagent-reliability --json",
+          "result": "passed"
+        },
+        {
+          "command": "git diff --check",
+          "result": "passed"
+        }
+      ]
+    },
+    {
+      "id": "receipt:P5:validation:2026-06-08T21:48:07+00:00",
+      "type": "validation-receipt",
+      "status": "passed",
+      "phase_id": "P5",
+      "summary": "> pi-cartographer@0.2.0 check\n> npm run check:scripts && npm run typecheck && npm run lint:py && npm run format:check && npm run test\n\n\n> pi-cartographer@0.2.0 check:scripts\n> python -m py_compile skills/index-project/scripts/index_project.py skills/plan/scripts/validate_planning_graph.py skills/plan/scripts/private_artifacts.py skills/plan/scripts/analyze_session.py skills/plan/scripts/validation_runner.py skills/plan/scripts/workflow_benchmark.py skills/plan/scripts/adr_records.py && node --experimental-strip-types --check skills/plan/scripts/manage_jsonl.ts && node --experimental-strip-types --check extensions/cartographer-tools.ts\n\n\n> pi-cartographer@0.2.0 typecheck\n> tsc --noEmit\n\n\n> pi-cartographer@0.2.0 lint:py\n> ruff check skills tests\n\nAll checks passed!\n\n> pi-cartographer@0.2.0 format:check\n> ruff format --check skills tests\n\n16 files already formatted\n\n> pi-cartographer@0.2.0 test\n> npm run test:py && npm run test:ts\n\n\n> pi-cartographer@0.2.0 test:py\n> python -m unittest discover tests\n\n\n> pi-cartographer@0.2.0 test:ts\n> vitest run\n\n\n RUN  v4.1.8 /var/home/falco/code/pi-cartographer\n\n\n Test Files  2 passed (2)\n      Tests  23 passed (23)\n   Start at  17:48:05\n   Duration  1.50s (transform 63ms, setup 0ms, import 157ms, tests 1.62s, environment 0ms)\n\n............................................hint: Using 'master' as the name for the initial branch. This default branch name\nhint: will change to \"main\" in Git 3.0. To configure the initial branch name\nhint: to use in all of your new repositories, which will suppress this warning,\nhint: call:\nhint:\nhint: \tgit config --global init.defaultBranch <name>\nhint:\nhint: Names commonly chosen instead of 'master' are 'main', 'trunk' and\nhint: 'development'. The just-created branch can be renamed via this command:\nhint:\nhint: \tgit branch -m <name>\nhint:\nhint: Disable this message with \"git config set advice.defaultBranchName false\"\n........................\n----------------------------------------------------------------------\nRan 68 tests in 5.536s\n\nOK",
+      "commands": [
+        {
+          "command": "PATH=\"/tmp/pi-cartographer-dev-venv/bin:$PATH\" npm run check",
+          "result": "passed"
+        }
+      ]
+    },
+    {
+      "id": "receipt:P5:validation:2026-06-08T21:48:14+00:00",
+      "type": "validation-receipt",
+      "status": "passed",
+      "phase_id": "P5",
+      "summary": "{\n  \"counts\": {\n    \"context_packs\": 9,\n    \"evidence_files\": 3,\n    \"fact_edges\": 24,\n    \"fact_nodes\": 36,\n    \"map_edges\": 18,\n    \"map_nodes\": 13,\n    \"plan_edges\": 149,\n    \"plan_nodes\": 64,\n    \"receipts\": 31,\n    \"retrieval_misses\": 0\n  },\n  \"errors\": [],\n  \"ok\": true,\n  \"topic\": \"subagent-reliability\",\n  \"warnings\": []\n}",
+      "commands": [
+        {
+          "command": "python skills/plan/scripts/validate_planning_graph.py --root \"$PWD\" --topic subagent-reliability --json",
+          "result": "passed"
+        }
+      ]
+    },
+    {
+      "id": "receipt:subagent-reliability:P5-validate-topic:2026-06-08T21:49:00Z",
+      "type": "validation-receipt",
+      "status": "passed",
+      "phase_id": "P5",
+      "summary": "cartographer_jsonl validate-topic --topic subagent-reliability passed with no errors or warnings.",
+      "commands": [
+        {
+          "action": "validate-topic",
+          "result": "passed",
+          "tool": "cartographer_jsonl",
+          "topic": "subagent-reliability"
+        }
+      ]
+    },
+    {
+      "id": "receipt:subagent-reliability:P5-auditor-correction:2026-06-08T21:55:00Z",
+      "type": "audit-receipt",
+      "status": "corrected",
+      "phase_id": "P5",
+      "summary": "Initial P5 auditor retry failed because pathfinder-P5-receipt.md still described P5.V1 as blocked after parent resolved ruff via an ephemeral /tmp venv and recorded a passed npm run check receipt. Parent updated the receipt to reconcile the passed validation and will rerun auditor."
+    },
+    {
+      "id": "receipt:P5:validation:2026-06-08T21:54:23+00:00",
+      "type": "validation-receipt",
+      "status": "passed",
+      "phase_id": "P5",
+      "summary": "> pi-cartographer@0.2.0 check\n> npm run check:scripts && npm run typecheck && npm run lint:py && npm run format:check && npm run test\n\n\n> pi-cartographer@0.2.0 check:scripts\n> python -m py_compile skills/index-project/scripts/index_project.py skills/plan/scripts/validate_planning_graph.py skills/plan/scripts/private_artifacts.py skills/plan/scripts/analyze_session.py skills/plan/scripts/validation_runner.py skills/plan/scripts/workflow_benchmark.py skills/plan/scripts/adr_records.py && node --experimental-strip-types --check skills/plan/scripts/manage_jsonl.ts && node --experimental-strip-types --check extensions/cartographer-tools.ts\n\n\n> pi-cartographer@0.2.0 typecheck\n> tsc --noEmit\n\n\n> pi-cartographer@0.2.0 lint:py\n> ruff check skills tests\n\nAll checks passed!\n\n> pi-cartographer@0.2.0 format:check\n> ruff format --check skills tests\n\n16 files already formatted\n\n> pi-cartographer@0.2.0 test\n> npm run test:py && npm run test:ts\n\n\n> pi-cartographer@0.2.0 test:py\n> python -m unittest discover tests\n\n\n> pi-cartographer@0.2.0 test:ts\n> vitest run\n\n\n RUN  v4.1.8 /var/home/falco/code/pi-cartographer\n\n\n Test Files  2 passed (2)\n      Tests  23 passed (23)\n   Start at  17:54:21\n   Duration  1.49s (transform 71ms, setup 0ms, import 148ms, tests 1.62s, environment 0ms)\n\n............................................hint: Using 'master' as the name for the initial branch. This default branch name\nhint: will change to \"main\" in Git 3.0. To configure the initial branch name\nhint: to use in all of your new repositories, which will suppress this warning,\nhint: call:\nhint:\nhint: \tgit config --global init.defaultBranch <name>\nhint:\nhint: Names commonly chosen instead of 'master' are 'main', 'trunk' and\nhint: 'development'. The just-created branch can be renamed via this command:\nhint:\nhint: \tgit branch -m <name>\nhint:\nhint: Disable this message with \"git config set advice.defaultBranchName false\"\n........................\n----------------------------------------------------------------------\nRan 68 tests in 5.581s\n\nOK",
+      "commands": [
+        {
+          "command": "PATH=\"/tmp/pi-cartographer-dev-venv/bin:$PATH\" npm run check",
+          "result": "passed"
+        }
+      ]
+    },
+    {
+      "id": "receipt:P5:validation:2026-06-08T21:54:31+00:00",
+      "type": "validation-receipt",
+      "status": "passed",
+      "phase_id": "P5",
+      "summary": "{\n  \"counts\": {\n    \"context_packs\": 9,\n    \"evidence_files\": 3,\n    \"fact_edges\": 24,\n    \"fact_nodes\": 36,\n    \"map_edges\": 18,\n    \"map_nodes\": 13,\n    \"plan_edges\": 149,\n    \"plan_nodes\": 64,\n    \"receipts\": 35,\n    \"retrieval_misses\": 0\n  },\n  \"errors\": [],\n  \"ok\": true,\n  \"topic\": \"subagent-reliability\",\n  \"warnings\": []\n}",
+      "commands": [
+        {
+          "command": "python skills/plan/scripts/validate_planning_graph.py --root \"$PWD\" --topic subagent-reliability --json",
+          "result": "passed"
+        }
+      ]
+    },
+    {
+      "id": "receipt:subagent-reliability:P5-validate-topic:2026-06-08T21:55:00Z",
+      "type": "validation-receipt",
+      "status": "passed",
+      "phase_id": "P5",
+      "summary": "cartographer_jsonl validate-topic --topic subagent-reliability passed with no errors or warnings after P5 documentation correction.",
+      "commands": [
+        {
+          "action": "validate-topic",
+          "result": "passed",
+          "tool": "cartographer_jsonl",
+          "topic": "subagent-reliability"
+        }
+      ]
+    },
+    {
+      "id": "receipt:subagent-reliability:P5-auditor-correction:2026-06-08T21:56:00Z",
+      "type": "audit-receipt",
+      "status": "corrected",
+      "phase_id": "P5",
+      "summary": "Second P5 auditor retry failed because proposal/plan skill examples used context-pack-summary with id. Parent corrected both examples to use cartographer_artifacts show-record for context-packs and reran deterministic validation."
+    },
+    {
+      "id": "receipt:subagent-reliability:P5-auditor-pass:2026-06-08T22:00:00Z",
+      "type": "audit-receipt",
+      "status": "passed",
+      "phase_id": "P5",
+      "summary": "cartographer-auditor returned PASS for P5 final integration after README/tool-helper examples, structured acceptance guidance, deterministic validation receipts, and corrected P5 helper summaries were reviewed."
+    },
+    {
+      "id": "receipt:subagent-reliability:P5-adr-finalized:2026-06-08T22:05:00Z",
+      "type": "adr-receipt",
+      "status": "passed",
+      "phase_id": "P5",
+      "summary": "ADR finalization completed for adr_required=true metadata. cartographer_adr write created ADR-0002 and cartographer_adr validate passed with no errors or warnings.",
+      "commands": [
+        {
+          "action": "evaluate",
+          "result": "passed",
+          "tool": "cartographer_adr",
+          "topic": "subagent-reliability"
+        },
+        {
+          "action": "draft",
+          "result": "passed",
+          "tool": "cartographer_adr",
+          "topic": "subagent-reliability"
+        },
+        {
+          "action": "write",
+          "path": "docs/adr/0002-require-auditable-cartographer-subagent-handoffs.md",
+          "result": "passed",
+          "tool": "cartographer_adr",
+          "topic": "subagent-reliability"
+        },
+        {
+          "action": "validate",
+          "result": "passed",
+          "tool": "cartographer_adr"
+        }
+      ]
+    },
+    {
+      "id": "receipt:P5:validation:2026-06-08T21:59:29+00:00",
+      "type": "validation-receipt",
+      "status": "passed",
+      "phase_id": "P5",
+      "summary": "> pi-cartographer@0.2.0 check\n> npm run check:scripts && npm run typecheck && npm run lint:py && npm run format:check && npm run test\n\n\n> pi-cartographer@0.2.0 check:scripts\n> python -m py_compile skills/index-project/scripts/index_project.py skills/plan/scripts/validate_planning_graph.py skills/plan/scripts/private_artifacts.py skills/plan/scripts/analyze_session.py skills/plan/scripts/validation_runner.py skills/plan/scripts/workflow_benchmark.py skills/plan/scripts/adr_records.py && node --experimental-strip-types --check skills/plan/scripts/manage_jsonl.ts && node --experimental-strip-types --check extensions/cartographer-tools.ts\n\n\n> pi-cartographer@0.2.0 typecheck\n> tsc --noEmit\n\n\n> pi-cartographer@0.2.0 lint:py\n> ruff check skills tests\n\nAll checks passed!\n\n> pi-cartographer@0.2.0 format:check\n> ruff format --check skills tests\n\n16 files already formatted\n\n> pi-cartographer@0.2.0 test\n> npm run test:py && npm run test:ts\n\n\n> pi-cartographer@0.2.0 test:py\n> python -m unittest discover tests\n\n\n> pi-cartographer@0.2.0 test:ts\n> vitest run\n\n\n RUN  v4.1.8 /var/home/falco/code/pi-cartographer\n\n\n Test Files  2 passed (2)\n      Tests  23 passed (23)\n   Start at  17:59:27\n   Duration  1.51s (transform 66ms, setup 0ms, import 148ms, tests 1.64s, environment 0ms)\n\n............................................hint: Using 'master' as the name for the initial branch. This default branch name\nhint: will change to \"main\" in Git 3.0. To configure the initial branch name\nhint: to use in all of your new repositories, which will suppress this warning,\nhint: call:\nhint:\nhint: \tgit config --global init.defaultBranch <name>\nhint:\nhint: Names commonly chosen instead of 'master' are 'main', 'trunk' and\nhint: 'development'. The just-created branch can be renamed via this command:\nhint:\nhint: \tgit branch -m <name>\nhint:\nhint: Disable this message with \"git config set advice.defaultBranchName false\"\n........................\n----------------------------------------------------------------------\nRan 68 tests in 5.561s\n\nOK",
+      "commands": [
+        {
+          "command": "PATH=\"/tmp/pi-cartographer-dev-venv/bin:$PATH\" npm run check",
+          "result": "passed"
+        }
+      ]
+    },
+    {
+      "id": "receipt:P5:validation:2026-06-08T21:59:36+00:00",
+      "type": "validation-receipt",
+      "status": "passed",
+      "phase_id": "P5",
+      "summary": "{\n  \"counts\": {\n    \"context_packs\": 9,\n    \"evidence_files\": 3,\n    \"fact_edges\": 24,\n    \"fact_nodes\": 36,\n    \"map_edges\": 18,\n    \"map_nodes\": 13,\n    \"plan_edges\": 149,\n    \"plan_nodes\": 64,\n    \"receipts\": 41,\n    \"retrieval_misses\": 0\n  },\n  \"errors\": [],\n  \"ok\": true,\n  \"topic\": \"subagent-reliability\",\n  \"warnings\": []\n}",
+      "commands": [
+        {
+          "command": "python skills/plan/scripts/validate_planning_graph.py --root \"$PWD\" --topic subagent-reliability --json",
+          "result": "passed"
+        }
+      ]
+    },
+    {
+      "id": "receipt:subagent-reliability:P5-final-validate-topic:2026-06-08T22:10:00Z",
+      "type": "validation-receipt",
+      "status": "passed",
+      "phase_id": "P5",
+      "summary": "Final cartographer_jsonl validate-topic passed after P5 checkoff, ADR finalization, and final receipts.",
+      "commands": [
+        {
+          "action": "validate-topic",
+          "result": "passed",
+          "tool": "cartographer_jsonl",
+          "topic": "subagent-reliability"
+        }
+      ]
+    },
+    {
+      "id": "receipt:subagent-reliability:P5-complete:2026-06-08T22:12:00Z",
+      "type": "phase-completion-receipt",
+      "status": "passed",
+      "phase_id": "P5",
+      "summary": "P5 final integration completed: README/tool-helper examples updated, skill helper examples corrected, Python formatting applied, full checks/topic/planning validations passed, final auditor PASS recorded, and ADR-0002 finalized/validated with final receipt evidence.",
+      "commands": [
+        {
+          "command": "PATH=\"/tmp/pi-cartographer-dev-venv/bin:$PATH\" npm run check",
+          "result": "passed",
+          "validation_id": "P5.final-check"
+        },
+        {
+          "action": "validate-topic",
+          "result": "passed",
+          "tool": "cartographer_jsonl",
+          "topic": "subagent-reliability",
+          "validation_id": "P5.final-validate-topic"
+        },
+        {
+          "command": "python skills/plan/scripts/validate_planning_graph.py --root \"$PWD\" --topic subagent-reliability --json",
+          "result": "passed",
+          "validation_id": "P5.final-planning-graph"
+        },
+        {
+          "action": "validate",
+          "result": "passed",
+          "tool": "cartographer_adr"
+        }
+      ]
+    },
+    {
+      "id": "receipt:P5:validation:2026-06-08T22:02:11+00:00",
+      "type": "validation-receipt",
+      "status": "passed",
+      "phase_id": "P5",
+      "summary": "> pi-cartographer@0.2.0 check\n> npm run check:scripts && npm run typecheck && npm run lint:py && npm run format:check && npm run test\n\n\n> pi-cartographer@0.2.0 check:scripts\n> python -m py_compile skills/index-project/scripts/index_project.py skills/plan/scripts/validate_planning_graph.py skills/plan/scripts/private_artifacts.py skills/plan/scripts/analyze_session.py skills/plan/scripts/validation_runner.py skills/plan/scripts/workflow_benchmark.py skills/plan/scripts/adr_records.py && node --experimental-strip-types --check skills/plan/scripts/manage_jsonl.ts && node --experimental-strip-types --check extensions/cartographer-tools.ts\n\n\n> pi-cartographer@0.2.0 typecheck\n> tsc --noEmit\n\n\n> pi-cartographer@0.2.0 lint:py\n> ruff check skills tests\n\nAll checks passed!\n\n> pi-cartographer@0.2.0 format:check\n> ruff format --check skills tests\n\n16 files already formatted\n\n> pi-cartographer@0.2.0 test\n> npm run test:py && npm run test:ts\n\n\n> pi-cartographer@0.2.0 test:py\n> python -m unittest discover tests\n\n\n> pi-cartographer@0.2.0 test:ts\n> vitest run\n\n\n RUN  v4.1.8 /var/home/falco/code/pi-cartographer\n\n\n Test Files  2 passed (2)\n      Tests  23 passed (23)\n   Start at  18:02:10\n   Duration  1.49s (transform 61ms, setup 0ms, import 148ms, tests 1.62s, environment 0ms)\n\n............................................hint: Using 'master' as the name for the initial branch. This default branch name\nhint: will change to \"main\" in Git 3.0. To configure the initial branch name\nhint: to use in all of your new repositories, which will suppress this warning,\nhint: call:\nhint:\nhint: \tgit config --global init.defaultBranch <name>\nhint:\nhint: Names commonly chosen instead of 'master' are 'main', 'trunk' and\nhint: 'development'. The just-created branch can be renamed via this command:\nhint:\nhint: \tgit branch -m <name>\nhint:\nhint: Disable this message with \"git config set advice.defaultBranchName false\"\n........................\n----------------------------------------------------------------------\nRan 68 tests in 5.529s\n\nOK",
+      "commands": [
+        {
+          "command": "PATH=\"/tmp/pi-cartographer-dev-venv/bin:$PATH\" npm run check",
+          "result": "passed"
+        }
+      ]
+    },
+    {
+      "id": "receipt:P5:validation:2026-06-08T22:02:12+00:00",
+      "type": "validation-receipt",
+      "status": "passed",
+      "phase_id": "P5",
+      "summary": "{\n  \"counts\": {\n    \"context_packs\": 9,\n    \"evidence_files\": 3,\n    \"fact_edges\": 24,\n    \"fact_nodes\": 36,\n    \"map_edges\": 18,\n    \"map_nodes\": 13,\n    \"plan_edges\": 149,\n    \"plan_nodes\": 64,\n    \"receipts\": 45,\n    \"retrieval_misses\": 0\n  },\n  \"errors\": [],\n  \"ok\": true,\n  \"topic\": \"subagent-reliability\",\n  \"warnings\": []\n}",
+      "commands": [
+        {
+          "command": "python skills/plan/scripts/validate_planning_graph.py --root \"$PWD\" --topic subagent-reliability --json",
+          "result": "passed"
+        }
+      ]
+    },
+    {
+      "id": "receipt:subagent-reliability:P5-final-validate-topic:2026-06-08T22:15:00Z",
+      "type": "validation-receipt",
+      "status": "passed",
+      "phase_id": "P5",
+      "summary": "Final cartographer_jsonl validate-topic passed after P5 plan wording adjustment and final validation receipt deduplication.",
+      "commands": [
+        {
+          "action": "validate-topic",
+          "result": "passed",
+          "tool": "cartographer_jsonl",
+          "topic": "subagent-reliability"
+        }
+      ]
+    },
+    {
+      "id": "receipt:subagent-reliability:P5-adr-evidence-correction:2026-06-08T22:20:00Z",
+      "type": "adr-receipt",
+      "status": "corrected",
+      "phase_id": "P5",
+      "summary": "Final-state auditor found ADR validation receipt metadata stale. Parent rewrote ADR evidence to include final P5 validation receipts, removed the uncommitted duplicate ADR draft, restored the final decision as ADR-0002, and cartographer_adr validate passed.",
+      "commands": [
+        {
+          "action": "write",
+          "result": "passed",
+          "summary": "Updated ADR evidence; tool produced a temporary uncommitted duplicate that parent collapsed back to ADR-0002.",
+          "tool": "cartographer_adr",
+          "topic": "subagent-reliability"
+        },
+        {
+          "action": "validate",
+          "result": "passed",
+          "tool": "cartographer_adr"
+        }
+      ]
+    },
+    {
+      "id": "receipt:subagent-reliability:P5-final-auditor-pass:2026-06-08T22:25:00Z",
+      "type": "audit-receipt",
+      "status": "passed",
+      "phase_id": "P5",
+      "summary": "Final-state cartographer-auditor returned PASS after ADR evidence freshness correction, final deterministic validation, and ADR graph validation."
+    }
+  ],
+  "errors": [],
+  "truncated": false
+}

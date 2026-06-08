@@ -1,0 +1,23 @@
+{
+  "ok": true,
+  "topic": "subagent-reliability",
+  "artifact": "receipts",
+  "file": ".plan/subagent-reliability/receipts.jsonl",
+  "id": "receipt:subagent-reliability:P5-validate-topic:2026-06-08T21:49:00Z",
+  "errors": [],
+  "record": {
+    "id": "receipt:subagent-reliability:P5-validate-topic:2026-06-08T21:49:00Z",
+    "type": "validation-receipt",
+    "status": "passed",
+    "phase_id": "P5",
+    "summary": "cartographer_jsonl validate-topic --topic subagent-reliability passed with no errors or warnings.",
+    "commands": [
+      {
+        "action": "validate-topic",
+        "result": "passed",
+        "tool": "cartographer_jsonl",
+        "topic": "subagent-reliability"
+      }
+    ]
+  }
+}
