@@ -414,7 +414,7 @@ Respect the project rule that tests must use temporary mock projects. Do not poi
 
 ### Phase P7 — Final validation and dogfood ADR
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P6
 - **Unlocks:** none
 - **Primary references:** `file:README.md`, `file:package.json`, `file:skills/implement/SKILL.md`, `artifact:docs-adr`, `artifact:docs-adr-graph`, [F008], [F011], [F014]
@@ -434,19 +434,19 @@ Run the full quality gate, validate planning artifacts, and dogfood the new ADR 
 
 #### Checklist
 
-- [ ] **P7.T1** Run full deterministic validation before creating any real repository ADR.
-- [ ] **P7.T2** Create a workflow-generated ADR for the completed ADR feature with `cartographer_adr`, or write an explicit user-approved skip receipt if ADR generation is declined.
-- [ ] **P7.T3** Validate generated ADR Markdown and `<adr-dir>/_graph/adr.nodes.jsonl` / `adr.edges.jsonl` with `cartographer_adr validate`.
-- [ ] **P7.T4** Re-run affected targeted tests and final graph validations after ADR artifacts are written.
-- [ ] **P7.T5** Produce final handoff citing the ADR path or skip receipt and all validation commands.
+- [x] **P7.T1** Run full deterministic validation before creating any real repository ADR.
+- [x] **P7.T2** Create a workflow-generated ADR for the completed ADR feature with `cartographer_adr`, or write an explicit user-approved skip receipt if ADR generation is declined.
+- [x] **P7.T3** Validate generated ADR Markdown and `<adr-dir>/_graph/adr.nodes.jsonl` / `adr.edges.jsonl` with `cartographer_adr validate`.
+- [x] **P7.T4** Re-run affected targeted tests and final graph validations after ADR artifacts are written.
+- [x] **P7.T5** Produce final handoff citing the ADR path or skip receipt and all validation commands.
 
 #### Validation
 
-- [ ] **P7.V1** Run `npm run check` and expect the full project gate to pass.
-- [ ] **P7.V2** Run `cartographer_jsonl validate-topic --topic adr-feature` and expect no errors.
-- [ ] **P7.V3** Run `python skills/plan/scripts/validate_planning_graph.py --topic adr-feature --json` and expect no errors.
-- [ ] **P7.V4** Run `python skills/plan/scripts/adr_records.py validate --root "$PWD" --json` or the equivalent `cartographer_adr validate` action and expect ADR docs/graph consistency to pass after dogfooding.
-- [ ] **P7.V5** Run `git diff --check` and expect no whitespace errors.
+- [x] **P7.V1** Run `npm run check` and expect the full project gate to pass.
+- [x] **P7.V2** Run `cartographer_jsonl validate-topic --topic adr-feature` and expect no errors.
+- [x] **P7.V3** Run `python skills/plan/scripts/validate_planning_graph.py --topic adr-feature --json` and expect no errors.
+- [x] **P7.V4** Run `python skills/plan/scripts/adr_records.py validate --root "$PWD" --json` or the equivalent `cartographer_adr validate` action and expect ADR docs/graph consistency to pass after dogfooding.
+- [x] **P7.V5** Run `git diff --check` and expect no whitespace errors.
 
 #### Exit Criteria
 
