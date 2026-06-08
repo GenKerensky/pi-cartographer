@@ -41,7 +41,43 @@ class AnalyzeSessionTests(unittest.TestCase):
                     "exitCode": 1,
                     "command": "npm run check -- --token " + secret,
                 },
-                {"type": "subagent", "agent": "reviewer", "timedOut": True, "message": "Run timed out after 120000ms"},
+                {
+                    "type": "subagent",
+                    "agent": "reviewer",
+                    "timedOut": True,
+                    "message": "Run timed out after 120000ms",
+                    "duration_ms": 121000,
+                    "acceptance": {"required": True},
+                    "timeout_ms": 120000,
+                    "async": False,
+                    "control": "bounded",
+                },
+                {
+                    "type": "tool_result",
+                    "tool_name": "bash",
+                    "stderr": "subagent timeout was mentioned in notes, not a child tool timeout " + secret,
+                    "exitCode": 0,
+                    "command": "echo timeout mention",
+                },
+                {
+                    "type": "tool_result",
+                    "tool_name": "bash",
+                    "stderr": "cartographer_index: command not found",
+                    "exitCode": 127,
+                    "command": "cartographer_index ensure",
+                },
+                {
+                    "type": "tool_result",
+                    "tool_name": "edit",
+                    "stderr": "oldText must match exact text replacement; invalid tool schema validation",
+                    "isError": True,
+                },
+                {
+                    "type": "tool_result",
+                    "tool_name": "bash",
+                    "stdout": "custom script created",
+                    "command": "python - <<'PY'\nprint('custom script')\nPY",
+                },
                 {"type": "compaction", "summary": "compacted conversation"},
             ]
             session.write_text("\n".join(json.dumps(record) for record in records) + "\n", encoding="utf-8")
@@ -67,8 +103,10 @@ class AnalyzeSessionTests(unittest.TestCase):
 
             receipt = json.loads(result.stdout)
             self.assertTrue(receipt["ok"])
-            self.assertEqual(receipt["entries"], 6)
+            self.assertEqual(receipt["entries"], 10)
             self.assertEqual(receipt["compactions"], 1)
+            self.assertEqual(receipt["subagent_timeouts"], 1)
+            self.assertEqual(receipt["timeout_mentions"], 1)
             stdout_report_and_json = (
                 result.stdout + report.read_text(encoding="utf-8") + summary.read_text(encoding="utf-8")
             )
@@ -77,9 +115,23 @@ class AnalyzeSessionTests(unittest.TestCase):
             summary_payload = json.loads(summary.read_text(encoding="utf-8"))
             self.assertEqual(summary_payload["roles"]["assistant"], 1)
             self.assertGreaterEqual(summary_payload["tools"].get("bash", 0), 2)
-            self.assertEqual(summary_payload["tool_errors"]["bash"], 1)
+            self.assertEqual(summary_payload["tool_errors"]["bash"], 2)
             self.assertEqual(summary_payload["token_totals"]["input_tokens"], 10)
             self.assertEqual(summary_payload["subagent_timeouts"][0]["agent"], "reviewer")
+            self.assertEqual(summary_payload["timeout_mentions"][0]["tool"], "bash")
+            self.assertEqual(summary_payload["subagent_agent_stats"]["reviewer"]["calls"], 1)
+            self.assertEqual(summary_payload["subagent_agent_stats"]["reviewer"]["timeouts"], 1)
+            self.assertEqual(summary_payload["subagent_agent_stats"]["reviewer"]["longest_duration_ms"], 121000)
+            self.assertEqual(summary_payload["subagent_field_usage"], {"acceptance": 1, "async": 1, "control": 1, "timeout": 1})
+            self.assertEqual(summary_payload["tooling_friction"]["command-not-found"], 1)
+            self.assertEqual(summary_payload["tooling_friction"]["schema/tool-validation"], 1)
+            self.assertEqual(summary_payload["tooling_friction"]["exact-edit-failure"], 1)
+            self.assertEqual(summary_payload["tooling_friction"]["custom-script-creation"], 1)
+            self.assertEqual(summary_payload["tooling_friction"]["cartographer-cli/tool-usage"], 1)
+            report_text = report.read_text(encoding="utf-8")
+            self.assertIn("## Non-Subagent Timeout Mentions", report_text)
+            self.assertIn("## Tooling Friction Summary", report_text)
+            self.assertNotIn("subagent timeout was mentioned in notes", report_text)
             self.assertEqual(summary_payload["repeated_commands"][0]["command_id"], "command-001")
             self.assertNotIn("command", summary_payload["repeated_commands"][0])
 

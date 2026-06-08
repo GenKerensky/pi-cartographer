@@ -117,7 +117,7 @@ This phase is documentation/test focused. Do not change agent frontmatter tools 
 
 ### Phase P1 — Session telemetry
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P0
 - **Unlocks:** P5
 - **Primary references:** `file:skills/plan/scripts/analyze_session.py`, `file:tests/test_analyze_session.py`, `.plan/subagent-reliability/evidence/adr-session-analysis.md`, `.plan/subagent-reliability/evidence/subagent-tooling-analysis.md`, [F001], [F002], [F011], [F014], [F015]
@@ -136,17 +136,17 @@ Make session retrospectives precise enough to diagnose subagent reliability and 
 
 #### Checklist
 
-- [ ] **P1.T1** Refactor `is_subagent_timeout` or related analyzer logic so non-subagent timeout mentions are reported separately from true subagent timeouts.
-- [ ] **P1.T2** Add per-agent tables for subagent calls, errors, timeouts, and longest durations.
-- [ ] **P1.T3** Add acceptance/timeout/async/control usage counts for subagent records when those fields are visible.
-- [ ] **P1.T4** Add sanitized tooling-friction category counts similar to command-not-found, schema/tool validation, exact-edit failures, custom-script creation, and Cartographer CLI/tool usage.
-- [ ] **P1.T5** Extend `tests/test_analyze_session.py` with synthetic fixtures that prove no raw payloads or secrets leak.
+- [x] **P1.T1** Refactor `is_subagent_timeout` or related analyzer logic so non-subagent timeout mentions are reported separately from true subagent timeouts.
+- [x] **P1.T2** Add per-agent tables for subagent calls, errors, timeouts, and longest durations.
+- [x] **P1.T3** Add acceptance/timeout/async/control usage counts for subagent records when those fields are visible.
+- [x] **P1.T4** Add sanitized tooling-friction category counts similar to command-not-found, schema/tool validation, exact-edit failures, custom-script creation, and Cartographer CLI/tool usage.
+- [x] **P1.T5** Extend `tests/test_analyze_session.py` with synthetic fixtures that prove no raw payloads or secrets leak.
 
 #### Validation
 
-- [ ] **P1.V1** Run `python -m py_compile skills/plan/scripts/analyze_session.py`.
-- [ ] **P1.V2** Run `python -m unittest discover tests -p "test_analyze_session.py"`.
-- [ ] **P1.V3** Run a synthetic analyzer command in `/tmp` and confirm the report distinguishes true subagent timeout records from timeout mentions.
+- [x] **P1.V1** Run `python -m py_compile skills/plan/scripts/analyze_session.py`.
+- [x] **P1.V2** Run `python -m unittest discover tests -p "test_analyze_session.py"`.
+- [x] **P1.V3** Run a synthetic analyzer command in `/tmp` and confirm the report distinguishes true subagent timeout records from timeout mentions.
 
 #### Exit Criteria
 

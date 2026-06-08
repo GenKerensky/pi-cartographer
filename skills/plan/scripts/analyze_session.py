@@ -165,22 +165,127 @@ def is_tool_error(record: dict[str, Any]) -> bool:
 
 
 def is_subagent_timeout(record: dict[str, Any]) -> bool:
+    """Return true only for timeout signals on explicit subagent records."""
+    return is_subagent_record(record) and has_timeout_signal(record)
+
+
+def is_subagent_record(record: dict[str, Any], tool: str | None = None) -> bool:
+    tool_name = (tool or tool_for(record) or "").lower()
+    if tool_name in {"subagent", "pi-subagents"} or "subagent" in tool_name:
+        return True
+    joined = " ".join(
+        str(record.get(key, "")) for key in ("type", "kind", "event", "action", "name")
+    ).lower()
+    if "subagent" in joined:
+        return True
+    subagent_keys = ("timeout_ms", "timeoutMs", "timedOut", "timed_out", "acceptance", "acceptanceContract")
+    return agent_for(record) is not None and any(
+        isinstance(obj, dict) and any(key in obj for key in subagent_keys) for obj in iter_values(record)
+    )
+
+
+def strings_for_detection(record: dict[str, Any]) -> list[str]:
+    strings: list[str] = []
+    detection_keys = (
+        "type",
+        "kind",
+        "event",
+        "status",
+        "message",
+        "summary",
+        "text",
+        "content",
+        "stderr",
+        "stdout",
+        "error",
+    )
+    for obj in iter_values(record):
+        if isinstance(obj, dict):
+            for key in detection_keys:
+                value = obj.get(key)
+                if isinstance(value, str):
+                    strings.append(value.lower())
+    return strings
+
+
+def has_timeout_signal(record: dict[str, Any]) -> bool:
     for obj in iter_values(record):
         if not isinstance(obj, dict):
             continue
         if obj.get("timedOut") is True or obj.get("timed_out") is True:
             return True
-    strings: list[str] = []
+        for key in ("status", "event", "kind", "message", "summary"):
+            value = obj.get(key)
+            if isinstance(value, str) and ("timed out" in value.lower() or "timeout" in value.lower()):
+                return True
+    joined = " ".join(strings_for_detection(record))
+    return "timed out" in joined or "timeout" in joined
+
+
+def field_usage_groups(record: dict[str, Any]) -> set[str]:
+    groups: set[str] = set()
+    acceptance_keys = {
+        "acceptance",
+        "acceptance_contract",
+        "acceptanceContract",
+        "criteriaSatisfied",
+        "acceptanceCriteria",
+    }
+    timeout_keys = {"timeout", "timeout_ms", "timeoutMs", "timedOut", "timed_out", "deadline", "deadline_ms"}
+    async_keys = {"async", "asyncMode", "async_mode", "background", "wait_for_completion", "waitForCompletion"}
+    control_keys = {"control", "controlMode", "control_mode", "handoff", "escalation", "stop_rules", "stopRules"}
+    for obj in iter_values(record):
+        if not isinstance(obj, dict):
+            continue
+        keys = set(obj)
+        if keys & acceptance_keys:
+            groups.add("acceptance")
+        if keys & timeout_keys:
+            groups.add("timeout")
+        if keys & async_keys:
+            groups.add("async")
+        if keys & control_keys:
+            groups.add("control")
+    return groups
+
+
+def tooling_friction_categories(record: dict[str, Any], tool: str, command: str | None) -> set[str]:
+    categories: set[str] = set()
+    joined = " ".join(strings_for_detection(record))
+    command_text = (command or "").lower()
+    tool_text = (tool or "").lower()
+    if "command not found" in joined or "not recognized as" in joined:
+        categories.add("command-not-found")
     for obj in iter_values(record):
         if isinstance(obj, dict):
-            for key in ("type", "kind", "event", "status", "message", "summary", "text", "content"):
-                value = obj.get(key)
-                if isinstance(value, str):
-                    strings.append(value.lower())
-    joined = " ".join(strings)
-    return ("subagent" in joined or "reviewer" in joined or "worker" in joined) and (
-        "timed out" in joined or "timeout" in joined
+            for key in ("exitCode", "exit_code", "returncode"):
+                if obj.get(key) == 127:
+                    categories.add("command-not-found")
+    schema_issue = (
+        "schema" in joined and ("invalid" in joined or "validation" in joined)
+    ) or "tool validation" in joined or "invalid tool" in joined
+    if schema_issue:
+        categories.add("schema/tool-validation")
+    if "oldtext" in joined or "exact text replacement" in joined or "must match" in joined:
+        categories.add("exact-edit-failure")
+    custom_script = (
+        "python - <<" in command_text
+        or "node - <<" in command_text
+        or "cat >" in command_text
+        or "mktemp" in command_text
+        or "custom script" in joined
     )
+    if custom_script:
+        categories.add("custom-script-creation")
+    cartographer_usage = (
+        "cartographer" in command_text
+        or "cartographer" in tool_text
+        or "cartographer_" in joined
+        or "cartographer-" in joined
+    )
+    if cartographer_usage:
+        categories.add("cartographer-cli/tool-usage")
+    return categories
 
 
 def accumulate_usage(record: dict[str, Any], token_totals: Counter[str], cost_totals: Counter[str]) -> None:
@@ -208,6 +313,11 @@ def analyze(input_path: Path, max_output_chars: int) -> dict[str, Any]:
     longest_turns: list[dict[str, Any]] = []
     compactions: list[dict[str, Any]] = []
     subagent_timeouts: list[dict[str, Any]] = []
+    timeout_mentions: list[dict[str, Any]] = []
+    subagent_agent_stats: dict[str, dict[str, int]] = {}
+    subagent_longest: list[dict[str, Any]] = []
+    subagent_field_usage: Counter[str] = Counter()
+    tooling_friction: Counter[str] = Counter()
     invalid_lines = 0
     entries = 0
     bytes_read = input_path.stat().st_size
@@ -260,18 +370,53 @@ def analyze(input_path: Path, max_output_chars: int) -> dict[str, Any]:
                 )
             if is_compaction(record):
                 compactions.append({"line": line_number, "role": role, "tool": None if tool == "unknown" else tool})
-            if is_subagent_timeout(record):
-                subagent_timeouts.append(
+            categories = tooling_friction_categories(record, tool, command)
+            for category in categories:
+                tooling_friction[category] += 1
+
+            is_subagent = is_subagent_record(record, tool)
+            if is_subagent:
+                agent = agent_for(record) or "unknown"
+                stats = subagent_agent_stats.setdefault(
+                    agent, {"calls": 0, "errors": 0, "timeouts": 0, "longest_duration_ms": 0}
+                )
+                stats["calls"] += 1
+                if is_tool_error(record):
+                    stats["errors"] += 1
+                if duration is not None:
+                    stats["longest_duration_ms"] = max(stats["longest_duration_ms"], duration)
+                    subagent_longest.append(
+                        {
+                            "line": line_number,
+                            "agent": agent,
+                            "tool": None if tool == "unknown" else tool,
+                            "duration_ms": duration,
+                        }
+                    )
+                for group in field_usage_groups(record):
+                    subagent_field_usage[group] += 1
+                if has_timeout_signal(record):
+                    stats["timeouts"] += 1
+                    subagent_timeouts.append(
+                        {
+                            "line": line_number,
+                            "role": role,
+                            "tool": None if tool == "unknown" else tool,
+                            "agent": agent,
+                        }
+                    )
+            elif has_timeout_signal(record):
+                timeout_mentions.append(
                     {
                         "line": line_number,
                         "role": role,
                         "tool": None if tool == "unknown" else tool,
-                        "agent": agent_for(record),
                     }
                 )
 
     largest_outputs.sort(key=lambda item: int(item["chars"]), reverse=True)
     longest_turns.sort(key=lambda item: int(item["duration_ms"]), reverse=True)
+    subagent_longest.sort(key=lambda item: int(item["duration_ms"]), reverse=True)
 
     return {
         "input_basename": input_path.name,
@@ -287,6 +432,11 @@ def analyze(input_path: Path, max_output_chars: int) -> dict[str, Any]:
         "longest_turns": longest_turns[:10],
         "compactions": compactions[:10],
         "subagent_timeouts": subagent_timeouts[:10],
+        "timeout_mentions": timeout_mentions[:10],
+        "subagent_agent_stats": dict(sorted(subagent_agent_stats.items())),
+        "subagent_longest": subagent_longest[:10],
+        "subagent_field_usage": dict(subagent_field_usage),
+        "tooling_friction": dict(tooling_friction.most_common()),
         "repeated_commands": [
             {"command_id": f"command-{index:03d}", "count": count, "command_chars": len(command)}
             for index, (command, count) in enumerate(commands.most_common(), start=1)
@@ -324,6 +474,20 @@ def render_markdown(summary: dict[str, Any]) -> str:
         [item["line"], item.get("role") or "", item.get("tool") or "", item.get("agent") or ""]
         for item in summary["subagent_timeouts"]
     ]
+    rows_timeout_mentions = [
+        [item["line"], item.get("role") or "", item.get("tool") or ""]
+        for item in summary["timeout_mentions"]
+    ]
+    rows_subagent_agents = [
+        [agent, stats.get("calls", 0), stats.get("errors", 0), stats.get("timeouts", 0), stats.get("longest_duration_ms", 0)]
+        for agent, stats in summary["subagent_agent_stats"].items()
+    ]
+    rows_subagent_longest = [
+        [item["line"], item.get("agent") or "", item.get("tool") or "", item["duration_ms"]]
+        for item in summary["subagent_longest"]
+    ]
+    rows_field_usage = [[key, count] for key, count in sorted(summary["subagent_field_usage"].items())]
+    rows_tooling_friction = [[key, count] for key, count in summary["tooling_friction"].items()]
     return f"""# Session Analysis: {summary["input_basename"]}
 
 ## Source Handling
@@ -353,9 +517,24 @@ def render_markdown(summary: dict[str, Any]) -> str:
 ## Repeated Commands
 
 {markdown_table(["Command ID", "Count", "Command Chars"], rows_commands)}
+## Subagent Outcomes by Agent
+
+{markdown_table(["Agent", "Calls", "Errors", "Timeouts", "Longest duration ms"], rows_subagent_agents)}
+## Longest Subagent Durations
+
+{markdown_table(["Line", "Agent", "Tool", "Duration ms"], rows_subagent_longest)}
+## Subagent Field Usage
+
+{markdown_table(["Field group", "Visible records"], rows_field_usage)}
 ## Subagent Timeouts
 
 {markdown_table(["Line", "Role", "Tool", "Agent"], rows_timeouts)}
+## Non-Subagent Timeout Mentions
+
+{markdown_table(["Line", "Role", "Tool"], rows_timeout_mentions)}
+## Tooling Friction Summary
+
+{markdown_table(["Category", "Records"], rows_tooling_friction)}
 ## Compaction Events
 
 {markdown_table(["Line", "Role", "Tool"], rows_compactions)}
@@ -401,6 +580,9 @@ def main() -> int:
         "longest_turns": len(summary["longest_turns"]),
         "compactions": len(summary["compactions"]),
         "subagent_timeouts": len(summary["subagent_timeouts"]),
+        "timeout_mentions": len(summary["timeout_mentions"]),
+        "subagent_agents": len(summary["subagent_agent_stats"]),
+        "tooling_friction_categories": len(summary["tooling_friction"]),
     }
     if args.json:
         print(json.dumps(receipt, indent=2, sort_keys=True))
