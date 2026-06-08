@@ -1,4 +1,4 @@
-{"id":"plan:subagent-reliability","type":"plan","title":"subagent-reliability Plan","description":"Machine-readable root node for the subagent reliability implementation plan.","source":"plan.md","status":"planned"}
+{"id":"plan:subagent-reliability","type":"plan","title":"subagent-reliability Plan","description":"Machine-readable root node for the subagent reliability implementation plan.","source":"plan.md","status":"implemented"}
 {"id":"phase:P0","type":"phase","phase_id":"P0","title":"Workflow contracts","status":"complete","depends_on":[],"unlocks":["P1","P2"],"source":"plan.md","references":["file:skills/proposal/SKILL.md","file:skills/plan/SKILL.md","file:skills/implement/SKILL.md","file:README.md","F005","F007","F008","F009","F010","F014","F016"]}
 {"id":"task:P0.T1","type":"task","task_id":"P0.T1","phase_id":"P0","title":"Update proposal skill final validation auditor gate","status":"complete","source":"plan.md"}
 {"id":"task:P0.T2","type":"task","task_id":"P0.T2","phase_id":"P0","title":"Update plan skill final validation auditor gate","status":"complete","source":"plan.md"}
@@ -58,7 +58,7 @@
 {"id":"validation:P5.V3","type":"validation","validation_id":"P5.V3","phase_id":"P5","title":"Validate planning graph","status":"complete","command":"python skills/plan/scripts/validate_planning_graph.py --root \"$PWD\" --topic subagent-reliability --json","source":"plan.md"}
 {"id":"validation:P5.V4","type":"validation","validation_id":"P5.V4","phase_id":"P5","title":"Run final cartographer-auditor pass","status":"complete","command":"cartographer-auditor manual/subagent pass with receipt paths","source":"plan.md"}
 {"id":"validation:P5.V5","type":"validation","validation_id":"P5.V5","phase_id":"P5","title":"Run ADR draft/write/validate when implementation evidence exists","status":"complete","command":"cartographer_adr draft/write/validate after source commits and validation receipts","source":"plan.md"}
-{"id":"cross:validate-topic","type":"validation","title":"Validate topic artifacts","status":"pending","command":"cartographer_jsonl validate-topic --topic subagent-reliability","source":"plan.md"}
-{"id":"cross:validate-planning-graph","type":"validation","title":"Validate planning graph","status":"pending","command":"python skills/plan/scripts/validate_planning_graph.py --root \"$PWD\" --topic subagent-reliability --json","source":"plan.md"}
-{"id":"cross:full-check","type":"validation","title":"Run full project check","status":"pending","command":"npm run check","source":"plan.md"}
-{"id":"cross:auditor-final","type":"validation","title":"Run final auditor gate","status":"pending","command":"cartographer-auditor final pass with receipts","source":"plan.md"}
+{"id":"cross:validate-topic","type":"validation","title":"Validate topic artifacts","status":"complete","command":"cartographer_jsonl validate-topic --topic subagent-reliability","source":"plan.md"}
+{"id":"cross:validate-planning-graph","type":"validation","title":"Validate planning graph","status":"complete","command":"python skills/plan/scripts/validate_planning_graph.py --root \"$PWD\" --topic subagent-reliability --json","source":"plan.md"}
+{"id":"cross:full-check","type":"validation","title":"Run full project check","status":"complete","command":"npm run check","source":"plan.md"}
+{"id":"cross:auditor-final","type":"validation","title":"Run final auditor gate","status":"complete","command":"cartographer-auditor final pass with receipts","source":"plan.md"}
