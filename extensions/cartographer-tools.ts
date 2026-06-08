@@ -98,6 +98,48 @@ type CartographerSessionParams = OutputShapeParams & {
 	jsonOut?: string;
 };
 
+type AdrStatus = "accepted" | "accepted-legacy" | "draft" | "proposed" | "rejected" | "superseded";
+type AdrRelationType = "child_of" | "conflicts_with" | "depends_on" | "precursor_to" | "related_to" | "supersedes";
+
+type CartographerAdrParams = OutputShapeParams & {
+	action: "evaluate" | "draft" | "create" | "write" | "list" | "query" | "show" | "relate" | "import" | "validate";
+	root?: string;
+	adrDir?: string;
+	topic?: string;
+	request?: string;
+	force?: boolean;
+	number?: number;
+	title?: string;
+	decision?: string;
+	context?: string;
+	options?: string[];
+	rationale?: string;
+	consequences?: string[];
+	usage?: string;
+	validation?: string;
+	domains?: string[];
+	keywords?: string[];
+	status?: AdrStatus;
+	decisionDate?: string;
+	decisionKind?: string;
+	confidence?: string;
+	sourceCommits?: string[];
+	validationReceipts?: string[];
+	includeSuperseded?: boolean;
+	limit?: number;
+	query?: string;
+	target?: string;
+	from?: string;
+	to?: string;
+	relationType?: AdrRelationType;
+	reason?: string;
+	evidence?: string[];
+	confirm?: boolean;
+	path?: string;
+	legacy?: boolean;
+	importNote?: string;
+};
+
 type ToolRegistration = {
 	name: string;
 	label: string;
@@ -146,6 +188,13 @@ const sessionScript = path.join(
 	"plan",
 	"scripts",
 	"analyze_session.py",
+);
+const adrScript = path.join(
+	packageRoot,
+	"skills",
+	"plan",
+	"scripts",
+	"adr_records.py",
 );
 
 function isExecFileException(error: unknown): error is ExecFileException & {
@@ -309,6 +358,93 @@ function requireString(value: unknown, message: string): string {
 
 function optionalNumber(value: unknown, fallback: number): number {
 	return typeof value === "number" && Number.isFinite(value) ? value : fallback;
+}
+
+function addAdrCommonArgs(args: string[], params: CartographerAdrParams): void {
+	addRoot(args, params.root);
+	if (params.adrDir) args.push("--adr-dir", params.adrDir);
+	args.push("--json");
+}
+
+function addRepeated(args: string[], flag: string, values?: string[]): void {
+	for (const value of values || []) args.push(flag, value);
+}
+
+function addAdrRecordArgs(args: string[], params: CartographerAdrParams, required: boolean): void {
+	if (required || params.title) args.push("--title", requireString(params.title, "cartographer_adr action requires title"));
+	if (required || params.decision)
+		args.push("--decision", requireString(params.decision, "cartographer_adr action requires decision"));
+	if (required || params.context)
+		args.push("--context", requireString(params.context, "cartographer_adr action requires context"));
+	addRepeated(args, "--option", params.options);
+	if (params.rationale) args.push("--rationale", params.rationale);
+	addRepeated(args, "--consequence", params.consequences);
+	if (params.usage) args.push("--usage", params.usage);
+	if (params.validation) args.push("--validation", params.validation);
+	addRepeated(args, "--domain", params.domains);
+	addRepeated(args, "--keyword", params.keywords);
+	if (params.status) args.push("--status", params.status);
+	if (params.decisionDate) args.push("--decision-date", params.decisionDate);
+	if (params.decisionKind) args.push("--decision-kind", params.decisionKind);
+	if (params.confidence) args.push("--confidence", params.confidence);
+	addRepeated(args, "--source-commit", params.sourceCommits);
+	addRepeated(args, "--validation-receipt", params.validationReceipts);
+}
+
+function buildAdrArgs(params: CartographerAdrParams): string[] {
+	const args: string[] = [params.action];
+	if (params.action === "evaluate") {
+		addAdrCommonArgs(args, params);
+		if (params.topic) args.push("--topic", params.topic);
+		if (params.request) args.push("--request", params.request);
+	} else if (params.action === "draft") {
+		addAdrCommonArgs(args, params);
+		args.push("--topic", requireString(params.topic, "cartographer_adr draft requires topic"));
+		if (params.force) args.push("--force");
+		if (typeof params.number === "number") args.push("--number", String(params.number));
+		addAdrRecordArgs(args, params, false);
+	} else if (params.action === "create") {
+		addAdrCommonArgs(args, params);
+		addAdrRecordArgs(args, params, true);
+	} else if (params.action === "write") {
+		addAdrCommonArgs(args, params);
+		if (params.topic) args.push("--topic", params.topic);
+		if (params.force) args.push("--force");
+		addAdrRecordArgs(args, params, true);
+	} else if (params.action === "list") {
+		addAdrCommonArgs(args, params);
+		if (params.includeSuperseded) args.push("--include-superseded");
+	} else if (params.action === "query") {
+		addAdrCommonArgs(args, params);
+		if (params.includeSuperseded) args.push("--include-superseded");
+		args.push("--limit", String(optionalNumber(params.limit, 10)));
+		args.push(requireString(params.query, "cartographer_adr query requires query"));
+	} else if (params.action === "show") {
+		addAdrCommonArgs(args, params);
+		if (params.includeSuperseded) args.push("--include-superseded");
+		args.push(requireString(params.target, "cartographer_adr show requires target"));
+	} else if (params.action === "relate") {
+		addAdrCommonArgs(args, params);
+		args.push(
+			"--from",
+			requireString(params.from, "cartographer_adr relate requires from"),
+			"--to",
+			requireString(params.to, "cartographer_adr relate requires to"),
+			"--type",
+			requireString(params.relationType, "cartographer_adr relate requires relationType"),
+		);
+		if (params.reason) args.push("--reason", params.reason);
+		addRepeated(args, "--evidence", params.evidence);
+		if (params.confirm) args.push("--confirm");
+	} else if (params.action === "import") {
+		addAdrCommonArgs(args, params);
+		args.push("--path", requireString(params.path, "cartographer_adr import requires path"));
+		if (params.legacy) args.push("--legacy");
+		if (params.importNote) args.push("--import-note", params.importNote);
+	} else if (params.action === "validate") {
+		addAdrCommonArgs(args, params);
+	}
+	return args;
 }
 
 export default function cartographerTools(pi: PiApi): void {
@@ -641,6 +777,103 @@ export default function cartographerTools(pi: PiApi): void {
 				outputPath: params.outputPath,
 				raw: params.raw,
 				label: "cartographer-session-analyze",
+			});
+		},
+	});
+
+	pi.registerTool({
+		name: "cartographer_adr",
+		label: "Cartographer ADR",
+		description: "Create, validate, search, and relate Architecture Decision Records.",
+		promptSnippet: "Manage durable ADRs with safe workflow, manual, and legacy-import modes",
+		promptGuidelines: [
+			"Use cartographer_adr for ADR-specific evaluation, drafting, creation, lookup, relationships, import, and validation.",
+			"Use workflow mode with topic only when proposal metadata and validation receipts support adr_required; otherwise use evaluate/draft before writing.",
+			"Use standalone/manual create or write for user-directed ADRs that do not belong to a .plan topic, but still provide context, decision, options or rationale, domains, and keywords.",
+			"Use import with legacy=true and an import note only for accepted legacy ADRs that intentionally lack validation receipts.",
+			"Do not place raw .plan/_private paths or sensitive evidence in ADR Markdown or graph metadata; cite sanitized evidence docs or receipt ids instead.",
+			"Keep cartographer_jsonl as the low-level JSONL utility; do not use it for normal ADR management when cartographer_adr can express the operation.",
+		],
+		parameters: Type.Object({
+			action: Type.Union([
+				Type.Literal("evaluate"),
+				Type.Literal("draft"),
+				Type.Literal("create"),
+				Type.Literal("write"),
+				Type.Literal("list"),
+				Type.Literal("query"),
+				Type.Literal("show"),
+				Type.Literal("relate"),
+				Type.Literal("import"),
+				Type.Literal("validate"),
+			]),
+			root: Type.Optional(Type.String({ description: "Project root. Defaults to current working directory." })),
+			adrDir: Type.Optional(Type.String({ description: "Explicit ADR directory path relative to root." })),
+			topic: Type.Optional(Type.String({ description: "Cartographer topic under .plan/ for workflow ADRs." })),
+			request: Type.Optional(Type.String({ description: "User request/proposal text for evaluate." })),
+			force: Type.Optional(Type.Boolean({ description: "Override ADR-required gate for draft/write." })),
+			number: Type.Optional(Type.Number({ description: "Draft ADR number preview." })),
+			title: Type.Optional(Type.String({ description: "ADR title." })),
+			decision: Type.Optional(Type.String({ description: "Plain decision statement." })),
+			context: Type.Optional(Type.String({ description: "Decision context/problem statement." })),
+			options: Type.Optional(Type.Array(Type.String(), { description: "Considered options." })),
+			rationale: Type.Optional(Type.String({ description: "Why this decision was made." })),
+			consequences: Type.Optional(Type.Array(Type.String(), { description: "Decision consequences." })),
+			usage: Type.Optional(Type.String({ description: "How future work should use this decision." })),
+			validation: Type.Optional(Type.String({ description: "Validation/evidence summary." })),
+			domains: Type.Optional(Type.Array(Type.String(), { description: "Search domains." })),
+			keywords: Type.Optional(Type.Array(Type.String(), { description: "Search keywords." })),
+			status: Type.Optional(
+				Type.Union([
+					Type.Literal("accepted"),
+					Type.Literal("accepted-legacy"),
+					Type.Literal("draft"),
+					Type.Literal("proposed"),
+					Type.Literal("rejected"),
+					Type.Literal("superseded"),
+				]),
+			),
+			decisionDate: Type.Optional(Type.String({ description: "Decision date YYYY-MM-DD." })),
+			decisionKind: Type.Optional(Type.String({ description: "Decision kind metadata." })),
+			confidence: Type.Optional(Type.String({ description: "Decision confidence metadata." })),
+			sourceCommits: Type.Optional(Type.Array(Type.String(), { description: "Source commits." })),
+			validationReceipts: Type.Optional(Type.Array(Type.String(), { description: "Validation receipt ids." })),
+			includeSuperseded: Type.Optional(Type.Boolean({ description: "Include superseded/non-current ADRs." })),
+			limit: Type.Optional(Type.Number({ description: "Query result limit." })),
+			query: Type.Optional(Type.String({ description: "Search text for query." })),
+			target: Type.Optional(Type.String({ description: "ADR id/node id/number/path for show." })),
+			from: Type.Optional(Type.String({ description: "Source ADR graph node id for relate." })),
+			to: Type.Optional(Type.String({ description: "Target ADR graph node id for relate." })),
+			relationType: Type.Optional(
+				Type.Union([
+					Type.Literal("child_of"),
+					Type.Literal("conflicts_with"),
+					Type.Literal("depends_on"),
+					Type.Literal("precursor_to"),
+					Type.Literal("related_to"),
+					Type.Literal("supersedes"),
+				]),
+			),
+			reason: Type.Optional(Type.String({ description: "Relationship rationale." })),
+			evidence: Type.Optional(Type.Array(Type.String(), { description: "Relationship evidence path/id." })),
+			confirm: Type.Optional(Type.Boolean({ description: "Confirm supersedes/conflicts_with writes." })),
+			path: Type.Optional(Type.String({ description: "Repo-relative ADR Markdown path for import." })),
+			legacy: Type.Optional(Type.Boolean({ description: "Mark imported ADR as legacy." })),
+			importNote: Type.Optional(Type.String({ description: "Required note for receiptless legacy import." })),
+			maxOutputChars: Type.Optional(
+				Type.Number({ description: "Inline output budget before saving a full-output receipt." }),
+			),
+			outputPath: Type.Optional(Type.String({ description: "Optional full-output path for oversized output." })),
+			raw: Type.Optional(Type.Boolean({ description: "Return raw command output instead of a compact receipt." })),
+		}),
+		async execute(_toolCallId, rawParams, signal) {
+			const params = rawParams as CartographerAdrParams;
+			const args = buildAdrArgs(params);
+			return runCommand("python", [adrScript, ...args], signal, {
+				maxOutputChars: params.maxOutputChars,
+				outputPath: params.outputPath,
+				raw: params.raw,
+				label: `cartographer-adr-${params.action}`,
 			});
 		},
 	});

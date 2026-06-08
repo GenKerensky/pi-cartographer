@@ -223,7 +223,7 @@ Use temp directories for all tests and smoke commands. Do not create real `docs/
 
 ### Phase P3 — Dedicated `cartographer_adr` extension tool
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P2
 - **Unlocks:** P5
 - **Primary references:** `file:extensions/cartographer-tools.ts`, `file:tests/cartographer_tools.test.ts`, `file:package.json`, [F014]
@@ -243,18 +243,18 @@ Expose ADR management as an always-available Pi extension tool with shaped outpu
 
 #### Checklist
 
-- [ ] **P3.T1** Add `CartographerAdrParams`, `adrScript`, and `cartographer_adr` registration to `extensions/cartographer-tools.ts`.
-- [ ] **P3.T2** Map extension params to safe CLI arguments without shell interpolation; reject missing required fields per action.
-- [ ] **P3.T3** Add prompt guidelines that make standalone/manual ADR creation available without `.plan` topics and keep raw/private references out.
-- [ ] **P3.T4** Add/adjust tests for shaped ADR output receipts and extension syntax where practical.
-- [ ] **P3.T5** Confirm `cartographer_jsonl` documentation/guidelines remain low-level and do not absorb ADR domain behavior.
+- [x] **P3.T1** Add `CartographerAdrParams`, `adrScript`, and `cartographer_adr` registration to `extensions/cartographer-tools.ts`.
+- [x] **P3.T2** Map extension params to safe CLI arguments without shell interpolation; reject missing required fields per action.
+- [x] **P3.T3** Add prompt guidelines that make standalone/manual ADR creation available without `.plan` topics and keep raw/private references out.
+- [x] **P3.T4** Add/adjust tests for shaped ADR output receipts and extension syntax where practical.
+- [x] **P3.T5** Confirm `cartographer_jsonl` documentation/guidelines remain low-level and do not absorb ADR domain behavior.
 
 #### Validation
 
-- [ ] **P3.V1** Run `node --experimental-strip-types --check extensions/cartographer-tools.ts` and expect success.
-- [ ] **P3.V2** Run `npm run typecheck` and expect TypeScript types to pass.
-- [ ] **P3.V3** Run `npm run test:ts` and expect Vitest tests to pass.
-- [ ] **P3.V4** Run a direct CLI smoke for `adr_records.py list --root <tmp-root> --json` to validate the extension target exists and returns shaped-friendly JSON.
+- [x] **P3.V1** Run `node --experimental-strip-types --check extensions/cartographer-tools.ts` and expect success.
+- [x] **P3.V2** Run `npm run typecheck` and expect TypeScript types to pass.
+- [x] **P3.V3** Run `npm run test:ts` and expect Vitest tests to pass.
+- [x] **P3.V4** Run a direct CLI smoke for `adr_records.py list --root <tmp-root> --json` to validate the extension target exists and returns shaped-friendly JSON.
 
 #### Exit Criteria
 
