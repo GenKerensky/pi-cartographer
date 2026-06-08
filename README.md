@@ -67,6 +67,21 @@ pi -e /path/to/pi-cartographer   # one-off local use
 
 Skill commands are available as `/skill:<name>` when pi skill commands are enabled.
 
+## Cartographer subagents
+
+Project-scoped Cartographer agents live under `.pi/agents/` and are intentionally narrow. They consume context packs, receipts, map/fact artifacts, and deterministic validation results; they are not a replacement for tool validation or parent orchestration.
+
+| Agent | Purpose |
+|---|---|
+| `cartographer-archivist` | Compresses missing research into source-backed fact/source/support JSONL suggestions. |
+| `cartographer-drafter` | Drafts proposal or plan artifacts from compact map/fact/context inputs. |
+| `cartographer-pathfinder` | Implements one approved phase as the single writer, without committing. |
+| `cartographer-auditor` | Performs semantic review after deterministic validation receipts pass. |
+| `cartographer-compass` | Advises on scope, dependency, phase-order, or repeated-failure decisions. |
+| `cartographer-redactor` | Sanitizes authorized private artifacts into commit-safe evidence analyses. |
+
+Do not add default Cartographer clones of generic `scout`, `delegate`, or `context-builder` roles without a new measured proposal. Built-in subagents remain explicit fallbacks when a Cartographer-specific agent is unavailable or the user approves substitution.
+
 ## Quick start
 
 Start pi from the repository you want to plan against, then run the workflow as needed:

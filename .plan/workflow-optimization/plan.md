@@ -358,7 +358,7 @@ Do not make the runner a new workflow engine. It should be a small command/recei
 
 ### Phase P6 — Specialized Cartographer agents
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P4
 - **Unlocks:** P7
 - **Primary references:** `.pi/agents/cartographer-redactor.md`, `file:skills/proposal/SKILL.md`, `file:skills/plan/SKILL.md`, `file:skills/implement/SKILL.md`, [F008], [F009], [F017], [F905]
@@ -377,19 +377,19 @@ Define the approved lean Cartographer-specific subagents only after the contract
 
 #### Checklist
 
-- [ ] **P6.T1** Create `.pi/agents/cartographer-archivist.md` for source-backed research compression into fact JSONL suggestions and file-only briefs.
-- [ ] **P6.T2** Create `.pi/agents/cartographer-drafter.md` for proposal/plan drafting from compact map/fact/context-pack inputs.
-- [ ] **P6.T3** Create `.pi/agents/cartographer-pathfinder.md` for single-phase implementation handoffs with receipt and validation obligations.
-- [ ] **P6.T4** Create `.pi/agents/cartographer-auditor.md` for semantic review after deterministic validation receipts pass.
-- [ ] **P6.T5** Create `.pi/agents/cartographer-compass.md` for rare scope/dependency/repeated-failure decision conflicts.
-- [ ] **P6.T6** Update README and workflow skills with default-agent mapping, fallback policy, timeout policy, and no-generic-clone policy.
+- [x] **P6.T1** Create `.pi/agents/cartographer-archivist.md` for source-backed research compression into fact JSONL suggestions and file-only briefs.
+- [x] **P6.T2** Create `.pi/agents/cartographer-drafter.md` for proposal/plan drafting from compact map/fact/context-pack inputs.
+- [x] **P6.T3** Create `.pi/agents/cartographer-pathfinder.md` for single-phase implementation handoffs with receipt and validation obligations.
+- [x] **P6.T4** Create `.pi/agents/cartographer-auditor.md` for semantic review after deterministic validation receipts pass.
+- [x] **P6.T5** Create `.pi/agents/cartographer-compass.md` for rare scope/dependency/repeated-failure decision conflicts.
+- [x] **P6.T6** Update README and workflow skills with default-agent mapping, fallback policy, timeout policy, and no-generic-clone policy.
 
 #### Validation
 
-- [ ] **P6.V1** Run `subagent list` or the equivalent Pi subagent discovery check and confirm the five new agents are discoverable along with `cartographer-redactor`.
-- [ ] **P6.V2** Run `rg -n "cartographer-archivist|cartographer-drafter|cartographer-pathfinder|cartographer-auditor|cartographer-compass" .pi/agents README.md skills` and confirm docs/skills reference all five.
-- [ ] **P6.V3** Run a contract check, manual or scripted, confirming each agent defaults to fresh context, has a bounded output contract, and forbids broad rediscovery or child subagent orchestration.
-- [ ] **P6.V4** Run `rg -n "cartographer-scout|cartographer-delegate|cartographer-context-builder" .pi/agents README.md skills` and confirm there are no proposed default agents with those names.
+- [x] **P6.V1** Run `subagent list` or the equivalent Pi subagent discovery check and confirm the five new agents are discoverable along with `cartographer-redactor`.
+- [x] **P6.V2** Run `rg -n "cartographer-archivist|cartographer-drafter|cartographer-pathfinder|cartographer-auditor|cartographer-compass" .pi/agents README.md skills` and confirm docs/skills reference all five.
+- [x] **P6.V3** Run a contract check, manual or scripted, confirming each agent defaults to fresh context, has a bounded output contract, and forbids broad rediscovery or child subagent orchestration.
+- [x] **P6.V4** Run `rg -n "cartographer-scout|cartographer-delegate|cartographer-context-builder" .pi/agents README.md skills` and confirm there are no proposed default agents with those names.
 
 #### Exit Criteria
 

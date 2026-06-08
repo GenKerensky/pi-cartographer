@@ -59,12 +59,12 @@ Use or create/update these supporting artifacts when needed:
 
 2. **Inspect available subagents and choose execution mode**
    - Call the subagent list action before delegating whenever the subagent tool is available.
-   - Preferred agents:
-     - `scout` for codebase/index verification only when deterministic Cartographer index/map tools plus focused `rg`/grep checks are insufficient
-     - `planner` for phase planning and final plan validation
-     - `oracle` for phase-by-phase dependency and scope checks
-     - `reviewer` for final plan review
-     - `researcher` only when research facts are missing, stale, or insufficient
+   - Preferred Cartographer agents:
+     - `cartographer-drafter` for phase planning from compact proposal/map/fact/context-pack inputs
+     - `cartographer-auditor` for final semantic plan review after deterministic validation
+     - `cartographer-compass` for phase dependency, scope, or decision-consistency conflicts
+     - `cartographer-archivist` only when research facts are missing, stale, or insufficient
+   - Built-in `scout`, `planner`, `oracle`, `reviewer`, and `researcher` are explicit fallback/substitution choices, not defaults. Use built-in `scout` only when deterministic Cartographer index/map tools plus focused `search`/`rg` checks are insufficient and the user approves fallback.
    - If the subagent list returns **no executable subagents**, or the subagent tool is unavailable:
      - Alert the user that no subagents are available for the plan workflow.
      - Ask whether they want to continue by running the full workflow serially with the current agent.
@@ -315,7 +315,7 @@ Performance rules:
 - Use the shared index and map JSONL as durable planning context; use `rg`/grep as the fast path for verifying concrete identifiers, filenames, scripts, tests, commands, and error strings.
 - Do not inline large child outputs into subsequent prompts. Use `outputMode: "file-only"` for researcher, optional scout, planner, reviewer, or any child likely to produce more than a concise answer.
 - Run `cartographer_jsonl validate-topic` and the planning graph validator before reviewer/oracle validation so children reason about a deterministic report rather than hand-checking raw JSONL.
-- Use `scout` only as an exception for missing/ambiguous context or complex architecture; never ask it to dump SQLite, perform broad repo rediscovery, or rewrite generated maps.
+- Use `cartographer-drafter`, `cartographer-auditor`, `cartographer-compass`, and `cartographer-archivist` for their narrow roles when needed. Use built-in `scout` only as an approved fallback for missing/ambiguous context or complex architecture; never ask it to dump SQLite, perform broad repo rediscovery, or rewrite generated maps.
 - Seed/reuse existing fact JSONL for local Pi/package/subagent docs with `cartographer_jsonl({"action":"seed-pi-facts", ...})`; do not repeat local-doc research each plan.
 
 Retrieval and lifecycle contract for plan artifacts:

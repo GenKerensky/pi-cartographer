@@ -75,8 +75,9 @@ Create or update ignored private-input files only when the user explicitly provi
 
 2. **Inspect available subagents and choose execution mode**
    - Call the subagent list action before delegating whenever the subagent tool is available.
-   - Prefer the exact agents named `delegate`, `researcher`, `planner`, `oracle`, and `reviewer` when available.
-   - Treat `scout` as optional. Use deterministic Cartographer index/map tools plus focused `rg`/grep verification first; call `scout` only when context is missing, contradictory, or too complex for the parent/tooling to summarize.
+   - Prefer Cartographer-specific agents when available: `cartographer-archivist` for missing research, `cartographer-drafter` for proposal/plan drafting, `cartographer-auditor` for semantic review after deterministic validation, and `cartographer-compass` for scope/dependency decisions.
+   - Built-in `delegate`, `researcher`, `planner`, `oracle`, and `reviewer` are explicit fallback/substitution choices, not defaults.
+   - Do not add or rely on default Cartographer clones of generic `scout`, `delegate`, or `context-builder`. Use deterministic Cartographer index/map tools plus focused `search`/`rg` verification first; call built-in `scout` only when context is missing, contradictory, or too complex for the parent/tooling to summarize and the user approves fallback.
    - If the subagent list returns **no executable subagents**, or the subagent tool is unavailable:
      - Alert the user that no subagents are available for the proposal workflow.
      - Ask whether they want to continue by running the whole workflow serially with the current agent.
@@ -280,7 +281,7 @@ Performance rules:
 - Use `cartographer_jsonl validate-topic` for artifact checks before asking reviewer/oracle to reason about higher-level quality.
 - Use `cartographer_evidence import` for user-provided private artifacts before any raw-content analysis. Keep `.plan/_private/**` out of prompts except as explicit paths for `cartographer-redactor`, and cite only sanitized `.plan/{topic}/evidence/` outputs.
 
-Use subagents only where they add judgment: scope wording, missing research, design synthesis, oracle consistency review, and reviewer validation.
+Use subagents only where they add judgment: missing research (`cartographer-archivist`), design/proposal synthesis (`cartographer-drafter`), semantic audit (`cartographer-auditor`), and decision consistency (`cartographer-compass`). Built-in agents remain fallback substitutes only.
 
 Retrieval and lifecycle contract for proposal artifacts:
 

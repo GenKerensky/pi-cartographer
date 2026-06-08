@@ -75,14 +75,13 @@ If the plan is missing, ask the user whether to generate it first with the `plan
 
 2. **Inspect subagents and choose execution mode**
    - Call the subagent list action before delegating whenever the subagent tool is available.
-   - Required preferred agents:
-     - `worker`
-     - `reviewer`
-   - Optional preferred agent:
-     - `scout` only for missing/ambiguous context after index/map plus focused `rg`/grep checks, or for complex unfamiliar architecture
-   - Useful optional agents:
-     - `oracle` for ambiguous plan/scope/dependency decisions, plan drift, repeated agent/tool failures, and unknown blockers
-     - `planner` for repairing a flawed plan
+   - Required preferred Cartographer agents:
+     - `cartographer-pathfinder` for single-phase implementation edits
+     - `cartographer-auditor` for semantic review after deterministic validation receipts pass
+   - Useful optional Cartographer agents:
+     - `cartographer-compass` for ambiguous plan/scope/dependency decisions, plan drift, repeated agent/tool failures, and unknown blockers
+     - `cartographer-drafter` for repairing flawed proposal/plan artifacts
+   - Built-in `worker`, `reviewer`, `oracle`, `planner`, and `scout` are explicit fallback/substitution choices, not defaults. Use built-in `scout` only for missing/ambiguous context after index/map plus focused `search`/`rg` checks, or for complex unfamiliar architecture, and only with approved fallback.
    - If `worker` is unavailable, do not proceed automatically. Ask the user whether to:
      - substitute another editing-capable agent
      - run worker duties serially with the current agent
@@ -324,7 +323,7 @@ Performance rules:
 - Do not inline large scout/research/planner outputs into worker/reviewer prompts; pass artifact paths and concise summaries. Use `outputMode: "file-only"` for large child outputs.
 - Prefer `cartographer_index context`, `repo-map`, `read`, safe `search`, `cartographer_jsonl validate-topic`, focused `rg`/grep, and selective reads before launching optional scout.
 - Do not ask child agents to dump SQLite schemas, grep entire large drafts, or read whole local docs unless targeted indexed reads and focused lexical searches are insufficient.
-- Use reviewer for code/artifact validation and oracle only for decision/scope consistency.
+- Use `cartographer-auditor` for code/artifact semantic validation after deterministic receipts pass, and `cartographer-compass` only for decision/scope consistency. Built-in reviewer/oracle remain fallback substitutes only.
 
 Retrieval and lifecycle contract for implementation:
 
