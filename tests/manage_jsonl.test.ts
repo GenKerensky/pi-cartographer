@@ -31,6 +31,27 @@ function tempDir(): string {
 	return fs.mkdtempSync(path.join(os.tmpdir(), "cartographer-jsonl-"));
 }
 
+function writeTopicFixture(root: string, topic = "demo"): string {
+	const topicDir = path.join(root, ".plan", topic);
+	const evidenceDir = path.join(topicDir, "evidence");
+	fs.mkdirSync(evidenceDir, { recursive: true });
+	fs.writeFileSync(path.join(topicDir, "proposal.md"), "# Demo\n\nUses [F001] and [F999].\n", "utf8");
+	fs.writeFileSync(path.join(topicDir, "plan.md"), "# Plan\n\nUses [F001] and [F002].\n", "utf8");
+	fs.writeFileSync(path.join(topicDir, "map.nodes.jsonl"), `${JSON.stringify({ id: "topic:demo", type: "topic", title: "Demo" })}\n`, "utf8");
+	fs.writeFileSync(path.join(topicDir, "map.edges.jsonl"), "", "utf8");
+	fs.writeFileSync(
+		path.join(topicDir, "facts.nodes.jsonl"),
+		`${JSON.stringify({ id: "S001", type: "source", title: "Evidence", reference: ".plan/demo/evidence/analysis.md:1" })}\n${JSON.stringify({ id: "F001", type: "fact", title: "Fact", claim: "Claim", raw_archive_path: ".plan/_private/demo/raw.log" })}\n${JSON.stringify({ id: "F002", type: "fact", title: "Unsupported" })}\n`,
+		"utf8",
+	);
+	fs.writeFileSync(path.join(topicDir, "facts.edges.jsonl"), `${JSON.stringify({ from: "F001", to: "S001", type: "supported_by" })}\n`, "utf8");
+	fs.writeFileSync(path.join(topicDir, "receipts.jsonl"), `${JSON.stringify({ id: "receipt:P1", type: "validation-receipt", status: "passed", phase_id: "P1", commands: [{ command: "test", result: "passed", output: ".plan/_private/demo/out.log" }] })}\n`, "utf8");
+	fs.writeFileSync(path.join(topicDir, "context-packs.jsonl"), `${JSON.stringify({ id: "context:P2", type: "context-pack", phase_id: "P2", summary: "Compact", references: [".plan/_private/demo/raw.log", ".plan/demo/proposal.md"] })}\n`, "utf8");
+	fs.writeFileSync(path.join(evidenceDir, "analysis.md"), "# Evidence\n\n- Redaction status: passed\n", "utf8");
+	fs.writeFileSync(path.join(evidenceDir, "manifest.jsonl"), `${JSON.stringify({ id: "evidence:1", path: ".plan/_private/demo/raw.log", summary: "Imported" })}\n`, "utf8");
+	return topicDir;
+}
+
 describe("manage_jsonl CLI", () => {
 	it("upserts and merges records by id", () => {
 		const dir = tempDir();
@@ -243,5 +264,58 @@ describe("manage_jsonl CLI", () => {
 		expect(report.payload.errors.join("\n")).toContain("Potential secret pattern");
 		expect(report.payload.errors.join("\n")).toContain("Direct private artifact reference");
 		expect(report.payload.errors.join("\n")).toContain("lacks Redaction status");
+	});
+
+	it("provides compact read-only artifact summaries without private raw references", () => {
+		const root = tempDir();
+		writeTopicFixture(root);
+
+		const list = runJson(["list-records", "--root", root, "--topic", "demo", "--artifact", "facts.nodes", "--limit", "1"]);
+		expect(list.ok).toBe(true);
+		expect(list.records).toHaveLength(1);
+		expect(JSON.stringify(list)).not.toContain(".plan/_private/demo/raw.log");
+		expect(JSON.stringify(list).length).toBeLessThan(1200);
+
+		const shown = runJson(["show-record", "--root", root, "--topic", "demo", "--artifact", "facts.nodes", "--id", "F001"]);
+		expect(shown.record.raw_archive_path).toBeUndefined();
+		expect(JSON.stringify(shown)).not.toContain(".plan/_private/demo/raw.log");
+	});
+
+	it("summarizes fact citations, receipts, context packs, and evidence manifests read-only", () => {
+		const root = tempDir();
+		writeTopicFixture(root);
+
+		const citationResult = runJsonUnchecked(["fact-citation-summary", "--root", root, "--topic", "demo"]);
+		expect(citationResult.status).not.toBe(0);
+		const citations = citationResult.payload;
+		expect(citations.ok).toBe(false);
+		expect(citations.missing).toEqual(["F999"]);
+		expect(citations.unsupported).toEqual(["F002"]);
+		expect(citations.counts.proposal_citations).toBe(2);
+
+		const receipts = runJson(["receipt-summary", "--root", root, "--topic", "demo"]);
+		expect(receipts.counts.by_status.passed).toBe(1);
+		expect(JSON.stringify(receipts)).not.toContain(".plan/_private/demo/out.log");
+
+		const packs = runJson(["context-pack-summary", "--root", root, "--topic", "demo"]);
+		expect(packs.context_packs[0].references[0]).toBe(".plan/_private/<redacted>");
+
+		const evidence = runJson(["evidence-manifest-summary", "--root", root, "--topic", "demo"]);
+		expect(evidence.counts.manifest_records).toBe(1);
+		expect(JSON.stringify(evidence)).not.toContain(".plan/_private/demo/raw.log");
+	});
+
+	it("does not expose upsert through read-only artifact commands", () => {
+		const root = tempDir();
+		writeTopicFixture(root);
+		const before = fs.readFileSync(path.join(root, ".plan", "demo", "facts.nodes.jsonl"), "utf8");
+		const result = spawnSync(
+			"node",
+			["--experimental-strip-types", script, "upsert-record", "--root", root, "--topic", "demo", "--json"],
+			{ encoding: "utf8" },
+		);
+		expect(result.status).not.toBe(0);
+		expect(result.stderr).toContain("Unknown command");
+		expect(fs.readFileSync(path.join(root, ".plan", "demo", "facts.nodes.jsonl"), "utf8")).toBe(before);
 	});
 });

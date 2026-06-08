@@ -163,7 +163,7 @@ Use temporary synthetic sessions for tests; do not run tests against the reposit
 
 ### Phase P2 — Read-only artifact helper
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P0
 - **Unlocks:** P3, P4
 - **Primary references:** `file:extensions/cartographer-tools.ts`, `file:skills/plan/scripts/manage_jsonl.ts`, `file:tests/manage_jsonl.test.ts`, `file:tests/cartographer_tools.test.ts`, `file:.pi/agents/cartographer-auditor.md`, [F015], [F016], [F903]
@@ -182,18 +182,18 @@ Give read-only and drafting subagents a structured way to inspect Cartographer a
 
 #### Checklist
 
-- [ ] **P2.T1** Implement read-only artifact summary actions in `skills/plan/scripts/manage_jsonl.ts` or a new stdlib-compatible helper script.
-- [ ] **P2.T2** Register the helper in `extensions/cartographer-tools.ts` with a read-only schema and Clean Context Contract output shaping.
-- [ ] **P2.T3** Add `fact-citation-summary` that verifies proposal/plan citations against `facts.nodes.jsonl` and `facts.edges.jsonl` without editing artifacts.
-- [ ] **P2.T4** Add `receipt-summary` and `context-pack-summary` actions for auditor/pathfinder handoffs.
-- [ ] **P2.T5** Add tests proving the helper cannot perform upserts, does not expose raw private references, and returns compact summaries.
+- [x] **P2.T1** Implement read-only artifact summary actions in `skills/plan/scripts/manage_jsonl.ts` or a new stdlib-compatible helper script.
+- [x] **P2.T2** Register the helper in `extensions/cartographer-tools.ts` with a read-only schema and Clean Context Contract output shaping.
+- [x] **P2.T3** Add `fact-citation-summary` that verifies proposal/plan citations against `facts.nodes.jsonl` and `facts.edges.jsonl` without editing artifacts.
+- [x] **P2.T4** Add `receipt-summary` and `context-pack-summary` actions for auditor/pathfinder handoffs.
+- [x] **P2.T5** Add tests proving the helper cannot perform upserts, does not expose raw private references, and returns compact summaries.
 
 #### Validation
 
-- [ ] **P2.V1** Run `node --experimental-strip-types --check skills/plan/scripts/manage_jsonl.ts`.
-- [ ] **P2.V2** Run `node --experimental-strip-types --check extensions/cartographer-tools.ts`.
-- [ ] **P2.V3** Run `npm run test:ts`.
-- [ ] **P2.V4** Run `python -m unittest discover tests -p "test_manage_jsonl.py"` if Python-side JSONL helper tests are added or changed.
+- [x] **P2.V1** Run `node --experimental-strip-types --check skills/plan/scripts/manage_jsonl.ts`.
+- [x] **P2.V2** Run `node --experimental-strip-types --check extensions/cartographer-tools.ts`.
+- [x] **P2.V3** Run `npm run test:ts`.
+- [x] **P2.V4** Run `python -m unittest discover tests -p "test_manage_jsonl.py"` if Python-side JSONL helper tests are added or changed.
 
 #### Exit Criteria
 

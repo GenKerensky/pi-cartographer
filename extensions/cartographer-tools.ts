@@ -77,6 +77,31 @@ type CartographerJsonlParams = OutputShapeParams & {
 	merge?: boolean;
 };
 
+type CartographerArtifactsParams = OutputShapeParams & {
+	action:
+		| "list-records"
+		| "show-record"
+		| "validate-topic-summary"
+		| "fact-citation-summary"
+		| "receipt-summary"
+		| "context-pack-summary"
+		| "evidence-manifest-summary";
+	root?: string;
+	topic?: string;
+	artifact?:
+		| "map.nodes"
+		| "map.edges"
+		| "facts.nodes"
+		| "facts.edges"
+		| "plan.nodes"
+		| "plan.edges"
+		| "receipts"
+		| "context-packs"
+		| "evidence-manifest";
+	id?: string;
+	limit?: number;
+};
+
 type CartographerEvidenceParams = OutputShapeParams & {
 	action: "import" | "list";
 	root?: string;
@@ -875,6 +900,86 @@ export default function cartographerTools(pi: PiApi): void {
 				raw: params.raw,
 				label: `cartographer-adr-${params.action}`,
 			});
+		},
+	});
+
+	pi.registerTool({
+		name: "cartographer_artifacts",
+		label: "Cartographer Artifacts",
+		description:
+			"Read-only compact summaries of Pi Cartographer planning artifacts for child agents.",
+		promptSnippet:
+			"Inspect Cartographer artifacts through read-only summaries without mutation or private raw references",
+		promptGuidelines: [
+			"Use cartographer_artifacts for auditor/pathfinder/drafter handoffs that need compact planning artifact summaries.",
+			"This helper is read-only: it cannot upsert records, write receipts, import private artifacts, mutate ADRs, or edit canonical JSONL files.",
+			"Use fact-citation-summary to verify proposal/plan [F###] citations against facts.nodes.jsonl and supported_by facts.edges.jsonl.",
+			"Use receipt-summary and context-pack-summary for Clean Context Contract handoffs instead of pasting large raw JSONL records.",
+			"Do not request raw .plan/_private paths or contents; outputs redact private references and keep records compact.",
+		],
+		parameters: Type.Object({
+			action: Type.Union([
+				Type.Literal("list-records"),
+				Type.Literal("show-record"),
+				Type.Literal("validate-topic-summary"),
+				Type.Literal("fact-citation-summary"),
+				Type.Literal("receipt-summary"),
+				Type.Literal("context-pack-summary"),
+				Type.Literal("evidence-manifest-summary"),
+			]),
+			root: Type.Optional(Type.String({ description: "Project root. Defaults to current working directory." })),
+			topic: Type.Optional(Type.String({ description: "Cartographer topic under .plan/." })),
+			artifact: Type.Optional(
+				Type.Union([
+					Type.Literal("map.nodes"),
+					Type.Literal("map.edges"),
+					Type.Literal("facts.nodes"),
+					Type.Literal("facts.edges"),
+					Type.Literal("plan.nodes"),
+					Type.Literal("plan.edges"),
+					Type.Literal("receipts"),
+					Type.Literal("context-packs"),
+					Type.Literal("evidence-manifest"),
+				], { description: "Artifact to summarize for list-records or show-record." }),
+			),
+			id: Type.Optional(Type.String({ description: "Record id for show-record." })),
+			limit: Type.Optional(Type.Number({ description: "Compact record limit." })),
+			maxOutputChars: Type.Optional(
+				Type.Number({ description: "Inline output budget before saving a full-output receipt." }),
+			),
+			outputPath: Type.Optional(Type.String({ description: "Optional full-output path for oversized output." })),
+			raw: Type.Optional(Type.Boolean({ description: "Return raw command output instead of a compact receipt." })),
+		}),
+		async execute(_toolCallId, rawParams, signal) {
+			const params = rawParams as CartographerArtifactsParams;
+			const args: string[] = [params.action];
+			addRoot(args, params.root);
+			args.push(
+				"--topic",
+				requireString(params.topic, `cartographer_artifacts ${params.action} requires topic`),
+			);
+			if (params.action === "list-records" || params.action === "show-record")
+				args.push("--artifact", requireString(params.artifact, `cartographer_artifacts ${params.action} requires artifact`));
+			if (params.action === "show-record")
+				args.push("--id", requireString(params.id, "cartographer_artifacts show-record requires id"));
+			if (["list-records", "receipt-summary", "context-pack-summary", "evidence-manifest-summary"].includes(params.action))
+				args.push("--limit", String(optionalNumber(params.limit, 20)));
+			args.push("--json");
+			return runCommand(
+				"node",
+				["--experimental-strip-types", jsonlScript, ...args],
+				signal,
+				{
+					maxOutputChars: params.maxOutputChars ?? 4000,
+					outputPath: params.outputPath,
+					raw: params.raw,
+					label: `cartographer-artifacts-${params.action}`,
+					nextActions: [
+						"Cite summarized artifact ids/paths only; verify source files before editing.",
+						"Ask the parent for mutable cartographer_jsonl access only when an approved phase requires writes.",
+					],
+				},
+			);
 		},
 	});
 

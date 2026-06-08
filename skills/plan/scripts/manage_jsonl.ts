@@ -99,6 +99,13 @@ function usage(exitCode: number): never {
   ${script} list-misses --root <root> [--limit 20] [--json]
   ${script} upsert --file <path> --record '<json>' [--key id] [--no-merge] [--json]
   ${script} list --file <path> [--limit 20] [--json]
+  ${script} list-records --root <root> --topic <topic> --artifact <name> [--limit 20] [--json]
+  ${script} show-record --root <root> --topic <topic> --artifact <name> --id <id> [--json]
+  ${script} validate-topic-summary --root <root> --topic <topic> [--json]
+  ${script} fact-citation-summary --root <root> --topic <topic> [--json]
+  ${script} receipt-summary --root <root> --topic <topic> [--limit 20] [--json]
+  ${script} context-pack-summary --root <root> --topic <topic> [--limit 20] [--json]
+  ${script} evidence-manifest-summary --root <root> --topic <topic> [--limit 20] [--json]
   ${script} seed-pi-facts --root <root> --topic <topic> [--json]`);
 	process.exit(exitCode);
 }
@@ -718,6 +725,228 @@ function listRecords(
 	};
 }
 
+const READ_ONLY_ARTIFACT_FILES: Record<string, string> = {
+	"map.nodes": "map.nodes.jsonl",
+	"map.edges": "map.edges.jsonl",
+	"facts.nodes": "facts.nodes.jsonl",
+	"facts.edges": "facts.edges.jsonl",
+	"plan.nodes": "plan.nodes.jsonl",
+	"plan.edges": "plan.edges.jsonl",
+	receipts: "receipts.jsonl",
+	"context-packs": "context-packs.jsonl",
+	"evidence-manifest": path.join("evidence", "manifest.jsonl"),
+};
+const PRIVATE_FIELD_NAMES = new Set([
+	"raw_archive_path",
+	"source_path",
+	"private_path_hint",
+	"raw_content",
+	"content",
+]);
+
+function topicDir(root: string, topic: string): string {
+	return path.join(root, ".plan", topic);
+}
+
+function artifactFilePath(root: string, topic: string, artifact: string): string {
+	const relative = READ_ONLY_ARTIFACT_FILES[artifact];
+	if (!relative)
+		throw new Error(`Unsupported read-only artifact ${JSON.stringify(artifact)}`);
+	return path.join(topicDir(root, topic), relative);
+}
+
+function sanitizeText(text: string): string {
+	return text.replace(ACTUAL_PRIVATE_PATH_RE, ".plan/_private/<redacted>");
+}
+
+function sanitizeForReadOnly(value: unknown): unknown {
+	if (typeof value === "string") return sanitizeText(value);
+	if (Array.isArray(value)) return value.map(sanitizeForReadOnly);
+	if (!value || typeof value !== "object") return value;
+	const output: JsonRecord = {};
+	for (const [key, item] of Object.entries(value as JsonRecord)) {
+		if (PRIVATE_FIELD_NAMES.has(key)) {
+			output[key] = "<redacted-private-reference>";
+			continue;
+		}
+		output[key] = sanitizeForReadOnly(item);
+	}
+	return output;
+}
+
+function compactRecord(record: JsonRecord): JsonRecord {
+	const fields = [
+		"id",
+		"type",
+		"status",
+		"phase_id",
+		"title",
+		"summary",
+		"claim",
+		"from",
+		"to",
+		"budget_tokens",
+		"references",
+		"verified_files",
+		"commands",
+	];
+	const output: JsonRecord = {};
+	for (const field of fields) if (record[field] !== undefined) output[field] = record[field];
+	return sanitizeForReadOnly(output) as JsonRecord;
+}
+
+function readOnlyTopicOptions(options: Record<string, string | boolean | string[]>): { root: string; topic: string } {
+	return {
+		root: path.resolve(optString(options, "root", process.cwd())),
+		topic: optString(options, "topic"),
+	};
+}
+
+function readOnlyListRecords(options: Record<string, string | boolean | string[]>): Record<string, unknown> {
+	const { root, topic } = readOnlyTopicOptions(options);
+	const artifact = optString(options, "artifact");
+	const filePath = artifactFilePath(root, topic, artifact);
+	const result = readJsonl(filePath, true);
+	const limit = Math.max(0, optNumber(options, "limit", 20));
+	return {
+		ok: result.errors.length === 0,
+		topic,
+		artifact,
+		file: path.relative(root, filePath),
+		count: result.records.length,
+		errors: result.errors,
+		records: result.records.slice(0, limit || result.records.length).map(compactRecord),
+		truncated: limit > 0 && result.records.length > limit,
+	};
+}
+
+function readOnlyShowRecord(options: Record<string, string | boolean | string[]>): Record<string, unknown> {
+	const { root, topic } = readOnlyTopicOptions(options);
+	const artifact = optString(options, "artifact");
+	const id = optString(options, "id");
+	const filePath = artifactFilePath(root, topic, artifact);
+	const result = readJsonl(filePath, true);
+	const record = result.records.find((item) => String(item.id || item.from || "") === id);
+	return {
+		ok: result.errors.length === 0 && Boolean(record),
+		topic,
+		artifact,
+		file: path.relative(root, filePath),
+		id,
+		errors: result.errors,
+		record: record ? compactRecord(record) : undefined,
+	};
+}
+
+function validateTopicSummary(options: Record<string, string | boolean | string[]>): Record<string, unknown> {
+	const report = validateTopic(options);
+	return {
+		ok: report.ok,
+		topic: report.topic,
+		counts: report.counts,
+		error_count: report.errors.length,
+		warning_count: (report.warnings || []).length,
+		errors: report.errors.slice(0, 20).map(sanitizeText),
+		warnings: (report.warnings || []).slice(0, 20).map(sanitizeText),
+		truncated: report.errors.length > 20 || (report.warnings || []).length > 20,
+	};
+}
+
+function markdownCitations(filePath: string): string[] {
+	if (!fs.existsSync(filePath)) return [];
+	return [...fs.readFileSync(filePath, "utf8").matchAll(FACT_CITATION_RE)].map((match) => match[1]);
+}
+
+function factCitationSummary(options: Record<string, string | boolean | string[]>): Record<string, unknown> {
+	const { root, topic } = readOnlyTopicOptions(options);
+	const dir = topicDir(root, topic);
+	const factNodes = readJsonl(path.join(dir, "facts.nodes.jsonl"), true);
+	const factEdges = readJsonl(path.join(dir, "facts.edges.jsonl"), true);
+	const errors = [...factNodes.errors, ...factEdges.errors];
+	const factIds = new Set(factNodes.records.filter((record) => record.type === "fact").map((record) => String(record.id)));
+	const sourceIds = new Set(factNodes.records.filter((record) => record.type === "source").map((record) => String(record.id)));
+	const supportedFacts = new Set(factEdges.records
+		.filter((edge) => edge.type === "supported_by" && sourceIds.has(String(edge.to)))
+		.map((edge) => String(edge.from)));
+	const proposal = markdownCitations(path.join(dir, "proposal.md"));
+	const plan = markdownCitations(path.join(dir, "plan.md"));
+	const cited = [...new Set([...proposal, ...plan])].sort();
+	const missing = cited.filter((id) => !factIds.has(id));
+	const unsupported = cited.filter((id) => factIds.has(id) && !supportedFacts.has(id));
+	return {
+		ok: errors.length === 0 && missing.length === 0 && unsupported.length === 0,
+		topic,
+		counts: {
+			facts: factIds.size,
+			sources: sourceIds.size,
+			supported_facts: supportedFacts.size,
+			proposal_citations: proposal.length,
+			plan_citations: plan.length,
+			unique_citations: cited.length,
+		},
+		citations: { proposal: [...new Set(proposal)].sort(), plan: [...new Set(plan)].sort() },
+		missing,
+		unsupported,
+		errors: errors.map(sanitizeText),
+	};
+}
+
+function countBy(records: JsonRecord[], field: string): Record<string, number> {
+	const counts: Record<string, number> = {};
+	for (const record of records) {
+		const key = String(record[field] || "unknown");
+		counts[key] = (counts[key] || 0) + 1;
+	}
+	return counts;
+}
+
+function receiptSummary(options: Record<string, string | boolean | string[]>): Record<string, unknown> {
+	const { root, topic } = readOnlyTopicOptions(options);
+	const result = readJsonl(path.join(topicDir(root, topic), "receipts.jsonl"));
+	const limit = Math.max(0, optNumber(options, "limit", 20));
+	return {
+		ok: result.errors.length === 0,
+		topic,
+		count: result.records.length,
+		counts: { by_status: countBy(result.records, "status"), by_type: countBy(result.records, "type"), by_phase: countBy(result.records, "phase_id") },
+		receipts: result.records.slice(0, limit || result.records.length).map(compactRecord),
+		errors: result.errors.map(sanitizeText),
+		truncated: limit > 0 && result.records.length > limit,
+	};
+}
+
+function contextPackSummary(options: Record<string, string | boolean | string[]>): Record<string, unknown> {
+	const { root, topic } = readOnlyTopicOptions(options);
+	const result = readJsonl(path.join(topicDir(root, topic), "context-packs.jsonl"));
+	const limit = Math.max(0, optNumber(options, "limit", 20));
+	return {
+		ok: result.errors.length === 0,
+		topic,
+		count: result.records.length,
+		counts: { by_phase: countBy(result.records, "phase_id") },
+		context_packs: result.records.slice(0, limit || result.records.length).map(compactRecord),
+		errors: result.errors.map(sanitizeText),
+		truncated: limit > 0 && result.records.length > limit,
+	};
+}
+
+function evidenceManifestSummary(options: Record<string, string | boolean | string[]>): Record<string, unknown> {
+	const { root, topic } = readOnlyTopicOptions(options);
+	const evidenceDir = path.join(topicDir(root, topic), "evidence");
+	const manifest = readJsonl(path.join(evidenceDir, "manifest.jsonl"));
+	const files = evidenceFiles(evidenceDir).map((file) => path.relative(root, file)).filter((file) => !file.includes(".plan/_private/"));
+	const limit = Math.max(0, optNumber(options, "limit", 20));
+	return {
+		ok: manifest.errors.length === 0,
+		topic,
+		counts: { manifest_records: manifest.records.length, evidence_files: files.length },
+		manifest_records: manifest.records.slice(0, limit || manifest.records.length).map(compactRecord),
+		evidence_files: files.slice(0, limit || files.length).map(sanitizeText),
+		errors: manifest.errors.map(sanitizeText),
+		truncated: limit > 0 && (manifest.records.length > limit || files.length > limit),
+	};
+}
+
 function upsertRecords(
 	filePath: string,
 	recordsToUpsert: JsonRecord[],
@@ -926,6 +1155,13 @@ function main(): number {
 	else if (command === "list-misses") payload = listMisses(options);
 	else if (command === "upsert") payload = upsert(options);
 	else if (command === "list") payload = listRecords(options);
+	else if (command === "list-records") payload = readOnlyListRecords(options);
+	else if (command === "show-record") payload = readOnlyShowRecord(options);
+	else if (command === "validate-topic-summary") payload = validateTopicSummary(options);
+	else if (command === "fact-citation-summary") payload = factCitationSummary(options);
+	else if (command === "receipt-summary") payload = receiptSummary(options);
+	else if (command === "context-pack-summary") payload = contextPackSummary(options);
+	else if (command === "evidence-manifest-summary") payload = evidenceManifestSummary(options);
 	else if (command === "seed-pi-facts") payload = seedPiFacts(options);
 	else throw new Error(`Unknown command: ${command}`);
 	printPayload(payload, Boolean(options.json));

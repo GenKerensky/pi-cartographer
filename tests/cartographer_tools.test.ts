@@ -9,6 +9,18 @@ function tempFile(name: string): string {
 	return path.join(dir, name);
 }
 
+function tempProjectWithTopic(): string {
+	const root = fs.mkdtempSync(path.join(os.tmpdir(), "cartographer-artifacts-tool-"));
+	const topicDir = path.join(root, ".plan", "demo");
+	fs.mkdirSync(topicDir, { recursive: true });
+	fs.writeFileSync(path.join(topicDir, "proposal.md"), "# Demo\n\nUses [F001].\n", "utf8");
+	fs.writeFileSync(path.join(topicDir, "facts.nodes.jsonl"), `${JSON.stringify({ id: "S001", type: "source" })}\n${JSON.stringify({ id: "F001", type: "fact", title: "Fact", raw_archive_path: ".plan/_private/demo/raw.log" })}\n`, "utf8");
+	fs.writeFileSync(path.join(topicDir, "facts.edges.jsonl"), `${JSON.stringify({ from: "F001", to: "S001", type: "supported_by" })}\n`, "utf8");
+	fs.writeFileSync(path.join(topicDir, "receipts.jsonl"), `${JSON.stringify({ id: "receipt:P1", type: "validation-receipt", status: "passed", phase_id: "P1", commands: [{ command: "test", result: "passed" }] })}\n`, "utf8");
+	fs.writeFileSync(path.join(topicDir, "context-packs.jsonl"), `${JSON.stringify({ id: "context:P2", type: "context-pack", phase_id: "P2", summary: "Compact", references: [".plan/_private/demo/raw.log"] })}\n`, "utf8");
+	return root;
+}
+
 type RegisteredTool = {
 	name: string;
 	promptGuidelines?: string[];
@@ -22,6 +34,37 @@ function registeredTools(): RegisteredTool[] {
 }
 
 describe("cartographer tool registration", () => {
+	it("registers a read-only artifact helper without mutation actions", () => {
+		const tools = registeredTools();
+		const artifactTool = tools.find((tool) => tool.name === "cartographer_artifacts") as RegisteredTool & { parameters?: unknown };
+
+		expect(artifactTool).toBeTruthy();
+		expect(artifactTool?.promptGuidelines?.join("\n")).toContain("read-only");
+		expect(JSON.stringify(artifactTool?.parameters)).toContain("fact-citation-summary");
+		expect(JSON.stringify(artifactTool?.parameters)).not.toContain("upsert");
+	});
+
+	it("runs artifact summaries through the registered read-only tool", async () => {
+		const project = tempProjectWithTopic();
+		const artifactTool = registeredTools().find((tool) => tool.name === "cartographer_artifacts");
+		if (!artifactTool) throw new Error("cartographer_artifacts was not registered");
+
+		const result = await artifactTool.execute("tool-call", {
+			action: "show-record",
+			root: project,
+			topic: "demo",
+			artifact: "facts.nodes",
+			id: "F001",
+		});
+		const payload = JSON.parse(result.content[0].text);
+
+		expect(result.isError).toBeUndefined();
+		expect(payload.ok).toBe(true);
+		expect(payload.record.raw_archive_path).toBeUndefined();
+		expect(result.content[0].text).not.toContain(".plan/_private/demo/raw.log");
+		expect(result.content[0].text.length).toBeLessThan(1000);
+	});
+
 	it("registers a dedicated ADR tool with domain guidance", () => {
 		const tools = registeredTools();
 		const adrTool = tools.find((tool) => tool.name === "cartographer_adr");
