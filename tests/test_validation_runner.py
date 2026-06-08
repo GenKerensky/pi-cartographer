@@ -80,6 +80,30 @@ class ValidationRunnerTests(unittest.TestCase):
             payload = json.loads(result.stdout)
             self.assertEqual(payload["status"], "failed")
             self.assertEqual(payload["exit_code"], 2)
+            self.assertEqual(payload["decision"], "parent-review-required-after-validation-failure")
+            self.assertTrue(payload["fallback_required"])
+
+    def test_timeout_receipt_includes_fallback_decision(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            receipts = project / "receipts.jsonl"
+            result = self.run_runner(
+                project,
+                "--command",
+                f"{sys.executable} -c \"import time; time.sleep(2)\"",
+                "--phase-id",
+                "P4",
+                "--receipt-file",
+                str(receipts),
+                "--timeout-sec",
+                "0.1",
+                check=False,
+            )
+            self.assertEqual(result.returncode, 124)
+            payload = json.loads(result.stdout)
+            self.assertEqual(payload["status"], "timed-out")
+            self.assertEqual(payload["decision"], "parent-review-required-after-timeout")
+            self.assertTrue(payload["fallback_required"])
 
     def test_large_output_uses_full_output_path(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

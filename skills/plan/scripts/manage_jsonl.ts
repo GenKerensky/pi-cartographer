@@ -106,6 +106,7 @@ function usage(exitCode: number): never {
   ${script} receipt-summary --root <root> --topic <topic> [--limit 20] [--json]
   ${script} context-pack-summary --root <root> --topic <topic> [--limit 20] [--json]
   ${script} evidence-manifest-summary --root <root> --topic <topic> [--limit 20] [--json]
+  ${script} phase-summary --root <root> --topic <topic> [--phase-id <id>] [--json]
   ${script} seed-pi-facts --root <root> --topic <topic> [--json]`);
 	process.exit(exitCode);
 }
@@ -524,8 +525,11 @@ function validateReceiptRecords(records: JsonRecord[], label: string, errors: st
 				errors.push(`truncated receipt lacks token_estimate in ${label} record ${index + 1}`);
 		}
 		const timedOut = record.timedOut === true || record.status === "timed-out" || record.status === "timeout";
+		const failed = record.status === "failed" || record.status === "failure";
 		if (timedOut && !record.narrowed_retry && !record.serial_fallback && !record.user_escalation && !record.decision)
 			errors.push(`timeout receipt lacks fallback decision in ${label} record ${index + 1}`);
+		if (failed && !record.narrowed_retry && !record.serial_fallback && !record.user_escalation && !record.decision)
+			errors.push(`failure receipt lacks fallback decision in ${label} record ${index + 1}`);
 	}
 }
 
@@ -947,6 +951,142 @@ function evidenceManifestSummary(options: Record<string, string | boolean | stri
 	};
 }
 
+
+function normalizePhaseStatus(value: unknown): string {
+	return String(value || "pending").toLowerCase();
+}
+
+function phaseComplete(status: unknown): boolean {
+	return ["complete", "completed", "implemented", "done"].includes(normalizePhaseStatus(status));
+}
+
+function phaseBlocked(status: unknown): boolean {
+	return ["blocked", "deferred", "superseded", "stale"].includes(normalizePhaseStatus(status));
+}
+
+function planMarkdownSection(text: string, phaseId: string): string {
+	const pattern = new RegExp(`^###\\s+Phase\\s+${phaseId}\\b[^\\n]*\\n`, "m");
+	const match = text.match(pattern);
+	if (!match || match.index === undefined) return "";
+	const start = match.index;
+	const next = text.slice(start + match[0].length).search(/^###\s+Phase\s+\w+\b/m);
+	return next >= 0 ? text.slice(start, start + match[0].length + next) : text.slice(start);
+}
+
+function markdownListAfterHeading(section: string, heading: string): string[] {
+	const pattern = new RegExp(`^####\\s+${heading}\\s*$`, "mi");
+	const match = section.match(pattern);
+	if (!match || match.index === undefined) return [];
+	const rest = section.slice(match.index + match[0].length);
+	const end = rest.search(/^####\s+/m);
+	const body = end >= 0 ? rest.slice(0, end) : rest;
+	return body
+		.split(/\r?\n/)
+		.map((line) => line.trim())
+		.filter((line) => line.startsWith("- "))
+		.map((line) => line.replace(/^- \[[ xX]\]\s+/, "").replace(/^-\s+/, "").trim());
+}
+
+function firstParagraphAfterHeading(section: string, heading: string): string | undefined {
+	const pattern = new RegExp(`^####\\s+${heading}\\s*$`, "mi");
+	const match = section.match(pattern);
+	if (!match || match.index === undefined) return undefined;
+	const rest = section.slice(match.index + match[0].length);
+	const end = rest.search(/^####\s+/m);
+	const body = (end >= 0 ? rest.slice(0, end) : rest).trim();
+	return body.split(/\n\s*\n/)[0]?.replace(/\s+/g, " ").trim() || undefined;
+}
+
+function fieldStrings(record: JsonRecord, field: string): string[] {
+	const value = record[field];
+	if (Array.isArray(value)) return value.map(String).filter(Boolean);
+	return value === undefined || value === null || value === "" ? [] : [String(value)];
+}
+
+function phaseSummary(options: Record<string, string | boolean | string[]>): Record<string, unknown> {
+	const { root, topic } = readOnlyTopicOptions(options);
+	const dir = topicDir(root, topic);
+	const nodesResult = readJsonl(path.join(dir, "plan.nodes.jsonl"), true);
+	const edgesResult = readJsonl(path.join(dir, "plan.edges.jsonl"), true);
+	const errors = [...nodesResult.errors, ...edgesResult.errors];
+	const phases = nodesResult.records.filter((record) => record.type === "phase" && record.phase_id);
+	const byId = new Map(phases.map((phase) => [String(phase.phase_id), phase]));
+	const order = new Map(phases.map((phase, index) => [String(phase.phase_id), index]));
+	const depsFor = (phase: JsonRecord) => {
+		const phaseId = String(phase.phase_id);
+		return [...fieldStrings(phase, "depends_on"), ...edgesResult.records
+			.filter((edge) => edge.type === "depends_on" && edge.from === `phase:${phaseId}`)
+			.map((edge) => String(edge.to).replace(/^phase:/, ""))]
+			.filter((value, index, array) => value && array.indexOf(value) === index);
+	};
+	const blockersFor = (phase: JsonRecord) => depsFor(phase).filter((dep) => !phaseComplete(byId.get(dep)?.status));
+	const requested = typeof options["phase-id"] === "string" ? String(options["phase-id"]) : undefined;
+	const candidates = requested ? phases.filter((phase) => phase.phase_id === requested) : phases;
+	const selected = candidates.find((phase) => !phaseComplete(phase.status) && !phaseBlocked(phase.status) && blockersFor(phase).length === 0)
+		|| candidates.find((phase) => !phaseComplete(phase.status) && !phaseBlocked(phase.status))
+		|| candidates[0];
+	if (!selected) return { ok: false, topic, errors: [...errors, "No phase records found in plan.nodes.jsonl"] };
+	const phaseId = String(selected.phase_id);
+	const tasks = nodesResult.records
+		.filter((record) => record.type === "task" && record.phase_id === phaseId)
+		.sort((a, b) => String(a.task_id || a.id).localeCompare(String(b.task_id || b.id)))
+		.map((record) => ({ id: record.task_id || record.id, title: record.title, status: record.status || selected.status }));
+	const validations = nodesResult.records
+		.filter((record) => record.type === "validation" && record.phase_id === phaseId)
+		.sort((a, b) => String(a.validation_id || a.id).localeCompare(String(b.validation_id || b.id)))
+		.map((record) => ({ id: record.validation_id || record.id, title: record.title, command: record.command, status: record.status || selected.status }));
+	const planPath = path.join(dir, "plan.md");
+	const planText = fs.existsSync(planPath) ? fs.readFileSync(planPath, "utf8") : "";
+	const section = planText ? planMarkdownSection(planText, phaseId) : "";
+	const checklistText = markdownListAfterHeading(section, "Checklist");
+	const validationText = markdownListAfterHeading(section, "Validation");
+	const blockedBy = blockersFor(selected);
+	const references = [...fieldStrings(selected, "references"), ...edgesResult.records
+		.filter((edge) => edge.type === "references" && edge.from === `phase:${phaseId}`)
+		.map((edge) => String(edge.to))]
+		.filter((value, index, array) => value && array.indexOf(value) === index)
+		.map(sanitizeText);
+	const verifyCommands = validations.map((validation) => validation.command).filter((command): command is string => typeof command === "string" && command.length > 0);
+	const suggestedAcceptanceCriteria = tasks.map((task) => ({
+		id: String(task.id),
+		criterion: `${String(task.id)} complete: ${task.title || "phase task is implemented"}`,
+	}));
+	return {
+		ok: errors.length === 0,
+		topic,
+		phase: {
+			id: phaseId,
+			title: selected.title,
+			status: selected.status,
+			executable: !phaseComplete(selected.status) && !phaseBlocked(selected.status) && blockedBy.length === 0,
+			blocked_by: blockedBy,
+			depends_on: depsFor(selected),
+			unlocks: fieldStrings(selected, "unlocks"),
+			order: order.get(phaseId),
+		},
+		next_executable_phase_id: !phaseComplete(selected.status) && !phaseBlocked(selected.status) && blockedBy.length === 0 ? phaseId : undefined,
+		objective: firstParagraphAfterHeading(section, "Objective"),
+		scope: firstParagraphAfterHeading(section, "Scope"),
+		references,
+		checklist: tasks,
+		checklist_text: checklistText,
+		validations,
+		validation_text: validationText,
+		suggested_subagent_contract: {
+			acceptance_criteria: suggestedAcceptanceCriteria,
+			evidence: ["changed-files", "commands-run", "validation-output", "residual-risks", "diff-summary"],
+			verify_commands: verifyCommands,
+			stop_rules: [
+				"Stop for product/scope/dependency decisions or changes outside the assigned phase.",
+				"Do not mutate .plan/_private/** or .plan/_index/**.",
+				"Keep canonical validation evidence parent-owned; workers may report non-canonical receipts only when explicitly assigned.",
+			],
+			structured_report_fields: ["criteriaSatisfied", "changedFiles", "commandsRun", "validationOutput", "residualRisks", "noStagedFiles", "diffSummary"],
+		},
+		errors: errors.map(sanitizeText),
+	};
+}
+
 function upsertRecords(
 	filePath: string,
 	recordsToUpsert: JsonRecord[],
@@ -1162,6 +1302,7 @@ function main(): number {
 	else if (command === "receipt-summary") payload = receiptSummary(options);
 	else if (command === "context-pack-summary") payload = contextPackSummary(options);
 	else if (command === "evidence-manifest-summary") payload = evidenceManifestSummary(options);
+	else if (command === "phase-summary") payload = phaseSummary(options);
 	else if (command === "seed-pi-facts") payload = seedPiFacts(options);
 	else throw new Error(`Unknown command: ${command}`);
 	printPayload(payload, Boolean(options.json));

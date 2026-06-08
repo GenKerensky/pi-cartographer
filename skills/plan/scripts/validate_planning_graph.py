@@ -213,10 +213,15 @@ def validate_receipt_records(records: list[dict[str, Any]], label: str, errors: 
             if not record.get("token_estimate"):
                 errors.append(f"truncated receipt lacks token_estimate in {label} record {index}")
         timed_out = record.get("timedOut") is True or record.get("status") in {"timed-out", "timeout"}
+        failed = record.get("status") in {"failed", "failure"}
         if timed_out and not any(
             record.get(field) for field in ("narrowed_retry", "serial_fallback", "user_escalation", "decision")
         ):
             errors.append(f"timeout receipt lacks fallback decision in {label} record {index}")
+        if failed and not any(
+            record.get(field) for field in ("narrowed_retry", "serial_fallback", "user_escalation", "decision")
+        ):
+            errors.append(f"failure receipt lacks fallback decision in {label} record {index}")
 
 
 def validate_context_pack_records(records: list[dict[str, Any]], label: str, errors: list[str]) -> None:

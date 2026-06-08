@@ -18,6 +18,13 @@ function tempProjectWithTopic(): string {
 	fs.writeFileSync(path.join(topicDir, "facts.edges.jsonl"), `${JSON.stringify({ from: "F001", to: "S001", type: "supported_by" })}\n`, "utf8");
 	fs.writeFileSync(path.join(topicDir, "receipts.jsonl"), `${JSON.stringify({ id: "receipt:P1", type: "validation-receipt", status: "passed", phase_id: "P1", commands: [{ command: "test", result: "passed" }] })}\n`, "utf8");
 	fs.writeFileSync(path.join(topicDir, "context-packs.jsonl"), `${JSON.stringify({ id: "context:P2", type: "context-pack", phase_id: "P2", summary: "Compact", references: [".plan/_private/demo/raw.log"] })}\n`, "utf8");
+	fs.writeFileSync(path.join(topicDir, "plan.md"), `# demo Plan\n\n### Phase P0 — Build\n\n#### Checklist\n- [ ] **P0.T1** Implement.\n\n#### Validation\n- [ ] **P0.V1** npm run test:ts\n`, "utf8");
+	fs.writeFileSync(path.join(topicDir, "plan.nodes.jsonl"), [
+		{ id: "phase:P0", type: "phase", phase_id: "P0", title: "Build", status: "pending" },
+		{ id: "task:P0.T1", type: "task", task_id: "P0.T1", phase_id: "P0", title: "Implement" },
+		{ id: "validation:P0.V1", type: "validation", validation_id: "P0.V1", phase_id: "P0", command: "npm run test:ts" },
+	].map((record) => JSON.stringify(record)).join("\n") + "\n", "utf8");
+	fs.writeFileSync(path.join(topicDir, "plan.edges.jsonl"), "", "utf8");
 	return root;
 }
 
@@ -44,6 +51,16 @@ describe("cartographer tool registration", () => {
 		expect(JSON.stringify(artifactTool?.parameters)).not.toContain("upsert");
 	});
 
+	it("registers a parent-owned validation wrapper", () => {
+		const tools = registeredTools();
+		const validationTool = tools.find((tool) => tool.name === "cartographer_validation") as RegisteredTool & { parameters?: unknown };
+
+		expect(validationTool).toBeTruthy();
+		expect(validationTool?.promptGuidelines?.join("\n")).toContain("parent");
+		expect(validationTool?.promptGuidelines?.join("\n")).toContain("does not implement signed receipt cryptography");
+		expect(JSON.stringify(validationTool?.parameters)).toContain("timeoutSec");
+	});
+
 	it("runs artifact summaries through the registered read-only tool", async () => {
 		const project = tempProjectWithTopic();
 		const artifactTool = registeredTools().find((tool) => tool.name === "cartographer_artifacts");
@@ -63,6 +80,44 @@ describe("cartographer tool registration", () => {
 		expect(payload.record.raw_archive_path).toBeUndefined();
 		expect(result.content[0].text).not.toContain(".plan/_private/demo/raw.log");
 		expect(result.content[0].text.length).toBeLessThan(1000);
+	});
+
+	it("runs phase-summary through the registered read-only tool", async () => {
+		const project = tempProjectWithTopic();
+		const artifactTool = registeredTools().find((tool) => tool.name === "cartographer_artifacts");
+		if (!artifactTool) throw new Error("cartographer_artifacts was not registered");
+
+		const result = await artifactTool.execute("tool-call", {
+			action: "phase-summary",
+			root: project,
+			topic: "demo",
+		});
+		const payload = JSON.parse(result.content[0].text);
+
+		expect(result.isError).toBeUndefined();
+		expect(payload.next_executable_phase_id).toBe("P0");
+		expect(payload.suggested_subagent_contract.acceptance_criteria[0].id).toBe("P0.T1");
+		expect(payload.suggested_subagent_contract.verify_commands).toEqual(["npm run test:ts"]);
+	});
+
+	it("runs validation wrapper and writes compatible receipts in a temp project", async () => {
+		const project = fs.mkdtempSync(path.join(os.tmpdir(), "cartographer-validation-tool-"));
+		const validationTool = registeredTools().find((tool) => tool.name === "cartographer_validation");
+		if (!validationTool) throw new Error("cartographer_validation was not registered");
+
+		const result = await validationTool.execute("tool-call", {
+			action: "run",
+			root: project,
+			command: "node -e \"process.exit(0)\"",
+			phaseId: "P4",
+			validationId: ["P4.V3"],
+			receiptFile: ".plan/demo/receipts.jsonl",
+		});
+		const payload = JSON.parse(result.content[0].text);
+
+		expect(result.isError).toBeUndefined();
+		expect(payload.status).toBe("passed");
+		expect(fs.existsSync(path.join(project, ".plan", "demo", "receipts.jsonl"))).toBe(true);
 	});
 
 	it("registers a dedicated ADR tool with domain guidance", () => {

@@ -1,0 +1,35 @@
+{
+  "ok": true,
+  "topic": "subagent-reliability",
+  "artifact": "context-packs",
+  "file": ".plan/subagent-reliability/context-packs.jsonl",
+  "id": "context:subagent-reliability:P4",
+  "errors": [],
+  "record": {
+    "id": "context:subagent-reliability:P4",
+    "type": "context-pack",
+    "phase_id": "P4",
+    "summary": "P4 phase and validation helpers: add parent-oriented phase-summary helper that reads plan.md/plan graph and returns next executable phase, dependencies, checklist IDs, validation IDs, references, and suggested structured acceptance contract; add or expose validation runner wrapper/receipt helper as parent-owned. Tests must use temp/mock roots and not mutate real .plan. Keep signed receipts compatible/deferred; no cryptographic claims unless implemented.",
+    "budget_tokens": 3500,
+    "references": [
+      ".plan/subagent-reliability/plan.md#Phase P4",
+      "skills/plan/scripts/manage_jsonl.ts",
+      "skills/plan/scripts/validate_planning_graph.py",
+      "skills/plan/scripts/validation_runner.py",
+      "extensions/cartographer-tools.ts",
+      "tests/test_validation_runner.py",
+      "tests/test_validate_planning_graph.py",
+      "tests/manage_jsonl.test.ts",
+      "tests/cartographer_tools.test.ts"
+    ],
+    "verified_files": [
+      "skills/plan/scripts/manage_jsonl.ts",
+      "skills/plan/scripts/validation_runner.py",
+      "extensions/cartographer-tools.ts",
+      "tests/test_validation_runner.py",
+      "tests/test_validate_planning_graph.py",
+      "tests/manage_jsonl.test.ts",
+      "tests/cartographer_tools.test.ts"
+    ]
+  }
+}

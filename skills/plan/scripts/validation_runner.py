@@ -145,6 +145,7 @@ def main() -> int:
     parser.add_argument("--receipt-file", required=True, help="Receipt JSONL file to append.")
     parser.add_argument("--max-output-chars", type=int, default=8000, help="Inline output budget.")
     parser.add_argument("--full-output-dir", default="/tmp/pi-cartographer-runs", help="Directory for oversized logs.")
+    parser.add_argument("--timeout-sec", type=float, help="Timeout seconds for the validation command.")
     parser.add_argument(
         "--skip-if-unchanged", action="store_true", help="Skip if a previous passed receipt has the same file hash set."
     )
@@ -180,13 +181,24 @@ def main() -> int:
         return 0
 
     started = dt.datetime.now(dt.UTC)
-    result = subprocess.run(args.command, cwd=root, shell=True, text=True, capture_output=True)
+    timed_out = False
+    try:
+        result = subprocess.run(args.command, cwd=root, shell=True, text=True, capture_output=True, timeout=args.timeout_sec)
+        stdout = result.stdout
+        stderr = result.stderr
+        exit_code = result.returncode
+    except subprocess.TimeoutExpired as error:
+        timed_out = True
+        stdout = error.stdout if isinstance(error.stdout, str) else ""
+        stderr = error.stderr if isinstance(error.stderr, str) else ""
+        stderr = (stderr + f"\nCommand timed out after {args.timeout_sec} seconds.").strip()
+        exit_code = 124
     ended = dt.datetime.now(dt.UTC)
     hashes_after = drop_receipt_file_hash(hash_files(root), root, receipt_file)
     digest_after = hash_set_digest(hashes_after)
     summary, full_output_path, truncated = summarize_output(
-        result.stdout,
-        result.stderr,
+        stdout,
+        stderr,
         args.max_output_chars,
         Path(args.full_output_dir),
         args.phase_id or "validation",
@@ -196,28 +208,31 @@ def main() -> int:
         "type": "validation-receipt",
         "phase_id": args.phase_id,
         "validation_ids": args.validation_id,
-        "status": "passed" if result.returncode == 0 else "failed",
+        "status": "timed-out" if timed_out else ("passed" if exit_code == 0 else "failed"),
         "command": args.command,
-        "commands": [{"command": args.command, "result": "passed" if result.returncode == 0 else "failed"}],
-        "exit_code": result.returncode,
+        "commands": [{"command": args.command, "result": "timed-out" if timed_out else ("passed" if exit_code == 0 else "failed")}],
+        "exit_code": exit_code,
         "duration_ms": int((ended - started).total_seconds() * 1000),
         "summary": summary.strip()
-        or ("Command passed with no output." if result.returncode == 0 else "Command failed with no output."),
+        or ("Command passed with no output." if exit_code == 0 else "Command timed out with no output." if timed_out else "Command failed with no output."),
         "truncated": truncated,
         "maxOutputChars": args.max_output_chars,
-        "token_estimate": max(1, (len(result.stdout) + len(result.stderr)) // 4),
+        "token_estimate": max(1, (len(stdout) + len(stderr)) // 4),
         "full_output_path": full_output_path,
         "hash_set_digest": digest_after,
         "changed_file_count": len(hashes_after),
         "changed_files": sorted(path for path in hashes_after if hashes_before.get(path) != hashes_after[path]),
-        "verified": result.returncode == 0,
+        "verified": exit_code == 0,
         "verification": {"validation": args.validation_id or [args.command]},
     }
+    if exit_code != 0:
+        receipt["decision"] = "parent-review-required-after-timeout" if timed_out else "parent-review-required-after-validation-failure"
+        receipt["fallback_required"] = True
     receipt = {key: value for key, value in receipt.items() if value not in (None, [], {})}
     append_jsonl(receipt_file, receipt)
     if args.json:
         print(json.dumps(receipt, indent=2, sort_keys=True))
-    return result.returncode
+    return exit_code
 
 
 if __name__ == "__main__":

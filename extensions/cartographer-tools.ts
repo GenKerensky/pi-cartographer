@@ -85,7 +85,8 @@ type CartographerArtifactsParams = OutputShapeParams & {
 		| "fact-citation-summary"
 		| "receipt-summary"
 		| "context-pack-summary"
-		| "evidence-manifest-summary";
+		| "evidence-manifest-summary"
+		| "phase-summary";
 	root?: string;
 	topic?: string;
 	artifact?:
@@ -100,6 +101,20 @@ type CartographerArtifactsParams = OutputShapeParams & {
 		| "evidence-manifest";
 	id?: string;
 	limit?: number;
+	phaseId?: string;
+};
+
+type CartographerValidationParams = OutputShapeParams & {
+	action: "run";
+	root?: string;
+	command: string;
+	phaseId?: string;
+	validationId?: string[];
+	receiptFile: string;
+	maxOutputChars?: number;
+	fullOutputDir?: string;
+	skipIfUnchanged?: boolean;
+	timeoutSec?: number;
 };
 
 type CartographerEvidenceParams = OutputShapeParams & {
@@ -213,6 +228,13 @@ const sessionScript = path.join(
 	"plan",
 	"scripts",
 	"analyze_session.py",
+);
+const validationRunnerScript = path.join(
+	packageRoot,
+	"skills",
+	"plan",
+	"scripts",
+	"validation_runner.py",
 );
 const adrScript = path.join(
 	packageRoot,
@@ -926,6 +948,7 @@ export default function cartographerTools(pi: PiApi): void {
 				Type.Literal("receipt-summary"),
 				Type.Literal("context-pack-summary"),
 				Type.Literal("evidence-manifest-summary"),
+				Type.Literal("phase-summary"),
 			]),
 			root: Type.Optional(Type.String({ description: "Project root. Defaults to current working directory." })),
 			topic: Type.Optional(Type.String({ description: "Cartographer topic under .plan/." })),
@@ -944,6 +967,7 @@ export default function cartographerTools(pi: PiApi): void {
 			),
 			id: Type.Optional(Type.String({ description: "Record id for show-record." })),
 			limit: Type.Optional(Type.Number({ description: "Compact record limit." })),
+			phaseId: Type.Optional(Type.String({ description: "Optional phase id for phase-summary." })),
 			maxOutputChars: Type.Optional(
 				Type.Number({ description: "Inline output budget before saving a full-output receipt." }),
 			),
@@ -964,6 +988,7 @@ export default function cartographerTools(pi: PiApi): void {
 				args.push("--id", requireString(params.id, "cartographer_artifacts show-record requires id"));
 			if (["list-records", "receipt-summary", "context-pack-summary", "evidence-manifest-summary"].includes(params.action))
 				args.push("--limit", String(optionalNumber(params.limit, 20)));
+			if (params.action === "phase-summary" && params.phaseId) args.push("--phase-id", params.phaseId);
 			args.push("--json");
 			return runCommand(
 				"node",
@@ -980,6 +1005,59 @@ export default function cartographerTools(pi: PiApi): void {
 					],
 				},
 			);
+		},
+	});
+
+
+	pi.registerTool({
+		name: "cartographer_validation",
+		label: "Cartographer Validation",
+		description:
+			"Parent-owned wrapper around validation_runner.py for compact validation receipts.",
+		promptSnippet:
+			"Run parent-owned validation commands and append compatible validation_runner receipts",
+		promptGuidelines: [
+			"Use from the parent session for canonical validation receipts; do not delegate canonical validation evidence fabrication to workers.",
+			"This is a compatibility wrapper around skills/plan/scripts/validation_runner.py and does not implement signed receipt cryptography.",
+			"Provide timeoutSec for bounded commands; failure and timeout receipts include a decision field for fallback handling.",
+		],
+		parameters: Type.Object({
+			action: Type.Literal("run"),
+			root: Type.Optional(Type.String({ description: "Project root. Defaults to current working directory." })),
+			command: Type.String({ description: "Validation command to run via the shell." }),
+			phaseId: Type.Optional(Type.String({ description: "Plan phase ID, such as P4." })),
+			validationId: Type.Optional(Type.Array(Type.String(), { description: "Validation IDs satisfied by this command." })),
+			receiptFile: Type.String({ description: "Receipt JSONL file to append." }),
+			maxOutputChars: Type.Optional(Type.Number({ description: "Inline output budget." })),
+			fullOutputDir: Type.Optional(Type.String({ description: "Directory for oversized validation logs." })),
+			skipIfUnchanged: Type.Optional(Type.Boolean({ description: "Skip if a previous passed receipt has the same file hash set." })),
+			timeoutSec: Type.Optional(Type.Number({ description: "Timeout seconds for the validation command." })),
+			outputPath: Type.Optional(Type.String({ description: "Optional full-output path for wrapper output shaping." })),
+			raw: Type.Optional(Type.Boolean({ description: "Return raw command output instead of a compact receipt." })),
+		}),
+		async execute(_toolCallId, rawParams, signal) {
+			const params = rawParams as CartographerValidationParams;
+			const args: string[] = [
+				"--root",
+				params.root || process.cwd(),
+				"--command",
+				requireString(params.command, "cartographer_validation run requires command"),
+				"--receipt-file",
+				requireString(params.receiptFile, "cartographer_validation run requires receiptFile"),
+				"--json",
+			];
+			if (params.phaseId) args.push("--phase-id", params.phaseId);
+			for (const id of params.validationId || []) args.push("--validation-id", id);
+			if (params.maxOutputChars) args.push("--max-output-chars", String(params.maxOutputChars));
+			if (params.fullOutputDir) args.push("--full-output-dir", params.fullOutputDir);
+			if (params.skipIfUnchanged) args.push("--skip-if-unchanged");
+			if (params.timeoutSec) args.push("--timeout-sec", String(params.timeoutSec));
+			return runCommand("python", [validationRunnerScript, ...args], signal, {
+				maxOutputChars: params.maxOutputChars ?? 4000,
+				outputPath: params.outputPath,
+				raw: params.raw,
+				label: "cartographer-validation-run",
+			});
 		},
 	});
 

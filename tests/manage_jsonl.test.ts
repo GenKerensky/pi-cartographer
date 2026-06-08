@@ -174,12 +174,13 @@ describe("manage_jsonl CLI", () => {
 
 		fs.writeFileSync(
 			receipts,
-			`${JSON.stringify({ id: "receipt:timeout", type: "subagent-receipt", status: "timed-out", phase_id: "P1" })}\n`,
+			`${JSON.stringify({ id: "receipt:timeout", type: "subagent-receipt", status: "timed-out", phase_id: "P1" })}\n${JSON.stringify({ id: "receipt:failed", type: "validation-receipt", status: "failed", phase_id: "P1", commands: [{ command: "test", result: "failed" }] })}\n`,
 			"utf8",
 		);
 		const invalid = runJsonUnchecked(["validate-file", "--file", receipts]);
 		expect(invalid.status).not.toBe(0);
 		expect(invalid.payload.errors.join("\n")).toContain("timeout receipt lacks fallback decision");
+		expect(invalid.payload.errors.join("\n")).toContain("failure receipt lacks fallback decision");
 	});
 
 	it("validates topic fact citations and support edges", () => {
@@ -317,5 +318,52 @@ describe("manage_jsonl CLI", () => {
 		expect(result.status).not.toBe(0);
 		expect(result.stderr).toContain("Unknown command");
 		expect(fs.readFileSync(path.join(root, ".plan", "demo", "facts.nodes.jsonl"), "utf8")).toBe(before);
+	});
+
+	it("summarizes the next executable phase with acceptance contract fields", () => {
+		const root = tempDir();
+		const topicDir = path.join(root, ".plan", "demo");
+		fs.mkdirSync(topicDir, { recursive: true });
+		fs.writeFileSync(path.join(topicDir, "plan.md"), `# demo Plan\n\n## Phases\n\n### Phase P0 — Setup\n\n- **Status:** complete\n- **Depends on:** none\n\n#### Objective\nDone work.\n\n#### Checklist\n- [x] **P0.T1** Done.\n\n#### Validation\n- [x] **P0.V1** Done.\n\n### Phase P1 — Build\n\n- **Status:** pending\n- **Depends on:** P0\n\n#### Objective\nBuild the helper.\n\n#### Scope\nOnly helper files.\n\n#### Checklist\n- [ ] **P1.T1** Implement helper.\n\n#### Validation\n- [ ] **P1.V1** npm run test:ts\n`, "utf8");
+		fs.writeFileSync(path.join(topicDir, "plan.nodes.jsonl"), [
+			{ id: "plan:demo", type: "plan" },
+			{ id: "phase:P0", type: "phase", phase_id: "P0", title: "Setup", status: "complete" },
+			{ id: "phase:P1", type: "phase", phase_id: "P1", title: "Build", status: "pending", depends_on: ["P0"], references: ["file:skills/plan/scripts/manage_jsonl.ts"] },
+			{ id: "task:P1.T1", type: "task", task_id: "P1.T1", phase_id: "P1", title: "Implement helper" },
+			{ id: "validation:P1.V1", type: "validation", validation_id: "P1.V1", phase_id: "P1", title: "Run tests", command: "npm run test:ts" },
+		].map((record) => JSON.stringify(record)).join("\n") + "\n", "utf8");
+		fs.writeFileSync(path.join(topicDir, "plan.edges.jsonl"), `${JSON.stringify({ from: "phase:P1", to: "phase:P0", type: "depends_on" })}\n`, "utf8");
+
+		const summary = runJson(["phase-summary", "--root", root, "--topic", "demo"]);
+		expect(summary.ok).toBe(true);
+		expect(summary.next_executable_phase_id).toBe("P1");
+		expect(summary.phase.executable).toBe(true);
+		expect(summary.checklist[0].id).toBe("P1.T1");
+		expect(summary.validations[0].id).toBe("P1.V1");
+		expect(summary.suggested_subagent_contract.acceptance_criteria[0].id).toBe("P1.T1");
+		expect(summary.suggested_subagent_contract.evidence).toContain("validation-output");
+		expect(summary.suggested_subagent_contract.verify_commands).toEqual(["npm run test:ts"]);
+		expect(summary.suggested_subagent_contract.stop_rules.join("\n")).toContain("outside the assigned phase");
+	});
+
+	it("reports dependency blockers and does not mutate the real repository .plan", () => {
+		const realPlan = path.resolve(".plan");
+		const before = fs.existsSync(realPlan) ? fs.statSync(realPlan).mtimeMs : undefined;
+		const root = tempDir();
+		const topicDir = path.join(root, ".plan", "demo");
+		fs.mkdirSync(topicDir, { recursive: true });
+		fs.writeFileSync(path.join(topicDir, "plan.md"), "# demo Plan\n\n### Phase P0 — Setup\n\n#### Checklist\n- [ ] **P0.T1** Setup.\n\n### Phase P1 — Build\n\n#### Checklist\n- [ ] **P1.T1** Build.\n", "utf8");
+		fs.writeFileSync(path.join(topicDir, "plan.nodes.jsonl"), [
+			{ id: "phase:P0", type: "phase", phase_id: "P0", status: "pending" },
+			{ id: "phase:P1", type: "phase", phase_id: "P1", status: "pending", depends_on: ["P0"] },
+			{ id: "task:P1.T1", type: "task", task_id: "P1.T1", phase_id: "P1", title: "Build" },
+		].map((record) => JSON.stringify(record)).join("\n") + "\n", "utf8");
+		fs.writeFileSync(path.join(topicDir, "plan.edges.jsonl"), "", "utf8");
+
+		const blocked = runJson(["phase-summary", "--root", root, "--topic", "demo", "--phase-id", "P1"]);
+		expect(blocked.phase.executable).toBe(false);
+		expect(blocked.phase.blocked_by).toEqual(["P0"]);
+		const after = fs.existsSync(realPlan) ? fs.statSync(realPlan).mtimeMs : undefined;
+		expect(after).toBe(before);
 	});
 });

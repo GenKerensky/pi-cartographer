@@ -258,7 +258,7 @@ Do not run live private evidence through child agents except the redactor with e
 
 ### Phase P4 — Phase and validation helpers
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P2
 - **Unlocks:** P5
 - **Primary references:** `file:skills/implement/SKILL.md`, `file:skills/plan/scripts/validate_planning_graph.py`, `file:skills/plan/scripts/validation_runner.py`, `file:extensions/cartographer-tools.ts`, `file:package.json`, [F007], [F013], [F015]
@@ -276,18 +276,18 @@ Reduce parent and child custom scripts for phase extraction, acceptance-contract
 
 #### Checklist
 
-- [ ] **P4.T1** Implement a phase-summary helper that reads `plan.md`/`plan.nodes.jsonl`/`plan.edges.jsonl` and returns next executable phase details.
-- [ ] **P4.T2** Include suggested `subagent(...)` acceptance criteria, evidence, verify commands, and stop rules in the phase summary.
-- [ ] **P4.T3** Add an extension/tool wrapper for validation runner receipts or document parent-only invocation if the wrapper is deferred.
-- [ ] **P4.T4** Ensure timeout/failure receipts include fallback decision fields required by validators.
-- [ ] **P4.T5** Add tests for phase extraction, dependency blocking, acceptance-contract generation, validation receipt shape, and no mutation of the real repository `.plan/` during tests.
+- [x] **P4.T1** Implement a phase-summary helper that reads `plan.md`/`plan.nodes.jsonl`/`plan.edges.jsonl` and returns next executable phase details.
+- [x] **P4.T2** Include suggested `subagent(...)` acceptance criteria, evidence, verify commands, and stop rules in the phase summary.
+- [x] **P4.T3** Add an extension/tool wrapper for validation runner receipts or document parent-only invocation if the wrapper is deferred.
+- [x] **P4.T4** Ensure timeout/failure receipts include fallback decision fields required by validators.
+- [x] **P4.T5** Add tests for phase extraction, dependency blocking, acceptance-contract generation, validation receipt shape, and no mutation of the real repository `.plan/` during tests.
 
 #### Validation
 
-- [ ] **P4.V1** Run `python -m unittest discover tests -p "test_validation_runner.py"`.
-- [ ] **P4.V2** Run `python -m unittest discover tests -p "test_validate_planning_graph.py"`.
-- [ ] **P4.V3** Run `npm run test:ts` if extension wrapper behavior is added.
-- [ ] **P4.V4** Run the phase-summary helper against a temporary mock plan and confirm it does not mutate the real repository `.plan/`.
+- [x] **P4.V1** Run `python -m unittest discover tests -p "test_validation_runner.py"`.
+- [x] **P4.V2** Run `python -m unittest discover tests -p "test_validate_planning_graph.py"`.
+- [x] **P4.V3** Run `npm run test:ts` if extension wrapper behavior is added.
+- [x] **P4.V4** Run the phase-summary helper against a temporary mock plan and confirm it does not mutate the real repository `.plan/`.
 
 #### Exit Criteria
 

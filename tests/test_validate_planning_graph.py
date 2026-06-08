@@ -271,6 +271,23 @@ Finish the feature.
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("timeout receipt lacks fallback decision", result.stdout)
 
+            (topic_dir / "receipts.jsonl").write_text(
+                json.dumps(
+                    {
+                        "id": "receipt:failed",
+                        "type": "validation-receipt",
+                        "status": "failed",
+                        "phase_id": "P0",
+                        "commands": [{"command": "manual", "result": "failed"}],
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            result = self.run_validator(project)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("failure receipt lacks fallback decision", result.stdout)
+
     def test_private_reference_and_secret_pattern_fail(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)

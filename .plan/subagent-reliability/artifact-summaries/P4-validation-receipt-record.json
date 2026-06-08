@@ -1,0 +1,57 @@
+{
+  "ok": true,
+  "topic": "subagent-reliability",
+  "artifact": "receipts",
+  "file": ".plan/subagent-reliability/receipts.jsonl",
+  "id": "receipt:subagent-reliability:P4-validation:2026-06-08T19:30:00Z",
+  "errors": [],
+  "record": {
+    "id": "receipt:subagent-reliability:P4-validation:2026-06-08T19:30:00Z",
+    "type": "validation-receipt",
+    "status": "passed",
+    "phase_id": "P4",
+    "summary": "P4 phase and validation helpers validation passed, including phase-summary smoke check against current topic, validation runner/planning graph tests, TypeScript tests, check:scripts, topic validation, planning graph validation, and diff check.",
+    "commands": [
+      {
+        "command": "python -m unittest discover tests -p \"test_validation_runner.py\"",
+        "result": "passed",
+        "validation_id": "P4.V1"
+      },
+      {
+        "command": "python -m unittest discover tests -p \"test_validate_planning_graph.py\"",
+        "result": "passed",
+        "validation_id": "P4.V2"
+      },
+      {
+        "command": "npm run test:ts",
+        "result": "passed",
+        "summary": "2 files / 23 tests passed",
+        "validation_id": "P4.V3"
+      },
+      {
+        "command": "node --experimental-strip-types skills/plan/scripts/manage_jsonl.ts phase-summary --root \"$PWD\" --topic subagent-reliability --json",
+        "result": "passed",
+        "summary": "Returned P4 as executable phase with suggested subagent contract before checkoff.",
+        "validation_id": "P4.V4"
+      },
+      {
+        "command": "npm run check:scripts",
+        "result": "passed"
+      },
+      {
+        "action": "validate-topic",
+        "result": "passed",
+        "tool": "cartographer_jsonl",
+        "topic": "subagent-reliability"
+      },
+      {
+        "command": "python skills/plan/scripts/validate_planning_graph.py --root \"$PWD\" --topic subagent-reliability --json",
+        "result": "passed"
+      },
+      {
+        "command": "git diff --check",
+        "result": "passed"
+      }
+    ]
+  }
+}
