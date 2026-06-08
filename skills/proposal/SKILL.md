@@ -57,6 +57,13 @@ Create or update ignored private-input files only when the user explicitly provi
 
      ## Viability
 
+     ## ADR Metadata
+
+     - `adr_required`: false
+     - `adr_reason`: Routine implementation change unless evaluation proves durable architectural significance.
+     - `adr_options_status`: not-applicable
+     - `adr_tool_mode`: evaluate-only
+
      ## Design
      ```
 
@@ -72,6 +79,13 @@ Create or update ignored private-input files only when the user explicitly provi
    - Preserve safe basenames by default. Use sanitized or opaque names only when a basename is sensitive, collides, or the user/project policy requires it. Raw hashes are opt-in only.
    - Store detailed provenance in ignored `.plan/_private/{topic}/manifest.private.jsonl`; commit-safe `evidence/manifest.jsonl` may include safe basenames, redaction status, and analysis paths.
    - Do not read, grep, summarize, index, quote, or paste raw private artifact contents in the parent session. The next step is redactor-only analysis.
+
+1b. **Evaluate ADR intent before planning begins**
+   - Run `cartographer_adr({"action":"evaluate","root":"$PWD","topic":"{topic}"})` once proposal scope is sketched, or the equivalent `python <plan-skill-dir>/scripts/adr_records.py evaluate --root "$PWD" --topic "{topic}" --json` CLI when the tool is unavailable.
+   - Record the evaluation under `## ADR Metadata` with `adr_required`, `adr_reason`, `adr_options_status`, and `adr_tool_mode`.
+   - Treat requests that embed a durable architectural choice, dependency/platform choice, identity/auth provider, data-store change, deployment topology, public API contract, or cross-cutting workflow policy as ADR-worthy unless clearly routine.
+   - If the user request directs a specific architectural choice such as "add Auth0" and the proposal lacks alternatives or explicit user rationale, ask one concise clarification for alternatives/rationale before marking the proposal ready for planning. Do not invent the user's rationale.
+   - If the user declines or the change is routine, set `adr_required: false` and record the reason. If `adr_required: true`, state that implementation finalization should generate or explicitly skip the ADR using `cartographer_adr` after validation.
 
 2. **Inspect available subagents and choose execution mode**
    - Call the subagent list action before delegating whenever the subagent tool is available.
@@ -250,6 +264,7 @@ Create or update ignored private-input files only when the user explicitly provi
      - evidence docs referenced as `source_kind: "sanitized_evidence"` include a redaction status
      - indexed nodes cited in `proposal.md`, `map.nodes.jsonl`, or `map.edges.jsonl` exist in `.plan/_index/project-graph.sqlite`
      - the plan respects `## Goals` and `## Non-Goals`
+     - `## ADR Metadata` exists, contains `adr_required`, and matches the request/proposal evidence
    - Apply any necessary corrections to `proposal.md`, `map.nodes.jsonl`, `map.edges.jsonl`, `facts.nodes.jsonl`, or `facts.edges.jsonl`.
 
 9. **Final response**
@@ -262,7 +277,7 @@ Create or update ignored private-input files only when the user explicitly provi
      - `.plan/{topic}/facts.nodes.jsonl`
      - `.plan/{topic}/facts.edges.jsonl`
      - `.plan/{topic}/evidence/` when private artifacts were analyzed
-   - Briefly summarize what each delegated or serial role contributed and mention any residual risks or unresolved decisions.
+   - Briefly summarize what each delegated or serial role contributed, mention any residual risks or unresolved decisions, and explicitly state whether an ADR is expected to be generated later (`adr_required: true/false`) and why.
 
 ## Delegation Guidance
 
@@ -289,7 +304,7 @@ Retrieval and lifecycle contract for proposal artifacts:
 - Index/map/query results are candidates until verified. Use `candidate`, `verified`, and `verification` metadata where useful; `verified: true` requires direct read, focused `rg`, or deterministic validation evidence.
 - Retrieval miss records belong in `.plan/_retrieval/misses.jsonl` and should include `failure_type`, `original_query`, `expanded_queries`, `retrieval_modes`, `expected_terms`, `eventual_hit`, `resolution`, and concise notes when known.
 - Retrieval scopes are `code`, `plans`, and `all`, with `code` as the default. Proposal code discovery should exclude `.plan/**`; rationale retrieval should search `.plan/` only through explicit bounded probes.
-- Final concise ADR generation into `docs/` is out of scope for this workflow and belongs to a later proposal.
+- ADR generation is no longer blanket out-of-scope: proposals must record `adr_required` intent, and implementation finalization should use `cartographer_adr` only when accepted metadata and validation receipts justify it.
 
 After choosing delegated or approved serial execution mode, use the `index-project` skill to create/update `.plan/_index/project-graph.sqlite` before scope, mapping, research, or planning passes. When this proposal skill is installed alongside `index-project`, prefer the direct sibling reference `../index-project/SKILL.md` to avoid ambiguity with another discovered skill of the same name. Pass concise query results, map JSONL paths, index artifact paths, and the index tool commands into subagent prompts. Subagents should use the index-derived graph as their starting context for proposal artifacts, then use `rg`/grep and selective file reads to verify exact code evidence or fill obvious lexical gaps.
 
@@ -302,6 +317,7 @@ cartographer_index({"action":"read","root":"$PWD","path":"<project-relative-path
 cartographer_index({"action":"read","root":"$PWD","nodeId":"<indexed-node-id>"})
 cartographer_jsonl({"action":"seed-pi-facts","root":"$PWD","topic":"{topic}"})
 cartographer_jsonl({"action":"validate-topic","root":"$PWD","topic":"{topic}"})
+cartographer_adr({"action":"evaluate","root":"$PWD","topic":"{topic}"})
 ```
 
 When launching delegated agents through pi-subagents, include the package extension path `extensions/cartographer-tools.ts` in the child tool/extension configuration when supported so these tools are callable. Tell each delegated agent it may run `cartographer_index` with `action: "ensure"` before reading the index; if it reports `action: "reindexed"`, it should continue from the refreshed index and mention that in its handoff. If custom tools are unavailable in the child, use the equivalent `python <index-project-skill-dir>/scripts/index_project.py ...` and `node --experimental-strip-types <plan-skill-dir>/scripts/manage_jsonl.ts ...` CLI commands via bash.
@@ -347,6 +363,8 @@ Serial-mode role prompts:
 - Do not turn the scope sections into a technology shopping list; keep them problem-centered.
 - Do not skip oracle checks for design steps, even in serial mode.
 - Do not overwrite useful existing proposal content without preserving or reconciling it.
+- Do not omit `## ADR Metadata`; every proposal should state `adr_required` and why.
+- Do not mark `adr_required: true` for directed architecture choices without alternatives or user-provided rationale unless the user explicitly accepts the rationale.
 
 ## Verification
 
@@ -366,4 +384,6 @@ Before finalizing, verify:
 - Every indexed node ID cited in `map.nodes.jsonl`, `map.edges.jsonl`, or `proposal.md` exists in `.plan/_index/project-graph.sqlite`.
 - `## Design` contains high-level `###` steps plus details, dependencies, references, and any useful diagrams/tables.
 - Design steps use indexed project files where relevant instead of relying only on ad-hoc file discovery.
+- `## ADR Metadata` includes `adr_required`, `adr_reason`, `adr_options_status`, and `adr_tool_mode`.
+- Directed ADR-worthy choices include alternatives or user-provided rationale, or the proposal records that clarification is still needed.
 - A final reviewer/oracle validation pass has been completed and corrections were applied.

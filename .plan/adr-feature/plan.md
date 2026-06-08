@@ -271,7 +271,7 @@ Do not call shell through string concatenation. Follow the existing `runCommand(
 
 ### Phase P4 — Proposal-time ADR gate
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P2
 - **Unlocks:** P5
 - **Primary references:** `file:skills/proposal/SKILL.md`, `file:skills/plan/SKILL.md`, `file:README.md`, [F011], [F012], [F014]
@@ -291,17 +291,17 @@ Teach the proposal workflow to detect ADR-worthy work, record `adr_required`, an
 
 #### Checklist
 
-- [ ] **P4.T1** Update proposal skill outputs/procedure to include ADR requirement evaluation, metadata, and the `evaluate` helper/tool contract.
-- [ ] **P4.T2** Add prompt/ask-user guidance for ADR-worthy directed choices lacking alternatives or explicit rationale.
-- [ ] **P4.T3** Update plan skill guidance so plans carry `adr_required` into implementation handoff when present.
-- [ ] **P4.T4** Add workflow documentation tests checking `adr_required`, alternatives/rationale prompt guidance, and absence of stale "ADR generation is out of scope" wording.
-- [ ] **P4.T5** Ensure proposal summaries are instructed to expose ADR intent to users before implementation starts.
+- [x] **P4.T1** Update proposal skill outputs/procedure to include ADR requirement evaluation, metadata, and the `evaluate` helper/tool contract.
+- [x] **P4.T2** Add prompt/ask-user guidance for ADR-worthy directed choices lacking alternatives or explicit rationale.
+- [x] **P4.T3** Update plan skill guidance so plans carry `adr_required` into implementation handoff when present.
+- [x] **P4.T4** Add workflow documentation tests checking `adr_required`, alternatives/rationale prompt guidance, and absence of stale "ADR generation is out of scope" wording.
+- [x] **P4.T5** Ensure proposal summaries are instructed to expose ADR intent to users before implementation starts.
 
 #### Validation
 
-- [ ] **P4.V1** Run `rg -n "adr_required|ADR-worthy|alternatives|rationale|cartographer_adr" skills/proposal/SKILL.md skills/plan/SKILL.md README.md` and confirm required guidance is present.
-- [ ] **P4.V2** Run `python -m unittest discover tests -p "test_workflow_docs.py"` and expect workflow doc assertions to pass.
-- [ ] **P4.V3** Run `npm run check:scripts` to ensure no extension/script syntax regressions from adjacent edits.
+- [x] **P4.V1** Run `rg -n "adr_required|ADR-worthy|alternatives|rationale|cartographer_adr" skills/proposal/SKILL.md skills/plan/SKILL.md README.md` and confirm required guidance is present.
+- [x] **P4.V2** Run `python -m unittest discover tests -p "test_workflow_docs.py"` and expect workflow doc assertions to pass.
+- [x] **P4.V3** Run `npm run check:scripts` to ensure no extension/script syntax regressions from adjacent edits.
 
 #### Exit Criteria
 

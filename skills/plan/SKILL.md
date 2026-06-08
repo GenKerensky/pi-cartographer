@@ -101,6 +101,7 @@ Use or create/update these supporting artifacts when needed:
      - non-goals
      - design steps
      - background and viability claims
+     - ADR metadata (`adr_required`, `adr_reason`, `adr_options_status`, and `adr_tool_mode`) when present
    - Parse these JSON/JSONL artifacts if they exist:
      - `.plan/{topic}/map.nodes.jsonl`
      - `.plan/{topic}/map.edges.jsonl`
@@ -218,12 +219,12 @@ Use or create/update these supporting artifacts when needed:
      ````
 
    - `## Source Artifacts` should list the exact proposal/index/map/fact artifacts used.
-   - `## Planning Assumptions` should separate confirmed facts from assumptions.
+   - `## Planning Assumptions` should separate confirmed facts from assumptions and preserve accepted ADR intent from the proposal (`adr_required: true/false`) instead of treating ADR generation as future work.
    - `## Phase Dependency Graph` must include a Mermaid graph showing phase ordering/dependencies.
    - `## Phase Summary` must include every phase and dependency.
    - `## Cross-Phase Validation` should include final validation commands/checks that run after all phases.
    - `## Open Questions` should be empty or explicitly list unresolved decisions.
-   - `## Handoff Guidance` should explain how an execution agent should execute the phases and when to stop for review.
+   - `## Handoff Guidance` should explain how an execution agent should execute the phases, when to stop for review, and whether implementation finalization must run `cartographer_adr` based on `adr_required` metadata.
 
 9. **Write machine-readable plan graph artifacts**
    - Create `.plan/{topic}/plan.nodes.jsonl` and `.plan/{topic}/plan.edges.jsonl` from the final Markdown plan.
@@ -324,7 +325,7 @@ Retrieval and lifecycle contract for plan artifacts:
 - Candidate/verified metadata uses `candidate`, `verified`, and `verification` fields. `verified: true` requires direct read, focused `rg`, or deterministic validation evidence.
 - Retrieval misses that materially change planning should be appended to `.plan/_retrieval/misses.jsonl` with `failure_type`, `original_query`, `expanded_queries`, `retrieval_modes`, `expected_terms`, `eventual_hit`, and `resolution`.
 - Retrieval scopes are `code`, `plans`, and `all`, with `code` as the default. Planning should use bounded rationale retrieval in `.plan/` for prior decisions and sanitized evidence docs while keeping source-code retrieval separate. Raw `.plan/_private/**` inputs are off limits and must not be cited.
-- Final concise ADR generation into `docs/` is out of scope for this plan and should be handled by a later proposal.
+- ADR generation is gated by accepted proposal/plan metadata: if `adr_required: true`, implementation finalization should run `cartographer_adr` after deterministic validation; if false, carry the reason forward rather than silently skipping.
 
 Cartographer tool access for every delegated agent in this workflow (`scout`, `researcher`, `planner`, `oracle`, and `reviewer`):
 
@@ -336,6 +337,7 @@ cartographer_index({"action":"read","root":"$PWD","nodeId":"<indexed-node-id>"})
 cartographer_jsonl({"action":"seed-pi-facts","root":"$PWD","topic":"{topic}"})
 cartographer_jsonl({"action":"validate-topic","root":"$PWD","topic":"{topic}"})
 cartographer_evidence({"action":"list","root":"$PWD","topic":"{topic}"})
+cartographer_adr({"action":"evaluate","root":"$PWD","topic":"{topic}"})
 ```
 
 When launching delegated agents through pi-subagents, include the package extension path `extensions/cartographer-tools.ts` in the child tool/extension configuration when supported so these tools are callable. Tell each delegated agent it may run `cartographer_index` with `action: "ensure"` before reading the index; if it reports `action: "reindexed"`, it should continue from the refreshed index and mention that in its handoff. If custom tools are unavailable in the child, use the equivalent `python <index-project-skill-dir>/scripts/index_project.py ...`, `python <plan-skill-dir>/scripts/private_artifacts.py ...`, and `node --experimental-strip-types <plan-skill-dir>/scripts/manage_jsonl.ts ...` CLI commands via bash. Do not let planning agents read raw `.plan/_private/**` contents; they may read sanitized `.plan/{topic}/evidence/` docs in `plans` scope.
@@ -368,6 +370,8 @@ Serial-mode role prompts:
 - Do not leave a phase without validation items and exit criteria.
 - Do not hide unresolved decisions; put them in `## Open Questions`.
 - Do not overwrite existing plans without preserving useful content and stable IDs.
+- Do not drop `adr_required` metadata from the proposal; carry it into assumptions, validation, or handoff guidance.
+- Do not describe ADR generation as out of scope when the accepted proposal says `adr_required: true`.
 
 ## Verification Checklist
 
@@ -393,4 +397,5 @@ Before finalizing, verify:
 - Every referenced fact ID exists.
 - Every validation command is valid for the project or clearly marked manual.
 - `scripts/validate_planning_graph.py --root "$PWD" --topic "{topic}"` passes.
+- ADR intent from the proposal is preserved in planning assumptions or handoff guidance, including `adr_required` and the reason.
 - Final reviewer/oracle validation was completed and corrections were applied.

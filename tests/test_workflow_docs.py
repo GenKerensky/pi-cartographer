@@ -21,6 +21,21 @@ class WorkflowDocsTests(unittest.TestCase):
         self.assertIn("log-miss", text)
         self.assertIn(".plan/_retrieval/misses.jsonl", text)
 
+    def test_adr_gate_guidance_is_documented(self) -> None:
+        proposal = (ROOT / "skills/proposal/SKILL.md").read_text(encoding="utf-8")
+        plan = (ROOT / "skills/plan/SKILL.md").read_text(encoding="utf-8")
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        combined = "\n".join([proposal, plan, readme])
+
+        self.assertIn("adr_required", proposal)
+        self.assertIn("alternatives/rationale", proposal)
+        self.assertIn("cartographer_adr", proposal)
+        self.assertIn("adr_required", plan)
+        self.assertIn("cartographer_adr", plan)
+        self.assertIn("adr_required", readme)
+        self.assertNotIn("Final concise ADR generation into `docs/` is out of scope", combined)
+        self.assertNotIn("does not generate final ADRs", readme)
+
 
 if __name__ == "__main__":
     unittest.main()

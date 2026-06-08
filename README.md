@@ -377,6 +377,10 @@ python skills/plan/scripts/analyze_session.py --input "/tmp/session.jsonl" --out
 # Compute lightweight workflow benchmark metrics from receipts/context packs and optional session summary JSON
 python skills/plan/scripts/workflow_benchmark.py --root "$PWD" --topic "support-case" --json
 
+# Evaluate or manage Architecture Decision Records
+python skills/plan/scripts/adr_records.py evaluate --root "$PWD" --topic "search-ui" --json
+python skills/plan/scripts/adr_records.py list --root "$PWD" --json
+
 # Validate planning artifacts
 node --experimental-strip-types skills/plan/scripts/manage_jsonl.ts validate-topic --root "$PWD" --topic "search-ui" --json
 python skills/plan/scripts/validate_planning_graph.py --root "$PWD" --topic "search-ui" --json
@@ -394,7 +398,7 @@ node --experimental-strip-types skills/plan/scripts/manage_jsonl.ts upsert --fil
 - The index excludes dependency directories, build outputs, caches, low-signal lockfiles, and files over the configured max size.
 - Index/map results are candidate context. Validate important claims against the working tree and actual project commands.
 - `implement` requires an existing plan and will stop for missing plans, dirty working trees, unavailable required subagents/substitutes, unclear decisions, or repeated validation failures.
-- The package does not generate final ADRs or docs outside `.plan/`; that is intentionally out of scope for the current workflows.
+- ADR generation is opt-in and metadata-gated: proposals/plans record `adr_required`, and implementation finalization should use `cartographer_adr`/`adr_records.py` only after validation evidence exists.
 - Pi packages and extensions run with local user permissions. Review third-party packages before installing them.
 
 ## Development
