@@ -1,9 +1,9 @@
 ---
 name: "proposal"
-description: "Pi Cartographer proposal workflow: create .plan/<topic>/proposal.md using the index-project SQLite/FTS graph plus delegated scope, mapping, research, design, oracle review, and validation."
-version: 17
+description: "Pi Cartographer proposal workflow: create .plan/<topic>/proposal.md using the index-project SQLite/FTS graph plus delegated scope, mapping, research, design, compass checks, deterministic validation, and cartographer-auditor gates."
+version: 18
 created: "2026-06-05"
-updated: "2026-06-07"
+updated: "2026-06-08"
 ---
 # Pi Cartographer Proposal
 
@@ -102,8 +102,8 @@ Create or update ignored private-input files only when the user explicitly provi
      2. deterministic codebase mapper using Cartographer tools plus focused `rg`/grep verification; run a scout-style manual pass only if the map tools and lexical checks fail or are ambiguous
      3. web/documentation researcher for `researcher` only when needed facts are missing or stale
      4. design planner for `planner`
-     5. skeptical consistency checker for `oracle`
-     6. final validator using `reviewer` when available, or `oracle` for consistency-focused validation
+     5. skeptical consistency checker using `cartographer-compass`, or fallback `oracle` when approved
+     6. final semantic gate using `cartographer-auditor`, or approved reviewer/oracle/serial fallback with an explicit fallback receipt
    - If some executable subagents exist but a required exact agent is unavailable, ask the user whether to substitute the closest available agent. Do not silently skip a role.
 
 3. **Create or update the shared project index**
@@ -248,10 +248,18 @@ Create or update ignored private-input files only when the user explicitly provi
      - references to fact IDs and file map/index entries
    - Include Mermaid diagrams and tables where they clarify control flow, data flow, responsibilities, dependencies, or sequencing.
 
-8. **Validate the proposal with `reviewer`/`oracle` or a serial validation pass**
-   - Prefer `reviewer` for artifact validation and concrete reference/citation checks. Use `oracle` for consistency, scope-fit, and design-step skepticism. Do not use `planner` for final validation unless no reviewer/oracle substitute is available.
-   - In approved serial mode, perform a distinct validation pass yourself.
-   - The validation pass must check that:
+8. **Run deterministic validation, then `cartographer-auditor` semantic audit**
+   - Deterministic validation before `cartographer-auditor` is mandatory for a proposal to become accepted. Run JSONL artifact validation first and record a validation receipt:
+
+     ```bash
+     node --experimental-strip-types <plan-skill-dir>/scripts/manage_jsonl.ts validate-topic --root "$PWD" --topic "{topic}" --json
+     ```
+
+   - Correct any deterministic validation failures before launching an auditor. Do not ask a child to hand-check raw JSONL as a substitute for this validation when the tool or CLI can run.
+   - After deterministic validation passes, launch `cartographer-auditor` as the default final semantic gate. Provide the proposal path, map/fact artifact paths, sanitized evidence paths when relevant, deterministic validation output or receipt IDs, and a requirement for an explicit `PASS`/`FAIL` decision.
+   - Built-in `reviewer`/`oracle` or a serial current-agent validation pass are fallback substitutes only when `cartographer-auditor` is unavailable, times out, or the user approves substitution. Each fallback must write an explicit fallback receipt in `.plan/{topic}/receipts.jsonl` with the attempted auditor, reason, substitute/manual reviewer used, deterministic validation receipt IDs, files reviewed, outcome, and residual risks.
+   - If the JSONL validator cannot run, stop or ask the user before accepting the proposal unless the user approves a manual fallback; record a fallback receipt that includes the failed command/tool, error summary, manual checks performed, and remaining risk.
+   - The deterministic/auditor validation pass must check that:
      - dependencies are declared and appear valid
      - steps align with the researched facts
      - referenced project files exist in the current checkout and, where possible, in the shared index
@@ -263,9 +271,9 @@ Create or update ignored private-input files only when the user explicitly provi
      - private-derived facts cite sanitized evidence docs, not `.plan/_private/**`
      - evidence docs referenced as `source_kind: "sanitized_evidence"` include a redaction status
      - indexed nodes cited in `proposal.md`, `map.nodes.jsonl`, or `map.edges.jsonl` exist in `.plan/_index/project-graph.sqlite`
-     - the plan respects `## Goals` and `## Non-Goals`
+     - the proposal respects `## Goals` and `## Non-Goals`
      - `## ADR Metadata` exists, contains `adr_required`, and matches the request/proposal evidence
-   - Apply any necessary corrections to `proposal.md`, `map.nodes.jsonl`, `map.edges.jsonl`, `facts.nodes.jsonl`, or `facts.edges.jsonl`.
+   - Apply any necessary corrections to `proposal.md`, `map.nodes.jsonl`, `map.edges.jsonl`, `facts.nodes.jsonl`, or `facts.edges.jsonl`, rerun deterministic validation, and require `cartographer-auditor` `PASS` or an approved fallback receipt before final response.
 
 9. **Final response**
    - Reply with the created topic and paths:
@@ -286,17 +294,19 @@ Keep the parent agent responsible for orchestration, artifact integrity, index f
 Performance rules:
 
 - Follow the Clean Context Contract: normal LLM-facing outputs should stay near 8KB, expanded diagnostics near 16KB, and larger outputs should be represented by compact receipts with `summary`, `references`, `counts`, `token_estimate`, `truncated`, `full_output_path`, `verification`, and `next_actions`.
-- Write proposal workflow checkpoints to `.plan/{topic}/receipts.jsonl` and compact handoff context to `.plan/{topic}/context-packs.jsonl` when a proposal step generates durable decisions, validation results, large research output, or subagent handoff context.
+- Write proposal workflow checkpoints to `.plan/{topic}/receipts.jsonl` and compact handoff context to `.plan/{topic}/context-packs.jsonl` when a proposal step generates durable decisions, validation results, large research output, timeout/fallback events, fallback substitutions, or subagent handoff context.
 - Keep raw command/search/session output in `/tmp/pi-cartographer-runs/` by default; use ignored `.plan/_runs/` only when explicitly useful for local replay, and never cite or commit raw run logs.
 - Do not read entire large files (`draft.md`, local Pi docs, raw README files, generated artifacts) unless targeted indexed reads or focused lexical searches are insufficient. Use `cartographer_index context`, `repo-map`, and `read` for durable planning context, and use safe `search`/focused `rg` for exact identifiers, filenames, scripts, tests, and error strings.
 - Treat lexical search as the fast verification path for concrete code evidence; treat the shared index as a reusable planning/map cache, not the only discovery mechanism.
-- Do not inline large subagent outputs into later prompts. Use `outputMode: "file-only"` for researcher, optional scout, planner, reviewer, or any child expected to produce more than a short answer.
-- Parallelize independent read-only roles where practical: scope writing and missing research can run after deterministic map generation without waiting for optional scout. Keep oracle/reviewer validation after design.
+- Do not inline large subagent outputs into later prompts. Use `outputMode: "file-only"` for researcher, optional scout, planner, `cartographer-auditor`/fallback reviewer, or any child expected to produce more than a short answer.
+- Parallelize independent read-only roles where practical: scope writing and missing research can run after deterministic map generation without waiting for optional scout. Keep `cartographer-compass`/oracle consistency checks after design and `cartographer-auditor` validation after deterministic receipts.
 - Seed/cache local Pi docs and pi-subagents facts with `cartographer_jsonl({"action":"seed-pi-facts", ...})`; do not ask researcher to re-summarize the same local docs every proposal.
-- Use `cartographer_jsonl validate-topic` for artifact checks before asking reviewer/oracle to reason about higher-level quality.
+- Use `cartographer_jsonl validate-topic` for deterministic artifact checks before asking `cartographer-auditor` to reason about higher-level quality; fallback reviewer/oracle passes must cite the validation receipt or explain the approved fallback receipt.
 - Use `cartographer_evidence import` for user-provided private artifacts before any raw-content analysis. Keep `.plan/_private/**` out of prompts except as explicit paths for `cartographer-redactor`, and cite only sanitized `.plan/{topic}/evidence/` outputs.
 
 Use subagents only where they add judgment: missing research (`cartographer-archivist`), design/proposal synthesis (`cartographer-drafter`), semantic audit (`cartographer-auditor`), and decision consistency (`cartographer-compass`). Built-in agents remain fallback substitutes only.
+
+Apply a least-privilege child tool policy. Do not grant every child full mutable JSONL/private/ADR/receipt authority: the parent owns canonical proposal/map/fact writes, receipt append decisions, ADR evaluation, and raw private intake. Give each child only the artifact paths, read-only Cartographer actions, sanitized evidence, and explicit output contract needed for its role; `cartographer-redactor` is the only child that should receive raw `.plan/_private/**` paths, and `cartographer-auditor` should normally receive deterministic receipts rather than mutable write authority.
 
 Retrieval and lifecycle contract for proposal artifacts:
 
@@ -308,7 +318,7 @@ Retrieval and lifecycle contract for proposal artifacts:
 
 After choosing delegated or approved serial execution mode, use the `index-project` skill to create/update `.plan/_index/project-graph.sqlite` before scope, mapping, research, or planning passes. When this proposal skill is installed alongside `index-project`, prefer the direct sibling reference `../index-project/SKILL.md` to avoid ambiguity with another discovered skill of the same name. Pass concise query results, map JSONL paths, index artifact paths, and the index tool commands into subagent prompts. Subagents should use the index-derived graph as their starting context for proposal artifacts, then use `rg`/grep and selective file reads to verify exact code evidence or fill obvious lexical gaps.
 
-Cartographer tool access for every delegated agent in this workflow (`delegate`, `scout`, `researcher`, `planner`, `oracle`, and `reviewer`):
+Role-scoped least-privilege Cartographer tool examples for delegated agents in this workflow (`delegate`, optional `scout`, `researcher`, `planner`, `cartographer-compass`/fallback `oracle`, and `cartographer-auditor`/fallback `reviewer`):
 
 ```bash
 cartographer_index({"action":"ensure","root":"$PWD"})
@@ -320,7 +330,7 @@ cartographer_jsonl({"action":"validate-topic","root":"$PWD","topic":"{topic}"})
 cartographer_adr({"action":"evaluate","root":"$PWD","topic":"{topic}"})
 ```
 
-When launching delegated agents through pi-subagents, include the package extension path `extensions/cartographer-tools.ts` in the child tool/extension configuration when supported so these tools are callable. Tell each delegated agent it may run `cartographer_index` with `action: "ensure"` before reading the index; if it reports `action: "reindexed"`, it should continue from the refreshed index and mention that in its handoff. If custom tools are unavailable in the child, use the equivalent `python <index-project-skill-dir>/scripts/index_project.py ...` and `node --experimental-strip-types <plan-skill-dir>/scripts/manage_jsonl.ts ...` CLI commands via bash.
+When launching delegated agents through pi-subagents, include the package extension path `extensions/cartographer-tools.ts` in the child tool/extension configuration when supported so needed tools are callable. Grant only the actions needed by that role; do not hand every child mutable `cartographer_jsonl upsert`, raw private paths, ADR write actions, or receipt append authority by default. Tell each delegated agent it may run `cartographer_index` with `action: "ensure"` before reading the index when freshness is uncertain; if it reports `action: "reindexed"`, it should continue from the refreshed index and mention that in its handoff. If custom tools are unavailable in the child, use the equivalent `python <index-project-skill-dir>/scripts/index_project.py ...` and `node --experimental-strip-types <plan-skill-dir>/scripts/manage_jsonl.ts ...` CLI commands via bash, then write a fallback receipt for any validation or audit step that used CLI/manual substitutes.
 
 If no executable subagents are available, first alert the user and ask whether they want the current agent to run the same sequence as an internal serial workflow. Only continue serially after the user approves. If they decline, stop and report any initialized/index artifacts.
 
@@ -332,12 +342,13 @@ Recommended prompts for delegated mode:
 - Optional `scout`: "Start from `cartographer_index query/read` outputs and existing map JSONL for `{topic}`, then use focused `rg`/grep searches for exact identifiers, filenames, scripts, tests, commands, and error strings that may be missing or questionable. Do not rediscover the repo broadly or read whole large files unless index snippets and lexical hits are insufficient. Do not rewrite map JSONL and do not create `map.graph.json`; return concise suggested node/edge additions with evidence."
 - `researcher`: "Research only missing or stale facts for `{topic}` in light of indexed project context. First inspect existing fact JSONL summaries; do not re-summarize local Pi docs or pi-subagents docs when existing supported fact nodes cover them. You have read access to Cartographer tools; run `cartographer_index ensure` if freshness is uncertain and use `query`/`read` for project context. Return concise JSONL node/edge suggestions and Background/Viability prose citing fact IDs. Every source-backed claim needs a fact node, source node, and `supported_by` edge. Do not read whole large docs unless targeted facts are missing."
 - `planner`: "Using proposal scope, concise map/fact summaries, artifact paths, and the shared project index, create high-level design steps under `## Design`, then fill each step with details, citations, dependencies, diagrams, and tables as appropriate. Use Cartographer tools for targeted reads before citing indexed context. Do not request or inline full raw map/research/scout outputs when file paths plus concise summaries are sufficient."
-- `oracle`: "Before the planner finalizes this step, check whether the step makes sense in context, fits the scope, respects goals/non-goals, aligns with facts, and references real project files or indexed nodes. You have read access to Cartographer tools and may run `cartographer_index`/`cartographer_jsonl` if freshness, references, or graph validity are uncertain. Return concerns and suggested corrections."
-- `reviewer`: "Final-validate the complete proposal artifacts. Use `cartographer_jsonl` to validate JSONL where available, and `cartographer_index` to verify indexed references when needed. Check required sections, fact citations/support, map/fact JSONL validity, file references, goals/non-goals alignment, and handoff readiness. Do not create new design content; return pass/fail with required corrections."
+- `cartographer-compass`/fallback `oracle`: "Before the planner finalizes this step, check whether the step makes sense in context, fits the scope, respects goals/non-goals, aligns with facts, and references real project files or indexed nodes. You have read access to Cartographer tools and may run `cartographer_index`/`cartographer_jsonl` if freshness, references, or graph validity are uncertain. Return concerns and suggested corrections."
+- `cartographer-auditor`: "Final-validate the complete proposal artifacts after deterministic validation receipts pass. Use the provided `cartographer_jsonl validate-topic` receipt instead of manually re-parsing large JSONL; run targeted `cartographer_index` reads only when freshness or references are uncertain. Check required sections, fact citations/support, map/fact JSONL validity, file references, goals/non-goals alignment, ADR metadata, and handoff readiness. Do not create new design content; return `PASS`/`FAIL` with required corrections."
+- Fallback `reviewer`/serial validator: "Use only when `cartographer-auditor` is unavailable or the user approved substitution. Review the same artifacts and deterministic receipts, then write or request an explicit fallback receipt with outcome and residual risk."
 
 Serial-mode confirmation prompt:
 
-- "No executable subagents are available for this proposal workflow. Do you want me to continue by creating/updating the shared project index, generating/validating map JSONL deterministically, and then performing needed scope, research, planner, oracle, and validation passes serially as the current agent?"
+- "No executable subagents are available for this proposal workflow. Do you want me to continue by creating/updating the shared project index, generating/validating map JSONL deterministically, and then performing needed scope, research, planner, compass/oracle, and auditor-validation passes serially as the current agent?"
 
 Serial-mode role prompts:
 
@@ -345,8 +356,8 @@ Serial-mode role prompts:
 - Codebase mapper: inspect the shared SQLite index and starter map JSONL, verify relevant files with focused `rg`/grep and selective reads as needed, and write `map.nodes.jsonl` plus `map.edges.jsonl` with valid file references and resolvable graph IDs.
 - Researcher: search or inspect documentation yourself, using indexed project constraints to focus the search, and append each source-backed finding as JSONL graph records to `facts.nodes.jsonl` and `facts.edges.jsonl` before continuing.
 - Planner: draft `## Design` as high-level `###` steps, then fill each step with dependencies, references to facts and indexed files, risks, diagrams, and tables where helpful.
-- Oracle checker: before each step is finalized, switch perspective and challenge the step for scope fit, fact alignment, index/file-reference validity, and hidden assumptions.
-- Final validator: perform a reviewer-style artifact validation pass and correct missing dependencies, invalid references, unsupported citations, missing index citations, or scope drift.
+- Compass/oracle checker: before each step is finalized, switch perspective and challenge the step for scope fit, fact alignment, index/file-reference validity, and hidden assumptions.
+- Final validator: perform a cartographer-auditor-style artifact validation pass after deterministic JSONL validation, correct missing dependencies, invalid references, unsupported citations, missing index citations, or scope drift, and write a fallback receipt because the default auditor was not used.
 
 ## Pitfalls
 
@@ -354,14 +365,14 @@ Serial-mode role prompts:
 - Do not continue after an indexing failure without alerting the user and getting approval for manual discovery with `rg`/grep and selective reads.
 - Do not continue automatically in the zero-subagent case; alert the user and ask whether to proceed serially with the current agent.
 - Do not run serial mode unless the user has approved it.
-- Do not treat serial mode as permission to skip roles. The current agent must still perform scope, mapping, research, planning, oracle checking, and final validation as separate passes.
+- Do not treat serial mode as permission to skip roles. The current agent must still perform scope, mapping, research, planning, compass/oracle checking, and final validation as separate passes.
 - Do not let research claims enter `proposal.md` without a corresponding `fact` node ID in `facts.nodes.jsonl` and a supporting `supported_by` edge in `facts.edges.jsonl`.
 - Do not write YAML, JSON arrays, or comma-separated JSON objects into the map or research graph files; they must remain newline-delimited JSON objects.
 - Treat `map.nodes.jsonl` plus `map.edges.jsonl` as the proposal map source of truth.
 - Do not let the map graph become a flat grep dump; it should be a curated graph view grounded in the indexed topic graph and verified with focused lexical evidence where useful.
 - Do not rely only on raw FTS ranking; verify high-impact files with `rg`/grep or direct reads and include graph neighbors where relevant.
 - Do not turn the scope sections into a technology shopping list; keep them problem-centered.
-- Do not skip oracle checks for design steps, even in serial mode.
+- Do not skip compass/oracle checks for design steps, even in serial mode.
 - Do not overwrite useful existing proposal content without preserving or reconciling it.
 - Do not omit `## ADR Metadata`; every proposal should state `adr_required` and why.
 - Do not mark `adr_required: true` for directed architecture choices without alternatives or user-provided rationale unless the user explicitly accepts the rationale.
@@ -386,4 +397,4 @@ Before finalizing, verify:
 - Design steps use indexed project files where relevant instead of relying only on ad-hoc file discovery.
 - `## ADR Metadata` includes `adr_required`, `adr_reason`, `adr_options_status`, and `adr_tool_mode`.
 - Directed ADR-worthy choices include alternatives or user-provided rationale, or the proposal records that clarification is still needed.
-- A final reviewer/oracle validation pass has been completed and corrections were applied.
+- A final `cartographer-auditor` `PASS` has been recorded after deterministic validation, or an approved reviewer/oracle/serial fallback receipt exists and corrections were applied.

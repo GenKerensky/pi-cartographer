@@ -71,7 +71,7 @@ flowchart TD
 
 ### Phase P0 — Workflow contracts
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** none
 - **Unlocks:** P1, P2
 - **Primary references:** `file:skills/proposal/SKILL.md`, `file:skills/plan/SKILL.md`, `file:skills/implement/SKILL.md`, `file:README.md`, `file:tests/test_workflow_docs.py`, [F005], [F007], [F008], [F009], [F010], [F014], [F016]
@@ -90,17 +90,17 @@ Make the parent workflow contract explicit before implementing helper tools or c
 
 #### Checklist
 
-- [ ] **P0.T1** Update `skills/proposal/SKILL.md` final validation guidance to require deterministic validation before `cartographer-auditor`, with explicit fallback receipts.
-- [ ] **P0.T2** Update `skills/plan/SKILL.md` final validation guidance to require `validate_planning_graph.py`/JSONL validation before `cartographer-auditor`, with explicit fallback receipts.
-- [ ] **P0.T3** Update `skills/implement/SKILL.md` to make `cartographer-pathfinder` the default phase writer, structured acceptance mandatory for non-trivial phase handoffs, and `cartographer-auditor` the default phase/final semantic gate.
-- [ ] **P0.T4** Document timeout/control/fallback receipt rules, including `cartographer-compass` escalation before substantial parent takeover after repeated child failures.
-- [ ] **P0.T5** Update `README.md` and `tests/test_workflow_docs.py` to assert auditor gates, structured acceptance, timeout/fallback receipts, and least-privilege child tool policy.
+- [x] **P0.T1** Update `skills/proposal/SKILL.md` final validation guidance to require deterministic validation before `cartographer-auditor`, with explicit fallback receipts.
+- [x] **P0.T2** Update `skills/plan/SKILL.md` final validation guidance to require `validate_planning_graph.py`/JSONL validation before `cartographer-auditor`, with explicit fallback receipts.
+- [x] **P0.T3** Update `skills/implement/SKILL.md` to make `cartographer-pathfinder` the default phase writer, structured acceptance mandatory for non-trivial phase handoffs, and `cartographer-auditor` the default phase/final semantic gate.
+- [x] **P0.T4** Document timeout/control/fallback receipt rules, including `cartographer-compass` escalation before substantial parent takeover after repeated child failures.
+- [x] **P0.T5** Update `README.md` and `tests/test_workflow_docs.py` to assert auditor gates, structured acceptance, timeout/fallback receipts, and least-privilege child tool policy.
 
 #### Validation
 
-- [ ] **P0.V1** Run `python -m unittest discover tests -p "test_workflow_docs.py"` and confirm the workflow documentation contract tests pass.
-- [ ] **P0.V2** Run `rg -n "cartographer-auditor|structured acceptance|least-privilege|timeout/fallback|cartographer-pathfinder" README.md skills tests/test_workflow_docs.py` and confirm each workflow surface documents the contract.
-- [ ] **P0.V3** Run `npm run check:scripts` to ensure scripts/extensions still parse after documentation/test changes.
+- [x] **P0.V1** Run `python -m unittest discover tests -p "test_workflow_docs.py"` and confirm the workflow documentation contract tests pass.
+- [x] **P0.V2** Run `rg -n "cartographer-auditor|structured acceptance|least-privilege|timeout/fallback|cartographer-pathfinder" README.md skills tests/test_workflow_docs.py` and confirm each workflow surface documents the contract.
+- [x] **P0.V3** Run `npm run check:scripts` to ensure scripts/extensions still parse after documentation/test changes.
 
 #### Exit Criteria
 

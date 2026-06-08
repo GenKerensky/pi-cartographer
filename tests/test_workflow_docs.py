@@ -50,6 +50,52 @@ class WorkflowDocsTests(unittest.TestCase):
         self.assertIn("legacy imports", readme)
         self.assertNotIn("Final concise ADR generation into `docs/` is out of scope", implement)
 
+    def test_deterministic_then_auditor_gates_are_documented(self) -> None:
+        proposal = (ROOT / "skills/proposal/SKILL.md").read_text(encoding="utf-8")
+        plan = (ROOT / "skills/plan/SKILL.md").read_text(encoding="utf-8")
+        implement = (ROOT / "skills/implement/SKILL.md").read_text(encoding="utf-8")
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+
+        self.assertIn("Deterministic validation before `cartographer-auditor`", proposal)
+        self.assertIn("cartographer-auditor` `PASS`", proposal)
+        self.assertIn("fallback receipt", proposal)
+        self.assertIn("JSONL validation before `cartographer-auditor`", plan)
+        self.assertIn("validate_planning_graph.py", plan)
+        self.assertIn("explicit fallback receipt", plan)
+        self.assertIn("default phase semantic gate", implement)
+        self.assertIn("final `cartographer-auditor` semantic gate", implement)
+        self.assertIn("deterministic validation receipts first", readme)
+
+    def test_pathfinder_structured_acceptance_contract_is_documented(self) -> None:
+        implement = (ROOT / "skills/implement/SKILL.md").read_text(encoding="utf-8")
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+
+        for text, name in [(implement, "implement"), (readme, "readme")]:
+            self.assertIn("cartographer-pathfinder", text, name)
+            self.assertIn("structured acceptance", text, name)
+            self.assertIn("default phase writer", text, name)
+        self.assertIn("non-trivial phase handoff", implement)
+        self.assertIn("non-trivial phase handoff requires structured acceptance", readme)
+
+    def test_timeout_fallback_receipts_and_compass_escalation_are_documented(self) -> None:
+        implement = (ROOT / "skills/implement/SKILL.md").read_text(encoding="utf-8")
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+
+        for text, name in [(implement, "implement"), (readme, "readme")]:
+            self.assertIn("timeout/fallback receipts", text, name)
+            self.assertIn("cartographer-compass", text, name)
+            self.assertIn("substantial parent takeover", text, name)
+
+    def test_least_privilege_child_tool_policy_is_documented(self) -> None:
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        self.assertIn("least-privilege child tool policy", readme)
+        self.assertIn("role-specific", readme)
+
+        for rel in ["skills/proposal/SKILL.md", "skills/plan/SKILL.md", "skills/implement/SKILL.md"]:
+            text = (ROOT / rel).read_text(encoding="utf-8")
+            self.assertIn("least-privilege", text, rel)
+            self.assertIn("full mutable JSONL/private/ADR/receipt authority", text, rel)
+
     def test_index_docs_explain_adr_markdown_and_graph_lookup(self) -> None:
         text = (ROOT / "skills/index-project/SKILL.md").read_text(encoding="utf-8")
 

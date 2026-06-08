@@ -59,7 +59,7 @@ pi -e /path/to/pi-cartographer   # one-off local use
 | `index-project` | Skill + Python CLI | Builds and queries a shared SQLite + FTS5 project graph under `.plan/_index/`. |
 | `proposal` | Skill | Creates `.plan/<topic>/proposal.md` plus project map and research fact JSONL artifacts. |
 | `plan` | Skill | Converts proposal/map/fact context into ordered phases, validations, and plan graph JSONL artifacts. |
-| `implement` | Skill | Executes an existing plan phase-by-phase with context gathering, worker edits, quality gates, reviewer approval, plan updates, and conventional commits. |
+| `implement` | Skill | Executes an existing plan phase-by-phase with deterministic context, `cartographer-pathfinder` phase edits, quality gates, `cartographer-auditor` approval, plan updates, and conventional commits. |
 | `cartographer_index` | Extension tool | Wraps index actions such as `ensure`, `query`, `context`, `read`, `slice-jsonl`, `status`, and `log-miss`. |
 | `cartographer_jsonl` | Extension tool | Wraps JSONL actions such as `validate-topic`, `validate-file`, `validate-misses`, `list-misses`, `list`, `upsert`, and `seed-pi-facts`. |
 | `cartographer_evidence` | Extension tool | Imports/list private proposal artifacts under `.plan/_private/<topic>/` without exposing raw contents and writes commit-safe evidence manifests. |
@@ -82,6 +82,13 @@ Project-scoped Cartographer agents live under `.pi/agents/` and are intentionall
 | `cartographer-redactor` | Sanitizes authorized private artifacts into commit-safe evidence analyses. |
 
 Do not add default Cartographer clones of generic `scout`, `delegate`, or `context-builder` roles without a new measured proposal. Built-in subagents remain explicit fallbacks when a Cartographer-specific agent is unavailable or the user approves substitution.
+
+Workflow contracts for delegated runs:
+
+- Run deterministic validation receipts first, then use `cartographer-auditor` as the default proposal, plan, phase, and final semantic gate. Auditor fallback to built-in reviewer/oracle or serial review must be user-approved and recorded as an explicit fallback receipt.
+- Use `cartographer-pathfinder` as the default phase writer for implementation. Every non-trivial phase handoff requires structured acceptance: exact checklist IDs, validation IDs, scope boundaries, changed-files evidence, commands/receipt requirements, residual risks, and stop rules.
+- Record timeout/fallback receipts for child timeouts, unavailable tools, fallback substitutions, and repeated unusable handoffs. After repeated child failures, ask `cartographer-compass` for an escalation recommendation before substantial parent takeover.
+- Apply a least-privilege child tool policy. Children receive only role-specific artifact paths and tool actions; the parent keeps canonical JSONL, private input, ADR, receipt, checkoff, commit, and orchestration authority unless a structured acceptance contract scopes a specific writer task.
 
 ## Quick start
 
@@ -128,16 +135,16 @@ Runs an existing plan one phase at a time:
 ```mermaid
 flowchart TD
   A[Select next phase] --> B[Gather focused context]
-  B --> C[Make scoped edits]
-  C --> D[Run checks]
+  B --> C[cartographer-pathfinder scoped edits]
+  C --> D[Run deterministic checks and receipts]
   D -->|fail| C
-  D -->|pass| E[Review]
+  D -->|pass| E[cartographer-auditor semantic gate]
   E -->|needs fixes| C
   E -->|approved| F[Update plan artifacts]
   F --> G[Conventional commit]
 ```
 
-If a phase hits an unclear product, design, dependency, or tooling decision, Cartographer stops and asks for direction.
+Non-trivial implementation handoffs use structured acceptance for the pathfinder task before edits start, and `cartographer-auditor` reviews only after deterministic validation receipts pass. If a phase hits an unclear product, design, dependency, repeated timeout/fallback, or tooling decision, Cartographer records the receipt, uses `cartographer-compass` when escalation is needed, and stops to ask for direction.
 
 ## What gets written
 
@@ -245,7 +252,7 @@ Example context pack:
 {"id":"context:P2:implementation","type":"context-pack","phase_id":"P2","budget_tokens":3000,"references":["skills/index-project/scripts/index_project.py:949"],"summary":"Only index output shaping and related tests are needed for this phase.","candidate_files":["extensions/cartographer-tools.ts"],"verified_files":["skills/index-project/scripts/index_project.py"],"open_questions":[]}
 ```
 
-Oversized-output receipts should include `summary`, `counts`, `truncated`, `maxOutputChars`, `token_estimate`, `full_output_path`, and `next_actions`. Validation receipts should include the command, exit code/result, duration, changed-file hash set when available, summarized output or first failure block, and the validation IDs satisfied.
+Oversized-output receipts should include `summary`, `counts`, `truncated`, `maxOutputChars`, `token_estimate`, `full_output_path`, and `next_actions`. Validation receipts should include the command, exit code/result, duration, changed-file hash set when available, summarized output or first failure block, and the validation IDs satisfied. Timeout/fallback receipts should include the child/tool attempted, attempt count, timeout or failure summary, control fields used when available, fallback approved, `cartographer-compass` recommendation for repeated child failures, outcome, and residual risk.
 
 ### JSONL graph artifacts
 
@@ -424,7 +431,8 @@ node --experimental-strip-types skills/plan/scripts/manage_jsonl.ts upsert --fil
 - Cartographer is a static planning aid. It uses SQLite + FTS5 + graph edges, not embeddings or runtime tracing.
 - The index excludes dependency directories, build outputs, caches, low-signal lockfiles, and files over the configured max size.
 - Index/map results are candidate context. Validate important claims against the working tree and actual project commands.
-- `implement` requires an existing plan and will stop for missing plans, dirty working trees, unavailable required subagents/substitutes, unclear decisions, or repeated validation failures.
+- `implement` requires an existing plan and will stop for missing plans, dirty working trees, unavailable required subagents/substitutes, unclear decisions, missing structured acceptance for non-trivial work, or repeated validation failures.
+- Delegated workflows use least-privilege child tool policy: deterministic validation precedes `cartographer-auditor`, `cartographer-pathfinder` is the default scoped phase writer, timeout/fallback receipts are required for fallbacks and repeated child failures, and `cartographer-compass` escalation comes before substantial parent takeover.
 - ADR generation is opt-in and metadata-gated: proposals/plans record `adr_required`; implementation finalization should use `cartographer_adr`/`adr_records.py` only after validation evidence exists, or write an explicit `adr-not-required` receipt when skipping.
 - Pi packages and extensions run with local user permissions. Review third-party packages before installing them.
 
