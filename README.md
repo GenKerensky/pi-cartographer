@@ -374,6 +374,9 @@ python skills/plan/scripts/private_artifacts.py list --root "$PWD" --topic "supp
 # Private sessions should be imported through private_artifacts.py first, then analyzed into .plan/<topic>/evidence/ or another commit-safe report path.
 python skills/plan/scripts/analyze_session.py --input "/tmp/session.jsonl" --out ".plan/support-case/evidence/session-analysis.md" --json-out ".plan/support-case/evidence/session-analysis.json" --json
 
+# Compute lightweight workflow benchmark metrics from receipts/context packs and optional session summary JSON
+python skills/plan/scripts/workflow_benchmark.py --root "$PWD" --topic "support-case" --json
+
 # Validate planning artifacts
 node --experimental-strip-types skills/plan/scripts/manage_jsonl.ts validate-topic --root "$PWD" --topic "search-ui" --json
 python skills/plan/scripts/validate_planning_graph.py --root "$PWD" --topic "search-ui" --json

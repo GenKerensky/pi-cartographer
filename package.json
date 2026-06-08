@@ -51,7 +51,7 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "check:scripts": "python -m py_compile skills/index-project/scripts/index_project.py skills/plan/scripts/validate_planning_graph.py skills/plan/scripts/private_artifacts.py skills/plan/scripts/analyze_session.py skills/plan/scripts/validation_runner.py && node --experimental-strip-types --check skills/plan/scripts/manage_jsonl.ts && node --experimental-strip-types --check extensions/cartographer-tools.ts",
+    "check:scripts": "python -m py_compile skills/index-project/scripts/index_project.py skills/plan/scripts/validate_planning_graph.py skills/plan/scripts/private_artifacts.py skills/plan/scripts/analyze_session.py skills/plan/scripts/validation_runner.py skills/plan/scripts/workflow_benchmark.py && node --experimental-strip-types --check skills/plan/scripts/manage_jsonl.ts && node --experimental-strip-types --check extensions/cartographer-tools.ts",
     "lint:py": "ruff check skills tests",
     "format:check": "ruff format --check skills tests",
     "format:py": "ruff format skills tests",

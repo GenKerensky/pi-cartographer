@@ -406,7 +406,7 @@ If package distribution of project-scoped `.pi/agents` is uncertain, document di
 
 ### Phase P7 — Benchmark and final integration
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P1, P3, P5, P6
 - **Unlocks:** none
 - **Primary references:** `file:tests/test_index_project.py`, `file:tests/test_validate_planning_graph.py`, `file:tests/manage_jsonl.test.ts`, `file:package.json`, [F014], [F015], [F019]
@@ -425,19 +425,19 @@ Validate the complete workflow-optimization package with regression tests, small
 
 #### Checklist
 
-- [ ] **P7.T1** Add benchmark fixtures and/or a lightweight benchmark script that records wall time, tool-output size, timeout count, full-check reruns, validation pass rate, and receipt coverage.
-- [ ] **P7.T2** Add regression tests for P1-P6 behaviors without depending on the private dogfooding session archive.
-- [ ] **P7.T3** Update README or workflow docs with benchmark usage and success-per-token measurement guidance.
-- [ ] **P7.T4** Run full validation and record concise results in implementation notes/receipts.
-- [ ] **P7.T5** Update `.plan/workflow-optimization/plan.md` and `plan.nodes.jsonl` statuses only after actual implementation validation passes.
+- [x] **P7.T1** Add benchmark fixtures and/or a lightweight benchmark script that records wall time, tool-output size, timeout count, full-check reruns, validation pass rate, and receipt coverage.
+- [x] **P7.T2** Add regression tests for P1-P6 behaviors without depending on the private dogfooding session archive.
+- [x] **P7.T3** Update README or workflow docs with benchmark usage and success-per-token measurement guidance.
+- [x] **P7.T4** Run full validation and record concise results in implementation notes/receipts.
+- [x] **P7.T5** Update `.plan/workflow-optimization/plan.md` and `plan.nodes.jsonl` statuses only after actual implementation validation passes.
 
 #### Validation
 
-- [ ] **P7.V1** Run `npm run check`.
-- [ ] **P7.V2** Run `cartographer_jsonl validate-topic --root "$PWD" --topic workflow-optimization`.
-- [ ] **P7.V3** Run `python skills/plan/scripts/validate_planning_graph.py --root "$PWD" --topic workflow-optimization --json`.
-- [ ] **P7.V4** Run benchmark/regression commands and confirm output budget, receipt, timeout-policy, and specialized-agent checks pass.
-- [ ] **P7.V5** Run `git status --short` and confirm only intentional source, test, doc, and `.plan/workflow-optimization/` artifacts are staged; ignored run/private artifacts are not staged.
+- [x] **P7.V1** Run `npm run check`.
+- [x] **P7.V2** Run `cartographer_jsonl validate-topic --root "$PWD" --topic workflow-optimization`.
+- [x] **P7.V3** Run `python skills/plan/scripts/validate_planning_graph.py --root "$PWD" --topic workflow-optimization --json`.
+- [x] **P7.V4** Run benchmark/regression commands and confirm output budget, receipt, timeout-policy, and specialized-agent checks pass.
+- [x] **P7.V5** Run `git status --short` and confirm only intentional source, test, doc, and `.plan/workflow-optimization/` artifacts are staged; ignored run/private artifacts are not staged.
 
 #### Exit Criteria
 
@@ -454,12 +454,12 @@ Do not use the raw private dogfooding archive in tests. Use synthetic sessions a
 
 ## Cross-Phase Validation
 
-- [ ] **X.V1** Run `npm run check` after all phases are implemented.
-- [ ] **X.V2** Run `cartographer_jsonl validate-topic --root "$PWD" --topic workflow-optimization` after plan artifacts and any receipt/context-pack validators are updated.
-- [ ] **X.V3** Run `python skills/plan/scripts/validate_planning_graph.py --root "$PWD" --topic workflow-optimization --json` and confirm no errors.
-- [ ] **X.V4** Verify no raw session transcript, oversized command log, `.plan/_runs/` file, or private artifact is staged.
-- [ ] **X.V5** Verify default extension output for a large synthetic query/tool result stays within the configured inline budget and includes a full-output path.
-- [ ] **X.V6** Verify the final docs and skill prompts still state that embeddings, LangGraph, LlamaIndex, DSPy, MCP, and mandatory subagents remain non-goals unless a future proposal accepts them.
+- [x] **X.V1** Run `npm run check` after all phases are implemented.
+- [x] **X.V2** Run `cartographer_jsonl validate-topic --root "$PWD" --topic workflow-optimization` after plan artifacts and any receipt/context-pack validators are updated.
+- [x] **X.V3** Run `python skills/plan/scripts/validate_planning_graph.py --root "$PWD" --topic workflow-optimization --json` and confirm no errors.
+- [x] **X.V4** Verify no raw session transcript, oversized command log, `.plan/_runs/` file, or private artifact is staged.
+- [x] **X.V5** Verify default extension output for a large synthetic query/tool result stays within the configured inline budget and includes a full-output path.
+- [x] **X.V6** Verify the final docs and skill prompts still state that embeddings, LangGraph, LlamaIndex, DSPy, MCP, and mandatory subagents remain non-goals unless a future proposal accepts them.
 
 ## Open Questions
 
