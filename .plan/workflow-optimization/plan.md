@@ -311,7 +311,7 @@ Preserve backwards compatibility for existing `.plan/` topics. New validation sh
 
 ### Phase P5 — Targeted validation runner
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P4
 - **Unlocks:** P7
 - **Primary references:** `file:skills/implement/SKILL.md`, `file:package.json`, `file:skills/plan/scripts/manage_jsonl.ts`, `file:skills/plan/scripts/validate_planning_graph.py`, [F011], [F018]
@@ -330,18 +330,18 @@ Reduce repeated full-suite validation while preserving a final full gate and dur
 
 #### Checklist
 
-- [ ] **P5.T1** Implement validation runner CLI with `--command`, `--phase-id`, `--validation-id`, `--receipt-file`, `--max-output-chars`, and JSON receipt output.
-- [ ] **P5.T2** Add changed-file hash-set recording and safe skip logic for unchanged repeated full checks.
-- [ ] **P5.T3** Add output summarization/failure-block extraction and full-log path handling consistent with P2.
-- [ ] **P5.T4** Update `skills/implement/SKILL.md` to use targeted validation receipts before repeated full-suite runs and to require one final full gate.
-- [ ] **P5.T5** Add Python tests for pass/fail/large-output/skip cases using temporary projects and commands.
+- [x] **P5.T1** Implement validation runner CLI with `--command`, `--phase-id`, `--validation-id`, `--receipt-file`, `--max-output-chars`, and JSON receipt output.
+- [x] **P5.T2** Add changed-file hash-set recording and safe skip logic for unchanged repeated full checks.
+- [x] **P5.T3** Add output summarization/failure-block extraction and full-log path handling consistent with P2.
+- [x] **P5.T4** Update `skills/implement/SKILL.md` to use targeted validation receipts before repeated full-suite runs and to require one final full gate.
+- [x] **P5.T5** Add Python tests for pass/fail/large-output/skip cases using temporary projects and commands.
 
 #### Validation
 
-- [ ] **P5.V1** Run `python -m py_compile skills/plan/scripts/validation_runner.py`.
-- [ ] **P5.V2** Run `python -m unittest discover tests -p "test_validation_runner.py"`.
-- [ ] **P5.V3** Run `npm run check` and confirm final full-suite validation still passes.
-- [ ] **P5.V4** Inspect a generated validation receipt from a synthetic repeated command and confirm it records skip reason, hash set, and previous receipt reference without hiding failures.
+- [x] **P5.V1** Run `python -m py_compile skills/plan/scripts/validation_runner.py`.
+- [x] **P5.V2** Run `python -m unittest discover tests -p "test_validation_runner.py"`.
+- [x] **P5.V3** Run `npm run check` and confirm final full-suite validation still passes.
+- [x] **P5.V4** Inspect a generated validation receipt from a synthetic repeated command and confirm it records skip reason, hash set, and previous receipt reference without hiding failures.
 
 #### Exit Criteria
 
