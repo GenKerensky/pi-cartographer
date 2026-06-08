@@ -508,6 +508,573 @@ class AdrRecordsTests(unittest.TestCase):
             self.assertFalse(payload["ok"])
             self.assertIn("lacks source metadata", "\n".join(payload["errors"]))
 
+    def test_evaluate_flags_adr_worthy_request_without_options_or_rationale(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp) / "project"
+            project.mkdir()
+
+            payload = json.loads(
+                self.run_script("evaluate", "--root", str(project), "--request", "add Auth0 to the project").stdout
+            )
+
+            self.assertTrue(payload["ok"])
+            self.assertTrue(payload["adr_required"])
+            self.assertTrue(payload["needs_user_prompt"])
+            self.assertEqual(payload["adr_options_status"], "missing")
+
+    def test_evaluate_rejects_path_traversal_topic(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp) / "project"
+            project.mkdir()
+
+            result = self.run_script("evaluate", "--root", str(project), "--topic", "../secret", check=False)
+            payload = json.loads(result.stdout)
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("Invalid topic name", "\n".join(payload["errors"]))
+
+    def test_create_standalone_adr_writes_markdown_graph_and_lookup_outputs(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp) / "project"
+            project.mkdir()
+
+            create_payload = json.loads(
+                self.run_script(
+                    "create",
+                    "--root",
+                    str(project),
+                    "--title",
+                    "Use Auth0 for Authentication",
+                    "--decision",
+                    "Use Auth0 as the hosted identity provider.",
+                    "--context",
+                    "The project needs hosted login and OIDC support.",
+                    "--option",
+                    "Auth0",
+                    "--option",
+                    "Self-hosted authentication",
+                    "--rationale",
+                    "Auth0 has the lowest operations burden.",
+                    "--domain",
+                    "authentication",
+                    "--keyword",
+                    "auth",
+                    "--keyword",
+                    "auth0",
+                ).stdout
+            )
+
+            self.assertTrue(create_payload["ok"])
+            self.assertEqual(create_payload["record"]["adr_id"], "ADR-0001")
+            self.assertTrue((project / create_payload["path"]).exists())
+            self.assertTrue((project / "docs/adr/_graph/adr.nodes.jsonl").exists())
+
+            list_payload = json.loads(self.run_script("list", "--root", str(project)).stdout)
+            query_payload = json.loads(self.run_script("query", "auth", "--root", str(project)).stdout)
+            show_payload = json.loads(self.run_script("show", "ADR-0001", "--root", str(project)).stdout)
+
+            self.assertEqual(list_payload["count"], 1)
+            self.assertEqual(query_payload["records"][0]["adr_id"], "ADR-0001")
+            self.assertEqual(show_payload["record"]["adr_id"], "ADR-0001")
+            self.assertEqual(show_payload["sections"]["decision"], "Use Auth0 as the hosted identity provider.")
+
+    def test_create_requires_options_or_rationale(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp) / "project"
+            project.mkdir()
+
+            result = self.run_script(
+                "create",
+                "--root",
+                str(project),
+                "--title",
+                "Use Auth0",
+                "--decision",
+                "Use Auth0.",
+                "--context",
+                "Authentication is needed.",
+                check=False,
+            )
+            payload = json.loads(result.stdout)
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("requires at least one --option", "\n".join(payload["errors"]))
+            self.assertFalse((project / "docs/adr").exists())
+
+    def test_create_requires_search_metadata(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp) / "project"
+            project.mkdir()
+
+            result = self.run_script(
+                "create",
+                "--root",
+                str(project),
+                "--title",
+                "Use Auth0",
+                "--decision",
+                "Use Auth0.",
+                "--context",
+                "Authentication is needed.",
+                "--option",
+                "Auth0",
+                "--rationale",
+                "It is the chosen provider.",
+                check=False,
+            )
+            payload = json.loads(result.stdout)
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("requires at least one --domain", "\n".join(payload["errors"]))
+            self.assertFalse((project / "docs/adr").exists())
+
+    def test_create_rolls_back_markdown_when_post_validation_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp) / "project"
+            project.mkdir()
+
+            result = self.run_script(
+                "create",
+                "--root",
+                str(project),
+                "--title",
+                "Use Legacy Auth",
+                "--decision",
+                "Use legacy auth.",
+                "--context",
+                "An accepted-legacy ADR without import note should fail validation.",
+                "--option",
+                "Legacy auth",
+                "--rationale",
+                "It was imported.",
+                "--domain",
+                "authentication",
+                "--keyword",
+                "legacy",
+                "--status",
+                "accepted-legacy",
+                check=False,
+            )
+            payload = json.loads(result.stdout)
+
+            self.assertFalse(payload["ok"])
+            self.assertFalse((project / "docs/adr").exists())
+            self.assertFalse((project / "docs/adr/0001-use-legacy-auth.md").exists())
+            self.assertFalse((project / "docs/adr/_graph").exists())
+
+    def test_relate_adds_graph_edge_and_show_reports_relationship(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp) / "project"
+            project.mkdir()
+            for title, decision, keyword in [
+                ("Use Auth0 for Authentication", "Use Auth0 as the hosted identity provider.", "auth0"),
+                ("Use OIDC Sessions", "Use OIDC sessions with Auth0.", "oidc"),
+            ]:
+                self.run_script(
+                    "create",
+                    "--root",
+                    str(project),
+                    "--title",
+                    title,
+                    "--decision",
+                    decision,
+                    "--context",
+                    "Authentication integration needs session handling.",
+                    "--option",
+                    title,
+                    "--option",
+                    "Custom implementation",
+                    "--rationale",
+                    "This option matches the selected authentication direction.",
+                    "--domain",
+                    "authentication",
+                    "--keyword",
+                    keyword,
+                )
+
+            relate_payload = json.loads(
+                self.run_script(
+                    "relate",
+                    "--root",
+                    str(project),
+                    "--from",
+                    "adr:0002",
+                    "--to",
+                    "adr:0001",
+                    "--type",
+                    "related_to",
+                    "--reason",
+                    "Session handling is related to hosted authentication.",
+                ).stdout
+            )
+            show_payload = json.loads(self.run_script("show", "ADR-0002", "--root", str(project)).stdout)
+
+            self.assertTrue(relate_payload["ok"])
+            self.assertEqual(show_payload["relationships"]["outgoing"][0]["type"], "related_to")
+
+    def test_relate_supersedes_requires_confirmation_and_updates_currentness(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp) / "project"
+            project.mkdir()
+            for title, decision, keyword in [
+                ("Use Auth0", "Use Auth0 as the hosted identity provider.", "auth0"),
+                ("Use Internal OIDC", "Use internal OIDC as the identity provider.", "oidc"),
+            ]:
+                self.run_script(
+                    "create",
+                    "--root",
+                    str(project),
+                    "--title",
+                    title,
+                    "--decision",
+                    decision,
+                    "--context",
+                    "Authentication provider decisions are needed.",
+                    "--option",
+                    title,
+                    "--option",
+                    "Alternative provider",
+                    "--rationale",
+                    "This option best fits current requirements.",
+                    "--domain",
+                    "authentication",
+                    "--keyword",
+                    keyword,
+                )
+
+            rejected = self.run_script(
+                "relate",
+                "--root",
+                str(project),
+                "--from",
+                "adr:0002",
+                "--to",
+                "adr:0001",
+                "--type",
+                "supersedes",
+                "--reason",
+                "Provider changed.",
+                check=False,
+            )
+            self.assertFalse(json.loads(rejected.stdout)["ok"])
+
+            accepted = json.loads(
+                self.run_script(
+                    "relate",
+                    "--root",
+                    str(project),
+                    "--from",
+                    "adr:0002",
+                    "--to",
+                    "adr:0001",
+                    "--type",
+                    "supersedes",
+                    "--reason",
+                    "Provider changed.",
+                    "--confirm",
+                ).stdout
+            )
+            list_payload = json.loads(self.run_script("list", "--root", str(project)).stdout)
+            include_payload = json.loads(self.run_script("list", "--root", str(project), "--include-superseded").stdout)
+
+            self.assertTrue(accepted["ok"])
+            self.assertEqual(list_payload["count"], 1)
+            self.assertEqual(list_payload["records"][0]["adr_id"], "ADR-0002")
+            self.assertEqual(include_payload["count"], 2)
+
+    def test_import_legacy_adr_adds_graph_node_without_receipts(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp) / "project"
+            legacy = self.record_for(1, "Use Legacy Auth", status="accepted-legacy", receipts=[], legacy=True)
+            legacy_path = self.write_adr(project, legacy)
+
+            payload = json.loads(
+                self.run_script(
+                    "import",
+                    "--root",
+                    str(project),
+                    "--path",
+                    legacy_path.relative_to(project).as_posix(),
+                    "--legacy",
+                    "--import-note",
+                    "Imported from existing ADR docs.",
+                ).stdout
+            )
+
+            self.assertTrue(payload["ok"])
+            self.assertEqual(payload["record"]["adr_id"], "ADR-0001")
+            self.assertTrue((project / "docs/adr/_graph/adr.nodes.jsonl").exists())
+
+    def test_import_rejects_accepted_receiptless_adr_without_legacy_marker(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp) / "project"
+            generated = self.record_for(1, "Use Auth0", receipts=[])
+            generated_path = self.write_adr(project, generated)
+
+            result = self.run_script(
+                "import",
+                "--root",
+                str(project),
+                "--path",
+                generated_path.relative_to(project).as_posix(),
+                check=False,
+            )
+            payload = json.loads(result.stdout)
+
+            self.assertFalse(payload["ok"])
+            self.assertIn("require --legacy", "\n".join(payload["errors"]))
+            self.assertFalse((project / "docs/adr/_graph/adr.nodes.jsonl").exists())
+
+    def test_write_topic_missing_search_metadata_leaves_no_artifacts(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp) / "project"
+            topic_dir = project / ".plan/demo"
+            topic_dir.mkdir(parents=True)
+            (topic_dir / "proposal.md").write_text(
+                "# demo Proposal\n\nadr_required: true\n\n- Auth0\n- Self-hosted auth\n",
+                encoding="utf-8",
+            )
+            (topic_dir / "receipts.jsonl").write_text(
+                json.dumps(
+                    {
+                        "id": "receipt:final",
+                        "type": "validation-receipt",
+                        "status": "passed",
+                        "commands": [{"command": "npm run check", "result": "passed"}],
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            result = self.run_script(
+                "write",
+                "--root",
+                str(project),
+                "--topic",
+                "demo",
+                "--title",
+                "Use Auth0",
+                "--decision",
+                "Use Auth0.",
+                "--context",
+                "Authentication is needed.",
+                "--option",
+                "Auth0",
+                "--rationale",
+                "It fits the requirements.",
+                check=False,
+            )
+            payload = json.loads(result.stdout)
+
+            self.assertFalse(payload["ok"])
+            self.assertIn("requires at least one --domain", "\n".join(payload["errors"]))
+            self.assertFalse((project / "docs/adr").exists())
+
+    def test_write_topic_rejects_adr_required_false_even_with_validation_receipt(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp) / "project"
+            topic_dir = project / ".plan/demo"
+            topic_dir.mkdir(parents=True)
+            (topic_dir / "proposal.md").write_text("# demo Proposal\n\nadr_required: false\n", encoding="utf-8")
+            (topic_dir / "receipts.jsonl").write_text(
+                json.dumps(
+                    {
+                        "id": "receipt:final",
+                        "type": "validation-receipt",
+                        "status": "passed",
+                        "commands": [{"command": "npm run check", "result": "passed"}],
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            result = self.run_script(
+                "write",
+                "--root",
+                str(project),
+                "--topic",
+                "demo",
+                "--title",
+                "Use Auth0",
+                "--decision",
+                "Use Auth0.",
+                "--context",
+                "Authentication is needed.",
+                "--option",
+                "Auth0",
+                "--rationale",
+                "It fits the requirements.",
+                "--domain",
+                "authentication",
+                "--keyword",
+                "auth0",
+                check=False,
+            )
+            payload = json.loads(result.stdout)
+
+            self.assertFalse(payload["ok"])
+            self.assertIn("not marked adr_required", "\n".join(payload["errors"]))
+            self.assertFalse((project / "docs/adr").exists())
+            self.assertFalse((project / "docs/adr/0001-use-auth0.md").exists())
+
+    def test_draft_requires_workflow_receipts_for_accepted_topic_adr(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp) / "project"
+            topic_dir = project / ".plan/demo"
+            topic_dir.mkdir(parents=True)
+            (topic_dir / "proposal.md").write_text(
+                "# demo Proposal\n\nadr_required: true\n\n## Considered Options\n\n- Auth0\n- Self-hosted auth\n",
+                encoding="utf-8",
+            )
+            failed = self.run_script(
+                "draft",
+                "--root",
+                str(project),
+                "--topic",
+                "demo",
+                "--title",
+                "Use Auth0",
+                "--decision",
+                "Use Auth0.",
+                "--context",
+                "Authentication is needed.",
+                "--option",
+                "Auth0",
+                "--rationale",
+                "It fits the requirements.",
+                "--domain",
+                "authentication",
+                "--keyword",
+                "auth0",
+                check=False,
+            )
+            self.assertFalse(json.loads(failed.stdout)["ok"])
+
+            (topic_dir / "receipts.jsonl").write_text(
+                json.dumps(
+                    {
+                        "id": "receipt:review",
+                        "type": "review-receipt",
+                        "status": "passed",
+                        "commands": [{"command": "npm run check", "result": "passed"}],
+                        "verification": {"validation": ["npm run check"]},
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            review_only_failed = self.run_script(
+                "draft",
+                "--root",
+                str(project),
+                "--topic",
+                "demo",
+                "--title",
+                "Use Auth0",
+                "--decision",
+                "Use Auth0.",
+                "--context",
+                "Authentication is needed.",
+                "--option",
+                "Auth0",
+                "--rationale",
+                "It fits the requirements.",
+                "--domain",
+                "authentication",
+                "--keyword",
+                "auth0",
+                check=False,
+            )
+            self.assertFalse(json.loads(review_only_failed.stdout)["ok"])
+
+            (topic_dir / "receipts.jsonl").write_text(
+                json.dumps({"id": "receipt:empty", "type": "validation-receipt", "status": "passed", "commands": []})
+                + "\n"
+                + json.dumps(
+                    {"id": "receipt:blank", "type": "validation-receipt", "status": "passed", "commands": [{}]}
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            empty_receipt_failed = self.run_script(
+                "draft",
+                "--root",
+                str(project),
+                "--topic",
+                "demo",
+                "--title",
+                "Use Auth0",
+                "--decision",
+                "Use Auth0.",
+                "--context",
+                "Authentication is needed.",
+                "--option",
+                "Auth0",
+                "--rationale",
+                "It fits the requirements.",
+                "--domain",
+                "authentication",
+                "--keyword",
+                "auth0",
+                check=False,
+            )
+            self.assertFalse(json.loads(empty_receipt_failed.stdout)["ok"])
+
+            (topic_dir / "receipts.jsonl").write_text(
+                json.dumps({"id": "receipt:review", "type": "review-receipt", "status": "passed"})
+                + "\n"
+                + json.dumps(
+                    {
+                        "id": "receipt:final",
+                        "type": "validation-receipt",
+                        "status": "passed",
+                        "commands": [{"command": "npm run check", "result": "passed"}],
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            ok_payload = json.loads(
+                self.run_script(
+                    "draft",
+                    "--root",
+                    str(project),
+                    "--topic",
+                    "demo",
+                    "--title",
+                    "Use Auth0",
+                    "--decision",
+                    "Use Auth0.",
+                    "--context",
+                    "Authentication is needed.",
+                    "--option",
+                    "Auth0",
+                    "--rationale",
+                    "It fits the requirements.",
+                    "--domain",
+                    "authentication",
+                    "--keyword",
+                    "auth0",
+                ).stdout
+            )
+            self.assertTrue(ok_payload["ok"])
+            self.assertEqual(ok_payload["draft"]["validation_receipts"], ["receipt:final"])
+
+            derived_payload = json.loads(
+                self.run_script(
+                    "draft",
+                    "--root",
+                    str(project),
+                    "--topic",
+                    "demo",
+                ).stdout
+            )
+            self.assertTrue(derived_payload["ok"])
+            self.assertEqual(derived_payload["draft"]["generated_from_topic"], "demo")
+            self.assertIn("Auth0", derived_payload["sections"]["Considered Options"])
+
 
 if __name__ == "__main__":
     unittest.main()

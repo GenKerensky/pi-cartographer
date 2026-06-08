@@ -62,6 +62,7 @@ LEGACY_IMPORT_NOTE_FIELDS = ("import_note", "legacy_import_note", "legacy_note")
 SOURCE_STRING_FIELDS = ("generated_from_topic", "adr_required_source", "source", "source_mode")
 SOURCE_LIST_FIELDS = ("source_commits", "validation_receipts")
 ACTUAL_PRIVATE_PATH_RE = re.compile(r"\.plan/_private/(?!<topic>|_inbox/<)[^\s`\"')\]]+")
+TOPIC_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,80}$")
 
 FRONT_MATTER_FIELD_ORDER = (
     "adr_id",
@@ -966,6 +967,17 @@ def validation_receipts_for(node: dict[str, Any], metadata: dict[str, Any] | Non
     return receipts
 
 
+def source_mode_for(node: dict[str, Any], metadata: dict[str, Any] | None) -> str:
+    merged = {**(metadata or {}), **node}
+    for key in ("source_mode", "source", "adr_required_source"):
+        value = merged.get(key)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    if merged.get("legacy_import") is True or merged.get("status") == "accepted-legacy":
+        return "legacy"
+    return ""
+
+
 def has_source_metadata(node: dict[str, Any], metadata: dict[str, Any] | None) -> bool:
     """Return true when an ADR graph node declares workflow/manual/legacy provenance."""
 
@@ -1105,6 +1117,7 @@ def validate_graph_nodes(
 
             receipts = validation_receipts_for(node, entry.metadata)
             legacy = bool(node.get("legacy_import")) or entry.record.legacy_import or status == "accepted-legacy"
+            manual = source_mode_for(node, entry.metadata) == "manual"
             import_note = first_import_note(node, entry.metadata)
             if status in {"accepted", "accepted-legacy"} and not receipts:
                 if legacy:
@@ -1112,9 +1125,10 @@ def validate_graph_nodes(
                         errors.append(
                             f"Legacy ADR {adr_label_for_node(node)} omits validation receipts but lacks an import note"
                         )
-                else:
+                elif not manual:
                     errors.append(
-                        f"Accepted ADR {adr_label_for_node(node)} is missing validation receipts; only legacy imports may omit receipts"
+                        f"Accepted ADR {adr_label_for_node(node)} is missing validation receipts; "
+                        "only manual ADRs and legacy imports may omit receipts"
                     )
 
         if (
@@ -1349,6 +1363,583 @@ def validate_adr_graph(root: str | Path, adr_dir: str | Path) -> dict[str, Any]:
         "parse_errors": parse_errors,
         "errors": errors,
         "warnings": warnings,
+    }
+
+
+ARCHITECTURE_TERMS = {
+    "architecture",
+    "architectural",
+    "auth",
+    "auth0",
+    "authentication",
+    "authorization",
+    "database",
+    "datastore",
+    "identity",
+    "oidc",
+    "oauth",
+    "payment",
+    "provider",
+    "queue",
+    "storage",
+}
+OPTION_TERMS = ("considered options", "alternatives", "options considered", "tradeoff", "trade-off")
+RATIONALE_TERMS = ("why this decision", "rationale", "because", "reason")
+
+
+def normalize_topic(topic: str) -> str:
+    value = topic.strip()
+    if not TOPIC_RE.match(value) or ".." in value or "/" in value or "\\" in value:
+        raise AdrRecordsError(f"Invalid topic name: {topic!r}")
+    return value
+
+
+def topic_dir(root: Path, topic: str) -> Path:
+    return root / ".plan" / normalize_topic(topic)
+
+
+def read_topic_text(root: Path, topic: str | None) -> str:
+    if not topic:
+        return ""
+    proposal_path = topic_dir(root, topic) / "proposal.md"
+    if not proposal_path.exists():
+        return ""
+    return proposal_path.read_text(encoding="utf-8")
+
+
+def has_substantive_command(value: Any) -> bool:
+    if isinstance(value, str):
+        return bool(value.strip())
+    if isinstance(value, dict):
+        command = value.get("command")
+        return isinstance(command, str) and bool(command.strip())
+    return False
+
+
+def has_substantive_validation_item(value: Any) -> bool:
+    if isinstance(value, str):
+        return bool(value.strip())
+    if isinstance(value, dict):
+        for key in ("command", "id", "validation_id"):
+            item = value.get(key)
+            if isinstance(item, str) and item.strip():
+                return True
+    return False
+
+
+def is_validation_receipt(record: dict[str, Any]) -> bool:
+    verification = record.get("verification")
+    validation_items = (verification or {}).get("validation") if isinstance(verification, dict) else None
+    commands = record.get("commands")
+    return record.get("type") == "validation-receipt" and (
+        (isinstance(commands, list) and any(has_substantive_command(command) for command in commands))
+        or (
+            isinstance(validation_items, list)
+            and any(has_substantive_validation_item(item) for item in validation_items)
+        )
+    )
+
+
+def passed_receipt_ids(root: Path, topic: str | None) -> list[str]:
+    if not topic:
+        return []
+    path = topic_dir(root, topic) / "receipts.jsonl"
+    records, _errors = read_jsonl_records(path)
+    ids: list[str] = []
+    for record in records:
+        if (
+            str(record.get("status", "")).lower() in {"passed", "pass", "complete"}
+            and record.get("id")
+            and is_validation_receipt(record)
+        ):
+            ids.append(str(record["id"]))
+    return ids
+
+
+def first_heading(text: str, fallback: str) -> str:
+    for line in text.splitlines():
+        if line.startswith("# "):
+            return line[2:].strip()
+    return fallback
+
+
+def evaluate_adr_need(text: str) -> dict[str, Any]:
+    lowered = text.lower()
+    explicit_true = re.search(r"\badr_required\s*[:=]\s*true\b", lowered) is not None
+    explicit_false = re.search(r"\badr_required\s*[:=]\s*false\b", lowered) is not None
+    architecture_hits = sorted(term for term in ARCHITECTURE_TERMS if term in lowered)
+    has_options = any(term in lowered for term in OPTION_TERMS)
+    has_rationale = any(term in lowered for term in RATIONALE_TERMS)
+    adr_required = explicit_true or (bool(architecture_hits) and not explicit_false)
+    needs_prompt = adr_required and not has_options and not has_rationale
+    if explicit_false:
+        reason = "Proposal explicitly marks adr_required false."
+    elif explicit_true:
+        reason = "Proposal explicitly marks adr_required true."
+    elif architecture_hits:
+        reason = "Request/proposal contains architecture-significant terms: " + ", ".join(architecture_hits[:8])
+    else:
+        reason = "No durable architecture decision indicators were detected."
+    return {
+        "adr_required": adr_required,
+        "adr_reason": reason,
+        "architecture_terms": architecture_hits,
+        "adr_options_status": "researched" if has_options else "missing",
+        "adr_rationale_status": "present" if has_rationale else "missing",
+        "needs_user_prompt": needs_prompt,
+        "prompt": (
+            "This appears ADR-worthy but lacks considered options or explicit rationale; "
+            "ask whether to research alternatives or use the user's provided reason."
+            if needs_prompt
+            else ""
+        ),
+    }
+
+
+def evaluate_action(args: argparse.Namespace) -> dict[str, Any]:
+    root = Path(args.root).resolve()
+    topic_text = read_topic_text(root, args.topic)
+    input_text = "\n".join(part for part in [args.request or "", topic_text] if part)
+    evaluation = evaluate_adr_need(input_text)
+    return {
+        "ok": True,
+        "action": "evaluate",
+        "root": str(root),
+        "topic": args.topic,
+        "summary": (
+            "I intend to generate an ADR at the end of validated work."
+            if evaluation["adr_required"]
+            else "I do not intend to generate an ADR for this work."
+        ),
+        **evaluation,
+    }
+
+
+def add_record_args(parser: argparse.ArgumentParser, *, required: bool = True) -> None:
+    parser.add_argument("--title", required=required, help="ADR title.")
+    parser.add_argument("--decision", required=required, help="Plain decision statement.")
+    parser.add_argument("--context", required=required, help="Decision context/problem statement.")
+    parser.add_argument("--option", dest="options", action="append", default=[], help="Considered option. Repeatable.")
+    parser.add_argument("--rationale", default="", help="Why this decision was made.")
+    parser.add_argument(
+        "--consequence", dest="consequences", action="append", default=[], help="Decision consequence. Repeatable."
+    )
+    parser.add_argument("--usage", default="", help="How future work should use this decision.")
+    parser.add_argument("--validation", default="", help="Validation/evidence summary.")
+    parser.add_argument("--domain", dest="domains", action="append", default=[], help="Search domain. Repeatable.")
+    parser.add_argument("--keyword", dest="keywords", action="append", default=[], help="Search keyword. Repeatable.")
+    parser.add_argument("--status", default="accepted", choices=sorted(ADR_STATUSES), help="ADR status.")
+    parser.add_argument("--decision-date", help="Decision date YYYY-MM-DD. Defaults to today.")
+    parser.add_argument("--decision-kind", default="feature-architecture", help="Decision kind metadata.")
+    parser.add_argument("--confidence", default="", help="Decision confidence metadata.")
+    parser.add_argument(
+        "--source-commit", dest="source_commits", action="append", default=[], help="Source commit. Repeatable."
+    )
+    parser.add_argument(
+        "--validation-receipt",
+        dest="validation_receipts",
+        action="append",
+        default=[],
+        help="Validation receipt id. Repeatable.",
+    )
+
+
+def ensure_options_or_rationale(options: list[str], rationale: str) -> None:
+    if not options and not rationale.strip():
+        raise AdrRecordsError("ADR creation requires at least one --option or an explicit --rationale")
+
+
+def ensure_search_metadata(domains: list[str], keywords: list[str]) -> None:
+    if not domains:
+        raise AdrRecordsError("ADR creation requires at least one --domain for search metadata")
+    if not keywords:
+        raise AdrRecordsError("ADR creation requires at least one --keyword for search metadata")
+
+
+def nonempty_or(value: str | None, fallback: str) -> str:
+    return value if isinstance(value, str) and value.strip() else fallback
+
+
+def proposal_bullets(text: str) -> list[str]:
+    bullets: list[str] = []
+    for line in text.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("- "):
+            bullets.append(stripped[2:].strip())
+    return bullets[:5]
+
+
+def record_from_args(
+    args: argparse.Namespace,
+    number: int,
+    *,
+    source_mode: str,
+    topic: str = "",
+    validation_receipts: list[str] | None = None,
+    legacy: bool = False,
+    proposal_text: str = "",
+    evaluation: dict[str, Any] | None = None,
+    allow_defaults: bool = False,
+) -> AdrRecord:
+    evaluation = evaluation or {}
+    options = list(args.options)
+    rationale = args.rationale
+    domains = list(args.domains)
+    keywords = list(args.keywords)
+    if allow_defaults:
+        options = options or proposal_bullets(proposal_text)
+        rationale = nonempty_or(rationale, str(evaluation.get("adr_reason") or ""))
+        domains = (
+            domains or [str(item) for item in evaluation.get("architecture_terms", [])[:3]] or [topic or "architecture"]
+        )
+        keywords = keywords or [slugify_title(args.title or topic or "decision").split("-")[0]]
+    ensure_options_or_rationale(options, rationale)
+    ensure_search_metadata(domains, keywords)
+    decision_date = args.decision_date or dt.date.today().isoformat()
+    receipts = validation_receipts if validation_receipts is not None else list(args.validation_receipts)
+    title = nonempty_or(args.title, first_heading(proposal_text, f"Decision for {topic or 'architecture'}"))
+    decision = nonempty_or(args.decision, f"Record the accepted decision for {title}.")
+    context = nonempty_or(args.context, first_heading(proposal_text, f"Context for {title}."))
+    return AdrRecord(
+        adr_id=format_adr_id(number),
+        title=title,
+        status=args.status,
+        decision_date=decision_date,
+        generated_from_topic=topic,
+        adr_required_source=source_mode,
+        legacy_import=legacy,
+        source_commits=list(args.source_commits),
+        validation_receipts=receipts,
+        domains=domains,
+        keywords=keywords,
+        decision_kind=args.decision_kind,
+        confidence=args.confidence,
+        decision=decision,
+        context=context,
+        considered_options=options,
+        rationale=rationale,
+        consequences=list(args.consequences),
+        usage=args.usage or f"Use this decision when working in {', '.join(domains) or 'the related area'}.",
+        validation=args.validation
+        or (
+            "Manual ADR; rationale and options were provided by the user."
+            if source_mode == "manual"
+            else "Validated through Cartographer workflow receipts."
+        ),
+    )
+
+
+def node_from_record(
+    root: Path, path: Path, record: AdrRecord, *, source_mode: str, current: bool = True, import_note: str = ""
+) -> dict[str, Any]:
+    number = number_from_adr_id(record.adr_id)
+    if number is None:
+        raise AdrRecordsError(f"Invalid ADR id for graph node: {record.adr_id}")
+    node: dict[str, Any] = {
+        "id": format_adr_node_id(number),
+        "type": "adr",
+        "adr_id": record.adr_id,
+        "title": record.title,
+        "path": rel_path(root, path),
+        "status": record.status,
+        "decision_date": record.decision_date,
+        "domains": list(record.domains),
+        "keywords": list(record.keywords),
+        "summary": record.decision,
+        "generated_from_topic": record.generated_from_topic,
+        "adr_required_source": record.adr_required_source,
+        "source": source_mode,
+        "source_mode": source_mode,
+        "legacy_import": record.legacy_import,
+        "source_commits": list(record.source_commits),
+        "validation_receipts": list(record.validation_receipts),
+        "current": current,
+    }
+    if import_note:
+        node["import_note"] = import_note
+    return node
+
+
+def upsert_by_key(records: tuple[dict[str, Any], ...], record: dict[str, Any], key: str) -> list[dict[str, Any]]:
+    value = record.get(key)
+    output = [existing for existing in records if existing.get(key) != value]
+    output.append(record)
+    return output
+
+
+def write_record_and_graph(
+    root: Path, adr_dir: Path, record: AdrRecord, *, source_mode: str, import_note: str = ""
+) -> dict[str, Any]:
+    number = number_from_adr_id(record.adr_id)
+    if number is None:
+        raise AdrRecordsError(f"Invalid ADR id: {record.adr_id}")
+    markdown = render_adr_markdown(record)
+    path = adr_dir / format_adr_filename(number, record.title)
+    if path.exists():
+        raise AdrRecordsError(f"ADR file already exists: {rel_path(root, path)}")
+    adr_dir_existed = adr_dir.exists()
+    nodes_path, edges_path = adr_graph_paths(adr_dir)
+    graph_dir = nodes_path.parent
+    graph_dir_existed = graph_dir.exists()
+    nodes_existed = nodes_path.exists()
+    edges_existed = edges_path.exists()
+    graph = load_adr_graph(adr_dir)
+    original_nodes = list(graph.nodes)
+    original_edges = list(graph.edges)
+    adr_dir.mkdir(parents=True, exist_ok=True)
+    path.write_text(markdown, encoding="utf-8")
+    node = node_from_record(
+        root,
+        path,
+        record,
+        source_mode=source_mode,
+        current=record.status not in NON_CURRENT_STATUSES,
+        import_note=import_note,
+    )
+    nodes = upsert_by_key(graph.nodes, node, "id")
+    save_adr_graph(adr_dir, nodes, original_edges)
+    report = validate_adr_graph(root, adr_dir)
+    if not report["ok"]:
+        path.unlink(missing_ok=True)
+        if nodes_existed:
+            write_jsonl_atomic(nodes_path, original_nodes)
+        else:
+            nodes_path.unlink(missing_ok=True)
+        if edges_existed:
+            write_jsonl_atomic(edges_path, original_edges)
+        else:
+            edges_path.unlink(missing_ok=True)
+        if not graph_dir_existed and graph_dir.exists() and not any(graph_dir.iterdir()):
+            graph_dir.rmdir()
+        if not adr_dir_existed and adr_dir.exists() and not any(adr_dir.iterdir()):
+            adr_dir.rmdir()
+    return {
+        "ok": report["ok"],
+        "path": rel_path(root, path),
+        "record": record.to_summary(path=path, root=root),
+        "node": node,
+        "validation": report,
+        "errors": report["errors"],
+        "warnings": report["warnings"],
+    }
+
+
+def create_action(args: argparse.Namespace) -> dict[str, Any]:
+    discovery = discover_adr_directory(args.root, args.adr_dir, create=False)
+    payload = discovery.to_receipt("create")
+    if not payload["ok"] or discovery.selected_dir is None:
+        return payload
+    allocation = allocate_next_number(discovery.selected_dir)
+    record = record_from_args(args, allocation.next_number, source_mode="manual")
+    result = write_record_and_graph(discovery.root, discovery.selected_dir, record, source_mode="manual")
+    return {**payload, **result, "action": "create"}
+
+
+def draft_action(args: argparse.Namespace) -> dict[str, Any]:
+    root = Path(args.root).resolve()
+    topic = normalize_topic(args.topic or "")
+    proposal_text = read_topic_text(root, topic)
+    evaluation = evaluate_adr_need(proposal_text)
+    if not evaluation["adr_required"] and not args.force:
+        return {
+            "ok": False,
+            "action": "draft",
+            "topic": topic,
+            "errors": ["Topic is not marked adr_required; pass --force to draft anyway."],
+            **evaluation,
+        }
+    receipts = passed_receipt_ids(root, topic)
+    if args.status == "accepted" and not receipts:
+        return {
+            "ok": False,
+            "action": "draft",
+            "topic": topic,
+            "errors": ["Accepted workflow ADR drafts require passed validation receipts."],
+            **evaluation,
+        }
+    number = args.number or 1
+    record = record_from_args(
+        args,
+        number,
+        source_mode="proposal",
+        topic=topic,
+        validation_receipts=receipts,
+        proposal_text=proposal_text,
+        evaluation=evaluation,
+        allow_defaults=True,
+    )
+    return {
+        "ok": True,
+        "action": "draft",
+        "topic": topic,
+        "draft": record.to_front_matter(),
+        "sections": record.to_sections(),
+        "markdown": render_adr_markdown(record),
+        **evaluation,
+    }
+
+
+def write_action(args: argparse.Namespace) -> dict[str, Any]:
+    root = Path(args.root).resolve()
+    topic = normalize_topic(args.topic) if args.topic else ""
+    if topic:
+        evaluation = evaluate_adr_need(read_topic_text(root, topic))
+        if not evaluation["adr_required"] and not args.force:
+            return {
+                "ok": False,
+                "action": "write",
+                "root": str(root),
+                "topic": topic,
+                "errors": ["Topic is not marked adr_required; pass --force to write anyway."],
+                **evaluation,
+            }
+        receipts = passed_receipt_ids(root, topic)
+        if args.status == "accepted" and not receipts:
+            return {
+                "ok": False,
+                "action": "write",
+                "root": str(root),
+                "topic": topic,
+                "errors": ["Accepted workflow ADR writes require passed validation receipts."],
+            }
+    else:
+        receipts = list(args.validation_receipts)
+    discovery = discover_adr_directory(root, args.adr_dir, create=False)
+    payload = discovery.to_receipt("write")
+    if not payload["ok"] or discovery.selected_dir is None:
+        return payload
+    allocation = allocate_next_number(discovery.selected_dir)
+    record = record_from_args(
+        args,
+        allocation.next_number,
+        source_mode="proposal" if topic else "manual",
+        topic=topic,
+        validation_receipts=receipts,
+    )
+    result = write_record_and_graph(
+        discovery.root, discovery.selected_dir, record, source_mode="workflow" if topic else "manual"
+    )
+    return {**payload, **result, "action": "write"}
+
+
+def relate_action(args: argparse.Namespace) -> dict[str, Any]:
+    discovery = discover_adr_directory(args.root, args.adr_dir, create=False)
+    payload = discovery.to_receipt("relate")
+    if not payload["ok"] or discovery.selected_dir is None:
+        return payload
+    if args.edge_type in {"supersedes", "conflicts_with"} and not args.confirm:
+        return {
+            **payload,
+            "ok": False,
+            "errors": [f"Relationship type {args.edge_type!r} requires --confirm before writing."],
+        }
+    graph = load_adr_graph(discovery.selected_dir)
+    node_by_id = {str(node.get("id")): dict(node) for node in graph.nodes if isinstance(node.get("id"), str)}
+    if args.from_id not in node_by_id or args.to_id not in node_by_id:
+        return {**payload, "ok": False, "errors": ["Both --from and --to must reference existing ADR graph node ids."]}
+    edge: dict[str, Any] = {"from": args.from_id, "to": args.to_id, "type": args.edge_type}
+    if args.reason:
+        edge["reason"] = args.reason
+    if args.evidence:
+        edge["evidence"] = args.evidence
+    if args.edge_type == "conflicts_with":
+        edge["reviewer_approved"] = True
+    candidate_edges = [
+        record
+        for record in graph.edges
+        if not (
+            record.get("from") == edge["from"] and record.get("to") == edge["to"] and record.get("type") == edge["type"]
+        )
+    ]
+    candidate_edges.append(edge)
+    valid_edges = [
+        (index, candidate, str(candidate.get("from")), str(candidate.get("to")), str(candidate.get("type")))
+        for index, candidate in enumerate(candidate_edges, start=1)
+        if isinstance(candidate.get("from"), str)
+        and isinstance(candidate.get("to"), str)
+        and isinstance(candidate.get("type"), str)
+        and str(candidate.get("type")) in ADR_EDGE_TYPES
+        and str(candidate.get("from")) in node_by_id
+        and str(candidate.get("to")) in node_by_id
+    ]
+    current_by_id, _superseded_by, _supersedes = derive_adr_currentness(node_by_id, valid_edges)
+    candidate_nodes: list[dict[str, Any]] = []
+    for node in graph.nodes:
+        updated = dict(node)
+        node_id = str(updated.get("id"))
+        if node_id in current_by_id:
+            updated["current"] = current_by_id[node_id]
+        candidate_nodes.append(updated)
+    save_adr_graph(discovery.selected_dir, candidate_nodes, candidate_edges)
+    report = validate_adr_graph(discovery.root, discovery.selected_dir)
+    if not report["ok"]:
+        save_adr_graph(discovery.selected_dir, list(graph.nodes), list(graph.edges))
+    return {
+        **payload,
+        "edge": edge,
+        "validation": report,
+        "ok": report["ok"],
+        "errors": report["errors"],
+        "warnings": report["warnings"],
+    }
+
+
+def import_action(args: argparse.Namespace) -> dict[str, Any]:
+    discovery = discover_adr_directory(args.root, args.adr_dir, create=False)
+    payload = discovery.to_receipt("import")
+    if not payload["ok"] or discovery.selected_dir is None:
+        return payload
+    source = resolve_under_root(discovery.root, args.path)
+    if not source.exists() or not source.is_file():
+        return {**payload, "ok": False, "errors": [f"ADR import path is not a file: {args.path}"]}
+    if not is_within(source, discovery.selected_dir):
+        return {
+            **payload,
+            "ok": False,
+            "errors": [
+                "Initial import support requires the ADR Markdown file to already be inside the selected ADR directory."
+            ],
+        }
+    record = parse_adr_markdown(source.read_text(encoding="utf-8"))
+    legacy = args.legacy or record.legacy_import or record.status == "accepted-legacy"
+    has_receipts = bool(record.validation_receipts)
+    if record.status == "accepted" and not has_receipts and not legacy:
+        return {
+            **payload,
+            "ok": False,
+            "errors": [
+                "Accepted ADR imports without validation receipts require --legacy, accepted-legacy status, or legacy_import=true."
+            ],
+        }
+    if legacy and not has_receipts and not args.import_note:
+        return {
+            **payload,
+            "ok": False,
+            "errors": ["Legacy ADR imports without validation receipts require --import-note."],
+        }
+    if args.legacy and not record.legacy_import:
+        record.legacy_import = True
+    graph = load_adr_graph(discovery.selected_dir)
+    node = node_from_record(
+        discovery.root,
+        source,
+        record,
+        source_mode="legacy" if legacy else "manual",
+        current=record.status not in NON_CURRENT_STATUSES,
+        import_note=args.import_note,
+    )
+    nodes = upsert_by_key(graph.nodes, node, "id")
+    save_adr_graph(discovery.selected_dir, nodes, list(graph.edges))
+    report = validate_adr_graph(discovery.root, discovery.selected_dir)
+    if not report["ok"]:
+        save_adr_graph(discovery.selected_dir, list(graph.nodes), list(graph.edges))
+    return {
+        **payload,
+        "record": record.to_summary(path=source, root=discovery.root),
+        "validation": report,
+        "ok": report["ok"],
+        "errors": report["errors"],
+        "warnings": report["warnings"],
     }
 
 
@@ -1709,6 +2300,57 @@ def build_parser() -> argparse.ArgumentParser:
     discover_p.add_argument("--create", action="store_true", help=f"Create fallback {FALLBACK_ADR_DIR}/ if needed.")
     discover_p.add_argument("--title", help="Optional title used to preview the next ADR filename.")
     discover_p.set_defaults(func=discover_action)
+
+    evaluate_p = sub.add_parser("evaluate", help="Evaluate whether a request/proposal likely requires an ADR.")
+    add_common_args(evaluate_p)
+    evaluate_p.add_argument("--topic", help="Cartographer topic under .plan/ used as proposal input.")
+    evaluate_p.add_argument("--request", help="Optional user request text to evaluate.")
+    evaluate_p.set_defaults(func=evaluate_action)
+
+    draft_p = sub.add_parser("draft", help="Draft an ADR from workflow topic artifacts without writing files.")
+    add_common_args(draft_p)
+    draft_p.add_argument("--topic", required=True, help="Cartographer topic under .plan/.")
+    draft_p.add_argument("--force", action="store_true", help="Draft even when evaluate does not recommend an ADR.")
+    draft_p.add_argument("--number", type=int, help="Draft ADR number. Defaults to 1 for preview.")
+    add_record_args(draft_p, required=False)
+    draft_p.set_defaults(func=draft_action)
+
+    create_p = sub.add_parser("create", help="Create a standalone/manual ADR and graph node.")
+    add_common_args(create_p)
+    add_record_args(create_p)
+    create_p.set_defaults(func=create_action)
+
+    write_p = sub.add_parser("write", help="Write a workflow/manual ADR and graph node.")
+    add_common_args(write_p)
+    write_p.add_argument("--topic", help="Optional Cartographer topic for workflow-generated ADR metadata.")
+    write_p.add_argument("--force", action="store_true", help="Write even when evaluate does not recommend an ADR.")
+    add_record_args(write_p)
+    write_p.set_defaults(func=write_action)
+
+    relate_p = sub.add_parser("relate", help="Add or update an ADR graph relationship edge.")
+    add_common_args(relate_p)
+    relate_p.add_argument("--from", dest="from_id", required=True, help="Source ADR graph node id, e.g. adr:0002.")
+    relate_p.add_argument("--to", dest="to_id", required=True, help="Target ADR graph node id, e.g. adr:0001.")
+    relate_p.add_argument(
+        "--type", dest="edge_type", required=True, choices=sorted(ADR_EDGE_TYPES), help="ADR relationship type."
+    )
+    relate_p.add_argument("--reason", default="", help="Relationship rationale.")
+    relate_p.add_argument("--evidence", action="append", default=[], help="Evidence path/id. Repeatable.")
+    relate_p.add_argument(
+        "--confirm", action="store_true", help="Confirm supersedes/conflicts_with relationship writes."
+    )
+    relate_p.set_defaults(func=relate_action)
+
+    import_p = sub.add_parser("import", help="Import an existing ADR Markdown file into the ADR graph.")
+    add_common_args(import_p)
+    import_p.add_argument(
+        "--path", required=True, help="Repo-relative path to an ADR Markdown file inside the ADR directory."
+    )
+    import_p.add_argument("--legacy", action="store_true", help="Mark the imported ADR as a legacy import.")
+    import_p.add_argument(
+        "--import-note", default="", help="Required note when a legacy ADR omits validation receipts."
+    )
+    import_p.set_defaults(func=import_action)
 
     validate_p = sub.add_parser("validate", help="Validate ADR Markdown and graph JSONL consistency.")
     add_common_args(validate_p)

@@ -172,7 +172,7 @@ Treat `cartographer_jsonl` as a reference for JSONL hygiene, not as the user-fac
 
 ### Phase P2 — ADR write, create, import, and relate
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P1
 - **Unlocks:** P3, P4
 - **Primary references:** `artifact:adr-generator`, `artifact:docs-adr`, `artifact:docs-adr-graph`, `file:skills/plan/scripts/validation_runner.py`, [F006], [F010], [F011], [F012], [F013], [F014]
@@ -193,19 +193,19 @@ Make ADR creation and management work from both workflow-generated inputs and di
 
 #### Checklist
 
-- [ ] **P2.T1** Implement `evaluate` using proposal/request inputs to recommend `adr_required`, summarize ADR intent, and flag missing alternatives or rationale.
-- [ ] **P2.T2** Implement `draft --topic` using proposal metadata and safe workflow artifacts; refuse accepted workflow ADRs without validation evidence unless the mode is manual or legacy.
-- [ ] **P2.T3** Implement standalone `create` with required context/decision/options-or-rationale fields and `source: manual` metadata.
-- [ ] **P2.T4** Implement `write` with atomic-ish file/graph updates, post-write validation, and compact success receipts.
-- [ ] **P2.T5** Implement `relate` and `import` actions with relationship validation and legacy markers.
-- [ ] **P2.T6** Add integration tests that generate ADR Markdown and graph JSONL in temporary repositories for evaluate, workflow, standalone, legacy, and current-decision query/show modes.
+- [x] **P2.T1** Implement `evaluate` using proposal/request inputs to recommend `adr_required`, summarize ADR intent, and flag missing alternatives or rationale.
+- [x] **P2.T2** Implement `draft --topic` using proposal metadata and safe workflow artifacts; refuse accepted workflow ADRs without validation evidence unless the mode is manual or legacy.
+- [x] **P2.T3** Implement standalone `create` with required context/decision/options-or-rationale fields and `source: manual` metadata.
+- [x] **P2.T4** Implement `write` with atomic-ish file/graph updates, post-write validation, and compact success receipts.
+- [x] **P2.T5** Implement `relate` and `import` actions with relationship validation and legacy markers.
+- [x] **P2.T6** Add integration tests that generate ADR Markdown and graph JSONL in temporary repositories for evaluate, workflow, standalone, legacy, and current-decision query/show modes.
 
 #### Validation
 
-- [ ] **P2.V1** Run `python -m unittest discover tests -p "test_adr_records.py"` and expect evaluate/workflow/standalone/import/relate tests to pass.
-- [ ] **P2.V2** Run a manual smoke command sequence in a temporary repo with concrete standalone fields: `evaluate`, create two manual ADRs using `--title`, `--decision`, `--context`, repeated `--option`, `--rationale`, `--domain`, and `--keyword`, then run `list`, `query "auth"`, `show ADR-0001`, `relate --from adr:0002 --to adr:0001 --type related_to`, and `validate`; expect current-first compact output and no raw graph dump.
-- [ ] **P2.V3** Run `python skills/plan/scripts/adr_records.py evaluate --root <tmp-root> --topic <tmp-topic> --json` against a mock proposal and confirm it reports `adr_required` plus alternatives/rationale status.
-- [ ] **P2.V4** Run `npm run test:py` and expect all Python tests to pass.
+- [x] **P2.V1** Run `python -m unittest discover tests -p "test_adr_records.py"` and expect evaluate/workflow/standalone/import/relate tests to pass.
+- [x] **P2.V2** Run a manual smoke command sequence in a temporary repo with concrete standalone fields: `evaluate`, create two manual ADRs using `--title`, `--decision`, `--context`, repeated `--option`, `--rationale`, `--domain`, and `--keyword`, then run `list`, `query "auth"`, `show ADR-0001`, `relate --from adr:0002 --to adr:0001 --type related_to`, and `validate`; expect current-first compact output and no raw graph dump.
+- [x] **P2.V3** Run `python skills/plan/scripts/adr_records.py evaluate --root <tmp-root> --topic <tmp-topic> --json` against a mock proposal and confirm it reports `adr_required` plus alternatives/rationale status.
+- [x] **P2.V4** Run `npm run test:py` and expect all Python tests to pass.
 
 #### Exit Criteria
 
