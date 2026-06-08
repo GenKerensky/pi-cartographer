@@ -1,0 +1,26 @@
+{"from":"F001","to":"S002","type":"supported_by","evidence":"ADR site defines ADRs as capturing a single decision and rationale and a collection as a decision log."}
+{"from":"F002","to":"S001","type":"supported_by","evidence":"ADR Templates page summarizes Nygard ADR title/status/context/decision/consequences structure."}
+{"from":"F003","to":"S003","type":"supported_by","evidence":"Microsoft ADR guidance recommends append-only logs and writing a new record that supersedes the original."}
+{"from":"F004","to":"S003","type":"supported_by","evidence":"Microsoft ADR guidance lists options considered, tradeoffs, confidence, and status."}
+{"from":"F005","to":"S004","type":"supported_by","evidence":"Microsoft playbook describes ascending numbers and date/status fields."}
+{"from":"F005","to":"S005","type":"supported_by","evidence":"MADR README suggests docs/decisions/nnnn-title.md."}
+{"from":"F006","to":"S003","type":"supported_by","evidence":"Microsoft ADR guidance says ADRs should be pithy, factual, on-topic, and not design guides."}
+{"from":"F007","to":"S006","type":"supported_by","evidence":"README states ADR generation outside .plan is currently out of scope."}
+{"from":"F008","to":"S006","type":"supported_by","evidence":"README documents receipts.jsonl and context-packs.jsonl as durable workflow state."}
+{"from":"F009","to":"S007","type":"supported_by","evidence":"manage_jsonl.ts and validate_planning_graph.py implement current JSONL artifact validation."}
+{"from":"F007","to":"file:README.md","type":"applies_to","evidence":"README should be updated if ADR generation becomes part of the workflow."}
+{"from":"F008","to":"file:skills/implement/SKILL.md","type":"applies_to","evidence":"Implement workflow can trigger ADR generation from completed validation receipts."}
+{"from":"F009","to":"file:skills/plan/scripts/manage_jsonl.ts","type":"applies_to","evidence":"JSONL helper can validate ADR graph nodes and edges."}
+{"from":"F009","to":"file:skills/plan/scripts/validate_planning_graph.py","type":"applies_to","evidence":"Planning graph validator patterns can be reused or extended for ADR graph validation."}
+{"from":"F010","to":"S008","type":"supported_by","evidence":"User selected existing ADR/decisions folder discovery before docs/adr fallback."}
+{"from":"F011","to":"S008","type":"supported_by","evidence":"User selected adr_required proposal gating and user-visible summary behavior."}
+{"from":"F012","to":"S008","type":"supported_by","evidence":"User required alternatives research or user-provided rationale for ADR-worthy dictated choices."}
+{"from":"F013","to":"S008","type":"supported_by","evidence":"User allowed explicitly marked imported legacy ADRs without validation receipts."}
+{"from":"F010","to":"artifact:docs-adr","type":"applies_to","evidence":"Directory selection changes where ADR Markdown and graph files are written."}
+{"from":"F011","to":"file:skills/proposal/SKILL.md","type":"applies_to","evidence":"Proposal workflow must evaluate and communicate adr_required before planning."}
+{"from":"F011","to":"file:skills/implement/SKILL.md","type":"applies_to","evidence":"Implementation finalization should generate ADRs only when adr_required is true."}
+{"from":"F012","to":"file:skills/proposal/SKILL.md","type":"applies_to","evidence":"Proposal workflow should prompt for alternatives or rationale when an architecture choice is requested directly."}
+{"from":"F013","to":"artifact:docs-adr","type":"applies_to","evidence":"ADR validation needs a legacy import status/path for existing ADRs without receipts."}
+{"from":"F014","to":"S009","type":"supported_by","evidence":"User agreed ADR creation, lookup, and management should be always available through a dedicated tool model."}
+{"from":"F014","to":"artifact:adr-generator","type":"applies_to","evidence":"The ADR generator should become a dedicated cartographer_adr user-facing tool rather than only a workflow helper."}
+{"from":"F014","to":"file:extensions/cartographer-tools.ts","type":"applies_to","evidence":"The extension should expose a shaped cartographer_adr tool for standalone ADR work."}

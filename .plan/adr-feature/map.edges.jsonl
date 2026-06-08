@@ -1,0 +1,20 @@
+{"from":"topic:adr-feature","to":"artifact:docs-adr","type":"proposes","description":"The proposal centers durable ADR Markdown files under a selected repository ADR/decisions docs folder."}
+{"from":"topic:adr-feature","to":"artifact:docs-adr-graph","type":"proposes","description":"The proposal centers ADR relationship graph JSONL colocated with the selected ADR docs."}
+{"from":"topic:adr-feature","to":"artifact:adr-generator","type":"proposes","description":"A dedicated cartographer_adr tool should create, look up, relate, validate, and import ADRs both inside and outside full Cartographer workflows."}
+{"from":"artifact:adr-generator","to":"artifact:adr-template","type":"uses","description":"The generator writes Markdown records from a stable template."}
+{"from":"artifact:adr-generator","to":"artifact:docs-adr","type":"writes","description":"Generated ADR Markdown records are committed under the selected ADR directory."}
+{"from":"artifact:adr-generator","to":"artifact:docs-adr-graph","type":"writes","description":"Generated ADR graph nodes and edges are committed under the selected ADR directory's _graph folder."}
+{"from":"artifact:adr-generator","to":"file:skills/implement/SKILL.md","type":"integrates_with","description":"Implementation completion should offer or require ADR generation after deterministic validation passes."}
+{"from":"artifact:adr-generator","to":"file:skills/proposal/SKILL.md","type":"reads_from","description":"ADR generation can summarize the accepted problem, scope, and evidence from proposal artifacts."}
+{"from":"artifact:adr-generator","to":"file:skills/plan/SKILL.md","type":"reads_from","description":"ADR generation can summarize phased plan decisions and accepted validation criteria."}
+{"from":"artifact:adr-generator","to":"file:skills/plan/scripts/validation_runner.py","type":"requires_evidence_from","description":"ADR generation should require validation receipts or equivalent command evidence before writing accepted ADRs."}
+{"from":"artifact:docs-adr-graph","to":"file:skills/plan/scripts/manage_jsonl.ts","type":"extends","description":"ADR graph JSONL validation can extend the JSONL artifact manager."}
+{"from":"artifact:docs-adr-graph","to":"file:skills/plan/scripts/validate_planning_graph.py","type":"extends","description":"ADR graph validation can reuse relation and reference validation patterns."}
+{"from":"artifact:docs-adr","to":"file:skills/index-project/scripts/index_project.py","type":"indexed_by","description":"Docs ADR Markdown should be retrievable through project index search and context queries."}
+{"from":"artifact:docs-adr-graph","to":"file:skills/index-project/scripts/index_project.py","type":"indexed_by","description":"ADR graph nodes and edges should be available to search/map helpers without broad raw-output dumps."}
+{"from":"artifact:adr-generator","to":"file:extensions/cartographer-tools.ts","type":"exposed_by","description":"Expose cartographer_adr as a dedicated shaped tool; keep cartographer_jsonl as a low-level JSONL utility reused internally."}
+{"from":"topic:adr-feature","to":"file:README.md","type":"documents","description":"README should document the ADR feature once implemented and remove/replace current out-of-scope wording."}
+{"from":"artifact:docs-adr-graph","to":"file:tests/manage_jsonl.test.ts","type":"validated_by","description":"TypeScript JSONL tests should cover ADR node and edge schema."}
+{"from":"artifact:docs-adr-graph","to":"file:tests/test_validate_planning_graph.py","type":"validated_by","description":"Python graph validation tests should cover ADR relation semantics and stale-reference safeguards."}
+{"from":"file:README.md","to":"file:skills/proposal/SKILL.md","type":"documents_workflow","description":"README and proposal skill should describe the same ADR handoff contract."}
+{"from":"file:skills/implement/SKILL.md","to":"artifact:docs-adr","type":"postcondition","description":"Validated feature completion can produce an ADR as a durable postcondition."}
