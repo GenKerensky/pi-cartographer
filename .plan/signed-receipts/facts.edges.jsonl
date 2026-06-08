@@ -1,0 +1,26 @@
+{"from":"F001","to":"S001","type":"supported_by","evidence":"skills/plan/scripts/validation_runner.py:183 runs the command and subsequent receipt construction records execution evidence."}
+{"from":"F001","to":"file:skills/plan/scripts/validation_runner.py","type":"applies_to","evidence":"This file is the current receipt producer to refactor or wrap."}
+{"from":"F002","to":"S001","type":"supported_by","evidence":"skills/plan/scripts/validation_runner.py:73 computes the hash-set digest and skills/plan/scripts/validation_runner.py:133 appends JSONL without signature fields."}
+{"from":"F002","to":"symbol:skills/plan/scripts/validation_runner.py#append_jsonl:133","type":"applies_to","evidence":"Canonical receipt appends need signing and chain metadata."}
+{"from":"F003","to":"S002","type":"supported_by","evidence":"skills/plan/scripts/manage_jsonl.ts:495 and skills/plan/scripts/manage_jsonl.ts:504 implement shape checks; skills/plan/scripts/manage_jsonl.ts:573 reads receipts.jsonl."}
+{"from":"F003","to":"symbol:skills/plan/scripts/manage_jsonl.ts#validateReceiptRecords:504","type":"applies_to","evidence":"Strict verifier logic should extend this validation path."}
+{"from":"F004","to":"S003","type":"supported_by","evidence":"extensions/cartographer-tools.ts registers tools and executes helper scripts through runCommand."}
+{"from":"F004","to":"file:extensions/cartographer-tools.ts","type":"applies_to","evidence":"Trusted validation should be registered in this extension surface."}
+{"from":"F005","to":"S004","type":"supported_by","evidence":"README.md:192 documents the Clean Context Contract and README.md:227 shows an example validation receipt."}
+{"from":"F005","to":"topic:signed-receipts","type":"supports_goal","evidence":"The new design keeps the existing receipt artifact while adding hard trust metadata."}
+{"from":"F006","to":"S004","type":"supported_by","evidence":"README.md:71 says subagents consume receipts and deterministic validation but do not replace tool validation or parent orchestration."}
+{"from":"F006","to":"topic:signed-receipts","type":"supports_goal","evidence":"This supports treating subagents as untrusted workers."}
+{"from":"F007","to":"S005","type":"supported_by","evidence":"Pi extension docs describe custom tools and security expectations for trusted extension installation."}
+{"from":"F007","to":"file:extensions/cartographer-tools.ts","type":"applies_to","evidence":"The trusted signer should live in the Pi extension/tool-host boundary."}
+{"from":"F008","to":"S005","type":"supported_by","evidence":"Pi extension docs recommend withFileMutationQueue for custom file-mutating tools."}
+{"from":"F008","to":"file:extensions/cartographer-tools.ts","type":"applies_to","evidence":"Receipt appends are file mutations and need serialization."}
+{"from":"F009","to":"S006","type":"supported_by","evidence":"Context7 Node.js v22 crypto docs list Ed25519 key/signature support."}
+{"from":"F009","to":"topic:signed-receipts","type":"supports_goal","evidence":"Ed25519 provides a practical signing algorithm for receipt records."}
+{"from":"F010","to":"S007","type":"supported_by","evidence":"RFC 8785 describes canonical JSON as an invariant representation for hashing and signing."}
+{"from":"F010","to":"topic:signed-receipts","type":"supports_goal","evidence":"Canonicalization ensures stable bytes for record digest and signature calculation."}
+{"from":"F011","to":"S008","type":"supported_by","evidence":"package.json:54 through package.json:61 define project validation commands."}
+{"from":"F011","to":"file:package.json","type":"applies_to","evidence":"These commands should be runnable through cartographer_validation.run."}
+{"from":"F012","to":"S011","type":"supported_by","evidence":"AGENTS.md:3 requires mock/temp roots for tests and validation fixtures."}
+{"from":"F012","to":"file:tests/test_validation_runner.py","type":"applies_to","evidence":"Existing validation runner tests already use temporary roots."}
+{"from":"F013","to":"S010","type":"supported_by","evidence":"tests/manage_jsonl.test.ts:136 writes an unsigned validation receipt and expects it to validate."}
+{"from":"F013","to":"file:tests/manage_jsonl.test.ts","type":"applies_to","evidence":"Strict-mode tests should reject unsigned canonical validation receipts."}
