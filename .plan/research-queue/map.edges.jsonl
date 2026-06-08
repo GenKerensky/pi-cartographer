@@ -1,0 +1,5 @@
+{"from":"topic:research-queue","to":"file:skills/proposal/SKILL.md","type":"relevant_to","evidence":"Proposal workflow must describe how parent orchestrates asynchronous research and final validation.","confidence":"high"}
+{"from":"topic:research-queue","to":"file:skills/plan/scripts/manage_jsonl.ts","type":"relevant_to","evidence":"Transaction queue actions and canonical JSONL commit semantics belong in JSONL management tooling.","confidence":"high"}
+{"from":"topic:research-queue","to":"file:extensions/cartographer-tools.ts","type":"relevant_to","evidence":"New queue actions must be exposed through cartographer_jsonl tool schema and execution paths.","confidence":"high"}
+{"from":"topic:research-queue","to":"file:skills/plan/scripts/validation_runner.py","type":"relevant_to","evidence":"Queue validation and final gates should emit command-backed receipts.","confidence":"high"}
+{"from":"topic:research-queue","to":"file:.pi/agents/cartographer-archivist.md","type":"relevant_to","evidence":"Archivist role should become the queue-bundle producer or narrow queue-submit actor.","confidence":"high"}
