@@ -398,7 +398,7 @@ node --experimental-strip-types skills/plan/scripts/manage_jsonl.ts upsert --fil
 - The index excludes dependency directories, build outputs, caches, low-signal lockfiles, and files over the configured max size.
 - Index/map results are candidate context. Validate important claims against the working tree and actual project commands.
 - `implement` requires an existing plan and will stop for missing plans, dirty working trees, unavailable required subagents/substitutes, unclear decisions, or repeated validation failures.
-- ADR generation is opt-in and metadata-gated: proposals/plans record `adr_required`, and implementation finalization should use `cartographer_adr`/`adr_records.py` only after validation evidence exists.
+- ADR generation is opt-in and metadata-gated: proposals/plans record `adr_required`; implementation finalization should use `cartographer_adr`/`adr_records.py` only after validation evidence exists, or write an explicit `adr-not-required` receipt when skipping.
 - Pi packages and extensions run with local user permissions. Review third-party packages before installing them.
 
 ## Development

@@ -71,7 +71,9 @@ If the plan is missing, ask the user whether to generate it first with the `plan
      - unchecked validation items
      - cross-phase validation commands
      - open questions
+     - ADR metadata (`adr_required`, `adr_reason`, `adr_options_status`, and `adr_tool_mode`) from the accepted proposal/plan when present
    - If open questions block implementation, ask the user before proceeding.
+   - If ADR metadata is missing for an architecture-significant plan, treat it as ambiguous and ask whether to evaluate with `cartographer_adr` before finalization.
 
 2. **Inspect subagents and choose execution mode**
    - Call the subagent list action before delegating whenever the subagent tool is available.
@@ -300,7 +302,27 @@ If the plan is missing, ask the user whether to generate it first with the `plan
    - If final checks create fixes or plan/checkoff changes, assign them to the owning phase, rerun relevant checks/reviewer, and create a conventional commit before final response.
    - If final checks fail, delegate fixes to `worker`, rerun checks, and dispatch `reviewer` if the fix changes code.
 
-16. **Final response**
+16. **Finalize ADR intent after validation**
+   - Run this step only after deterministic final validation is green and before the final handoff.
+   - Inspect accepted proposal/plan ADR metadata. If `adr_required: true`, use `cartographer_adr` (or `python <plan-skill-dir>/scripts/adr_records.py`) to draft/write/validate a workflow ADR for `{topic}`.
+   - Workflow-generated ADR evidence must include:
+     - stable topic ID (`--topic {topic}`)
+     - passed validation receipt IDs from `.plan/{topic}/receipts.jsonl`
+     - phase/final commit IDs when available (`--source-commit <sha>`)
+     - a concise validation summary with no raw `.plan/_private/**` references and no brittle raw log paths
+   - Typical commands, keeping output shaped under the Clean Context Contract:
+
+     ```bash
+     cartographer_adr({"action":"draft","root":"$PWD","topic":"{topic}","maxOutputChars":8000})
+     cartographer_adr({"action":"write","root":"$PWD","topic":"{topic}","title":"<decision>","decision":"<decision>","context":"<context>","options":["<accepted option>","<alternative>"],"rationale":"<why>","domains":["<domain>"],"keywords":["<keyword>"],"validationReceipts":["<receipt-id>"],"sourceCommits":["<sha>"],"maxOutputChars":8000})
+     cartographer_adr({"action":"validate","root":"$PWD","maxOutputChars":8000})
+     ```
+
+   - If `adr_required: false`, append an `adr-not-required` receipt to `.plan/{topic}/receipts.jsonl` with `topic`, `reason`, `source: proposal-metadata`, `validation_receipts`, optional `source_commits`, `created_at`, and `status: skipped`. Do not silently skip.
+   - If ADR metadata is missing or conflicts with an obviously ADR-worthy change, stop and ask the user whether to create an ADR, update metadata, or record an `adr-not-required` receipt.
+   - Do not generate ADRs before validation evidence exists, do not include raw/private artifact paths, and do not make subagents mandatory for ADR finalization.
+
+17. **Final response**
    - Report:
      - completed topic
      - plan artifacts updated (`plan.md`, `plan.nodes.jsonl`, `plan.edges.jsonl`)
@@ -308,6 +330,7 @@ If the plan is missing, ask the user whether to generate it first with the `plan
      - commits created
      - final quality commands run
      - reviewer approval status
+     - ADR outcome: generated ADR path/graph validation, `adr-not-required` receipt ID, or user-deferred decision
      - any skipped/unavailable commands
      - any residual risks or follow-up recommendations
 
@@ -331,7 +354,7 @@ Retrieval and lifecycle contract for implementation:
 - Candidate/verified metadata uses `candidate`, `verified`, and `verification` fields. Worker handoffs should not rely on candidate-only files for edit instructions unless the worker is explicitly told to verify first.
 - Retrieval misses that materially change implementation should be appended to `.plan/_retrieval/misses.jsonl` with `failure_type`, `original_query`, `expanded_queries`, `retrieval_modes`, `expected_terms`, `eventual_hit`, and `resolution`.
 - Retrieval scopes are `code`, `plans`, and `all`, with `code` as the default. Implementation source-code retrieval should exclude `.plan/**`; rationale retrieval should search `.plan/` only through bounded probes for the active or explicitly related topics, including sanitized evidence docs when relevant. Raw `.plan/_private/**` inputs are off limits during implementation unless a phase explicitly tests private intake with synthetic fixtures.
-- Final concise ADR generation into `docs/` is out of scope for this plan and should be handled by a later proposal.
+- ADR finalization is metadata-gated: after final validation, `adr_required: true` should produce a validated `cartographer_adr` workflow ADR, while `adr_required: false` should produce an explicit `adr-not-required` receipt with a short reason.
 
 Cartographer tool access for every delegated agent in this workflow (`scout`, `worker`, `reviewer`, and optional `oracle`/`planner`):
 
@@ -342,6 +365,8 @@ cartographer_index({"action":"read","root":"$PWD","path":"<project-relative-path
 cartographer_index({"action":"read","root":"$PWD","nodeId":"<indexed-node-id>"})
 cartographer_jsonl({"action":"validate-topic","root":"$PWD","topic":"{topic}"})
 cartographer_evidence({"action":"list","root":"$PWD","topic":"{topic}"})
+cartographer_adr({"action":"draft","root":"$PWD","topic":"{topic}","maxOutputChars":8000})
+cartographer_adr({"action":"validate","root":"$PWD","maxOutputChars":8000})
 ```
 
 When launching delegated agents through pi-subagents, include the package extension path `extensions/cartographer-tools.ts` in the child tool/extension configuration when supported so these tools are callable. Tell each delegated agent it may run `cartographer_index` with `action: "ensure"` before reading the index; if it reports `action: "reindexed"`, it should continue from the refreshed index and mention that in its handoff. If custom tools are unavailable in the child, use the equivalent `python <index-project-skill-dir>/scripts/index_project.py ...`, `python <plan-skill-dir>/scripts/private_artifacts.py ...`, and `node --experimental-strip-types <plan-skill-dir>/scripts/manage_jsonl.ts ...` CLI commands via bash. Do not ask agents to inspect the SQLite file manually when the index tool can answer the question. Do not ask agents to read raw `.plan/_private/**` inputs; use sanitized `.plan/{topic}/evidence/` docs instead.
@@ -400,6 +425,7 @@ Stop and ask the user before continuing when:
 - worker/reviewer/subagent calls repeatedly fail
 - fixing the issue would require expanding scope beyond the current phase
 - committing would include unrelated files
+- ADR metadata is missing or contradictory for an ADR-worthy implementation and the user has not chosen create/update/skip
 
 ## Verification Checklist
 
@@ -415,4 +441,6 @@ Before final completion, verify:
 - All available quality tools are green or explicitly documented as unavailable/skipped with a reason.
 - Reviewer approved the final code for each phase.
 - Each phase with changes has a conventional commit.
+- If `adr_required: true`, `cartographer_adr draft/write/validate` ran after final validation and the ADR path/validation receipt is recorded.
+- If `adr_required: false`, `.plan/{topic}/receipts.jsonl` contains an `adr-not-required` receipt with a reason and validation receipt references.
 - Final `git status --short` has no unexpected unstaged/uncommitted changes.

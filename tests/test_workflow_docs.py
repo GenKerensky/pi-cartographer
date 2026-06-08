@@ -36,6 +36,17 @@ class WorkflowDocsTests(unittest.TestCase):
         self.assertNotIn("Final concise ADR generation into `docs/` is out of scope", combined)
         self.assertNotIn("does not generate final ADRs", readme)
 
+    def test_implement_documents_adr_finalization(self) -> None:
+        implement = (ROOT / "skills/implement/SKILL.md").read_text(encoding="utf-8")
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+
+        self.assertIn("adr_required", implement)
+        self.assertIn("adr-not-required", implement)
+        self.assertIn("cartographer_adr", implement)
+        self.assertIn("validation receipt", implement)
+        self.assertIn("adr-not-required", readme)
+        self.assertNotIn("Final concise ADR generation into `docs/` is out of scope", implement)
+
 
 if __name__ == "__main__":
     unittest.main()

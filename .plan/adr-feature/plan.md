@@ -318,7 +318,7 @@ This phase changes workflow instructions and tests, not the extension tool. Avoi
 
 ### Phase P5 — Implementation finalization integration
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P3, P4
 - **Unlocks:** P6
 - **Primary references:** `file:skills/implement/SKILL.md`, `file:skills/plan/scripts/validation_runner.py`, `artifact:adr-generator`, [F008], [F011], [F014]
@@ -338,17 +338,17 @@ Integrate ADR generation/skipping into the implement workflow after deterministi
 
 #### Checklist
 
-- [ ] **P5.T1** Update implement skill finalization procedure for `adr_required: true`, `adr_required: false`, and missing/ambiguous ADR metadata.
-- [ ] **P5.T2** Define the workflow-generated ADR evidence contract: topic ID, validation receipt IDs, commit IDs when available, and no raw/private references.
-- [ ] **P5.T3** Add `adr-not-required` receipt shape/guidance for accepted skips.
-- [ ] **P5.T4** Add or update tests checking implement docs contain ADR finalization guidance and no stale out-of-scope ADR wording.
-- [ ] **P5.T5** Verify `cartographer_adr draft/write/validate` commands are described with shaped output and clear stop rules.
+- [x] **P5.T1** Update implement skill finalization procedure for `adr_required: true`, `adr_required: false`, and missing/ambiguous ADR metadata.
+- [x] **P5.T2** Define the workflow-generated ADR evidence contract: topic ID, validation receipt IDs, commit IDs when available, and no raw/private references.
+- [x] **P5.T3** Add `adr-not-required` receipt shape/guidance for accepted skips.
+- [x] **P5.T4** Add or update tests checking implement docs contain ADR finalization guidance and no stale out-of-scope ADR wording.
+- [x] **P5.T5** Verify `cartographer_adr draft/write/validate` commands are described with shaped output and clear stop rules.
 
 #### Validation
 
-- [ ] **P5.V1** Run `rg -n "adr_required|adr-not-required|cartographer_adr|validation receipt" skills/implement/SKILL.md README.md` and confirm finalization guidance is present.
-- [ ] **P5.V2** Run `python -m unittest discover tests -p "test_workflow_docs.py"` and expect updated workflow doc tests to pass.
-- [ ] **P5.V3** Run `npm run check:scripts` and expect no script/extension syntax regressions.
+- [x] **P5.V1** Run `rg -n "adr_required|adr-not-required|cartographer_adr|validation receipt" skills/implement/SKILL.md README.md` and confirm finalization guidance is present.
+- [x] **P5.V2** Run `python -m unittest discover tests -p "test_workflow_docs.py"` and expect updated workflow doc tests to pass.
+- [x] **P5.V3** Run `npm run check:scripts` and expect no script/extension syntax regressions.
 
 #### Exit Criteria
 
