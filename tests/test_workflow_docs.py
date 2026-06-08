@@ -45,7 +45,17 @@ class WorkflowDocsTests(unittest.TestCase):
         self.assertIn("cartographer_adr", implement)
         self.assertIn("validation receipt", implement)
         self.assertIn("adr-not-required", readme)
+        self.assertIn("Architecture Decision Records", readme)
+        self.assertIn("docs/adr/", readme)
+        self.assertIn("legacy imports", readme)
         self.assertNotIn("Final concise ADR generation into `docs/` is out of scope", implement)
+
+    def test_index_docs_explain_adr_markdown_and_graph_lookup(self) -> None:
+        text = (ROOT / "skills/index-project/SKILL.md").read_text(encoding="utf-8")
+
+        self.assertIn("docs/adr/*.md", text)
+        self.assertIn("cartographer_adr query/show", text)
+        self.assertIn("ADR graph JSONL", text)
 
 
 if __name__ == "__main__":

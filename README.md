@@ -64,6 +64,7 @@ pi -e /path/to/pi-cartographer   # one-off local use
 | `cartographer_jsonl` | Extension tool | Wraps JSONL actions such as `validate-topic`, `validate-file`, `validate-misses`, `list-misses`, `list`, `upsert`, and `seed-pi-facts`. |
 | `cartographer_evidence` | Extension tool | Imports/list private proposal artifacts under `.plan/_private/<topic>/` without exposing raw contents and writes commit-safe evidence manifests. |
 | `cartographer_session` | Extension tool | Analyzes authorized Pi session JSONL into compact Markdown/JSON reports without exposing raw transcript contents. |
+| `cartographer_adr` | Extension tool | Evaluates, drafts, creates, imports, validates, searches, and relates Architecture Decision Records. |
 
 Skill commands are available as `/skill:<name>` when pi skill commands are enabled.
 
@@ -151,9 +152,19 @@ Cartographer writes planning artifacts under `.plan/` in your project. Depending
 .plan/<topic>/facts.edges.jsonl
 .plan/<topic>/plan.nodes.jsonl
 .plan/<topic>/plan.edges.jsonl
+.plan/<topic>/receipts.jsonl
+.plan/<topic>/context-packs.jsonl
 ```
 
-These topic artifacts are intentional rationale. Review and commit them when they explain the work.
+When ADR generation is required and final validation has passed, Cartographer may also write ADR artifacts outside `.plan/` using the repository's existing ADR/decisions folder or the fallback `docs/adr/`:
+
+```text
+docs/adr/0001-<slug>.md
+docs/adr/_graph/adr.nodes.jsonl
+docs/adr/_graph/adr.edges.jsonl
+```
+
+These topic artifacts and ADR Markdown files are intentional rationale. Review and commit them when they explain the work.
 
 ### Private inputs and sanitized evidence
 
@@ -177,6 +188,18 @@ Commit-safe summaries of private inputs belong under the topic evidence folder:
 Evidence analyses should summarize useful findings, relationships, counts, timelines, and redacted examples while omitting secrets, PII, raw stack traces, request/response bodies, private document text, and enough adjacent context to reconstruct sensitive values. Facts derived from these analyses should cite source nodes with `source_kind: sanitized_evidence` and references to `.plan/<topic>/evidence/*.md`, never raw `.plan/_private/**` files.
 
 The private manifest `.plan/_private/<topic>/manifest.private.jsonl` may contain detailed provenance and optional hashes, but it is ignored. The commit-safe `evidence/manifest.jsonl` may store safe basenames by default; use redacted or opaque IDs when names are sensitive or collide. Raw file hashes are opt-in for reproducibility and should not be written by default.
+
+### Architecture Decision Records
+
+ADR support is deliberately small and metadata-gated:
+
+- Proposal and plan workflows record `adr_required`, `adr_reason`, `adr_options_status`, and `adr_tool_mode`.
+- Implementation finalization creates ADRs only after deterministic validation evidence exists, or records an `adr-not-required` receipt when skipping.
+- `cartographer_adr` supports workflow-generated ADRs, standalone/manual ADR creation, legacy imports, relationship edges, current-first lookup, and validation.
+- ADR directory discovery prefers an existing ADR/decisions folder and falls back to `docs/adr/`.
+- ADR Markdown in `docs/adr/*.md` is ordinary documentation and is searchable through `cartographer_index` in `code`/`all` scopes. ADR graph JSONL under `<adr-dir>/_graph/` is managed by `cartographer_adr query/show/validate`, not broad JSONL indexing.
+- Legacy imports may omit validation receipts only when explicitly marked legacy and accompanied by an import note.
+- ADR content must cite sanitized evidence docs or validation receipt IDs, never raw `.plan/_private/**` paths.
 
 ### Clean Context Contract
 
@@ -379,7 +402,11 @@ python skills/plan/scripts/workflow_benchmark.py --root "$PWD" --topic "support-
 
 # Evaluate or manage Architecture Decision Records
 python skills/plan/scripts/adr_records.py evaluate --root "$PWD" --topic "search-ui" --json
+python skills/plan/scripts/adr_records.py draft --root "$PWD" --topic "search-ui" --json
+python skills/plan/scripts/adr_records.py create --root "$PWD" --title "Use hosted auth" --decision "Use hosted auth" --context "Login needs OIDC support" --option "Hosted auth" --option "Self-hosted auth" --rationale "Lower operational burden" --domain authentication --keyword auth --json
 python skills/plan/scripts/adr_records.py list --root "$PWD" --json
+python skills/plan/scripts/adr_records.py query auth --root "$PWD" --json
+python skills/plan/scripts/adr_records.py validate --root "$PWD" --json
 
 # Validate planning artifacts
 node --experimental-strip-types skills/plan/scripts/manage_jsonl.ts validate-topic --root "$PWD" --topic "search-ui" --json

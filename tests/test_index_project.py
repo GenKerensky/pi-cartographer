@@ -330,6 +330,33 @@ class IndexProjectTests(unittest.TestCase):
             self.assertEqual(stale_payload["action"], "reindexed")
             self.assertFalse(stale_payload["after"]["stale"])
 
+    def test_adr_markdown_is_indexed_as_repository_documentation(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            (project / "docs/adr").mkdir(parents=True)
+            (project / "docs/adr/0001-use-hosted-auth.md").write_text(
+                "# ADR-0001: Use hosted auth\n\n## Decision\n\nUse hosted authentication for OIDC login.\n",
+                encoding="utf-8",
+            )
+
+            self.run_script("index", "--root", str(project), "--no-git-root", "--json")
+            query_result = self.run_script(
+                "query",
+                "--root",
+                str(project),
+                "--no-git-root",
+                "--scope",
+                "code",
+                "--topic",
+                "hosted authentication OIDC",
+                "--limit",
+                "5",
+                "--json",
+            )
+            query = json.loads(query_result.stdout)
+
+            self.assertTrue(any(item["path"] == "docs/adr/0001-use-hosted-auth.md" for item in query))
+
     def test_duplicate_downranking_and_adjacent_context_packing(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)

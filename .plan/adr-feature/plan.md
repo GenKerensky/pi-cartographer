@@ -365,7 +365,7 @@ Do not make subagents mandatory for ADR finalization. Keep the parent/implement 
 
 ### Phase P6 — Documentation, indexing, and regression tests
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P5
 - **Unlocks:** P7
 - **Primary references:** `file:README.md`, `file:skills/index-project/SKILL.md`, `file:skills/index-project/scripts/index_project.py`, `file:tests/test_index_project.py`, `file:tests/test_workflow_docs.py`, [F004], [F010], [F014]
@@ -386,18 +386,18 @@ Document the ADR feature end to end and ensure ADR Markdown is searchable throug
 
 #### Checklist
 
-- [ ] **P6.T1** Update README resource table, quick start/helper CLI reference, written artifacts, retrieval, limitations, and development notes for ADR support.
-- [ ] **P6.T2** Update `skills/index-project/SKILL.md` to clarify ADR Markdown retrieval and ADR graph lookup via `cartographer_adr`.
-- [ ] **P6.T3** Add indexer tests proving `docs/adr/*.md` is indexed/retrievable in a temporary mock repo.
-- [ ] **P6.T4** Add workflow doc tests that stale ADR out-of-scope wording is removed from README/proposal/plan/implement skills.
-- [ ] **P6.T5** Run targeted and full regression checks and fix documentation drift.
+- [x] **P6.T1** Update README resource table, quick start/helper CLI reference, written artifacts, retrieval, limitations, and development notes for ADR support.
+- [x] **P6.T2** Update `skills/index-project/SKILL.md` to clarify ADR Markdown retrieval and ADR graph lookup via `cartographer_adr`.
+- [x] **P6.T3** Add indexer tests proving `docs/adr/*.md` is indexed/retrievable in a temporary mock repo.
+- [x] **P6.T4** Add workflow doc tests that stale ADR out-of-scope wording is removed from README/proposal/plan/implement skills.
+- [x] **P6.T5** Run targeted and full regression checks and fix documentation drift.
 
 #### Validation
 
-- [ ] **P6.V1** Run `python -m unittest discover tests -p "test_index_project.py"` and expect ADR Markdown indexing regression tests to pass.
-- [ ] **P6.V2** Run `python -m unittest discover tests -p "test_workflow_docs.py"` and expect ADR documentation tests to pass.
-- [ ] **P6.V3** Run `npm run test:py` and expect all Python tests to pass.
-- [ ] **P6.V4** Run `npm run test:ts` and expect all TypeScript tests to pass.
+- [x] **P6.V1** Run `python -m unittest discover tests -p "test_index_project.py"` and expect ADR Markdown indexing regression tests to pass.
+- [x] **P6.V2** Run `python -m unittest discover tests -p "test_workflow_docs.py"` and expect ADR documentation tests to pass.
+- [x] **P6.V3** Run `npm run test:py` and expect all Python tests to pass.
+- [x] **P6.V4** Run `npm run test:ts` and expect all TypeScript tests to pass.
 
 #### Exit Criteria
 

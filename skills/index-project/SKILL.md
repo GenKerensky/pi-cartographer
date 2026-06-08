@@ -20,7 +20,7 @@ The index lives in the current project:
 
 The indexer also ensures `.plan/_index/` and `.plan/_private/` are present in the target project's `.gitignore`, creating `.gitignore` if needed. Topic planning artifacts remain text/JSONL source-of-truth files and are not automatically ignored.
 
-Committed `.plan/<topic>/proposal.md`, `.plan/<topic>/plan.md`, related JSONL rationale artifacts, and sanitized `.plan/<topic>/evidence/` analyses are indexed in the explicit `plans` retrieval scope. They are excluded from the default `code` scope. `.plan/_index/` cache files and raw `.plan/_private/` inputs are never indexed.
+Committed `.plan/<topic>/proposal.md`, `.plan/<topic>/plan.md`, related JSONL rationale artifacts, and sanitized `.plan/<topic>/evidence/` analyses are indexed in the explicit `plans` retrieval scope. They are excluded from the default `code` scope. ADR Markdown such as `docs/adr/0001-*.md` is ordinary repository documentation and is indexed in `code`/`all` scopes; ADR graph JSONL under `<adr-dir>/_graph/` should be queried with `cartographer_adr query/show/validate` rather than broad JSONL indexing. `.plan/_index/` cache files and raw `.plan/_private/` inputs are never indexed.
 
 Do not place topic-specific proposal content inside `.plan/_index/`; proposals should query this shared artifact and write their own slices under `.plan/{topic}/`.
 
@@ -145,7 +145,7 @@ Node IDs are stable and typed, for example:
 
 Cartographer separates retrieval into three planned scopes:
 
-- `code` — default source-code retrieval over project code/docs/config. This scope excludes committed `.plan/` rationale artifacts and never treats `.plan/_index/` cache files as source.
+- `code` — default source-code retrieval over project code/docs/config, including committed docs such as `docs/adr/*.md`. This scope excludes committed `.plan/` rationale artifacts and never treats `.plan/_index/` cache files as source.
 - `plans` — explicit rationale retrieval over committed `.plan/<topic>/proposal.md`, `.plan/<topic>/plan.md`, map/fact/plan JSONL, sanitized `.plan/<topic>/evidence/` analyses, and retrieval miss logs.
 - `all` — explicit combined retrieval for architecture review, migration, or reasoning across source and rationale.
 
@@ -165,7 +165,7 @@ Candidate/verified metadata uses these fields where applicable:
 
 Retrieval misses that materially slow or change the workflow should be captured as concise JSONL records in `.plan/_retrieval/misses.jsonl`. Miss records should include `failure_type`, `original_query`, `expanded_queries`, `retrieval_modes`, `expected_terms`, `eventual_hit`, `resolution`, and `notes` when known. Do not log secrets, proprietary raw snippets, or routine empty searches.
 
-Raw private proposal inputs under `.plan/_private/**` are excluded from every retrieval scope. If private artifacts are needed for planning, first generate sanitized analysis documents under `.plan/<topic>/evidence/`; those evidence docs can then be retrieved with `scope=plans`.
+Raw private proposal inputs under `.plan/_private/**` are excluded from every retrieval scope. If private artifacts are needed for planning, first generate sanitized analysis documents under `.plan/<topic>/evidence/`; those evidence docs can then be retrieved with `scope=plans`. For ADR history, use `cartographer_index query --scope code --topic "<decision>"` to find ADR Markdown and `cartographer_adr query/show` for currentness, supersession, and graph relationships.
 
 ## Query Semantics
 
