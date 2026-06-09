@@ -8,7 +8,19 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "allowImportingTsExtensions": true,
-    "types": ["node", "vitest"]
+    "jsx": "react-jsx",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["dashboard/client/src/*.ts", "dashboard/client/src/*.tsx"]
+    },
+    "types": ["node", "vitest", "vite/client"]
   },
-  "include": ["dashboard/**/*.ts", "extensions/**/*.ts", "skills/**/*.ts", "tests/**/*.ts"]
+  "include": [
+    "dashboard/**/*.ts",
+    "dashboard/**/*.tsx",
+    "extensions/**/*.ts",
+    "skills/**/*.ts",
+    "tests/**/*.ts",
+    "tests/**/*.tsx"
+  ]
 }

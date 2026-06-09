@@ -231,7 +231,7 @@ Keep live reload separate from Vite hot module reload. This phase is about plann
 
 ### Phase P3 — React Shell and Design System
 
-- **Status:** pending
+- **Status:** implemented
 - **Depends on:** P0
 - **Unlocks:** P4, P7
 - **Primary references:** `proposed:dashboard-client`, `constraint:shadcn-tailwind`, `external:taste-profile`, [F010], [F014], [F015]
@@ -250,17 +250,17 @@ Create the Vite/React client foundation with shadcn/ui components, Tailwind CSS 
 
 #### Checklist
 
-- [ ] **P3.T1** Add Vite/React client project wiring under `dashboard/client`, build scripts, TypeScript config inclusion, shadcn-compatible aliases, and runtime asset output paths [F021].
-- [ ] **P3.T2** Configure Tailwind CSS and semantic CSS variables for dark tactile surfaces, category colors, spacing, borders, elevation, and state tokens.
-- [ ] **P3.T3** Initialize shadcn/ui-compatible aliases and add core components for button, card, badge, tabs, sheet/dialog/drawer, tooltip, dropdown menu, scroll area, table, command/search, separator, skeleton, toast/sonner, and form controls.
-- [ ] **P3.T4** Build the application shell with left navigation, top status bar, route container, inspector region, live-connection indicator, keyboard focus states, and reduced-motion handling.
-- [ ] **P3.T5** Add Vitest Browser Mode coverage for key shadcn component rendering, Tailwind token availability, shell responsiveness, focus states, and reduced-motion behavior [F024].
+- [x] **P3.T1** Add Vite/React client project wiring under `dashboard/client`, build scripts, TypeScript config inclusion, shadcn-compatible aliases, and runtime asset output paths [F021].
+- [x] **P3.T2** Configure Tailwind CSS and semantic CSS variables for dark tactile surfaces, category colors, spacing, borders, elevation, and state tokens.
+- [x] **P3.T3** Initialize shadcn/ui-compatible aliases and add core components for button, card, badge, tabs, sheet/dialog/drawer, tooltip, dropdown menu, scroll area, table, command/search, separator, skeleton, toast/sonner, and form controls.
+- [x] **P3.T4** Build the application shell with left navigation, top status bar, route container, inspector region, live-connection indicator, keyboard focus states, and reduced-motion handling.
+- [x] **P3.T5** Add Vitest Browser Mode coverage for key shadcn component rendering, Tailwind token availability, shell responsiveness, focus states, and reduced-motion behavior [F024].
 
 #### Validation
 
-- [ ] **P3.V1** Run the Vitest Browser Mode client shell tests, such as `npm run test:browser -- tests/dashboard/client-shell.test.tsx`; expect shadcn components, route shell, live-state UI, keyboard focus, and reduced-motion behavior to pass [F024].
-- [ ] **P3.V2** Run the dashboard client build command added in this phase, such as `npm run dashboard:build`; expect Tailwind CSS output and Vite assets to build without errors.
-- [ ] **P3.V3** Run `npm run typecheck`; expect TS/TSX client source, aliases, and shared API types to pass strict checks.
+- [x] **P3.V1** Run the Vitest Browser Mode client shell tests, such as `npm run test:browser -- tests/dashboard/client-shell.test.tsx`; expect shadcn components, route shell, live-state UI, keyboard focus, and reduced-motion behavior to pass [F024].
+- [x] **P3.V2** Run the dashboard client build command added in this phase, such as `npm run dashboard:build`; expect Tailwind CSS output and Vite assets to build without errors.
+- [x] **P3.V3** Run `npm run typecheck`; expect TS/TSX client source, aliases, and shared API types to pass strict checks.
 
 #### Exit Criteria
 
