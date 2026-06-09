@@ -28,3 +28,40 @@
 {"from":"F903","to":"S902","type":"supported_by","evidence":"Seeded Pi extensions fact."}
 {"from":"F904","to":"S903","type":"supported_by","evidence":"Seeded Pi prompt templates fact."}
 {"from":"F905","to":"S904","type":"supported_by","evidence":"Seeded pi-subagents fact."}
+{"from":"F013","to":"S013","type":"supported_by","evidence":"User request states that the dashboard should live reload when .plan files are updated."}
+{"from":"F013","to":"proposed:dashboard-server","type":"constrains","evidence":"The server should watch safe .plan paths, invalidate cached topic data, and publish reload events to connected clients."}
+{"from":"F013","to":"proposed:dashboard-client","type":"constrains","evidence":"The client should react to reload events by refreshing affected overview, topic, document, graph, health, and receipt data."}
+{"from":"F014","to":"S014","type":"supported_by","evidence":"shadcn/ui docs describe accessible open-code components built with TypeScript, Tailwind CSS, and Radix UI, with Vite setup and component add commands."}
+{"from":"F014","to":"proposed:dashboard-client","type":"constrains","evidence":"Dashboard React components should be built from shadcn/ui primitives and copied-in component code rather than a bespoke component stack."}
+{"from":"F015","to":"S015","type":"supported_by","evidence":"Tailwind CSS docs show Vite plugin setup, CSS import entrypoint, and utility-class styling behavior."}
+{"from":"F015","to":"proposed:dashboard-client","type":"constrains","evidence":"Dashboard styling, theme tokens, layout, responsive states, and tactile UI polish should be implemented with Tailwind CSS."}
+{"from":"F016","to":"S016","type":"supported_by","evidence":"ESLint docs describe flat config files and @eslint/js recommended configs."}
+{"from":"F016","to":"file:package.json","type":"constrains","evidence":"Package scripts and devDependencies should add a repository ESLint flat-config lint baseline before dashboard TypeScript work expands."}
+{"from":"F017","to":"S017","type":"supported_by","evidence":"typescript-eslint docs show recommended type-checked configs and projectService for typed linting."}
+{"from":"F017","to":"file:package.json","type":"constrains","evidence":"Repository lint scripts should include typescript-eslint typed linting for TS/TSX dashboard code and existing TypeScript helpers."}
+{"from":"F018","to":"S018","type":"supported_by","evidence":"Prettier docs show check and write CLI commands for formatting validation and application."}
+{"from":"F018","to":"file:package.json","type":"constrains","evidence":"Package scripts should include Prettier format/check commands and integrate formatting into the project quality gate."}
+{"from":"F019","to":"S019","type":"supported_by","evidence":"Hono docs show Node static serving, modular routing, and SSE/streaming patterns suitable for the dashboard server."}
+{"from":"F019","to":"proposed:dashboard-server","type":"constrains","evidence":"Dashboard server implementation should use Hono on Node.js for routes, static runtime assets, and the /api/events stream."}
+{"from":"F019","to":"file:package.json","type":"constrains","evidence":"Package dependencies should include Hono and its Node server adapter when implementing the dashboard server."}
+{"from":"F020","to":"S020","type":"supported_by","evidence":"User selected strict full-repo rollout for TypeScript linting and formatting quality gates."}
+{"from":"F020","to":"constraint:ts-quality-tooling","type":"clarifies","evidence":"Quality tooling should be broad and strict for supported repository files rather than dashboard-only or minimal."}
+{"from":"F020","to":"file:package.json","type":"constrains","evidence":"Package scripts should expose strict full-repo lint and Prettier checks suitable for local and CI validation."}
+{"from":"F021","to":"S021","type":"supported_by","evidence":"User selected the top-level dashboard layout after reviewing source/build layout options."}
+{"from":"F021","to":"proposed:dashboard-server","type":"constrains","evidence":"Server source should live under dashboard/server and share types/utilities through dashboard/shared."}
+{"from":"F021","to":"proposed:dashboard-client","type":"constrains","evidence":"Client source should live under dashboard/client with shadcn/ui-compatible aliases and Vite build output packaged for runtime serving."}
+{"from":"F021","to":"proposed:bin-cartographer-dashboard","type":"constrains","evidence":"CLI entrypoint should remain under bin/cartographer-dashboard.js and invoke the top-level dashboard runtime."}
+{"from":"F021","to":"file:package.json","type":"constrains","evidence":"Package files/build scripts should include bin/cartographer-dashboard.js and the top-level dashboard runtime/build assets."}
+{"from":"F022","to":"S022","type":"supported_by","evidence":"User selected XDG runtime/tmp storage for dashboard process/status metadata."}
+{"from":"F022","to":"proposed:bin-cartographer-dashboard","type":"constrains","evidence":"CLI lifecycle metadata should use XDG runtime/tmp storage keyed by repository root hash."}
+{"from":"F022","to":"proposed:dashboard-server","type":"constrains","evidence":"Server lifecycle should not write process metadata into the repository or .plan artifacts."}
+{"from":"F023","to":"S023","type":"supported_by","evidence":"Chokidar docs show ignore filters, add/change/unlink events, atomic write handling, awaitWriteFinish, and async close behavior."}
+{"from":"F023","to":"constraint:plan-live-reload","type":"clarifies","evidence":"Live reload should use Chokidar to watch safe .plan paths and ignore private/cache/generated paths."}
+{"from":"F023","to":"proposed:dashboard-server","type":"constrains","evidence":"Dashboard server live reload implementation should use Chokidar for .plan watching."}
+{"from":"F023","to":"file:package.json","type":"constrains","evidence":"Package dependencies should include Chokidar when live reload is implemented."}
+{"from":"F024","to":"S024","type":"supported_by","evidence":"Vitest Browser Mode docs show React browser component tests and Playwright docs show webServer-based local app smoke testing."}
+{"from":"F024","to":"proposed:dashboard-client","type":"constrains","evidence":"Client tests should include Vitest Browser Mode coverage for key UI components and interactions."}
+{"from":"F024","to":"proposed:bin-cartographer-dashboard","type":"constrains","evidence":"A small Playwright smoke suite should exercise CLI/server/browser/live-reload flows against temporary fixtures."}
+{"from":"F024","to":"file:package.json","type":"constrains","evidence":"Package devDependencies/scripts should include Vitest Browser Mode and a small Playwright smoke path when UI implementation reaches that phase."}
+{"from":"F025","to":"S025","type":"supported_by","evidence":"ADR-0003 exists with status draft and records selected planning-dashboard stack decisions."}
+{"from":"F025","to":"topic:planning-dashboard","type":"constrains","evidence":"Implementation finalization should update or accept ADR-0003 after validation receipts exist."}

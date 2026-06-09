@@ -1,5 +1,6 @@
 # Pi Cartographer
-*Mapping Your Project and Plotting Your Feature's Path Forward*
+
+_Mapping Your Project and Plotting Your Feature's Path Forward_
 
 ![Pi Cartographer logo](assets/pi-cartographer.png)
 
@@ -11,8 +12,7 @@ Pi Cartographer is a graph-grounded planning package for [pi](https://pi.dev). I
 
 It bundles pi skills plus a small extension that registers deterministic helper tools. Durable planning notes live under `.plan/` so decisions can be reviewed, resumed, and committed with the code they explain.
 
-
-*pi-cartographer is currently in active development and may not be production ready yet*
+_pi-cartographer is currently in active development and may not be production ready yet_
 
 ## Table of contents
 
@@ -54,19 +54,19 @@ pi -e /path/to/pi-cartographer   # one-off local use
 
 ## What this package includes
 
-| Resource | Type | What it does |
-|---|---|---|
-| `index-project` | Skill + Python CLI | Builds and queries a shared SQLite + FTS5 project graph under `.plan/_index/`. |
-| `proposal` | Skill | Creates `.plan/<topic>/proposal.md` plus project map and research fact JSONL artifacts. |
-| `plan` | Skill | Converts proposal/map/fact context into ordered phases, validations, and plan graph JSONL artifacts. |
-| `implement` | Skill | Executes an existing plan phase-by-phase with deterministic context, `cartographer-pathfinder` phase edits, quality gates, `cartographer-auditor` approval, plan updates, and conventional commits. |
-| `cartographer_index` | Extension tool | Wraps index actions such as `ensure`, `query`, `context`, `read`, `slice-jsonl`, `status`, and `log-miss`. |
-| `cartographer_jsonl` | Extension tool | Wraps JSONL actions such as `validate-topic`, `validate-file`, `validate-misses`, `list-misses`, `list`, `upsert`, and `seed-pi-facts`. |
-| `cartographer_evidence` | Extension tool | Imports/list private proposal artifacts under `.plan/_private/<topic>/` without exposing raw contents and writes commit-safe evidence manifests. |
-| `cartographer_session` | Extension tool | Analyzes authorized Pi session JSONL into compact Markdown/JSON reports without exposing raw transcript contents. |
-| `cartographer_artifacts` | Extension tool | Provides read-only compact summaries for topic validation, fact citations, receipts, context packs, evidence manifests, and phase acceptance handoffs. |
-| `cartographer_validation` | Extension tool | Parent-owned wrapper for validation commands and compact receipt output; it does not replace semantic auditor review. |
-| `cartographer_adr` | Extension tool | Evaluates, drafts, creates, imports, validates, searches, and relates Architecture Decision Records. |
+| Resource                  | Type               | What it does                                                                                                                                                                                        |
+| ------------------------- | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `index-project`           | Skill + Python CLI | Builds and queries a shared SQLite + FTS5 project graph under `.plan/_index/`.                                                                                                                      |
+| `proposal`                | Skill              | Creates `.plan/<topic>/proposal.md` plus project map and research fact JSONL artifacts.                                                                                                             |
+| `plan`                    | Skill              | Converts proposal/map/fact context into ordered phases, validations, and plan graph JSONL artifacts.                                                                                                |
+| `implement`               | Skill              | Executes an existing plan phase-by-phase with deterministic context, `cartographer-pathfinder` phase edits, quality gates, `cartographer-auditor` approval, plan updates, and conventional commits. |
+| `cartographer_index`      | Extension tool     | Wraps index actions such as `ensure`, `query`, `context`, `read`, `slice-jsonl`, `status`, and `log-miss`.                                                                                          |
+| `cartographer_jsonl`      | Extension tool     | Wraps JSONL actions such as `validate-topic`, `validate-file`, `validate-misses`, `list-misses`, `list`, `upsert`, and `seed-pi-facts`.                                                             |
+| `cartographer_evidence`   | Extension tool     | Imports/list private proposal artifacts under `.plan/_private/<topic>/` without exposing raw contents and writes commit-safe evidence manifests.                                                    |
+| `cartographer_session`    | Extension tool     | Analyzes authorized Pi session JSONL into compact Markdown/JSON reports without exposing raw transcript contents.                                                                                   |
+| `cartographer_artifacts`  | Extension tool     | Provides read-only compact summaries for topic validation, fact citations, receipts, context packs, evidence manifests, and phase acceptance handoffs.                                              |
+| `cartographer_validation` | Extension tool     | Parent-owned wrapper for validation commands and compact receipt output; it does not replace semantic auditor review.                                                                               |
+| `cartographer_adr`        | Extension tool     | Evaluates, drafts, creates, imports, validates, searches, and relates Architecture Decision Records.                                                                                                |
 
 Skill commands are available as `/skill:<name>` when pi skill commands are enabled.
 
@@ -74,14 +74,14 @@ Skill commands are available as `/skill:<name>` when pi skill commands are enabl
 
 Project-scoped Cartographer agents live under `.pi/agents/` and are intentionally narrow. They consume context packs, receipts, map/fact artifacts, and deterministic validation results; they are not a replacement for tool validation or parent orchestration.
 
-| Agent | Purpose |
-|---|---|
-| `cartographer-archivist` | Compresses missing research into source-backed fact/source/support JSONL suggestions. |
-| `cartographer-drafter` | Drafts proposal or plan artifacts from compact map/fact/context inputs. |
-| `cartographer-pathfinder` | Implements one approved phase as the single writer, without committing. |
-| `cartographer-auditor` | Performs semantic review after deterministic validation receipts pass. |
-| `cartographer-compass` | Advises on scope, dependency, phase-order, or repeated-failure decisions. |
-| `cartographer-redactor` | Sanitizes authorized private artifacts into commit-safe evidence analyses. |
+| Agent                     | Purpose                                                                               |
+| ------------------------- | ------------------------------------------------------------------------------------- |
+| `cartographer-archivist`  | Compresses missing research into source-backed fact/source/support JSONL suggestions. |
+| `cartographer-drafter`    | Drafts proposal or plan artifacts from compact map/fact/context inputs.               |
+| `cartographer-pathfinder` | Implements one approved phase as the single writer, without committing.               |
+| `cartographer-auditor`    | Performs semantic review after deterministic validation receipts pass.                |
+| `cartographer-compass`    | Advises on scope, dependency, phase-order, or repeated-failure decisions.             |
+| `cartographer-redactor`   | Sanitizes authorized private artifacts into commit-safe evidence analyses.            |
 
 Do not add default Cartographer clones of generic `scout`, `delegate`, or `context-builder` roles without a new measured proposal. Built-in subagents remain explicit fallbacks when a Cartographer-specific agent is unavailable or the user approves substitution.
 
@@ -94,13 +94,13 @@ Workflow contracts for delegated runs:
 
 Final role/tool matrix:
 
-| Role | Default tools/context | Parent-owned boundaries | Example handoff evidence |
-|---|---|---|---|
-| `cartographer-archivist` / `cartographer-drafter` | `cartographer_artifacts` fact/context summaries, `cartographer_index` query/read, sanitized evidence docs | Canonical JSONL upserts and receipt writes unless explicitly scoped | Fact citation summary, context-pack path, draft JSONL suggestions |
-| `cartographer-pathfinder` | Focused context pack, helper summary paths, `cartographer_index` reads/searches, scoped edit tools | Commits, staging, final checkoff, ADR writes, unrelated phase files | Structured acceptance report with changed files, commands, validation IDs, no-staged-files evidence |
-| `cartographer-auditor` | Deterministic validation receipts, `cartographer_artifacts` receipt/context/validation summaries, targeted `cartographer_index` reads | Read-only: no plan edits, no checkoff, no receipt/ADR mutation | PASS/FAIL receipt at a deterministic path with required corrections if any |
-| `cartographer-compass` | Receipt/context summaries, proposal/plan references, validation failure summaries | Decision advice only; user/parent chooses scope/order changes | Escalation recommendation before parent takeover |
-| `cartographer-redactor` | Authorized raw private paths only when explicitly scoped; `cartographer_session` for authorized sessions | No proposal/plan decisions; sanitized outputs only | `.plan/<topic>/evidence/*-analysis.md` and safe manifest entries |
+| Role                                              | Default tools/context                                                                                                                 | Parent-owned boundaries                                             | Example handoff evidence                                                                            |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `cartographer-archivist` / `cartographer-drafter` | `cartographer_artifacts` fact/context summaries, `cartographer_index` query/read, sanitized evidence docs                             | Canonical JSONL upserts and receipt writes unless explicitly scoped | Fact citation summary, context-pack path, draft JSONL suggestions                                   |
+| `cartographer-pathfinder`                         | Focused context pack, helper summary paths, `cartographer_index` reads/searches, scoped edit tools                                    | Commits, staging, final checkoff, ADR writes, unrelated phase files | Structured acceptance report with changed files, commands, validation IDs, no-staged-files evidence |
+| `cartographer-auditor`                            | Deterministic validation receipts, `cartographer_artifacts` receipt/context/validation summaries, targeted `cartographer_index` reads | Read-only: no plan edits, no checkoff, no receipt/ADR mutation      | PASS/FAIL receipt at a deterministic path with required corrections if any                          |
+| `cartographer-compass`                            | Receipt/context summaries, proposal/plan references, validation failure summaries                                                     | Decision advice only; user/parent chooses scope/order changes       | Escalation recommendation before parent takeover                                                    |
+| `cartographer-redactor`                           | Authorized raw private paths only when explicitly scoped; `cartographer_session` for authorized sessions                              | No proposal/plan decisions; sanitized outputs only                  | `.plan/<topic>/evidence/*-analysis.md` and safe manifest entries                                    |
 
 Examples:
 
@@ -120,7 +120,22 @@ cartographer_artifacts({"action":"validate-topic-summary","root":"$PWD","topic":
 ```
 
 ```jsonl
-{"id":"receipt:P2:timeout-fallback:2026-06-08T12:00:00Z","type":"fallback-receipt","phase_id":"P2","child":"cartographer-pathfinder","attempt_count":2,"failure":"timeout after 600000ms","control":{"async":true,"timeoutMs":600000},"fallback_approved":"user-approved serial repair","compass_recommendation":"safe to continue with scoped docs-only fix","outcome":"continued","residual_risk":"semantic auditor still required"}
+{
+  "id": "receipt:P2:timeout-fallback:2026-06-08T12:00:00Z",
+  "type": "fallback-receipt",
+  "phase_id": "P2",
+  "child": "cartographer-pathfinder",
+  "attempt_count": 2,
+  "failure": "timeout after 600000ms",
+  "control": {
+    "async": true,
+    "timeoutMs": 600000
+  },
+  "fallback_approved": "user-approved serial repair",
+  "compass_recommendation": "safe to continue with scoped docs-only fix",
+  "outcome": "continued",
+  "residual_risk": "semantic auditor still required"
+}
 ```
 
 ## Quick start
@@ -248,12 +263,12 @@ Cartographer tools and skills should keep the chat as a control surface, not as 
 ```json
 {
   "summary": "Short human-readable result.",
-  "references": [{"path": "skills/example.md", "start_line": 1, "end_line": 20}],
-  "counts": {"matches": 12, "omitted": 9},
+  "references": [{ "path": "skills/example.md", "start_line": 1, "end_line": 20 }],
+  "counts": { "matches": 12, "omitted": 9 },
   "token_estimate": 1200,
   "truncated": true,
   "full_output_path": "/tmp/pi-cartographer-runs/<id>.log",
-  "verification": {"read": [], "rg": [], "validation": []},
+  "verification": { "read": [], "rg": [], "validation": [] },
   "next_actions": ["read skills/example.md:1", "run targeted validation"]
 }
 ```
@@ -276,13 +291,52 @@ Workflow state should be checkpointed in small JSONL records instead of relying 
 Example receipt:
 
 ```jsonl
-{"id":"receipt:P2:validation:2026-06-07T05:40:00Z","type":"validation-receipt","phase_id":"P2","status":"passed","changed_files":["skills/index-project/scripts/index_project.py"],"commands":[{"command":"npm run test:py","result":"passed","duration_ms":1516}],"summary":"Targeted Python tests passed.","full_output_path":"/tmp/pi-cartographer-runs/p2-test.log","verified":true,"verification":{"validation":["npm run test:py"]}}
+{
+  "id": "receipt:P2:validation:2026-06-07T05:40:00Z",
+  "type": "validation-receipt",
+  "phase_id": "P2",
+  "status": "passed",
+  "changed_files": [
+    "skills/index-project/scripts/index_project.py"
+  ],
+  "commands": [
+    {
+      "command": "npm run test:py",
+      "result": "passed",
+      "duration_ms": 1516
+    }
+  ],
+  "summary": "Targeted Python tests passed.",
+  "full_output_path": "/tmp/pi-cartographer-runs/p2-test.log",
+  "verified": true,
+  "verification": {
+    "validation": [
+      "npm run test:py"
+    ]
+  }
+}
 ```
 
 Example context pack:
 
 ```jsonl
-{"id":"context:P2:implementation","type":"context-pack","phase_id":"P2","budget_tokens":3000,"references":["skills/index-project/scripts/index_project.py:949"],"summary":"Only index output shaping and related tests are needed for this phase.","candidate_files":["extensions/cartographer-tools.ts"],"verified_files":["skills/index-project/scripts/index_project.py"],"open_questions":[]}
+{
+  "id": "context:P2:implementation",
+  "type": "context-pack",
+  "phase_id": "P2",
+  "budget_tokens": 3000,
+  "references": [
+    "skills/index-project/scripts/index_project.py:949"
+  ],
+  "summary": "Only index output shaping and related tests are needed for this phase.",
+  "candidate_files": [
+    "extensions/cartographer-tools.ts"
+  ],
+  "verified_files": [
+    "skills/index-project/scripts/index_project.py"
+  ],
+  "open_questions": []
+}
 ```
 
 Oversized-output receipts should include `summary`, `counts`, `truncated`, `maxOutputChars`, `token_estimate`, `full_output_path`, and `next_actions`. Validation receipts should include the command, exit code/result, duration, changed-file hash set when available, summarized output or first failure block, and the validation IDs satisfied. Timeout/fallback receipts should include the child/tool attempted, attempt count, timeout or failure summary, control fields used when available, fallback approved, `cartographer-compass` recommendation for repeated child failures, outcome, and residual risk.
@@ -307,11 +361,11 @@ flowchart TD
   plan --> implement[Implement phases with focused evidence]
 ```
 
-| Artifact | What it stores | How it is used |
-|---|---|---|
-| `map.nodes.jsonl` / `map.edges.jsonl` | Relevant project files, symbols, docs, dependencies, and relationships | Grounds proposal recommendations in the current codebase and gives planning reusable file/symbol context. |
-| `facts.nodes.jsonl` / `facts.edges.jsonl` | Research findings, sources, constraints, risks, tools, and `supported_by` evidence | Grounds proposal recommendations in source-backed facts and keeps design choices traceable. |
-| `plan.nodes.jsonl` / `plan.edges.jsonl` | Phases, tasks, validations, dependencies, and references | Turns the grounded proposal into ordered implementation work and validation checks. |
+| Artifact                                  | What it stores                                                                     | How it is used                                                                                            |
+| ----------------------------------------- | ---------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `map.nodes.jsonl` / `map.edges.jsonl`     | Relevant project files, symbols, docs, dependencies, and relationships             | Grounds proposal recommendations in the current codebase and gives planning reusable file/symbol context. |
+| `facts.nodes.jsonl` / `facts.edges.jsonl` | Research findings, sources, constraints, risks, tools, and `supported_by` evidence | Grounds proposal recommendations in source-backed facts and keeps design choices traceable.               |
+| `plan.nodes.jsonl` / `plan.edges.jsonl`   | Phases, tasks, validations, dependencies, and references                           | Turns the grounded proposal into ordered implementation work and validation checks.                       |
 
 Generated cache/index files are different:
 
@@ -353,11 +407,11 @@ These are concise records of material searches that missed, including unresolved
 
 Cartographer keeps source-code search separate from planning-rationale search.
 
-| Scope | Meaning | Use when |
-|---|---|---|
-| `code` | Project code/docs/config, excluding `.plan/` rationale | Default for implementation and code discovery. |
+| Scope   | Meaning                                                                                | Use when                                                               |
+| ------- | -------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `code`  | Project code/docs/config, excluding `.plan/` rationale                                 | Default for implementation and code discovery.                         |
 | `plans` | Committed `.plan/` proposals, plans, facts, maps, sanitized `evidence/`, and miss logs | Checking prior decisions, sanitized evidence, or historical rationale. |
-| `all` | Both code and planning rationale | Architecture review or migration work. |
+| `all`   | Both code and planning rationale                                                       | Architecture review or migration work.                                 |
 
 Index results are **candidates**, not proof. Important matches should be verified with direct reads, focused `rg`, or validation commands before they are cited or edited.
 

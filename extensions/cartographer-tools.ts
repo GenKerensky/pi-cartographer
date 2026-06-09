@@ -49,24 +49,12 @@ type CartographerIndexParams = OutputShapeParams & {
 		| "tool_failure";
 	expectedTerm?: string[];
 	eventualHit?: string;
-	resolution?:
-		| "query_expansion"
-		| "path_constraint"
-		| "manual_read"
-		| "user_hint"
-		| "unresolved";
+	resolution?: "query_expansion" | "path_constraint" | "manual_read" | "user_hint" | "unresolved";
 	notes?: string;
 };
 
 type CartographerJsonlParams = OutputShapeParams & {
-	action:
-		| "validate-topic"
-		| "validate-file"
-		| "validate-misses"
-		| "list-misses"
-		| "list"
-		| "upsert"
-		| "seed-pi-facts";
+	action: "validate-topic" | "validate-file" | "validate-misses" | "list-misses" | "list" | "upsert" | "seed-pi-facts";
 	root?: string;
 	topic?: string;
 	file?: string;
@@ -187,11 +175,7 @@ type ToolRegistration = {
 	promptSnippet?: string;
 	promptGuidelines?: string[];
 	parameters: unknown;
-	execute: (
-		toolCallId: string,
-		params: Record<string, unknown>,
-		signal?: AbortSignal,
-	) => Promise<ToolResult>;
+	execute: (toolCallId: string, params: Record<string, unknown>, signal?: AbortSignal) => Promise<ToolResult>;
 };
 
 type PiApi = {
@@ -201,48 +185,12 @@ type PiApi = {
 const execFileAsync = promisify(execFile);
 const extensionDir = path.dirname(fileURLToPath(import.meta.url));
 const packageRoot = path.dirname(extensionDir);
-const indexScript = path.join(
-	packageRoot,
-	"skills",
-	"index-project",
-	"scripts",
-	"index_project.py",
-);
-const jsonlScript = path.join(
-	packageRoot,
-	"skills",
-	"plan",
-	"scripts",
-	"manage_jsonl.ts",
-);
-const evidenceScript = path.join(
-	packageRoot,
-	"skills",
-	"plan",
-	"scripts",
-	"private_artifacts.py",
-);
-const sessionScript = path.join(
-	packageRoot,
-	"skills",
-	"plan",
-	"scripts",
-	"analyze_session.py",
-);
-const validationRunnerScript = path.join(
-	packageRoot,
-	"skills",
-	"plan",
-	"scripts",
-	"validation_runner.py",
-);
-const adrScript = path.join(
-	packageRoot,
-	"skills",
-	"plan",
-	"scripts",
-	"adr_records.py",
-);
+const indexScript = path.join(packageRoot, "skills", "index-project", "scripts", "index_project.py");
+const jsonlScript = path.join(packageRoot, "skills", "plan", "scripts", "manage_jsonl.ts");
+const evidenceScript = path.join(packageRoot, "skills", "plan", "scripts", "private_artifacts.py");
+const sessionScript = path.join(packageRoot, "skills", "plan", "scripts", "analyze_session.py");
+const validationRunnerScript = path.join(packageRoot, "skills", "plan", "scripts", "validation_runner.py");
+const adrScript = path.join(packageRoot, "skills", "plan", "scripts", "adr_records.py");
 
 function isExecFileException(error: unknown): error is ExecFileException & {
 	stdout?: string;
@@ -418,7 +366,8 @@ function addRepeated(args: string[], flag: string, values?: string[]): void {
 }
 
 function addAdrRecordArgs(args: string[], params: CartographerAdrParams, required: boolean): void {
-	if (required || params.title) args.push("--title", requireString(params.title, "cartographer_adr action requires title"));
+	if (required || params.title)
+		args.push("--title", requireString(params.title, "cartographer_adr action requires title"));
 	if (required || params.decision)
 		args.push("--decision", requireString(params.decision, "cartographer_adr action requires decision"));
 	if (required || params.context)
@@ -498,8 +447,7 @@ export default function cartographerTools(pi: PiApi): void {
 	pi.registerTool({
 		name: "cartographer_index",
 		label: "Cartographer Index",
-		description:
-			"Ensure, query, or read the Pi Cartographer SQLite project index.",
+		description: "Ensure, query, or read the Pi Cartographer SQLite project index.",
 		promptSnippet: "Read or refresh the Pi Cartographer SQLite project index",
 		promptGuidelines: [
 			"Use cartographer_index before manual file discovery when Pi Cartographer index context is needed.",
@@ -534,19 +482,11 @@ export default function cartographerTools(pi: PiApi): void {
 					description: "Topic/search text for query or slice-jsonl.",
 				}),
 			),
-			path: Type.Optional(
-				Type.String({ description: "Project-relative path for read." }),
-			),
-			nodeId: Type.Optional(
-				Type.String({ description: "Indexed node ID for read." }),
-			),
-			outDir: Type.Optional(
-				Type.String({ description: "Output directory for slice-jsonl." }),
-			),
+			path: Type.Optional(Type.String({ description: "Project-relative path for read." })),
+			nodeId: Type.Optional(Type.String({ description: "Indexed node ID for read." })),
+			outDir: Type.Optional(Type.String({ description: "Output directory for slice-jsonl." })),
 			limit: Type.Optional(Type.Number({ description: "Result limit." })),
-			maxTokens: Type.Optional(
-				Type.Number({ description: "Approximate context/repo-map token budget." }),
-			),
+			maxTokens: Type.Optional(Type.Number({ description: "Approximate context/repo-map token budget." })),
 			pattern: Type.Optional(Type.String({ description: "Pattern for search action." })),
 			mode: Type.Optional(
 				Type.Union([Type.Literal("fixed"), Type.Literal("regex")], { description: "Search mode. Defaults to fixed." }),
@@ -560,12 +500,7 @@ export default function cartographerTools(pi: PiApi): void {
 				}),
 			),
 			workflow: Type.Optional(
-				Type.Union([
-					Type.Literal("proposal"),
-					Type.Literal("plan"),
-					Type.Literal("implement"),
-					Type.Literal("manual"),
-				]),
+				Type.Union([Type.Literal("proposal"), Type.Literal("plan"), Type.Literal("implement"), Type.Literal("manual")]),
 			),
 			originalQuery: Type.Optional(Type.String({ description: "Missed original query for log-miss." })),
 			expandedQuery: Type.Optional(Type.Array(Type.String())),
@@ -612,17 +547,13 @@ export default function cartographerTools(pi: PiApi): void {
 			} else if (params.action === "query" || params.action === "context") {
 				args.push(
 					"--topic",
-					requireString(
-						params.topic,
-						`cartographer_index ${params.action} requires topic`,
-					),
+					requireString(params.topic, `cartographer_index ${params.action} requires topic`),
 					"--scope",
 					params.scope || "code",
 					"--limit",
 					String(optionalNumber(params.limit, params.action === "context" ? 8 : 10)),
 				);
-				if (params.action === "context")
-					args.push("--max-tokens", String(optionalNumber(params.maxTokens, 3000)));
+				if (params.action === "context") args.push("--max-tokens", String(optionalNumber(params.maxTokens, 3000)));
 				args.push("--json");
 			} else if (params.action === "repo-map") {
 				args.push(
@@ -655,23 +586,13 @@ export default function cartographerTools(pi: PiApi): void {
 				if (params.path) args.push("--path", params.path);
 				else if (params.nodeId) args.push("--node-id", params.nodeId);
 				else throw new Error("cartographer_index read requires path or nodeId");
-				args.push(
-					"--limit",
-					String(optionalNumber(params.limit, 50)),
-					"--json",
-				);
+				args.push("--limit", String(optionalNumber(params.limit, 50)), "--json");
 			} else if (params.action === "slice-jsonl") {
 				args.push(
 					"--topic",
-					requireString(
-						params.topic,
-						"cartographer_index slice-jsonl requires topic",
-					),
+					requireString(params.topic, "cartographer_index slice-jsonl requires topic"),
 					"--out-dir",
-					requireString(
-						params.outDir,
-						"cartographer_index slice-jsonl requires outDir",
-					),
+					requireString(params.outDir, "cartographer_index slice-jsonl requires outDir"),
 					"--limit",
 					String(optionalNumber(params.limit, 30)),
 					"--scope",
@@ -710,10 +631,8 @@ export default function cartographerTools(pi: PiApi): void {
 	pi.registerTool({
 		name: "cartographer_evidence",
 		label: "Cartographer Evidence",
-		description:
-			"Import or list private proposal artifacts without exposing raw contents.",
-		promptSnippet:
-			"Safely import private artifacts into .plan/_private/<topic>/ and write evidence manifests",
+		description: "Import or list private proposal artifacts without exposing raw contents.",
+		promptSnippet: "Safely import private artifacts into .plan/_private/<topic>/ and write evidence manifests",
 		promptGuidelines: [
 			"Use cartographer_evidence before reading user-provided private logs, transcripts, errors, screenshots, exports, or documents for a proposal.",
 			"Derive or confirm the proposal topic before import when possible; use inbox only for explicit pre-topic staging.",
@@ -722,29 +641,17 @@ export default function cartographerTools(pi: PiApi): void {
 		],
 		parameters: Type.Object({
 			action: Type.Union([Type.Literal("import"), Type.Literal("list")]),
-			root: Type.Optional(
-				Type.String({ description: "Project root. Defaults to current working directory." }),
-			),
-			topic: Type.Optional(
-				Type.String({ description: "Proposal topic slug for private/evidence directories." }),
-			),
-			input: Type.Optional(
-				Type.Array(Type.String(), { description: "Private artifact file path(s) to import." }),
-			),
-			move: Type.Optional(
-				Type.Boolean({ description: "Move instead of copy. Tracked repo files are refused." }),
-			),
+			root: Type.Optional(Type.String({ description: "Project root. Defaults to current working directory." })),
+			topic: Type.Optional(Type.String({ description: "Proposal topic slug for private/evidence directories." })),
+			input: Type.Optional(Type.Array(Type.String(), { description: "Private artifact file path(s) to import." })),
+			move: Type.Optional(Type.Boolean({ description: "Move instead of copy. Tracked repo files are refused." })),
 			basenameMode: Type.Optional(
 				Type.Union([Type.Literal("preserve"), Type.Literal("sanitize"), Type.Literal("opaque")], {
 					description: "Destination basename strategy. Defaults to preserve.",
 				}),
 			),
-			hash: Type.Optional(
-				Type.Boolean({ description: "Opt-in sha256 recording in the private manifest only." }),
-			),
-			inbox: Type.Optional(
-				Type.Boolean({ description: "Use temporary .plan/_private/_inbox/<id>/ staging." }),
-			),
+			hash: Type.Optional(Type.Boolean({ description: "Opt-in sha256 recording in the private manifest only." })),
+			inbox: Type.Optional(Type.Boolean({ description: "Use temporary .plan/_private/_inbox/<id>/ staging." })),
 			inboxId: Type.Optional(Type.String({ description: "Inbox id when inbox is true." })),
 			sensitivity: Type.Optional(
 				Type.Union([Type.Literal("unknown"), Type.Literal("low"), Type.Literal("medium"), Type.Literal("high")]),
@@ -762,7 +669,10 @@ export default function cartographerTools(pi: PiApi): void {
 			addRoot(args, params.root);
 			if (params.action === "import") {
 				if (!params.inbox)
-					args.push("--topic", requireString(params.topic, "cartographer_evidence import requires topic unless inbox is true"));
+					args.push(
+						"--topic",
+						requireString(params.topic, "cartographer_evidence import requires topic unless inbox is true"),
+					);
 				for (const input of params.input || []) args.push("--input", input);
 				if (!params.input || params.input.length === 0)
 					throw new Error("cartographer_evidence import requires at least one input");
@@ -928,8 +838,7 @@ export default function cartographerTools(pi: PiApi): void {
 	pi.registerTool({
 		name: "cartographer_artifacts",
 		label: "Cartographer Artifacts",
-		description:
-			"Read-only compact summaries of Pi Cartographer planning artifacts for child agents.",
+		description: "Read-only compact summaries of Pi Cartographer planning artifacts for child agents.",
 		promptSnippet:
 			"Inspect Cartographer artifacts through read-only summaries without mutation or private raw references",
 		promptGuidelines: [
@@ -953,17 +862,20 @@ export default function cartographerTools(pi: PiApi): void {
 			root: Type.Optional(Type.String({ description: "Project root. Defaults to current working directory." })),
 			topic: Type.Optional(Type.String({ description: "Cartographer topic under .plan/." })),
 			artifact: Type.Optional(
-				Type.Union([
-					Type.Literal("map.nodes"),
-					Type.Literal("map.edges"),
-					Type.Literal("facts.nodes"),
-					Type.Literal("facts.edges"),
-					Type.Literal("plan.nodes"),
-					Type.Literal("plan.edges"),
-					Type.Literal("receipts"),
-					Type.Literal("context-packs"),
-					Type.Literal("evidence-manifest"),
-				], { description: "Artifact to summarize for list-records or show-record." }),
+				Type.Union(
+					[
+						Type.Literal("map.nodes"),
+						Type.Literal("map.edges"),
+						Type.Literal("facts.nodes"),
+						Type.Literal("facts.edges"),
+						Type.Literal("plan.nodes"),
+						Type.Literal("plan.edges"),
+						Type.Literal("receipts"),
+						Type.Literal("context-packs"),
+						Type.Literal("evidence-manifest"),
+					],
+					{ description: "Artifact to summarize for list-records or show-record." },
+				),
 			),
 			id: Type.Optional(Type.String({ description: "Record id for show-record." })),
 			limit: Type.Optional(Type.Number({ description: "Compact record limit." })),
@@ -978,44 +890,38 @@ export default function cartographerTools(pi: PiApi): void {
 			const params = rawParams as CartographerArtifactsParams;
 			const args: string[] = [params.action];
 			addRoot(args, params.root);
-			args.push(
-				"--topic",
-				requireString(params.topic, `cartographer_artifacts ${params.action} requires topic`),
-			);
+			args.push("--topic", requireString(params.topic, `cartographer_artifacts ${params.action} requires topic`));
 			if (params.action === "list-records" || params.action === "show-record")
-				args.push("--artifact", requireString(params.artifact, `cartographer_artifacts ${params.action} requires artifact`));
+				args.push(
+					"--artifact",
+					requireString(params.artifact, `cartographer_artifacts ${params.action} requires artifact`),
+				);
 			if (params.action === "show-record")
 				args.push("--id", requireString(params.id, "cartographer_artifacts show-record requires id"));
-			if (["list-records", "receipt-summary", "context-pack-summary", "evidence-manifest-summary"].includes(params.action))
+			if (
+				["list-records", "receipt-summary", "context-pack-summary", "evidence-manifest-summary"].includes(params.action)
+			)
 				args.push("--limit", String(optionalNumber(params.limit, 20)));
 			if (params.action === "phase-summary" && params.phaseId) args.push("--phase-id", params.phaseId);
 			args.push("--json");
-			return runCommand(
-				"node",
-				["--experimental-strip-types", jsonlScript, ...args],
-				signal,
-				{
-					maxOutputChars: params.maxOutputChars ?? 4000,
-					outputPath: params.outputPath,
-					raw: params.raw,
-					label: `cartographer-artifacts-${params.action}`,
-					nextActions: [
-						"Cite summarized artifact ids/paths only; verify source files before editing.",
-						"Ask the parent for mutable cartographer_jsonl access only when an approved phase requires writes.",
-					],
-				},
-			);
+			return runCommand("node", ["--experimental-strip-types", jsonlScript, ...args], signal, {
+				maxOutputChars: params.maxOutputChars ?? 4000,
+				outputPath: params.outputPath,
+				raw: params.raw,
+				label: `cartographer-artifacts-${params.action}`,
+				nextActions: [
+					"Cite summarized artifact ids/paths only; verify source files before editing.",
+					"Ask the parent for mutable cartographer_jsonl access only when an approved phase requires writes.",
+				],
+			});
 		},
 	});
-
 
 	pi.registerTool({
 		name: "cartographer_validation",
 		label: "Cartographer Validation",
-		description:
-			"Parent-owned wrapper around validation_runner.py for compact validation receipts.",
-		promptSnippet:
-			"Run parent-owned validation commands and append compatible validation_runner receipts",
+		description: "Parent-owned wrapper around validation_runner.py for compact validation receipts.",
+		promptSnippet: "Run parent-owned validation commands and append compatible validation_runner receipts",
 		promptGuidelines: [
 			"Use from the parent session for canonical validation receipts; do not delegate canonical validation evidence fabrication to workers.",
 			"This is a compatibility wrapper around skills/plan/scripts/validation_runner.py and does not implement signed receipt cryptography.",
@@ -1026,11 +932,15 @@ export default function cartographerTools(pi: PiApi): void {
 			root: Type.Optional(Type.String({ description: "Project root. Defaults to current working directory." })),
 			command: Type.String({ description: "Validation command to run via the shell." }),
 			phaseId: Type.Optional(Type.String({ description: "Plan phase ID, such as P4." })),
-			validationId: Type.Optional(Type.Array(Type.String(), { description: "Validation IDs satisfied by this command." })),
+			validationId: Type.Optional(
+				Type.Array(Type.String(), { description: "Validation IDs satisfied by this command." }),
+			),
 			receiptFile: Type.String({ description: "Receipt JSONL file to append." }),
 			maxOutputChars: Type.Optional(Type.Number({ description: "Inline output budget." })),
 			fullOutputDir: Type.Optional(Type.String({ description: "Directory for oversized validation logs." })),
-			skipIfUnchanged: Type.Optional(Type.Boolean({ description: "Skip if a previous passed receipt has the same file hash set." })),
+			skipIfUnchanged: Type.Optional(
+				Type.Boolean({ description: "Skip if a previous passed receipt has the same file hash set." }),
+			),
 			timeoutSec: Type.Optional(Type.Number({ description: "Timeout seconds for the validation command." })),
 			outputPath: Type.Optional(Type.String({ description: "Optional full-output path for wrapper output shaping." })),
 			raw: Type.Optional(Type.Boolean({ description: "Return raw command output instead of a compact receipt." })),
@@ -1064,10 +974,8 @@ export default function cartographerTools(pi: PiApi): void {
 	pi.registerTool({
 		name: "cartographer_jsonl",
 		label: "Cartographer JSONL",
-		description:
-			"Validate, list, or upsert Pi Cartographer JSONL graph artifacts.",
-		promptSnippet:
-			"Validate, list, or update Pi Cartographer JSONL graph artifacts",
+		description: "Validate, list, or upsert Pi Cartographer JSONL graph artifacts.",
+		promptSnippet: "Validate, list, or update Pi Cartographer JSONL graph artifacts",
 		promptGuidelines: [
 			"Use cartographer_jsonl to validate map/fact/plan JSONL instead of writing ad-hoc validation scripts.",
 			"Use cartographer_jsonl validate-misses/list-misses for .plan/_retrieval/misses.jsonl records.",
@@ -1097,20 +1005,14 @@ export default function cartographerTools(pi: PiApi): void {
 					description: "JSONL file path for validate-file, list, or upsert.",
 				}),
 			),
-			record: Type.Optional(
-				Type.Any({ description: "JSON object to upsert." }),
-			),
+			record: Type.Optional(Type.Any({ description: "JSON object to upsert." })),
 			key: Type.Optional(
 				Type.Array(Type.String(), {
 					description: "Key fields for upsert matching.",
 				}),
 			),
-			limit: Type.Optional(
-				Type.Number({ description: "Record limit for list." }),
-			),
-			requireId: Type.Optional(
-				Type.Boolean({ description: "Require id fields for validate-file." }),
-			),
+			limit: Type.Optional(Type.Number({ description: "Record limit for list." })),
+			requireId: Type.Optional(Type.Boolean({ description: "Require id fields for validate-file." })),
 			merge: Type.Optional(
 				Type.Boolean({
 					description: "Merge with existing record on upsert. Defaults true.",
@@ -1127,23 +1029,9 @@ export default function cartographerTools(pi: PiApi): void {
 			const args: string[] = [params.action];
 			if (params.action === "validate-topic") {
 				addRoot(args, params.root);
-				args.push(
-					"--topic",
-					requireString(
-						params.topic,
-						"cartographer_jsonl validate-topic requires topic",
-					),
-					"--json",
-				);
+				args.push("--topic", requireString(params.topic, "cartographer_jsonl validate-topic requires topic"), "--json");
 			} else if (params.action === "validate-file") {
-				args.push(
-					"--file",
-					requireString(
-						params.file,
-						"cartographer_jsonl validate-file requires file",
-					),
-					"--json",
-				);
+				args.push("--file", requireString(params.file, "cartographer_jsonl validate-file requires file"), "--json");
 				if (params.requireId) args.push("--require-id");
 			} else if (params.action === "validate-misses") {
 				addRoot(args, params.root);
@@ -1160,8 +1048,7 @@ export default function cartographerTools(pi: PiApi): void {
 					"--json",
 				);
 			} else if (params.action === "upsert") {
-				if (params.record === undefined)
-					throw new Error("cartographer_jsonl upsert requires record");
+				if (params.record === undefined) throw new Error("cartographer_jsonl upsert requires record");
 				args.push(
 					"--file",
 					requireString(params.file, "cartographer_jsonl upsert requires file"),
@@ -1173,26 +1060,14 @@ export default function cartographerTools(pi: PiApi): void {
 				if (params.merge === false) args.push("--no-merge");
 			} else if (params.action === "seed-pi-facts") {
 				addRoot(args, params.root);
-				args.push(
-					"--topic",
-					requireString(
-						params.topic,
-						"cartographer_jsonl seed-pi-facts requires topic",
-					),
-					"--json",
-				);
+				args.push("--topic", requireString(params.topic, "cartographer_jsonl seed-pi-facts requires topic"), "--json");
 			}
-			return runCommand(
-				"node",
-				["--experimental-strip-types", jsonlScript, ...args],
-				signal,
-				{
-					maxOutputChars: params.maxOutputChars,
-					outputPath: params.outputPath,
-					raw: params.raw,
-					label: `cartographer-jsonl-${params.action}`,
-				},
-			);
+			return runCommand("node", ["--experimental-strip-types", jsonlScript, ...args], signal, {
+				maxOutputChars: params.maxOutputChars,
+				outputPath: params.outputPath,
+				raw: params.raw,
+				label: `cartographer-jsonl-${params.action}`,
+			});
 		},
 	});
 }

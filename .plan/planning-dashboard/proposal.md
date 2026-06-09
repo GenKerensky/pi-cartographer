@@ -2,15 +2,15 @@
 
 ## Description
 
-Add a local, read-only web dashboard for Pi Cartographer planning files. The dashboard should be started by an installed `cartographer-dashboard` CLI, and a new packaged Pi skill should invoke that installed CLI for the user. The dashboard turns existing `.plan/` artifacts into browsable overview metrics, topic pages, rendered documents, code views, and graph exploration without replacing the filesystem artifacts as the source of truth.
+Add a local, read-only web dashboard for Pi Cartographer planning files. The dashboard should be started by an installed `cartographer-dashboard` CLI, and a new packaged Pi skill should invoke that installed CLI for the user. The dashboard turns existing `.plan/` artifacts into browsable overview metrics, topic pages, rendered documents, code views, graph exploration, and live views that refresh when `.plan` files change without replacing the filesystem artifacts as the source of truth [F013].
 
 The first version should have three product surfaces:
 
 - **Installed CLI:** `cartographer-dashboard start|status|stop`, rooted at the current repository by default.
 - **Pi skill:** `/skill:dashboard` that runs the installed CLI, opens the dashboard, and reports the URL/status.
-- **Local dashboard:** a browser UI backed by a loopback-only read-only server that scans proposal, plan, fact, map, receipt, evidence, index, and ADR artifacts.
+- **Local dashboard:** a browser UI backed by a loopback-only read-only server that scans proposal, plan, fact, map, receipt, evidence, index, and ADR artifacts, then live-reloads visible dashboard state when safe `.plan` files change [F013].
 
-The UI should feel like a dark tactile planning cockpit: layered surfaces, strong affordances, immediate interaction feedback, purposeful motion, and category colors that help users distinguish proposals, plans, implementations, facts, files, validations, and ADRs [F010].
+The React UI should use shadcn/ui for reusable components and Tailwind CSS for styling, theme tokens, responsive states, and tactile polish [F014] [F015]. Because the dashboard will add substantial TypeScript across CLI, server, client, and tests, the repository should set up a strict full-repo ESLint flat config, typescript-eslint typed linting, and Prettier formatting baseline before the heavy implementation phases [F016] [F017] [F018] [F020]. It should feel like a dark tactile planning cockpit: layered surfaces, strong affordances, immediate interaction feedback, purposeful motion, and category colors that help users distinguish proposals, plans, implementations, facts, files, validations, and ADRs [F010].
 
 ## Problem Statement
 
@@ -18,6 +18,7 @@ Cartographer already writes useful graph-grounded artifacts, but the human revie
 
 - Which proposals, plans, implementations, and ADRs are active, in progress, complete, stale, or superseded?
 - Which topics exist in this repository, and which ones have proposals, plans, evidence, receipts, or ADRs?
+- Did the proposal, plan, receipt, evidence note, or graph I am viewing change since I opened the page?
 - What does a proposal claim, what fact/source supports it, and where does that source point?
 - How do topic map, fact, plan, implementation, and ADR relationships connect?
 - When a JSONL node references a file or URL, how can the user open it immediately?
@@ -28,18 +29,22 @@ The underlying model is already graph-shaped: Cartographer writes node/edge JSON
 ## Goals
 
 1. **Start from the installed package.** Add a package-exposed `cartographer-dashboard` CLI and a Pi skill that uses that CLI instead of embedding dashboard logic in the skill [F005] [F006].
-2. **Stay read-only by default.** The v1 dashboard may scan, render, link, validate, and inspect planning files, but it must not edit `.plan/`, ADRs, index/cache files, or source files.
-3. **Show at-a-glance metrics.** The overview should summarize active, in-progress, and finished proposals, plans, implementations, and ADRs using existing lifecycle, receipt, validation, and ADR semantics [F008] [F009] [F011].
-4. **List every topic.** A Plans/Topics page should list `.plan/<topic>/` directories with proposal/plan presence, lifecycle/status, current phase, validation health, graph counts, receipts, evidence, and ADR links.
-5. **Render topic workspaces.** Clicking a topic should show proposal, plan, research/facts, evidence, receipts, validation, graphs, related ADRs, and referenced files in one workspace.
-6. **Hyperlink JSONL references.** Rendered Markdown should turn fact citations such as `[F001]`, and unambiguous short forms such as `F01`, into links to fact/source detail. Map node IDs, plan IDs, ADR IDs, and file references should also resolve to the correct dashboard target [F011].
-7. **Explore topic graphs.** Users should be able to browse map/fact/plan/ADR graphs, inspect relationships, filter layers/types, and click nodes or edges to open files, URLs, detail drawers, or warning states [F002] [F004].
-8. **Provide a rich document/code viewer.** Render Markdown with code fences and show referenced source files with line numbers, line anchors, copy affordances, and high-quality Shiki syntax highlighting [F003].
-9. **Follow the taste profile.** Treat the dark tactile UI system as an acceptance criterion, not optional polish [F010].
+2. **Stay read-only by default.** The v1 dashboard may scan, watch, render, link, validate, and inspect planning files, but it must not edit `.plan/`, ADRs, index/cache files, or source files.
+3. **Live-reload planning changes.** When safe files under `.plan/` are created, edited, deleted, or renamed, connected dashboard pages should refresh affected overview, topic, document, graph, receipt, evidence, and health data without requiring a manual browser refresh [F013].
+4. **Show at-a-glance metrics.** The overview should summarize active, in-progress, and finished proposals, plans, implementations, and ADRs using existing lifecycle, receipt, validation, and ADR semantics [F008] [F009] [F011].
+5. **List every topic.** A Plans/Topics page should list `.plan/<topic>/` directories with proposal/plan presence, lifecycle/status, current phase, validation health, graph counts, receipts, evidence, and ADR links.
+6. **Render topic workspaces.** Clicking a topic should show proposal, plan, research/facts, evidence, receipts, validation, graphs, related ADRs, and referenced files in one workspace.
+7. **Hyperlink JSONL references.** Rendered Markdown should turn fact citations such as `[F001]`, and unambiguous short forms such as `F01`, into links to fact/source detail. Map node IDs, plan IDs, ADR IDs, and file references should also resolve to the correct dashboard target [F011].
+8. **Explore topic graphs.** Users should be able to browse map/fact/plan/ADR graphs, inspect relationships, filter layers/types, and click nodes or edges to open files, URLs, detail drawers, or warning states [F002] [F004].
+9. **Provide a rich document/code viewer.** Render Markdown with code fences and show referenced source files with line numbers, line anchors, copy affordances, and high-quality Shiki syntax highlighting [F003].
+10. **Use shadcn/ui and Tailwind CSS.** Build React components from shadcn/ui open-code primitives and implement styling, design tokens, dark mode, responsive states, and interaction polish with Tailwind CSS [F014] [F015].
+11. **Set up TypeScript quality tooling.** Add strict full-repo ESLint flat config, typescript-eslint typed linting, and Prettier format/check scripts so TS/TSX-heavy dashboard work has consistent quality gates from the start, while excluding private/cache/generated artifacts [F016] [F017] [F018] [F020].
+12. **Follow the taste profile.** Treat the dark tactile UI system as an acceptance criterion, not optional polish [F010].
 
 ## Non-Goals
 
 - Do not build a writable planning editor in v1.
+- Do not implement live reload by enabling write operations; the dashboard may watch/read and refresh, but not mutate artifacts [F013].
 - Do not replace `.plan/` Markdown/JSONL artifacts with a new authoritative database.
 - Do not expose or traverse raw `.plan/_private/**` files; only sanitized evidence under topic evidence directories may be displayed [F011].
 - Do not build hosted collaboration, authentication, telemetry, comments, or remote sharing in v1.
@@ -59,15 +64,15 @@ Several existing helpers should become server-side semantic references rather th
 - `file:skills/plan/scripts/adr_records.py` defines ADR graph files, statuses, edge types, required fields, currentness, and validation [F009].
 - `file:skills/index-project/scripts/index_project.py` and `.plan/_index/project-graph.sqlite` can help resolve indexed file/node references when available.
 
-The proposed frontend stack is viable. Vite exposes a programmatic server API useful for dashboard development and integration tests [F001]. React Flow supports interactive node/edge canvases with controls, minimaps, backgrounds, custom nodes/edges, and fit-to-view behavior [F002]. Shiki can render source code and Markdown code blocks with VS Code-style highlighting and themes [F003]. `jsonl-graph` demonstrates the simple JSONL graph convention of nodes with `id` and edges with `from`/`to`, which matches Cartographer’s graph artifacts [F004].
+The proposed frontend stack is viable. Vite exposes a programmatic server API useful for dashboard development and integration tests [F001]. shadcn/ui provides accessible, customizable, open-code React components built with TypeScript, Tailwind CSS, and Radix UI, with Vite-compatible setup and component add workflows [F014]. Tailwind CSS provides the styling foundation through utility classes, CSS entrypoint imports, and the first-party Vite plugin [F015]. ESLint flat config, typescript-eslint typed linting, and Prettier CLI checks provide a practical strict full-repo TS/TSX quality baseline before the dashboard codebase grows [F016] [F017] [F018] [F020]. React Flow supports interactive node/edge canvases with controls, minimaps, backgrounds, custom nodes/edges, and fit-to-view behavior [F002]. Shiki can render source code and Markdown code blocks with VS Code-style highlighting and themes [F003]. `jsonl-graph` demonstrates the simple JSONL graph convention of nodes with `id` and edges with `from`/`to`, which matches Cartographer’s graph artifacts [F004].
 
 ## Viability
 
 This is a moderate but well-bounded package feature. The hard data-model work is mostly present: planning artifacts, validation helpers, metric helpers, ADR graph helpers, and project index files already exist [F007] [F008] [F009] [F011]. The first dashboard can stay read-only and avoid changing workflow semantics.
 
-The launch model is feasible. A Node CLI can be exposed from `package.json`, while the Pi skill can remain a thin wrapper around the installed CLI [F005] [F006]. In development, Vite can power the frontend dev server; in installed runtime mode, the CLI should serve prebuilt assets plus the local read-only API rather than requiring a Vite dev server in normal user sessions [F001].
+The launch model is feasible. A Node CLI can be exposed from `package.json`, while the Pi skill can remain a thin wrapper around the installed CLI [F005] [F006]. The local server should use Hono on Node.js for routes, static runtime assets, and SSE/live-reload events [F019]. In development, Vite can power the frontend dev server; in installed runtime mode, the CLI should serve prebuilt assets plus the local read-only API rather than requiring a Vite dev server in normal user sessions [F001].
 
-The UI requirements are also feasible. React Flow fits the interactive graph explorer [F002]. Shiki fits Markdown code blocks and read-only source viewing without forcing a Monaco-sized editor into v1 [F003]. The JSONL graph model is simple enough to normalize map, fact, plan, and ADR records while preserving original IDs and edge types [F004].
+The UI requirements are also feasible. shadcn/ui gives the dashboard an accessible component baseline without locking the project into a black-box component library [F014]. Tailwind CSS lets the tactile dark design system live in utility classes and semantic CSS variables rather than a separate runtime styling layer [F015]. React Flow fits the interactive graph explorer [F002]. Shiki fits Markdown code blocks and read-only source viewing without forcing a Monaco-sized editor into v1 [F003]. The JSONL graph model is simple enough to normalize map, fact, plan, and ADR records while preserving original IDs and edge types [F004].
 
 Primary risks and mitigations:
 
@@ -78,13 +83,14 @@ Primary risks and mitigations:
 | Dashboard becomes an editor | Keep all v1 endpoints read-only and omit mutating UI affordances. |
 | Graph noise | Start topic-scoped, add layer/type filters, search, minimap, and lazy detail drawers. |
 | Installed package complexity | Serve prebuilt assets at runtime; reserve Vite dev server for development/build. |
+| Stale browser state | Watch safe `.plan/**` paths, debounce reload events, invalidate affected caches, and show a disconnected/manual-refresh state if the event stream drops [F013]. |
 | UI polish slips | Encode the tactile dark design system as acceptance criteria [F010]. |
 
 ## Design
 
 ### 1. Package the installed dashboard CLI
 
-Add a package `bin` entry for `cartographer-dashboard` and include dashboard runtime assets/dependencies in `file:package.json` [F006]. The CLI should own process lifecycle, port selection, browser opening, JSON output, and root selection.
+Add a package `bin` entry for `cartographer-dashboard` at `bin/cartographer-dashboard.js` and include top-level `dashboard/` runtime/build assets and dependencies in `file:package.json` [F006] [F021]. The CLI should own process lifecycle, port selection, browser opening, JSON output, and root selection.
 
 Minimal v1 contract:
 
@@ -98,7 +104,7 @@ Default behavior:
 
 - `--root` defaults to `$PWD`.
 - `--host` defaults to loopback.
-- `start` starts a read-only local server and reports `ok`, `url`, `root`, `topic`, `pid`, `mode: "read-only"`, and warnings when `--json` is used.
+- `start` starts a read-only local server, stores process/status metadata outside the repository under XDG runtime storage or an `os.tmpdir` fallback keyed by repository root hash, and reports `ok`, `url`, `root`, `topic`, `pid`, `mode: "read-only"`, and warnings when `--json` is used [F022].
 - `--topic` deep-links to a topic detail route.
 - Runtime mode serves prebuilt client assets plus the local API.
 - Development mode may use Vite’s programmatic server API for fast frontend iteration [F001].
@@ -127,7 +133,7 @@ If `cartographer-dashboard` is missing from `PATH`, the skill can try the packag
 
 ### 3. Build a read-only server/API
 
-Implement a loopback-only server that scans safe paths under the selected repository root. The server should read:
+Implement a loopback-only Hono server that scans safe paths under the selected repository root and watches safe `.plan/**` changes for live reload [F019]. The server should read:
 
 - `.plan/<topic>/proposal.md`
 - `.plan/<topic>/plan.md`
@@ -154,6 +160,9 @@ Useful endpoints:
 | `GET /api/files?path=<path>&line=<line>` | Safe file read for code/document viewer. |
 | `GET /api/adrs` / `GET /api/adrs/:id` | ADR metrics, currentness, and relationships [F009]. |
 | `GET /api/health` | Broken refs, stale index hints, private-reference warnings, validator summaries. |
+| `GET /api/events` | Server-sent event stream for debounced `.plan` change notifications and reload hints [F013]. |
+
+Live reload should use Chokidar as a debounced watcher over safe `.plan/**` paths, ignore `.plan/_private/**`, coalesce rapid/atomic writes, invalidate only affected topic/global caches, and send clients enough metadata to refetch impacted resources [F023]. The selected API shape should use Hono's Node-compatible SSE/streaming support for a stable event contract such as `{ type, topic?, paths, changedAt }` and degrade to a visible manual-refresh state when event streaming is unavailable [F013] [F019].
 
 ### 4. Create the dashboard information architecture
 
@@ -161,7 +170,7 @@ The dashboard should have these main routes:
 
 | Area | Question answered | Key content |
 |---|---|---|
-| Overview | “What is happening?” | Active/in-progress/finished metrics, recent receipts, validation health, broken refs. |
+| Overview | “What is happening?” | Active/in-progress/finished metrics, recent receipts, validation health, broken refs, live connection status. |
 | Topics / Plans | “What topics exist?” | Topic list with proposal/plan status, current phase, validations, graph counts, ADR links. |
 | Topic Detail | “What does this topic say and prove?” | Summary, Proposal, Plan, Facts, Evidence, Receipts, Graph, Files tabs. |
 | Graph Explorer | “How is this connected?” | Layered map/fact/plan/ADR graph, filters, search, minimap, relationship inspector. |
@@ -214,17 +223,29 @@ The viewer should optimize for reading and navigation:
 
 This satisfies the “lightweight VS Code” requirement without making v1 a full editor.
 
-### 8. Apply the tactile dark UI system
+### 8. Use shadcn/ui and Tailwind CSS for frontend UI
 
-Design tokens and components should be defined before page polish begins:
+The dashboard client should live under `dashboard/client` in the selected top-level `dashboard/` layout and use shadcn/ui as its React component foundation and Tailwind CSS as its styling system [F014] [F015] [F021]. This is a requirement for v1, not an optional implementation detail.
 
-- Dark neutral base surfaces with layered panels, inset wells, raised cards, soft shadows, and edge highlights.
+Implementation expectations:
+
+- Initialize the Vite/React client under `dashboard/client` with shadcn/ui-compatible aliases and component layout, with copied component code kept in the dashboard client source tree for local customization [F014] [F021].
+- Add only the components needed for v1 surfaces first, such as button, card, badge, tabs, sheet/dialog/drawer, tooltip, dropdown menu, scroll area, table, command/search, separator, skeleton, toast/sonner, and form controls [F014].
+- Use Tailwind CSS through the Vite integration and CSS entrypoint, then express layout, spacing, responsive behavior, state variants, and tactile dark theme tokens through Tailwind utilities and CSS variables [F015].
+- Treat shadcn/ui accessibility defaults, keyboard behavior, focus states, and Radix-backed primitives as the baseline; do not replace them with bespoke inaccessible controls [F014].
+- Customize shadcn/ui component styling to match the tactile cockpit aesthetic rather than accepting generic defaults unchanged [F010] [F014] [F015].
+
+### 9. Apply the tactile dark UI system
+
+Design tokens and shadcn/ui components should be defined before page polish begins:
+
+- Dark neutral base surfaces with layered panels, inset wells, raised cards, soft shadows, and edge highlights, implemented as Tailwind theme tokens/utilities [F015].
 - Pressed, hovered, focused, loading, copied, selected, and expanded states for every interactive control.
 - Category colors: proposal purple, plan blue, implementation green, fact/source teal, file slate, ADR amber, validation success/warning/danger.
 - Motion that explains state: drawer slides, graph focus transitions, card lift/press, filter chip toggles, and copy/open feedback.
 - Reduced-motion support, visible focus rings, contrast checks, and icons/labels so status does not rely on color alone [F010].
 
-### 9. Validate with temporary projects and existing checks
+### 10. Validate with temporary projects and existing checks
 
 Testing must use temporary/mock repositories for commands that create `.plan/`, index, or generated artifacts, consistent with `file:AGENTS.md`.
 
@@ -234,8 +255,11 @@ Validation should cover:
 - Server path-safety and `.plan/_private/**` blocking.
 - JSONL parsing, broken-ref detection, and citation linkification.
 - Overview/topic metrics from fixture proposal/plan/receipt/ADR data [F008] [F009].
+- Live reload event delivery when fixture `.plan` files are created, edited, deleted, or renamed [F013].
 - Graph node/edge rendering and node-click routing [F002].
 - Markdown/code rendering with Shiki and line anchors [F003].
+- shadcn/ui component import/render smoke tests, Vitest Browser Mode coverage for key React components/interactions, a small Playwright smoke suite for CLI/server/browser/live-reload flows against temporary fixtures, and Tailwind CSS build output checks for the dashboard client [F014] [F015] [F024].
+- Strict full-repo ESLint, typescript-eslint, and Prettier setup checks, including package scripts that can run in CI/local validation before heavy TS implementation continues [F016] [F017] [F018] [F020].
 - Package checks from `file:package.json`, plus existing JSONL/topic validation helpers [F011].
 
-A practical implementation sequence is: safe artifact reader/API, frontend build/dev setup, installed CLI/runtime server, overview/topics/topic detail APIs, Markdown/code rendering, graph explorer, dashboard skill, then polish and validation hardening. A Pi extension command/tool remains a post-v1 option unless the user explicitly asks for deeper Pi-native controls.
+A practical implementation sequence is: TypeScript quality tooling, safe artifact reader/API, debounced `.plan` watcher and event stream, frontend build/dev setup with Tailwind CSS and shadcn/ui, installed CLI/runtime server, overview/topics/topic detail APIs, Markdown/code rendering, graph explorer, dashboard skill, then polish and validation hardening. Draft ADR-0003 records the selected dashboard stack and should be accepted, updated, or superseded after implementation validation receipts exist [F025]. A Pi extension command/tool remains a post-v1 option unless the user explicitly asks for deeper Pi-native controls.

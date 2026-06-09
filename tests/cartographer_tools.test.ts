@@ -14,16 +14,48 @@ function tempProjectWithTopic(): string {
 	const topicDir = path.join(root, ".plan", "demo");
 	fs.mkdirSync(topicDir, { recursive: true });
 	fs.writeFileSync(path.join(topicDir, "proposal.md"), "# Demo\n\nUses [F001].\n", "utf8");
-	fs.writeFileSync(path.join(topicDir, "facts.nodes.jsonl"), `${JSON.stringify({ id: "S001", type: "source" })}\n${JSON.stringify({ id: "F001", type: "fact", title: "Fact", raw_archive_path: ".plan/_private/demo/raw.log" })}\n`, "utf8");
-	fs.writeFileSync(path.join(topicDir, "facts.edges.jsonl"), `${JSON.stringify({ from: "F001", to: "S001", type: "supported_by" })}\n`, "utf8");
-	fs.writeFileSync(path.join(topicDir, "receipts.jsonl"), `${JSON.stringify({ id: "receipt:P1", type: "validation-receipt", status: "passed", phase_id: "P1", commands: [{ command: "test", result: "passed" }] })}\n`, "utf8");
-	fs.writeFileSync(path.join(topicDir, "context-packs.jsonl"), `${JSON.stringify({ id: "context:P2", type: "context-pack", phase_id: "P2", summary: "Compact", references: [".plan/_private/demo/raw.log"] })}\n`, "utf8");
-	fs.writeFileSync(path.join(topicDir, "plan.md"), `# demo Plan\n\n### Phase P0 — Build\n\n#### Checklist\n- [ ] **P0.T1** Implement.\n\n#### Validation\n- [ ] **P0.V1** npm run test:ts\n`, "utf8");
-	fs.writeFileSync(path.join(topicDir, "plan.nodes.jsonl"), [
-		{ id: "phase:P0", type: "phase", phase_id: "P0", title: "Build", status: "pending" },
-		{ id: "task:P0.T1", type: "task", task_id: "P0.T1", phase_id: "P0", title: "Implement" },
-		{ id: "validation:P0.V1", type: "validation", validation_id: "P0.V1", phase_id: "P0", command: "npm run test:ts" },
-	].map((record) => JSON.stringify(record)).join("\n") + "\n", "utf8");
+	fs.writeFileSync(
+		path.join(topicDir, "facts.nodes.jsonl"),
+		`${JSON.stringify({ id: "S001", type: "source" })}\n${JSON.stringify({ id: "F001", type: "fact", title: "Fact", raw_archive_path: ".plan/_private/demo/raw.log" })}\n`,
+		"utf8",
+	);
+	fs.writeFileSync(
+		path.join(topicDir, "facts.edges.jsonl"),
+		`${JSON.stringify({ from: "F001", to: "S001", type: "supported_by" })}\n`,
+		"utf8",
+	);
+	fs.writeFileSync(
+		path.join(topicDir, "receipts.jsonl"),
+		`${JSON.stringify({ id: "receipt:P1", type: "validation-receipt", status: "passed", phase_id: "P1", commands: [{ command: "test", result: "passed" }] })}\n`,
+		"utf8",
+	);
+	fs.writeFileSync(
+		path.join(topicDir, "context-packs.jsonl"),
+		`${JSON.stringify({ id: "context:P2", type: "context-pack", phase_id: "P2", summary: "Compact", references: [".plan/_private/demo/raw.log"] })}\n`,
+		"utf8",
+	);
+	fs.writeFileSync(
+		path.join(topicDir, "plan.md"),
+		`# demo Plan\n\n### Phase P0 — Build\n\n#### Checklist\n- [ ] **P0.T1** Implement.\n\n#### Validation\n- [ ] **P0.V1** npm run test:ts\n`,
+		"utf8",
+	);
+	fs.writeFileSync(
+		path.join(topicDir, "plan.nodes.jsonl"),
+		[
+			{ id: "phase:P0", type: "phase", phase_id: "P0", title: "Build", status: "pending" },
+			{ id: "task:P0.T1", type: "task", task_id: "P0.T1", phase_id: "P0", title: "Implement" },
+			{
+				id: "validation:P0.V1",
+				type: "validation",
+				validation_id: "P0.V1",
+				phase_id: "P0",
+				command: "npm run test:ts",
+			},
+		]
+			.map((record) => JSON.stringify(record))
+			.join("\n") + "\n",
+		"utf8",
+	);
 	fs.writeFileSync(path.join(topicDir, "plan.edges.jsonl"), "", "utf8");
 	return root;
 }
@@ -31,7 +63,10 @@ function tempProjectWithTopic(): string {
 type RegisteredTool = {
 	name: string;
 	promptGuidelines?: string[];
-	execute: (toolCallId: string, params: Record<string, unknown>) => Promise<{ content: { text: string }[]; isError?: boolean }>;
+	execute: (
+		toolCallId: string,
+		params: Record<string, unknown>,
+	) => Promise<{ content: { text: string }[]; isError?: boolean }>;
 };
 
 function registeredTools(): RegisteredTool[] {
@@ -43,7 +78,9 @@ function registeredTools(): RegisteredTool[] {
 describe("cartographer tool registration", () => {
 	it("registers a read-only artifact helper without mutation actions", () => {
 		const tools = registeredTools();
-		const artifactTool = tools.find((tool) => tool.name === "cartographer_artifacts") as RegisteredTool & { parameters?: unknown };
+		const artifactTool = tools.find((tool) => tool.name === "cartographer_artifacts") as RegisteredTool & {
+			parameters?: unknown;
+		};
 
 		expect(artifactTool).toBeTruthy();
 		expect(artifactTool?.promptGuidelines?.join("\n")).toContain("read-only");
@@ -53,7 +90,9 @@ describe("cartographer tool registration", () => {
 
 	it("registers a parent-owned validation wrapper", () => {
 		const tools = registeredTools();
-		const validationTool = tools.find((tool) => tool.name === "cartographer_validation") as RegisteredTool & { parameters?: unknown };
+		const validationTool = tools.find((tool) => tool.name === "cartographer_validation") as RegisteredTool & {
+			parameters?: unknown;
+		};
 
 		expect(validationTool).toBeTruthy();
 		expect(validationTool?.promptGuidelines?.join("\n")).toContain("parent");
@@ -108,7 +147,7 @@ describe("cartographer tool registration", () => {
 		const result = await validationTool.execute("tool-call", {
 			action: "run",
 			root: project,
-			command: "node -e \"process.exit(0)\"",
+			command: 'node -e "process.exit(0)"',
 			phaseId: "P4",
 			validationId: ["P4.V3"],
 			receiptFile: ".plan/demo/receipts.jsonl",

@@ -5,6 +5,7 @@ version: 3
 created: "2026-06-06"
 updated: "2026-06-07"
 ---
+
 # Pi Cartographer Index Project
 
 ## When to Use

@@ -7,23 +7,18 @@ import path from "node:path";
 const script = path.resolve("skills/plan/scripts/manage_jsonl.ts");
 
 function runJson(args: string[], cwd = process.cwd()): any {
-	const stdout = execFileSync(
-		"node",
-		["--experimental-strip-types", script, ...args, "--json"],
-		{
-			cwd,
-			encoding: "utf8",
-		},
-	);
+	const stdout = execFileSync("node", ["--experimental-strip-types", script, ...args, "--json"], {
+		cwd,
+		encoding: "utf8",
+	});
 	return JSON.parse(stdout);
 }
 
 function runJsonUnchecked(args: string[], cwd = process.cwd()): any {
-	const result = spawnSync(
-		"node",
-		["--experimental-strip-types", script, ...args, "--json"],
-		{ cwd, encoding: "utf8" },
-	);
+	const result = spawnSync("node", ["--experimental-strip-types", script, ...args, "--json"], {
+		cwd,
+		encoding: "utf8",
+	});
 	return { status: result.status, payload: JSON.parse(result.stdout) };
 }
 
@@ -37,18 +32,38 @@ function writeTopicFixture(root: string, topic = "demo"): string {
 	fs.mkdirSync(evidenceDir, { recursive: true });
 	fs.writeFileSync(path.join(topicDir, "proposal.md"), "# Demo\n\nUses [F001] and [F999].\n", "utf8");
 	fs.writeFileSync(path.join(topicDir, "plan.md"), "# Plan\n\nUses [F001] and [F002].\n", "utf8");
-	fs.writeFileSync(path.join(topicDir, "map.nodes.jsonl"), `${JSON.stringify({ id: "topic:demo", type: "topic", title: "Demo" })}\n`, "utf8");
+	fs.writeFileSync(
+		path.join(topicDir, "map.nodes.jsonl"),
+		`${JSON.stringify({ id: "topic:demo", type: "topic", title: "Demo" })}\n`,
+		"utf8",
+	);
 	fs.writeFileSync(path.join(topicDir, "map.edges.jsonl"), "", "utf8");
 	fs.writeFileSync(
 		path.join(topicDir, "facts.nodes.jsonl"),
 		`${JSON.stringify({ id: "S001", type: "source", title: "Evidence", reference: ".plan/demo/evidence/analysis.md:1" })}\n${JSON.stringify({ id: "F001", type: "fact", title: "Fact", claim: "Claim", raw_archive_path: ".plan/_private/demo/raw.log" })}\n${JSON.stringify({ id: "F002", type: "fact", title: "Unsupported" })}\n`,
 		"utf8",
 	);
-	fs.writeFileSync(path.join(topicDir, "facts.edges.jsonl"), `${JSON.stringify({ from: "F001", to: "S001", type: "supported_by" })}\n`, "utf8");
-	fs.writeFileSync(path.join(topicDir, "receipts.jsonl"), `${JSON.stringify({ id: "receipt:P1", type: "validation-receipt", status: "passed", phase_id: "P1", commands: [{ command: "test", result: "passed", output: ".plan/_private/demo/out.log" }] })}\n`, "utf8");
-	fs.writeFileSync(path.join(topicDir, "context-packs.jsonl"), `${JSON.stringify({ id: "context:P2", type: "context-pack", phase_id: "P2", summary: "Compact", references: [".plan/_private/demo/raw.log", ".plan/demo/proposal.md"] })}\n`, "utf8");
+	fs.writeFileSync(
+		path.join(topicDir, "facts.edges.jsonl"),
+		`${JSON.stringify({ from: "F001", to: "S001", type: "supported_by" })}\n`,
+		"utf8",
+	);
+	fs.writeFileSync(
+		path.join(topicDir, "receipts.jsonl"),
+		`${JSON.stringify({ id: "receipt:P1", type: "validation-receipt", status: "passed", phase_id: "P1", commands: [{ command: "test", result: "passed", output: ".plan/_private/demo/out.log" }] })}\n`,
+		"utf8",
+	);
+	fs.writeFileSync(
+		path.join(topicDir, "context-packs.jsonl"),
+		`${JSON.stringify({ id: "context:P2", type: "context-pack", phase_id: "P2", summary: "Compact", references: [".plan/_private/demo/raw.log", ".plan/demo/proposal.md"] })}\n`,
+		"utf8",
+	);
 	fs.writeFileSync(path.join(evidenceDir, "analysis.md"), "# Evidence\n\n- Redaction status: passed\n", "utf8");
-	fs.writeFileSync(path.join(evidenceDir, "manifest.jsonl"), `${JSON.stringify({ id: "evidence:1", path: ".plan/_private/demo/raw.log", summary: "Imported" })}\n`, "utf8");
+	fs.writeFileSync(
+		path.join(evidenceDir, "manifest.jsonl"),
+		`${JSON.stringify({ id: "evidence:1", path: ".plan/_private/demo/raw.log", summary: "Imported" })}\n`,
+		"utf8",
+	);
 	return topicDir;
 }
 
@@ -80,16 +95,9 @@ describe("manage_jsonl CLI", () => {
 			.trim()
 			.split("\n")
 			.map((line) => JSON.parse(line));
-		expect(records).toEqual([
-			{ description: "Merged", id: "N1", title: "Old", type: "thing" },
-		]);
+		expect(records).toEqual([{ description: "Merged", id: "N1", title: "Old", type: "thing" }]);
 
-		const validation = runJson([
-			"validate-file",
-			"--file",
-			file,
-			"--require-id",
-		]);
+		const validation = runJson(["validate-file", "--file", file, "--require-id"]);
 		expect(validation.ok).toBe(true);
 	});
 
@@ -97,20 +105,11 @@ describe("manage_jsonl CLI", () => {
 		const root = tempDir();
 		fs.mkdirSync(path.join(root, ".plan", "demo"), { recursive: true });
 
-		const seeded = runJson([
-			"seed-pi-facts",
-			"--root",
-			root,
-			"--topic",
-			"demo",
-		]);
+		const seeded = runJson(["seed-pi-facts", "--root", root, "--topic", "demo"]);
 		expect(seeded.ok).toBe(true);
 		expect(seeded.nodes.count).toBeGreaterThanOrEqual(11);
 
-		const facts = fs.readFileSync(
-			path.join(root, ".plan", "demo", "facts.nodes.jsonl"),
-			"utf8",
-		);
+		const facts = fs.readFileSync(path.join(root, ".plan", "demo", "facts.nodes.jsonl"), "utf8");
 		expect(facts).toContain("F900");
 		expect(facts).toContain("S904");
 	});
@@ -142,11 +141,7 @@ describe("manage_jsonl CLI", () => {
 		const missList = runJson(["list-misses", "--root", root]);
 		expect(missList.count).toBe(1);
 
-		fs.appendFileSync(
-			missFile,
-			`${JSON.stringify({ id: "miss:2", failure_type: "bad", text: "raw" })}\n`,
-			"utf8",
-		);
+		fs.appendFileSync(missFile, `${JSON.stringify({ id: "miss:2", failure_type: "bad", text: "raw" })}\n`, "utf8");
 		const invalidMisses = runJsonUnchecked(["validate-misses", "--root", root]);
 		expect(invalidMisses.status).not.toBe(0);
 		expect(invalidMisses.payload.ok).toBe(false);
@@ -188,11 +183,7 @@ describe("manage_jsonl CLI", () => {
 		const topicDir = path.join(root, ".plan", "demo");
 		fs.mkdirSync(topicDir, { recursive: true });
 		fs.writeFileSync(path.join(root, "README.md"), "hello\n", "utf8");
-		fs.writeFileSync(
-			path.join(topicDir, "proposal.md"),
-			"# Demo\n\nUses [F001].\n",
-			"utf8",
-		);
+		fs.writeFileSync(path.join(topicDir, "proposal.md"), "# Demo\n\nUses [F001].\n", "utf8");
 		fs.writeFileSync(
 			path.join(topicDir, "map.nodes.jsonl"),
 			`${JSON.stringify({ id: "topic:demo", type: "topic", title: "Demo" })}\n`,
@@ -210,13 +201,7 @@ describe("manage_jsonl CLI", () => {
 			"utf8",
 		);
 
-		const report = runJson([
-			"validate-topic",
-			"--root",
-			root,
-			"--topic",
-			"demo",
-		]);
+		const report = runJson(["validate-topic", "--root", root, "--topic", "demo"]);
 		expect(report.ok).toBe(true);
 		expect(report.counts.fact_nodes).toBe(2);
 	});
@@ -228,15 +213,27 @@ describe("manage_jsonl CLI", () => {
 		fs.mkdirSync(evidenceDir, { recursive: true });
 		fs.writeFileSync(path.join(root, "README.md"), "hello\n", "utf8");
 		fs.writeFileSync(path.join(topicDir, "proposal.md"), "# Demo\n\nUses [F001].\n", "utf8");
-		fs.writeFileSync(path.join(topicDir, "map.nodes.jsonl"), `${JSON.stringify({ id: "topic:demo", type: "topic", title: "Demo" })}\n`, "utf8");
+		fs.writeFileSync(
+			path.join(topicDir, "map.nodes.jsonl"),
+			`${JSON.stringify({ id: "topic:demo", type: "topic", title: "Demo" })}\n`,
+			"utf8",
+		);
 		fs.writeFileSync(path.join(topicDir, "map.edges.jsonl"), "", "utf8");
-		fs.writeFileSync(path.join(evidenceDir, "artifact-analysis.md"), "# Evidence Analysis: artifact\n\n## Source Handling\n- Redaction status: passed\n", "utf8");
+		fs.writeFileSync(
+			path.join(evidenceDir, "artifact-analysis.md"),
+			"# Evidence Analysis: artifact\n\n## Source Handling\n- Redaction status: passed\n",
+			"utf8",
+		);
 		fs.writeFileSync(
 			path.join(topicDir, "facts.nodes.jsonl"),
 			`${JSON.stringify({ id: "S001", type: "source", title: "Evidence", source_kind: "sanitized_evidence", reference: ".plan/demo/evidence/artifact-analysis.md:1" })}\n${JSON.stringify({ id: "F001", type: "fact", title: "Fact" })}\n`,
 			"utf8",
 		);
-		fs.writeFileSync(path.join(topicDir, "facts.edges.jsonl"), `${JSON.stringify({ from: "F001", to: "S001", type: "supported_by" })}\n`, "utf8");
+		fs.writeFileSync(
+			path.join(topicDir, "facts.edges.jsonl"),
+			`${JSON.stringify({ from: "F001", to: "S001", type: "supported_by" })}\n`,
+			"utf8",
+		);
 
 		const report = runJson(["validate-topic", "--root", root, "--topic", "demo"]);
 		expect(report.ok).toBe(true);
@@ -249,16 +246,28 @@ describe("manage_jsonl CLI", () => {
 		const evidenceDir = path.join(topicDir, "evidence");
 		fs.mkdirSync(evidenceDir, { recursive: true });
 		fs.writeFileSync(path.join(topicDir, "proposal.md"), "# Demo\n\nUses [F001].\n", "utf8");
-		fs.writeFileSync(path.join(topicDir, "map.nodes.jsonl"), `${JSON.stringify({ id: "topic:demo", type: "topic", title: "Demo" })}\n`, "utf8");
+		fs.writeFileSync(
+			path.join(topicDir, "map.nodes.jsonl"),
+			`${JSON.stringify({ id: "topic:demo", type: "topic", title: "Demo" })}\n`,
+			"utf8",
+		);
 		fs.writeFileSync(path.join(topicDir, "map.edges.jsonl"), "", "utf8");
 		const fakeToken = `ghp_${"123456789012345678901234567890123456"}`;
-		fs.writeFileSync(path.join(evidenceDir, "artifact-analysis.md"), `# Evidence Analysis: artifact\n\n${fakeToken}\n`, "utf8");
+		fs.writeFileSync(
+			path.join(evidenceDir, "artifact-analysis.md"),
+			`# Evidence Analysis: artifact\n\n${fakeToken}\n`,
+			"utf8",
+		);
 		fs.writeFileSync(
 			path.join(topicDir, "facts.nodes.jsonl"),
 			`${JSON.stringify({ id: "S001", type: "source", title: "Evidence", source_kind: "sanitized_evidence", reference: ".plan/demo/evidence/artifact-analysis.md:1" })}\n${JSON.stringify({ id: "F001", type: "fact", title: "Fact", raw_archive_path: ".plan/_private/demo/raw.log" })}\n`,
 			"utf8",
 		);
-		fs.writeFileSync(path.join(topicDir, "facts.edges.jsonl"), `${JSON.stringify({ from: "F001", to: "S001", type: "supported_by" })}\n`, "utf8");
+		fs.writeFileSync(
+			path.join(topicDir, "facts.edges.jsonl"),
+			`${JSON.stringify({ from: "F001", to: "S001", type: "supported_by" })}\n`,
+			"utf8",
+		);
 
 		const report = runJsonUnchecked(["validate-topic", "--root", root, "--topic", "demo"]);
 		expect(report.status).not.toBe(0);
@@ -271,13 +280,33 @@ describe("manage_jsonl CLI", () => {
 		const root = tempDir();
 		writeTopicFixture(root);
 
-		const list = runJson(["list-records", "--root", root, "--topic", "demo", "--artifact", "facts.nodes", "--limit", "1"]);
+		const list = runJson([
+			"list-records",
+			"--root",
+			root,
+			"--topic",
+			"demo",
+			"--artifact",
+			"facts.nodes",
+			"--limit",
+			"1",
+		]);
 		expect(list.ok).toBe(true);
 		expect(list.records).toHaveLength(1);
 		expect(JSON.stringify(list)).not.toContain(".plan/_private/demo/raw.log");
 		expect(JSON.stringify(list).length).toBeLessThan(1200);
 
-		const shown = runJson(["show-record", "--root", root, "--topic", "demo", "--artifact", "facts.nodes", "--id", "F001"]);
+		const shown = runJson([
+			"show-record",
+			"--root",
+			root,
+			"--topic",
+			"demo",
+			"--artifact",
+			"facts.nodes",
+			"--id",
+			"F001",
+		]);
 		expect(shown.record.raw_archive_path).toBeUndefined();
 		expect(JSON.stringify(shown)).not.toContain(".plan/_private/demo/raw.log");
 	});
@@ -324,15 +353,44 @@ describe("manage_jsonl CLI", () => {
 		const root = tempDir();
 		const topicDir = path.join(root, ".plan", "demo");
 		fs.mkdirSync(topicDir, { recursive: true });
-		fs.writeFileSync(path.join(topicDir, "plan.md"), `# demo Plan\n\n## Phases\n\n### Phase P0 — Setup\n\n- **Status:** complete\n- **Depends on:** none\n\n#### Objective\nDone work.\n\n#### Checklist\n- [x] **P0.T1** Done.\n\n#### Validation\n- [x] **P0.V1** Done.\n\n### Phase P1 — Build\n\n- **Status:** pending\n- **Depends on:** P0\n\n#### Objective\nBuild the helper.\n\n#### Scope\nOnly helper files.\n\n#### Checklist\n- [ ] **P1.T1** Implement helper.\n\n#### Validation\n- [ ] **P1.V1** npm run test:ts\n`, "utf8");
-		fs.writeFileSync(path.join(topicDir, "plan.nodes.jsonl"), [
-			{ id: "plan:demo", type: "plan" },
-			{ id: "phase:P0", type: "phase", phase_id: "P0", title: "Setup", status: "complete" },
-			{ id: "phase:P1", type: "phase", phase_id: "P1", title: "Build", status: "pending", depends_on: ["P0"], references: ["file:skills/plan/scripts/manage_jsonl.ts"] },
-			{ id: "task:P1.T1", type: "task", task_id: "P1.T1", phase_id: "P1", title: "Implement helper" },
-			{ id: "validation:P1.V1", type: "validation", validation_id: "P1.V1", phase_id: "P1", title: "Run tests", command: "npm run test:ts" },
-		].map((record) => JSON.stringify(record)).join("\n") + "\n", "utf8");
-		fs.writeFileSync(path.join(topicDir, "plan.edges.jsonl"), `${JSON.stringify({ from: "phase:P1", to: "phase:P0", type: "depends_on" })}\n`, "utf8");
+		fs.writeFileSync(
+			path.join(topicDir, "plan.md"),
+			`# demo Plan\n\n## Phases\n\n### Phase P0 — Setup\n\n- **Status:** complete\n- **Depends on:** none\n\n#### Objective\nDone work.\n\n#### Checklist\n- [x] **P0.T1** Done.\n\n#### Validation\n- [x] **P0.V1** Done.\n\n### Phase P1 — Build\n\n- **Status:** pending\n- **Depends on:** P0\n\n#### Objective\nBuild the helper.\n\n#### Scope\nOnly helper files.\n\n#### Checklist\n- [ ] **P1.T1** Implement helper.\n\n#### Validation\n- [ ] **P1.V1** npm run test:ts\n`,
+			"utf8",
+		);
+		fs.writeFileSync(
+			path.join(topicDir, "plan.nodes.jsonl"),
+			[
+				{ id: "plan:demo", type: "plan" },
+				{ id: "phase:P0", type: "phase", phase_id: "P0", title: "Setup", status: "complete" },
+				{
+					id: "phase:P1",
+					type: "phase",
+					phase_id: "P1",
+					title: "Build",
+					status: "pending",
+					depends_on: ["P0"],
+					references: ["file:skills/plan/scripts/manage_jsonl.ts"],
+				},
+				{ id: "task:P1.T1", type: "task", task_id: "P1.T1", phase_id: "P1", title: "Implement helper" },
+				{
+					id: "validation:P1.V1",
+					type: "validation",
+					validation_id: "P1.V1",
+					phase_id: "P1",
+					title: "Run tests",
+					command: "npm run test:ts",
+				},
+			]
+				.map((record) => JSON.stringify(record))
+				.join("\n") + "\n",
+			"utf8",
+		);
+		fs.writeFileSync(
+			path.join(topicDir, "plan.edges.jsonl"),
+			`${JSON.stringify({ from: "phase:P1", to: "phase:P0", type: "depends_on" })}\n`,
+			"utf8",
+		);
 
 		const summary = runJson(["phase-summary", "--root", root, "--topic", "demo"]);
 		expect(summary.ok).toBe(true);
@@ -352,12 +410,22 @@ describe("manage_jsonl CLI", () => {
 		const root = tempDir();
 		const topicDir = path.join(root, ".plan", "demo");
 		fs.mkdirSync(topicDir, { recursive: true });
-		fs.writeFileSync(path.join(topicDir, "plan.md"), "# demo Plan\n\n### Phase P0 — Setup\n\n#### Checklist\n- [ ] **P0.T1** Setup.\n\n### Phase P1 — Build\n\n#### Checklist\n- [ ] **P1.T1** Build.\n", "utf8");
-		fs.writeFileSync(path.join(topicDir, "plan.nodes.jsonl"), [
-			{ id: "phase:P0", type: "phase", phase_id: "P0", status: "pending" },
-			{ id: "phase:P1", type: "phase", phase_id: "P1", status: "pending", depends_on: ["P0"] },
-			{ id: "task:P1.T1", type: "task", task_id: "P1.T1", phase_id: "P1", title: "Build" },
-		].map((record) => JSON.stringify(record)).join("\n") + "\n", "utf8");
+		fs.writeFileSync(
+			path.join(topicDir, "plan.md"),
+			"# demo Plan\n\n### Phase P0 — Setup\n\n#### Checklist\n- [ ] **P0.T1** Setup.\n\n### Phase P1 — Build\n\n#### Checklist\n- [ ] **P1.T1** Build.\n",
+			"utf8",
+		);
+		fs.writeFileSync(
+			path.join(topicDir, "plan.nodes.jsonl"),
+			[
+				{ id: "phase:P0", type: "phase", phase_id: "P0", status: "pending" },
+				{ id: "phase:P1", type: "phase", phase_id: "P1", status: "pending", depends_on: ["P0"] },
+				{ id: "task:P1.T1", type: "task", task_id: "P1.T1", phase_id: "P1", title: "Build" },
+			]
+				.map((record) => JSON.stringify(record))
+				.join("\n") + "\n",
+			"utf8",
+		);
 		fs.writeFileSync(path.join(topicDir, "plan.edges.jsonl"), "", "utf8");
 
 		const blocked = runJson(["phase-summary", "--root", root, "--topic", "demo", "--phase-id", "P1"]);

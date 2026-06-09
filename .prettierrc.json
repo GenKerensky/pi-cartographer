@@ -1,0 +1,21 @@
+{
+  "printWidth": 120,
+  "singleQuote": false,
+  "trailingComma": "all",
+  "overrides": [
+    {
+      "files": ["*.ts", "*.tsx", "*.js", "*.mjs", "*.cjs"],
+      "options": {
+        "tabWidth": 2,
+        "useTabs": true
+      }
+    },
+    {
+      "files": ["*.json", "*.jsonc"],
+      "options": {
+        "tabWidth": 2,
+        "useTabs": false
+      }
+    }
+  ]
+}

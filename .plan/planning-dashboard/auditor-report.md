@@ -1,0 +1,54 @@
+PASS
+
+Required corrections: none.
+
+Validation receipts/helper summaries reviewed:
+- `receipt:plan:validation:2026-06-09T05:07:50+00:00` — validate-topic PASS.
+- `receipt:plan:validation:2026-06-09T05:07:57+00:00` — planning graph validation PASS.
+- `receipt:plan:validation:2026-06-09T05:08:04+00:00` — ADR validation PASS.
+- validate-topic-summary: ok, no errors/warnings.
+- fact-citation-summary: ok; F001–F025 cited in proposal and plan; no missing/unsupported facts.
+- receipt-summary: all 12 receipts passed.
+- context-pack-summary: `context:planning-dashboard:proposal` exists.
+
+Findings:
+- Resolved decisions F019–F025 are recorded and supported in facts/edges: `.plan/planning-dashboard/facts.nodes.jsonl:48-61`, `.plan/planning-dashboard/facts.edges.jsonl:44-67`.
+- Plan/proposal reflect Hono, strict tooling, top-level layout, XDG/tmp metadata, Chokidar, browser/smoke testing, and ADR-0003 handoff: `.plan/planning-dashboard/plan.md:20-32`, `.plan/planning-dashboard/proposal.md:103-107`, `.plan/planning-dashboard/proposal.md:136-165`, `.plan/planning-dashboard/proposal.md:228-265`.
+- P0/P1/P2/P3/P7 reference the relevant decisions in tasks/validations and graph edges: `.plan/planning-dashboard/plan.md:102-114`, `154-156`, `204-205`, `253-257`, `450-463`; `.plan/planning-dashboard/plan.edges.jsonl:213-251`.
+- ADR-0003 exists as draft and finalization guidance requires accept/update/supersede with implementation receipts: `docs/adr/0003-use-local-dashboard-stack-for-cartographer-planning-ui.md:1-4`, `46-78`; `.plan/planning-dashboard/plan.md:455`, `511`.
+- Existing constraints remain intact: read-only dashboard, loopback-only server, thin skill, private-path safety, live reload, shadcn/Tailwind, React Flow/Shiki, and temp/mock fixture testing are preserved: `.plan/planning-dashboard/proposal.md:46-54`, `149-165`, `252-265`; `.plan/planning-dashboard/plan.md:17`, `24-25`, `490-491`, `506-507`.
+
+Deterministic receipt path for parent recording:
+- `.plan/planning-dashboard/auditor-report.md`
+
+Residual risks:
+- ADR-0003 intentionally remains draft until implementation validation receipts exist; P7 already captures required finalization.
+## P0 Phase Audit — 2026-06-09T05:37:00+00:00
+
+PASS
+
+Required corrections: none.
+
+Auditor execution note:
+- Attempted `cartographer-auditor` subagent run for P0, but the harness rejected execution because no OpenRouter API key/provider login was available. Parent performed this fallback audit from deterministic receipts, helper summaries, and targeted code/search inspection.
+
+Validation receipts/helper summaries reviewed:
+- `receipt:P0:validation:2026-06-09T05:35:11+00:00` — `P0.V1` dashboard artifact reader/API health tests PASS.
+- `receipt:P0:validation:2026-06-09T05:35:16+00:00` — `P0.V2` typecheck PASS.
+- `receipt:P0:validation:2026-06-09T05:35:23+00:00` — `P0.V4` lint + Prettier PASS.
+- `receipt:P0:manual-route-inspection:2026-06-09T05:35:30+00:00` — `P0.V3` manual read-only route inspection PASS.
+- `receipt:P0:validation:2026-06-09T05:36:02+00:00` — `CV.V2` validate-topic PASS.
+- `receipt:P0:validation:2026-06-09T05:36:07+00:00` — `CV.V3` planning graph validation PASS.
+- Final post-receipt read-only validations: validate-topic PASS and planning graph PASS with no errors/warnings.
+
+Findings:
+- P0 checklist and validations are marked complete in `.plan/planning-dashboard/plan.md` and `.plan/planning-dashboard/plan.nodes.jsonl`.
+- `dashboard/server/app.ts` registers only `app.get(...)` API routes and `READ_ONLY_ROUTES` declares only `GET` methods.
+- Dashboard server/shared code contains no write/mutate file operations; fixture writes are confined to `tests/dashboard/fixtures.ts` under `os.tmpdir()` temp roots.
+- `dashboard/server/safety.ts` canonicalizes selected roots, blocks outside-root resolutions, blocks symlink/realpath escapes, and rejects `.plan/_private/**` reads before file content is returned.
+- `dashboard/server/artifact-reader.ts`, `dashboard/server/jsonl.ts`, and `dashboard/shared/models.ts` provide normalized topic/document/graph/receipt/context/evidence/index/ADR/health models with raw record preservation and private-reference redaction/warnings.
+- Strict TypeScript quality tooling is established through `eslint.config.js`, `.prettierrc.json`, `.prettierignore`, package scripts, updated dependencies, and `npm run check` passes.
+
+Residual risks:
+- P0 intentionally provides API/data foundations only; CLI lifecycle, loopback binding, live reload, and browser UI remain in later phases.
+- The one-time Prettier baseline touched existing Markdown/TypeScript files beyond the dashboard to make strict full-repo checks enforceable.

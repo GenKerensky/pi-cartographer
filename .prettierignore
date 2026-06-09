@@ -1,0 +1,10 @@
+node_modules/
+.plan/
+.ruff_cache/
+coverage/
+dist/
+**/__pycache__/
+**/*.pyc
+docs/adr/_graph/
+package-lock.json
+pathfinder-receipt.md

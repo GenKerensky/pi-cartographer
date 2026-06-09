@@ -5,6 +5,7 @@ version: 18
 created: "2026-06-05"
 updated: "2026-06-08"
 ---
+
 # Pi Cartographer Proposal
 
 ## When to Use
@@ -72,20 +73,22 @@ Create or update ignored private-input files only when the user explicitly provi
    - If any topic artifact already exists, do not blindly truncate it. Preserve useful content, continue stable ID sequences, and reconcile existing records with new indexed/researched context.
 
 1a. **Run private-artifact intake preflight when needed**
-   - Trigger this preflight when the initial request includes private artifact paths, attachments, or phrases such as "use these logs", "consider this error dump", or "review this private document".
-   - Derive or confirm `{topic}` from the request text before reading raw private contents. If the topic is ambiguous, ask one concise topic/scope question.
-   - Import authorized files with `cartographer_evidence({"action":"import", ...})` when available, or the equivalent `python <plan-skill-dir>/scripts/private_artifacts.py import ... --json` CLI.
-   - Copy external files into `.plan/_private/{topic}/`. Move untracked in-repo sensitive files only when safe. If a referenced file is tracked by git, stop and ask before moving or rewriting it.
-   - Preserve safe basenames by default. Use sanitized or opaque names only when a basename is sensitive, collides, or the user/project policy requires it. Raw hashes are opt-in only.
-   - Store detailed provenance in ignored `.plan/_private/{topic}/manifest.private.jsonl`; commit-safe `evidence/manifest.jsonl` may include safe basenames, redaction status, and analysis paths.
-   - Do not read, grep, summarize, index, quote, or paste raw private artifact contents in the parent session. The next step is redactor-only analysis.
+
+- Trigger this preflight when the initial request includes private artifact paths, attachments, or phrases such as "use these logs", "consider this error dump", or "review this private document".
+- Derive or confirm `{topic}` from the request text before reading raw private contents. If the topic is ambiguous, ask one concise topic/scope question.
+- Import authorized files with `cartographer_evidence({"action":"import", ...})` when available, or the equivalent `python <plan-skill-dir>/scripts/private_artifacts.py import ... --json` CLI.
+- Copy external files into `.plan/_private/{topic}/`. Move untracked in-repo sensitive files only when safe. If a referenced file is tracked by git, stop and ask before moving or rewriting it.
+- Preserve safe basenames by default. Use sanitized or opaque names only when a basename is sensitive, collides, or the user/project policy requires it. Raw hashes are opt-in only.
+- Store detailed provenance in ignored `.plan/_private/{topic}/manifest.private.jsonl`; commit-safe `evidence/manifest.jsonl` may include safe basenames, redaction status, and analysis paths.
+- Do not read, grep, summarize, index, quote, or paste raw private artifact contents in the parent session. The next step is redactor-only analysis.
 
 1b. **Evaluate ADR intent before planning begins**
-   - Run `cartographer_adr({"action":"evaluate","root":"$PWD","topic":"{topic}"})` once proposal scope is sketched, or the equivalent `python <plan-skill-dir>/scripts/adr_records.py evaluate --root "$PWD" --topic "{topic}" --json` CLI when the tool is unavailable.
-   - Record the evaluation under `## ADR Metadata` with `adr_required`, `adr_reason`, `adr_options_status`, and `adr_tool_mode`.
-   - Treat requests that embed a durable architectural choice, dependency/platform choice, identity/auth provider, data-store change, deployment topology, public API contract, or cross-cutting workflow policy as ADR-worthy unless clearly routine.
-   - If the user request directs a specific architectural choice such as "add Auth0" and the proposal lacks alternatives or explicit user rationale, ask one concise clarification for alternatives/rationale before marking the proposal ready for planning. Do not invent the user's rationale.
-   - If the user declines or the change is routine, set `adr_required: false` and record the reason. If `adr_required: true`, state that implementation finalization should generate or explicitly skip the ADR using `cartographer_adr` after validation.
+
+- Run `cartographer_adr({"action":"evaluate","root":"$PWD","topic":"{topic}"})` once proposal scope is sketched, or the equivalent `python <plan-skill-dir>/scripts/adr_records.py evaluate --root "$PWD" --topic "{topic}" --json` CLI when the tool is unavailable.
+- Record the evaluation under `## ADR Metadata` with `adr_required`, `adr_reason`, `adr_options_status`, and `adr_tool_mode`.
+- Treat requests that embed a durable architectural choice, dependency/platform choice, identity/auth provider, data-store change, deployment topology, public API contract, or cross-cutting workflow policy as ADR-worthy unless clearly routine.
+- If the user request directs a specific architectural choice such as "add Auth0" and the proposal lacks alternatives or explicit user rationale, ask one concise clarification for alternatives/rationale before marking the proposal ready for planning. Do not invent the user's rationale.
+- If the user declines or the change is routine, set `adr_required: false` and record the reason. If `adr_required: true`, state that implementation finalization should generate or explicitly skip the ADR using `cartographer_adr` after validation.
 
 2. **Inspect available subagents and choose execution mode**
    - Call the subagent list action before delegating whenever the subagent tool is available.
@@ -339,10 +342,19 @@ Structured handoff contract fields should be explicit in the `subagent(...)` cal
 {
   "acceptance": {
     "criteria": ["exact sections/checklist IDs", "helper summaries cited", "PASS/FAIL or draft receipt required"],
-    "evidenceRequired": ["changed-files when applicable", "commands-run", "validation-output", "residual-risks", "diff-summary"]
+    "evidenceRequired": [
+      "changed-files when applicable",
+      "commands-run",
+      "validation-output",
+      "residual-risks",
+      "diff-summary"
+    ]
   },
-  "async": {"enabled": true, "timeoutMs": 600000},
-  "control": {"stopRules": ["scope ambiguity", "missing helper summaries", "repeated tool failure"], "maxFinalizationTurns": 3},
+  "async": { "enabled": true, "timeoutMs": 600000 },
+  "control": {
+    "stopRules": ["scope ambiguity", "missing helper summaries", "repeated tool failure"],
+    "maxFinalizationTurns": 3
+  },
   "outputMode": "file-only",
   "helperSummaries": [".plan/{topic}/context-packs.jsonl:<id>", ".plan/{topic}/receipts.jsonl:<ids>"],
   "timeoutFallbackReceipt": ".plan/{topic}/receipts.jsonl"

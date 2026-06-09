@@ -5,6 +5,7 @@ version: 5
 created: "2026-06-06"
 updated: "2026-06-08"
 ---
+
 # Pi Cartographer Plan
 
 ## When to Use
@@ -182,7 +183,7 @@ Use or create/update these supporting artifacts when needed:
      ## Phase Summary
 
      | Order | Phase ID | Phase | Depends On | Unlocks | Exit Criteria |
-     |---:|---|---|---|---|---|
+     | ----: | -------- | ----- | ---------- | ------- | ------------- |
 
      ## Phases
 
@@ -260,57 +261,60 @@ Use or create/update these supporting artifacts when needed:
      ```
 
 10. **Run JSONL and planning graph validation before audit**
-   - JSONL validation before `cartographer-auditor` is mandatory. First validate topic JSONL artifacts with `cartographer_jsonl validate-topic` or the CLI fallback:
 
-     ```bash
-     node --experimental-strip-types <plan-skill-dir>/scripts/manage_jsonl.ts validate-topic --root "$PWD" --topic "{topic}" --json
-     ```
+- JSONL validation before `cartographer-auditor` is mandatory. First validate topic JSONL artifacts with `cartographer_jsonl validate-topic` or the CLI fallback:
 
-   - Then resolve `scripts/validate_planning_graph.py` relative to this `SKILL.md` and run the planning graph validator:
+  ```bash
+  node --experimental-strip-types <plan-skill-dir>/scripts/manage_jsonl.ts validate-topic --root "$PWD" --topic "{topic}" --json
+  ```
 
-     ```bash
-     python <plan-skill-dir>/scripts/validate_planning_graph.py --root "$PWD" --topic "{topic}" --json
-     ```
+- Then resolve `scripts/validate_planning_graph.py` relative to this `SKILL.md` and run the planning graph validator:
 
-   - Record validation receipts for both deterministic checks in `.plan/{topic}/receipts.jsonl`, including command, result, validation IDs when known, output summary, and changed-file hash set when available.
-   - If validation fails, correct `plan.md`, `plan.nodes.jsonl`, `plan.edges.jsonl`, map/fact graph files, or citations, then rerun the failed deterministic checks before finalizing.
-   - If either validator cannot run, stop or ask the user before accepting the plan unless the user approves a manual fallback; write an explicit fallback receipt with the failed command/tool, error summary, manual checks performed, files reviewed, and residual risk.
+  ```bash
+  python <plan-skill-dir>/scripts/validate_planning_graph.py --root "$PWD" --topic "{topic}" --json
+  ```
+
+- Record validation receipts for both deterministic checks in `.plan/{topic}/receipts.jsonl`, including command, result, validation IDs when known, output summary, and changed-file hash set when available.
+- If validation fails, correct `plan.md`, `plan.nodes.jsonl`, `plan.edges.jsonl`, map/fact graph files, or citations, then rerun the failed deterministic checks before finalizing.
+- If either validator cannot run, stop or ask the user before accepting the plan unless the user approves a manual fallback; write an explicit fallback receipt with the failed command/tool, error summary, manual checks performed, files reviewed, and residual risk.
 
 11. **Final validation with `cartographer-auditor`**
-   - After `cartographer_jsonl validate-topic` and `validate_planning_graph.py` receipts pass, launch `cartographer-auditor` as the default final semantic gate for plan artifacts, references, graph consistency, checklist/validation coverage, and handoff readiness.
-   - Provide the auditor the plan path, plan graph paths, proposal/map/fact references, deterministic validation receipt IDs or compact output summaries, and require an explicit `PASS`/`FAIL` decision. A plan should not be marked ready for implementation without a `cartographer-auditor` `PASS` or an approved fallback receipt.
-   - Use `cartographer-compass` for scope, dependency, and decision-consistency concerns, especially when phase ordering or assumptions are questionable; compass does not replace the final audit gate.
-   - Built-in `reviewer`/`oracle` or a serial current-agent validation pass are fallback substitutes only when `cartographer-auditor` is unavailable, times out, or the user approves substitution. Each fallback must write an explicit fallback receipt in `.plan/{topic}/receipts.jsonl` with the attempted auditor, reason, substitute/manual reviewer used, deterministic validation receipt IDs, files reviewed, outcome, and residual risks.
-   - Do not use `planner` for final validation unless no auditor/reviewer/oracle substitute is available and the user approves; record that as a fallback receipt.
-   - The auditor/fallback validation pass must check:
-     - `.plan/{topic}/plan.md` exists
-     - `.plan/{topic}/plan.nodes.jsonl` and `.plan/{topic}/plan.edges.jsonl` exist and parse as valid JSONL
-     - every phase has a unique phase ID, status, objective, checklist, validation items, exit criteria, and dependencies
-     - phase dependencies are acyclic and topologically ordered
-     - checklist item IDs are unique and scoped to their phase
-     - validation item IDs are unique and scoped to their phase
-     - validation commands are declared and appear valid for the project, or are clearly marked as manual checks
-     - referenced project files exist in the current checkout
-     - referenced indexed node IDs exist in `map.nodes.jsonl`, or `.plan/_index/project-graph.sqlite`
-     - referenced fact IDs exist as `fact` nodes in `facts.nodes.jsonl`
-     - every cited source-backed fact has a `supported_by` edge to a `source` node
-     - the plan respects proposal goals and non-goals
-     - the plan does not include code changes disguised as planning
-   - Apply corrections, rerun deterministic validation, and repeat the `cartographer-auditor` or approved fallback gate before finalizing.
+
+- After `cartographer_jsonl validate-topic` and `validate_planning_graph.py` receipts pass, launch `cartographer-auditor` as the default final semantic gate for plan artifacts, references, graph consistency, checklist/validation coverage, and handoff readiness.
+- Provide the auditor the plan path, plan graph paths, proposal/map/fact references, deterministic validation receipt IDs or compact output summaries, and require an explicit `PASS`/`FAIL` decision. A plan should not be marked ready for implementation without a `cartographer-auditor` `PASS` or an approved fallback receipt.
+- Use `cartographer-compass` for scope, dependency, and decision-consistency concerns, especially when phase ordering or assumptions are questionable; compass does not replace the final audit gate.
+- Built-in `reviewer`/`oracle` or a serial current-agent validation pass are fallback substitutes only when `cartographer-auditor` is unavailable, times out, or the user approves substitution. Each fallback must write an explicit fallback receipt in `.plan/{topic}/receipts.jsonl` with the attempted auditor, reason, substitute/manual reviewer used, deterministic validation receipt IDs, files reviewed, outcome, and residual risks.
+- Do not use `planner` for final validation unless no auditor/reviewer/oracle substitute is available and the user approves; record that as a fallback receipt.
+- The auditor/fallback validation pass must check:
+  - `.plan/{topic}/plan.md` exists
+  - `.plan/{topic}/plan.nodes.jsonl` and `.plan/{topic}/plan.edges.jsonl` exist and parse as valid JSONL
+  - every phase has a unique phase ID, status, objective, checklist, validation items, exit criteria, and dependencies
+  - phase dependencies are acyclic and topologically ordered
+  - checklist item IDs are unique and scoped to their phase
+  - validation item IDs are unique and scoped to their phase
+  - validation commands are declared and appear valid for the project, or are clearly marked as manual checks
+  - referenced project files exist in the current checkout
+  - referenced indexed node IDs exist in `map.nodes.jsonl`, or `.plan/_index/project-graph.sqlite`
+  - referenced fact IDs exist as `fact` nodes in `facts.nodes.jsonl`
+  - every cited source-backed fact has a `supported_by` edge to a `source` node
+  - the plan respects proposal goals and non-goals
+  - the plan does not include code changes disguised as planning
+- Apply corrections, rerun deterministic validation, and repeat the `cartographer-auditor` or approved fallback gate before finalizing.
 
 12. **Final response**
-   - Reply with the topic and created/updated paths:
-     - `.plan/{topic}/plan.md`
-     - `.plan/{topic}/plan.nodes.jsonl`
-     - `.plan/{topic}/plan.edges.jsonl`
-   - Mention the source artifacts used:
-     - `.plan/_index/project-graph.sqlite`
-     - `.plan/{topic}/proposal.md` if present
-     - `.plan/{topic}/map.nodes.jsonl`
-     - `.plan/{topic}/map.edges.jsonl`
-     - `.plan/{topic}/facts.nodes.jsonl`
-     - `.plan/{topic}/facts.edges.jsonl`
-   - Briefly summarize phase count, dependency shape, validation coverage, and any unresolved open questions.
+
+- Reply with the topic and created/updated paths:
+  - `.plan/{topic}/plan.md`
+  - `.plan/{topic}/plan.nodes.jsonl`
+  - `.plan/{topic}/plan.edges.jsonl`
+- Mention the source artifacts used:
+  - `.plan/_index/project-graph.sqlite`
+  - `.plan/{topic}/proposal.md` if present
+  - `.plan/{topic}/map.nodes.jsonl`
+  - `.plan/{topic}/map.edges.jsonl`
+  - `.plan/{topic}/facts.nodes.jsonl`
+  - `.plan/{topic}/facts.edges.jsonl`
+- Briefly summarize phase count, dependency shape, validation coverage, and any unresolved open questions.
 
 ## Delegation Guidance
 
@@ -356,11 +360,24 @@ Structured handoff contract fields should be explicit in the `subagent(...)` cal
 ```json
 {
   "acceptance": {
-    "criteria": ["phase/checklist/validation IDs are preserved", "helper summaries cited", "PASS/FAIL or draft receipt required"],
-    "evidenceRequired": ["changed-files when applicable", "commands-run", "validation-output", "residual-risks", "diff-summary"]
+    "criteria": [
+      "phase/checklist/validation IDs are preserved",
+      "helper summaries cited",
+      "PASS/FAIL or draft receipt required"
+    ],
+    "evidenceRequired": [
+      "changed-files when applicable",
+      "commands-run",
+      "validation-output",
+      "residual-risks",
+      "diff-summary"
+    ]
   },
-  "async": {"enabled": true, "timeoutMs": 600000},
-  "control": {"stopRules": ["scope ambiguity", "missing helper summaries", "repeated tool failure"], "maxFinalizationTurns": 3},
+  "async": { "enabled": true, "timeoutMs": 600000 },
+  "control": {
+    "stopRules": ["scope ambiguity", "missing helper summaries", "repeated tool failure"],
+    "maxFinalizationTurns": 3
+  },
   "outputMode": "file-only",
   "helperSummaries": [".plan/{topic}/context-packs.jsonl:<id>", ".plan/{topic}/receipts.jsonl:<ids>"],
   "timeoutFallbackReceipt": ".plan/{topic}/receipts.jsonl"

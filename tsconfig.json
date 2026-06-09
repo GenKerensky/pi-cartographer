@@ -7,7 +7,8 @@
     "noEmit": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "types": ["node"]
+    "allowImportingTsExtensions": true,
+    "types": ["node", "vitest"]
   },
-  "include": ["extensions/**/*.ts", "skills/**/*.ts"]
+  "include": ["dashboard/**/*.ts", "extensions/**/*.ts", "skills/**/*.ts", "tests/**/*.ts"]
 }

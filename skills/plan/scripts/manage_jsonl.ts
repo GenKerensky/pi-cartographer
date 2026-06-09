@@ -5,17 +5,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const FACT_CITATION_RE = /\[(F\d+)\]/g;
-const REFERENCE_RE =
-	/(^|\s|[`([])([A-Za-z0-9_./@+-]+\.[A-Za-z0-9_./@+-]+):(\d+)/g;
-const LIFECYCLE_STATES = new Set([
-	"draft",
-	"accepted",
-	"planned",
-	"in-progress",
-	"implemented",
-	"superseded",
-	"stale",
-]);
+const REFERENCE_RE = /(^|\s|[`([])([A-Za-z0-9_./@+-]+\.[A-Za-z0-9_./@+-]+):(\d+)/g;
+const LIFECYCLE_STATES = new Set(["draft", "accepted", "planned", "in-progress", "implemented", "superseded", "stale"]);
 const MISS_FAILURE_TYPES = new Set([
 	"vocabulary_mismatch",
 	"generic_noise",
@@ -24,20 +15,8 @@ const MISS_FAILURE_TYPES = new Set([
 	"ranking_failure",
 	"tool_failure",
 ]);
-const MISS_RESOLUTIONS = new Set([
-	"query_expansion",
-	"path_constraint",
-	"manual_read",
-	"user_hint",
-	"unresolved",
-]);
-const RAW_MISS_FIELDS = new Set([
-	"text",
-	"snippet",
-	"raw_snippet",
-	"content",
-	"raw_content",
-]);
+const MISS_RESOLUTIONS = new Set(["query_expansion", "path_constraint", "manual_read", "user_hint", "unresolved"]);
+const RAW_MISS_FIELDS = new Set(["text", "snippet", "raw_snippet", "content", "raw_content"]);
 const SECRET_PATTERNS: Array<[string, RegExp]> = [
 	["private-key", /-----BEGIN [A-Z ]*PRIVATE KEY-----/],
 	["github-token", /\b(?:github_pat|gh[pousr])_[A-Za-z0-9_]{20,}\b/],
@@ -68,16 +47,14 @@ function parseArgs(argv: string[]): {
 	const options: Record<string, string | boolean | string[]> = {};
 	for (let index = 0; index < rest.length; index += 1) {
 		const token = rest[index];
-		if (!token.startsWith("--"))
-			throw new Error(`Unexpected positional argument: ${token}`);
+		if (!token.startsWith("--")) throw new Error(`Unexpected positional argument: ${token}`);
 		const name = token.slice(2);
 		if (["json", "require-id", "merge", "no-merge"].includes(name)) {
 			options[name] = true;
 			continue;
 		}
 		const value = rest[index + 1];
-		if (value === undefined || value.startsWith("--"))
-			throw new Error(`Missing value for --${name}`);
+		if (value === undefined || value.startsWith("--")) throw new Error(`Missing value for --${name}`);
 		index += 1;
 		if (name === "key") {
 			const current = options[name];
@@ -111,32 +88,21 @@ function usage(exitCode: number): never {
 	process.exit(exitCode);
 }
 
-function optString(
-	options: Record<string, unknown>,
-	name: string,
-	fallback?: string,
-): string {
+function optString(options: Record<string, unknown>, name: string, fallback?: string): string {
 	const value = options[name];
 	if (typeof value === "string" && value.length > 0) return value;
 	if (fallback !== undefined) return fallback;
 	throw new Error(`Missing required --${name}`);
 }
 
-function optNumber(
-	options: Record<string, unknown>,
-	name: string,
-	fallback: number,
-): number {
+function optNumber(options: Record<string, unknown>, name: string, fallback: number): number {
 	const value = options[name];
 	if (typeof value !== "string") return fallback;
 	const parsed = Number(value);
 	return Number.isFinite(parsed) ? parsed : fallback;
 }
 
-function readJsonl(
-	filePath: string,
-	required = false,
-): { records: JsonRecord[]; errors: string[] } {
+function readJsonl(filePath: string, required = false): { records: JsonRecord[]; errors: string[] } {
 	const errors: string[] = [];
 	if (!fs.existsSync(filePath)) {
 		if (required) errors.push(`Missing required JSONL file: ${filePath}`);
@@ -150,16 +116,12 @@ function readJsonl(
 		try {
 			const value: unknown = JSON.parse(line);
 			if (!value || typeof value !== "object" || Array.isArray(value)) {
-				errors.push(
-					`JSONL record must be an object in ${filePath}:${index + 1}`,
-				);
+				errors.push(`JSONL record must be an object in ${filePath}:${index + 1}`);
 			} else {
 				records.push(value as JsonRecord);
 			}
 		} catch (error) {
-			errors.push(
-				`Invalid JSONL in ${filePath}:${index + 1}: ${String(error)}`,
-			);
+			errors.push(`Invalid JSONL in ${filePath}:${index + 1}: ${String(error)}`);
 		}
 	}
 	return { records, errors };
@@ -167,13 +129,8 @@ function readJsonl(
 
 function writeJsonlAtomic(filePath: string, records: JsonRecord[]): void {
 	fs.mkdirSync(path.dirname(filePath), { recursive: true });
-	const tmp = path.join(
-		path.dirname(filePath),
-		`.tmp-${process.pid}-${Date.now()}-${path.basename(filePath)}`,
-	);
-	const text = records
-		.map((record) => `${JSON.stringify(sortObject(record))}\n`)
-		.join("");
+	const tmp = path.join(path.dirname(filePath), `.tmp-${process.pid}-${Date.now()}-${path.basename(filePath)}`);
+	const text = records.map((record) => `${JSON.stringify(sortObject(record))}\n`).join("");
 	fs.writeFileSync(tmp, text, "utf8");
 	fs.renameSync(tmp, filePath);
 }
@@ -190,8 +147,7 @@ function sortObject(value: unknown): unknown {
 
 function defaultKeysFor(filePath: string, record: JsonRecord): string[] {
 	if ("id" in record) return ["id"];
-	if ("from" in record && "to" in record && "type" in record)
-		return ["from", "to", "type"];
+	if ("from" in record && "to" in record && "type" in record) return ["from", "to", "type"];
 	if (filePath.endsWith(".edges.jsonl")) return ["from", "to", "type"];
 	return ["id"];
 }
@@ -200,19 +156,14 @@ function recordKey(record: JsonRecord, keys: string[]): string {
 	return JSON.stringify(keys.map((key) => record[key] ?? null));
 }
 
-function upsert(
-	options: Record<string, string | boolean | string[]>,
-): Record<string, unknown> {
+function upsert(options: Record<string, string | boolean | string[]>): Record<string, unknown> {
 	const filePath = path.resolve(optString(options, "file"));
 	const record = JSON.parse(optString(options, "record")) as unknown;
-	if (!record || typeof record !== "object" || Array.isArray(record))
-		throw new Error("--record must be a JSON object");
+	if (!record || typeof record !== "object" || Array.isArray(record)) throw new Error("--record must be a JSON object");
 	const parsed = readJsonl(filePath);
 	if (parsed.errors.length) throw new Error(parsed.errors.join("\n"));
 	const jsonRecord = record as JsonRecord;
-	const keys = Array.isArray(options.key)
-		? options.key
-		: defaultKeysFor(filePath, jsonRecord);
+	const keys = Array.isArray(options.key) ? options.key : defaultKeysFor(filePath, jsonRecord);
 	for (const key of keys)
 		if (jsonRecord[key] === undefined || jsonRecord[key] === null)
 			throw new Error(`Record is missing key field: ${key}`);
@@ -220,13 +171,9 @@ function upsert(
 	let action = "inserted";
 	const merge = options.merge !== false;
 	const records = parsed.records;
-	const existingIndex = records.findIndex(
-		(item) => recordKey(item, keys) === target,
-	);
+	const existingIndex = records.findIndex((item) => recordKey(item, keys) === target);
 	if (existingIndex >= 0) {
-		records[existingIndex] = merge
-			? { ...records[existingIndex], ...jsonRecord }
-			: jsonRecord;
+		records[existingIndex] = merge ? { ...records[existingIndex], ...jsonRecord } : jsonRecord;
 		action = "updated";
 	} else {
 		records.push(jsonRecord);
@@ -235,11 +182,7 @@ function upsert(
 	return { ok: true, action, file: filePath, keys, count: records.length };
 }
 
-function validateUnique(
-	records: JsonRecord[],
-	label: string,
-	errors: string[],
-): Set<string> {
+function validateUnique(records: JsonRecord[], label: string, errors: string[]): Set<string> {
 	const ids = new Set<string>();
 	records.forEach((record, index) => {
 		const id = record.id;
@@ -248,45 +191,26 @@ function validateUnique(
 			return;
 		}
 		const text = String(id);
-		if (ids.has(text))
-			errors.push(`Duplicate id ${JSON.stringify(text)} in ${label}`);
+		if (ids.has(text)) errors.push(`Duplicate id ${JSON.stringify(text)} in ${label}`);
 		ids.add(text);
 	});
 	return ids;
 }
 
-function validateEdges(
-	records: JsonRecord[],
-	label: string,
-	allowed: Set<string>,
-	errors: string[],
-): void {
+function validateEdges(records: JsonRecord[], label: string, allowed: Set<string>, errors: string[]): void {
 	records.forEach((record, index) => {
 		for (const key of ["from", "to", "type"])
-			if (!record[key])
-				errors.push(
-					`Missing ${JSON.stringify(key)} in ${label} record ${index + 1}`,
-				);
+			if (!record[key]) errors.push(`Missing ${JSON.stringify(key)} in ${label} record ${index + 1}`);
 		for (const endpoint of ["from", "to"]) {
 			const value = record[endpoint];
 			const text = value === undefined || value === null ? "" : String(value);
-			if (
-				text &&
-				!allowed.has(text) &&
-				!/^(file|doc|symbol|dependency):/.test(text)
-			)
-				errors.push(
-					`Unresolved edge endpoint ${JSON.stringify(text)} in ${label} record ${index + 1}`,
-				);
+			if (text && !allowed.has(text) && !/^(file|doc|symbol|dependency):/.test(text))
+				errors.push(`Unresolved edge endpoint ${JSON.stringify(text)} in ${label} record ${index + 1}`);
 		}
 	});
 }
 
-function validateFileRefs(
-	root: string,
-	records: JsonRecord[],
-	errors: string[],
-): void {
+function validateFileRefs(root: string, records: JsonRecord[], errors: string[]): void {
 	for (const record of records) {
 		for (const field of ["reference", "evidence"]) {
 			const value = record[field];
@@ -294,27 +218,17 @@ function validateFileRefs(
 			for (const match of value.matchAll(REFERENCE_RE)) {
 				const pathText = match[2];
 				const lineText = match[3];
-				let resolved = path.isAbsolute(pathText)
-					? pathText
-					: path.join(root, pathText);
-				if (
-					!fs.existsSync(resolved) &&
-					typeof record.url === "string" &&
-					record.url.startsWith("file://")
-				) {
+				let resolved = path.isAbsolute(pathText) ? pathText : path.join(root, pathText);
+				if (!fs.existsSync(resolved) && typeof record.url === "string" && record.url.startsWith("file://")) {
 					const urlPath = fileURLToPath(record.url);
-					if (path.basename(urlPath) === path.basename(pathText))
-						resolved = urlPath;
+					if (path.basename(urlPath) === path.basename(pathText)) resolved = urlPath;
 				}
 				if (!fs.existsSync(resolved)) {
 					errors.push(`Missing referenced file: ${pathText}`);
 					continue;
 				}
-				const lineCount = fs
-					.readFileSync(resolved, "utf8")
-					.split(/\r?\n/).length;
-				if (Number(lineText) > lineCount)
-					errors.push(`Reference line out of range: ${pathText}:${lineText}`);
+				const lineCount = fs.readFileSync(resolved, "utf8").split(/\r?\n/).length;
+				if (Number(lineText) > lineCount) errors.push(`Reference line out of range: ${pathText}:${lineText}`);
 			}
 		}
 	}
@@ -322,8 +236,7 @@ function validateFileRefs(
 
 function hasVerificationEvidence(record: JsonRecord): boolean {
 	const verification = record.verification;
-	if (!verification || typeof verification !== "object" || Array.isArray(verification))
-		return false;
+	if (!verification || typeof verification !== "object" || Array.isArray(verification)) return false;
 	return ["read", "rg", "validation"].some((key) => {
 		const value = (verification as JsonRecord)[key];
 		return Array.isArray(value) ? value.length > 0 : Boolean(value);
@@ -357,57 +270,36 @@ function validateLifecycleAndRetrievalMetadata(
 		if (field) {
 			const value = String(record[field]);
 			if (!LIFECYCLE_STATES.has(value))
-				errors.push(
-					`Invalid lifecycle state ${JSON.stringify(value)} in ${label} record ${index + 1}`,
-				);
+				errors.push(`Invalid lifecycle state ${JSON.stringify(value)} in ${label} record ${index + 1}`);
 		}
 		if (record.verified === true && !hasVerificationEvidence(record))
-			errors.push(
-				`verified=true lacks read/rg/validation evidence in ${label} record ${index + 1}`,
-			);
+			errors.push(`verified=true lacks read/rg/validation evidence in ${label} record ${index + 1}`);
 		const highImpactCandidate =
 			record.candidate === true &&
 			record.verified !== true &&
 			(["file", "symbol", "dependency"].includes(String(record.type)) ||
-				["depends_on", "imports", "references", "relevant_to"].includes(
-					String(record.type),
-				));
-		if (highImpactCandidate)
-			warnings.push(
-				`High-impact candidate-only reference in ${label} record ${index + 1}`,
-			);
+				["depends_on", "imports", "references", "relevant_to"].includes(String(record.type)));
+		if (highImpactCandidate) warnings.push(`High-impact candidate-only reference in ${label} record ${index + 1}`);
 		const usedForImplementation =
 			record.implementation_guidance === true ||
 			record.used_as === "implementation_guidance" ||
-			(Array.isArray(record.used_as) &&
-				record.used_as.includes("implementation_guidance"));
+			(Array.isArray(record.used_as) && record.used_as.includes("implementation_guidance"));
 		if (usedForImplementation) {
 			const state = field ? String(record[field]) : undefined;
 			if (!state || ["draft", "superseded", "stale"].includes(state) || !record.last_verified_at)
-				warnings.push(
-					`Implementation guidance uses stale/unverified rationale in ${label} record ${index + 1}`,
-				);
+				warnings.push(`Implementation guidance uses stale/unverified rationale in ${label} record ${index + 1}`);
 		}
 	});
 }
 
-function validateMissRecords(
-	records: JsonRecord[],
-	label: string,
-	errors: string[],
-): void {
+function validateMissRecords(records: JsonRecord[], label: string, errors: string[]): void {
 	records.forEach((record, index) => {
 		for (const field of ["id", "created_at", "original_query", "failure_type", "resolution"])
-			if (!record[field])
-				errors.push(`Missing ${field} in ${label} record ${index + 1}`);
+			if (!record[field]) errors.push(`Missing ${field} in ${label} record ${index + 1}`);
 		if (record.failure_type && !MISS_FAILURE_TYPES.has(String(record.failure_type)))
-			errors.push(
-				`Invalid failure_type ${JSON.stringify(record.failure_type)} in ${label} record ${index + 1}`,
-			);
+			errors.push(`Invalid failure_type ${JSON.stringify(record.failure_type)} in ${label} record ${index + 1}`);
 		if (record.resolution && !MISS_RESOLUTIONS.has(String(record.resolution)))
-			errors.push(
-				`Invalid resolution ${JSON.stringify(record.resolution)} in ${label} record ${index + 1}`,
-			);
+			errors.push(`Invalid resolution ${JSON.stringify(record.resolution)} in ${label} record ${index + 1}`);
 		for (const field of Object.keys(record))
 			if (RAW_MISS_FIELDS.has(field))
 				errors.push(`Raw snippet/content field ${field} is not allowed in ${label} record ${index + 1}`);
@@ -423,7 +315,15 @@ function collectStrings(value: unknown, output: string[] = []): string[] {
 }
 
 function validateNoPrivateArtifactRefs(records: JsonRecord[], label: string, errors: string[]): void {
-	const checkedFields = ["reference", "evidence", "url", "path", "raw_archive_path", "source_path", "private_path_hint"];
+	const checkedFields = [
+		"reference",
+		"evidence",
+		"url",
+		"path",
+		"raw_archive_path",
+		"source_path",
+		"private_path_hint",
+	];
 	records.forEach((record, index) => {
 		for (const field of checkedFields) {
 			for (const text of collectStrings(record[field])) {
@@ -466,12 +366,7 @@ function referencePath(root: string, reference: unknown): string | undefined {
 	return path.isAbsolute(refPath) ? refPath : path.join(root, refPath);
 }
 
-function validateEvidenceArtifacts(
-	root: string,
-	topic: string,
-	factNodes: JsonRecord[],
-	errors: string[],
-): number {
+function validateEvidenceArtifacts(root: string, topic: string, factNodes: JsonRecord[], errors: string[]): number {
 	const dir = path.join(root, ".plan", topic, "evidence");
 	const files = evidenceFiles(dir);
 	for (const file of files) {
@@ -491,7 +386,9 @@ function validateEvidenceArtifacts(
 		}
 		const text = fs.readFileSync(sourcePath, "utf8");
 		if (!/Redaction status:/i.test(text))
-			errors.push(`Sanitized evidence source ${String(source.id)} lacks Redaction status in ${path.relative(root, sourcePath)}`);
+			errors.push(
+				`Sanitized evidence source ${String(source.id)} lacks Redaction status in ${path.relative(root, sourcePath)}`,
+			);
 	}
 	return files.length;
 }
@@ -521,8 +418,7 @@ function validateReceiptRecords(records: JsonRecord[], label: string, errors: st
 				errors.push(`truncated receipt lacks full_output_path in ${label} record ${index + 1}`);
 			if (!record.maxOutputChars && !record.max_output_chars)
 				errors.push(`truncated receipt lacks maxOutputChars in ${label} record ${index + 1}`);
-			if (!record.token_estimate)
-				errors.push(`truncated receipt lacks token_estimate in ${label} record ${index + 1}`);
+			if (!record.token_estimate) errors.push(`truncated receipt lacks token_estimate in ${label} record ${index + 1}`);
 		}
 		const timedOut = record.timedOut === true || record.status === "timed-out" || record.status === "timeout";
 		const failed = record.status === "failed" || record.status === "failure";
@@ -538,7 +434,8 @@ function validateContextPackRecords(records: JsonRecord[], label: string, errors
 		for (const field of ["id", "type", "phase_id", "summary"]) {
 			if (!record[field]) errors.push(`Missing ${field} in ${label} record ${index + 1}`);
 		}
-		if (record.type !== "context-pack") errors.push(`Context pack record ${index + 1} has type ${JSON.stringify(record.type)}`);
+		if (record.type !== "context-pack")
+			errors.push(`Context pack record ${index + 1} has type ${JSON.stringify(record.type)}`);
 		if (record.budget_tokens !== undefined && typeof record.budget_tokens !== "number")
 			errors.push(`context-pack budget_tokens must be numeric in ${label} record ${index + 1}`);
 		if (record.references !== undefined && !Array.isArray(record.references))
@@ -562,9 +459,7 @@ function warnMissingWorkflowState(
 	}
 }
 
-function validateTopic(
-	options: Record<string, string | boolean | string[]>,
-): ValidateReport {
+function validateTopic(options: Record<string, string | boolean | string[]>): ValidateReport {
 	const root = path.resolve(optString(options, "root", process.cwd()));
 	const topic = optString(options, "topic");
 	const dir = path.join(root, ".plan", topic);
@@ -595,18 +490,7 @@ function validateTopic(
 	validateEdges(mapEdges, "map.edges.jsonl", allowed, errors);
 	validateEdges(factEdges, "facts.edges.jsonl", allowed, errors);
 	validateEdges(planEdges, "plan.edges.jsonl", allowed, errors);
-	validateFileRefs(
-		root,
-		[
-			...mapNodes,
-			...mapEdges,
-			...factNodes,
-			...factEdges,
-			...planNodes,
-			...planEdges,
-		],
-		errors,
-	);
+	validateFileRefs(root, [...mapNodes, ...mapEdges, ...factNodes, ...factEdges, ...planNodes, ...planEdges], errors);
 	validateLifecycleAndRetrievalMetadata(mapNodes, "map.nodes.jsonl", errors, warnings);
 	validateLifecycleAndRetrievalMetadata(mapEdges, "map.edges.jsonl", errors, warnings);
 	validateLifecycleAndRetrievalMetadata(factNodes, "facts.nodes.jsonl", errors, warnings);
@@ -627,34 +511,21 @@ function validateTopic(
 	validateMissRecords(missResult.records, "misses.jsonl", errors);
 	const evidenceFileCount = validateEvidenceArtifacts(root, topic, factNodes, errors);
 
-	const factById = new Map(
-		factNodes.filter((item) => item.id).map((item) => [String(item.id), item]),
-	);
-	const sourceIds = new Set(
-		[...factById]
-			.filter(([, item]) => item.type === "source")
-			.map(([id]) => id),
-	);
-	const factIds = new Set(
-		[...factById].filter(([, item]) => item.type === "fact").map(([id]) => id),
-	);
+	const factById = new Map(factNodes.filter((item) => item.id).map((item) => [String(item.id), item]));
+	const sourceIds = new Set([...factById].filter(([, item]) => item.type === "source").map(([id]) => id));
+	const factIds = new Set([...factById].filter(([, item]) => item.type === "fact").map(([id]) => id));
 	const supported = new Set(
 		factEdges
-			.filter(
-				(edge) =>
-					edge.type === "supported_by" && sourceIds.has(String(edge.to)),
-			)
+			.filter((edge) => edge.type === "supported_by" && sourceIds.has(String(edge.to)))
 			.map((edge) => String(edge.from)),
 	);
 	for (const id of factIds)
-		if (id.startsWith("F") && !supported.has(id))
-			errors.push(`Fact ${id} has no supported_by edge to a source node`);
+		if (id.startsWith("F") && !supported.has(id)) errors.push(`Fact ${id} has no supported_by edge to a source node`);
 	const proposalPath = path.join(dir, "proposal.md");
 	if (fs.existsSync(proposalPath)) {
 		const text = fs.readFileSync(proposalPath, "utf8");
 		for (const match of text.matchAll(FACT_CITATION_RE))
-			if (!factIds.has(match[1]))
-				errors.push(`Proposal cites missing fact [${match[1]}]`);
+			if (!factIds.has(match[1])) errors.push(`Proposal cites missing fact [${match[1]}]`);
 	}
 	return {
 		ok: errors.length === 0,
@@ -676,9 +547,7 @@ function validateTopic(
 	};
 }
 
-function validateFile(
-	options: Record<string, string | boolean | string[]>,
-): ValidateReport {
+function validateFile(options: Record<string, string | boolean | string[]>): ValidateReport {
 	const filePath = path.resolve(optString(options, "file"));
 	const result = readJsonl(filePath, true);
 	const warnings: string[] = [];
@@ -698,28 +567,21 @@ function validateFile(
 	};
 }
 
-function validateMisses(
-	options: Record<string, string | boolean | string[]>,
-): ValidateReport {
+function validateMisses(options: Record<string, string | boolean | string[]>): ValidateReport {
 	const root = path.resolve(optString(options, "root", process.cwd()));
 	const filePath = retrievalMissPath(root);
 	return validateFile({ file: filePath, "require-id": true });
 }
 
-function listMisses(
-	options: Record<string, string | boolean | string[]>,
-): Record<string, unknown> {
+function listMisses(options: Record<string, string | boolean | string[]>): Record<string, unknown> {
 	const root = path.resolve(optString(options, "root", process.cwd()));
 	return listRecords({ file: retrievalMissPath(root), limit: options.limit ?? "20" });
 }
 
-function listRecords(
-	options: Record<string, string | boolean | string[]>,
-): Record<string, unknown> {
+function listRecords(options: Record<string, string | boolean | string[]>): Record<string, unknown> {
 	const filePath = path.resolve(optString(options, "file"));
 	const result = readJsonl(filePath, true);
-	if (result.errors.length)
-		return { ok: false, file: filePath, errors: result.errors, records: [] };
+	if (result.errors.length) return { ok: false, file: filePath, errors: result.errors, records: [] };
 	const limit = Math.max(0, optNumber(options, "limit", 20));
 	return {
 		ok: true,
@@ -740,13 +602,7 @@ const READ_ONLY_ARTIFACT_FILES: Record<string, string> = {
 	"context-packs": "context-packs.jsonl",
 	"evidence-manifest": path.join("evidence", "manifest.jsonl"),
 };
-const PRIVATE_FIELD_NAMES = new Set([
-	"raw_archive_path",
-	"source_path",
-	"private_path_hint",
-	"raw_content",
-	"content",
-]);
+const PRIVATE_FIELD_NAMES = new Set(["raw_archive_path", "source_path", "private_path_hint", "raw_content", "content"]);
 
 function topicDir(root: string, topic: string): string {
 	return path.join(root, ".plan", topic);
@@ -754,8 +610,7 @@ function topicDir(root: string, topic: string): string {
 
 function artifactFilePath(root: string, topic: string, artifact: string): string {
 	const relative = READ_ONLY_ARTIFACT_FILES[artifact];
-	if (!relative)
-		throw new Error(`Unsupported read-only artifact ${JSON.stringify(artifact)}`);
+	if (!relative) throw new Error(`Unsupported read-only artifact ${JSON.stringify(artifact)}`);
 	return path.join(topicDir(root, topic), relative);
 }
 
@@ -867,11 +722,17 @@ function factCitationSummary(options: Record<string, string | boolean | string[]
 	const factNodes = readJsonl(path.join(dir, "facts.nodes.jsonl"), true);
 	const factEdges = readJsonl(path.join(dir, "facts.edges.jsonl"), true);
 	const errors = [...factNodes.errors, ...factEdges.errors];
-	const factIds = new Set(factNodes.records.filter((record) => record.type === "fact").map((record) => String(record.id)));
-	const sourceIds = new Set(factNodes.records.filter((record) => record.type === "source").map((record) => String(record.id)));
-	const supportedFacts = new Set(factEdges.records
-		.filter((edge) => edge.type === "supported_by" && sourceIds.has(String(edge.to)))
-		.map((edge) => String(edge.from)));
+	const factIds = new Set(
+		factNodes.records.filter((record) => record.type === "fact").map((record) => String(record.id)),
+	);
+	const sourceIds = new Set(
+		factNodes.records.filter((record) => record.type === "source").map((record) => String(record.id)),
+	);
+	const supportedFacts = new Set(
+		factEdges.records
+			.filter((edge) => edge.type === "supported_by" && sourceIds.has(String(edge.to)))
+			.map((edge) => String(edge.from)),
+	);
 	const proposal = markdownCitations(path.join(dir, "proposal.md"));
 	const plan = markdownCitations(path.join(dir, "plan.md"));
 	const cited = [...new Set([...proposal, ...plan])].sort();
@@ -912,7 +773,11 @@ function receiptSummary(options: Record<string, string | boolean | string[]>): R
 		ok: result.errors.length === 0,
 		topic,
 		count: result.records.length,
-		counts: { by_status: countBy(result.records, "status"), by_type: countBy(result.records, "type"), by_phase: countBy(result.records, "phase_id") },
+		counts: {
+			by_status: countBy(result.records, "status"),
+			by_type: countBy(result.records, "type"),
+			by_phase: countBy(result.records, "phase_id"),
+		},
 		receipts: result.records.slice(0, limit || result.records.length).map(compactRecord),
 		errors: result.errors.map(sanitizeText),
 		truncated: limit > 0 && result.records.length > limit,
@@ -938,7 +803,9 @@ function evidenceManifestSummary(options: Record<string, string | boolean | stri
 	const { root, topic } = readOnlyTopicOptions(options);
 	const evidenceDir = path.join(topicDir(root, topic), "evidence");
 	const manifest = readJsonl(path.join(evidenceDir, "manifest.jsonl"));
-	const files = evidenceFiles(evidenceDir).map((file) => path.relative(root, file)).filter((file) => !file.includes(".plan/_private/"));
+	const files = evidenceFiles(evidenceDir)
+		.map((file) => path.relative(root, file))
+		.filter((file) => !file.includes(".plan/_private/"));
 	const limit = Math.max(0, optNumber(options, "limit", 20));
 	return {
 		ok: manifest.errors.length === 0,
@@ -950,7 +817,6 @@ function evidenceManifestSummary(options: Record<string, string | boolean | stri
 		truncated: limit > 0 && (manifest.records.length > limit || files.length > limit),
 	};
 }
-
 
 function normalizePhaseStatus(value: unknown): string {
 	return String(value || "pending").toLowerCase();
@@ -984,7 +850,12 @@ function markdownListAfterHeading(section: string, heading: string): string[] {
 		.split(/\r?\n/)
 		.map((line) => line.trim())
 		.filter((line) => line.startsWith("- "))
-		.map((line) => line.replace(/^- \[[ xX]\]\s+/, "").replace(/^-\s+/, "").trim());
+		.map((line) =>
+			line
+				.replace(/^- \[[ xX]\]\s+/, "")
+				.replace(/^-\s+/, "")
+				.trim(),
+		);
 }
 
 function firstParagraphAfterHeading(section: string, heading: string): string | undefined {
@@ -994,7 +865,12 @@ function firstParagraphAfterHeading(section: string, heading: string): string | 
 	const rest = section.slice(match.index + match[0].length);
 	const end = rest.search(/^####\s+/m);
 	const body = (end >= 0 ? rest.slice(0, end) : rest).trim();
-	return body.split(/\n\s*\n/)[0]?.replace(/\s+/g, " ").trim() || undefined;
+	return (
+		body
+			.split(/\n\s*\n/)[0]
+			?.replace(/\s+/g, " ")
+			.trim() || undefined
+	);
 }
 
 function fieldStrings(record: JsonRecord, field: string): string[] {
@@ -1014,39 +890,58 @@ function phaseSummary(options: Record<string, string | boolean | string[]>): Rec
 	const order = new Map(phases.map((phase, index) => [String(phase.phase_id), index]));
 	const depsFor = (phase: JsonRecord) => {
 		const phaseId = String(phase.phase_id);
-		return [...fieldStrings(phase, "depends_on"), ...edgesResult.records
-			.filter((edge) => edge.type === "depends_on" && edge.from === `phase:${phaseId}`)
-			.map((edge) => String(edge.to).replace(/^phase:/, ""))]
-			.filter((value, index, array) => value && array.indexOf(value) === index);
+		return [
+			...fieldStrings(phase, "depends_on"),
+			...edgesResult.records
+				.filter((edge) => edge.type === "depends_on" && edge.from === `phase:${phaseId}`)
+				.map((edge) => String(edge.to).replace(/^phase:/, "")),
+		].filter((value, index, array) => value && array.indexOf(value) === index);
 	};
 	const blockersFor = (phase: JsonRecord) => depsFor(phase).filter((dep) => !phaseComplete(byId.get(dep)?.status));
 	const requested = typeof options["phase-id"] === "string" ? String(options["phase-id"]) : undefined;
 	const candidates = requested ? phases.filter((phase) => phase.phase_id === requested) : phases;
-	const selected = candidates.find((phase) => !phaseComplete(phase.status) && !phaseBlocked(phase.status) && blockersFor(phase).length === 0)
-		|| candidates.find((phase) => !phaseComplete(phase.status) && !phaseBlocked(phase.status))
-		|| candidates[0];
+	const selected =
+		candidates.find(
+			(phase) => !phaseComplete(phase.status) && !phaseBlocked(phase.status) && blockersFor(phase).length === 0,
+		) ||
+		candidates.find((phase) => !phaseComplete(phase.status) && !phaseBlocked(phase.status)) ||
+		candidates[0];
 	if (!selected) return { ok: false, topic, errors: [...errors, "No phase records found in plan.nodes.jsonl"] };
 	const phaseId = String(selected.phase_id);
 	const tasks = nodesResult.records
 		.filter((record) => record.type === "task" && record.phase_id === phaseId)
 		.sort((a, b) => String(a.task_id || a.id).localeCompare(String(b.task_id || b.id)))
-		.map((record) => ({ id: record.task_id || record.id, title: record.title, status: record.status || selected.status }));
+		.map((record) => ({
+			id: record.task_id || record.id,
+			title: record.title,
+			status: record.status || selected.status,
+		}));
 	const validations = nodesResult.records
 		.filter((record) => record.type === "validation" && record.phase_id === phaseId)
 		.sort((a, b) => String(a.validation_id || a.id).localeCompare(String(b.validation_id || b.id)))
-		.map((record) => ({ id: record.validation_id || record.id, title: record.title, command: record.command, status: record.status || selected.status }));
+		.map((record) => ({
+			id: record.validation_id || record.id,
+			title: record.title,
+			command: record.command,
+			status: record.status || selected.status,
+		}));
 	const planPath = path.join(dir, "plan.md");
 	const planText = fs.existsSync(planPath) ? fs.readFileSync(planPath, "utf8") : "";
 	const section = planText ? planMarkdownSection(planText, phaseId) : "";
 	const checklistText = markdownListAfterHeading(section, "Checklist");
 	const validationText = markdownListAfterHeading(section, "Validation");
 	const blockedBy = blockersFor(selected);
-	const references = [...fieldStrings(selected, "references"), ...edgesResult.records
-		.filter((edge) => edge.type === "references" && edge.from === `phase:${phaseId}`)
-		.map((edge) => String(edge.to))]
+	const references = [
+		...fieldStrings(selected, "references"),
+		...edgesResult.records
+			.filter((edge) => edge.type === "references" && edge.from === `phase:${phaseId}`)
+			.map((edge) => String(edge.to)),
+	]
 		.filter((value, index, array) => value && array.indexOf(value) === index)
 		.map(sanitizeText);
-	const verifyCommands = validations.map((validation) => validation.command).filter((command): command is string => typeof command === "string" && command.length > 0);
+	const verifyCommands = validations
+		.map((validation) => validation.command)
+		.filter((command): command is string => typeof command === "string" && command.length > 0);
 	const suggestedAcceptanceCriteria = tasks.map((task) => ({
 		id: String(task.id),
 		criterion: `${String(task.id)} complete: ${task.title || "phase task is implemented"}`,
@@ -1064,7 +959,8 @@ function phaseSummary(options: Record<string, string | boolean | string[]>): Rec
 			unlocks: fieldStrings(selected, "unlocks"),
 			order: order.get(phaseId),
 		},
-		next_executable_phase_id: !phaseComplete(selected.status) && !phaseBlocked(selected.status) && blockedBy.length === 0 ? phaseId : undefined,
+		next_executable_phase_id:
+			!phaseComplete(selected.status) && !phaseBlocked(selected.status) && blockedBy.length === 0 ? phaseId : undefined,
 		objective: firstParagraphAfterHeading(section, "Objective"),
 		scope: firstParagraphAfterHeading(section, "Scope"),
 		references,
@@ -1081,7 +977,15 @@ function phaseSummary(options: Record<string, string | boolean | string[]>): Rec
 				"Do not mutate .plan/_private/** or .plan/_index/**.",
 				"Keep canonical validation evidence parent-owned; workers may report non-canonical receipts only when explicitly assigned.",
 			],
-			structured_report_fields: ["criteriaSatisfied", "changedFiles", "commandsRun", "validationOutput", "residualRisks", "noStagedFiles", "diffSummary"],
+			structured_report_fields: [
+				"criteriaSatisfied",
+				"changedFiles",
+				"commandsRun",
+				"validationOutput",
+				"residualRisks",
+				"noStagedFiles",
+				"diffSummary",
+			],
 		},
 		errors: errors.map(sanitizeText),
 	};
@@ -1099,9 +1003,7 @@ function upsertRecords(
 	let updated = 0;
 	for (const record of recordsToUpsert) {
 		const target = recordKey(record, keys);
-		const existingIndex = records.findIndex(
-			(item) => recordKey(item, keys) === target,
-		);
+		const existingIndex = records.findIndex((item) => recordKey(item, keys) === target);
 		if (existingIndex >= 0) {
 			records[existingIndex] = { ...records[existingIndex], ...record };
 			updated += 1;
@@ -1114,12 +1016,7 @@ function upsertRecords(
 	return { inserted, updated, count: records.length };
 }
 
-function docSource(
-	id: string,
-	title: string,
-	filePath: string,
-	description: string,
-): JsonRecord {
+function docSource(id: string, title: string, filePath: string, description: string): JsonRecord {
 	return {
 		id,
 		type: "source",
@@ -1132,13 +1029,7 @@ function docSource(
 	};
 }
 
-function fact(
-	id: string,
-	title: string,
-	claim: string,
-	sourceId: string,
-	relevance: string,
-): JsonRecord {
+function fact(id: string, title: string, claim: string, sourceId: string, relevance: string): JsonRecord {
 	return {
 		id,
 		type: "fact",
@@ -1161,16 +1052,12 @@ function supportEdge(from: string, to: string, evidence: string): JsonRecord {
 	};
 }
 
-function seedPiFacts(
-	options: Record<string, string | boolean | string[]>,
-): Record<string, unknown> {
+function seedPiFacts(options: Record<string, string | boolean | string[]>): Record<string, unknown> {
 	const root = path.resolve(optString(options, "root", process.cwd()));
 	const topic = optString(options, "topic");
 	const dir = path.join(root, ".plan", topic);
-	const piDocs =
-		"/var/home/linuxbrew/.linuxbrew/lib/node_modules/@earendil-works/pi-coding-agent/docs";
-	const subagentsSkill =
-		"/home/falco/.pi/agent/npm/node_modules/pi-subagents/skills/pi-subagents/SKILL.md";
+	const piDocs = "/var/home/linuxbrew/.linuxbrew/lib/node_modules/@earendil-works/pi-coding-agent/docs";
+	const subagentsSkill = "/home/falco/.pi/agent/npm/node_modules/pi-subagents/skills/pi-subagents/SKILL.md";
 	const nodesPath = path.join(dir, "facts.nodes.jsonl");
 	const edgesPath = path.join(dir, "facts.edges.jsonl");
 	const nodes = [
@@ -1198,12 +1085,7 @@ function seedPiFacts(
 			path.join(piDocs, "prompt-templates.md"),
 			"Official Pi prompt template packaging documentation.",
 		),
-		docSource(
-			"S904",
-			"pi-subagents skill",
-			subagentsSkill,
-			"Official local pi-subagents orchestration guidance.",
-		),
+		docSource("S904", "pi-subagents skill", subagentsSkill, "Official local pi-subagents orchestration guidance."),
 		fact(
 			"F900",
 			"Pi packages bundle resources",
@@ -1248,27 +1130,11 @@ function seedPiFacts(
 		),
 	];
 	const edges = [
-		supportEdge(
-			"F900",
-			"S900",
-			"packages.md describes package.json pi manifest resources.",
-		),
-		supportEdge(
-			"F901",
-			"S900",
-			"packages.md documents gallery image metadata.",
-		),
-		supportEdge(
-			"F902",
-			"S901",
-			"skills.md describes skill structure and frontmatter.",
-		),
+		supportEdge("F900", "S900", "packages.md describes package.json pi manifest resources."),
+		supportEdge("F901", "S900", "packages.md documents gallery image metadata."),
+		supportEdge("F902", "S901", "skills.md describes skill structure and frontmatter."),
 		supportEdge("F903", "S902", "extensions.md documents pi.registerTool."),
-		supportEdge(
-			"F904",
-			"S903",
-			"prompt-templates.md documents packaged prompt templates.",
-		),
+		supportEdge("F904", "S903", "prompt-templates.md documents packaged prompt templates."),
 		supportEdge(
 			"F905",
 			"S904",

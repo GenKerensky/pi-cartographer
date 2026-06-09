@@ -5,6 +5,7 @@ version: 5
 created: "2026-06-06"
 updated: "2026-06-08"
 ---
+
 # Pi Cartographer Implement
 
 ## When to Use
@@ -91,7 +92,7 @@ If the plan is missing, ask the user whether to generate it first with the `plan
      - substitute built-in `worker` or another editing-capable agent
      - run pathfinder duties serially with the current agent
      - stop until `cartographer-pathfinder` is available
-     Record the approved substitution or serial mode as a fallback receipt before substantial edits.
+       Record the approved substitution or serial mode as a fallback receipt before substantial edits.
    - If `cartographer-auditor` is unavailable, ask whether to substitute built-in `reviewer`/`oracle` or run that role serially. Do not silently skip review; record the fallback receipt before accepting any phase. If `scout` is unavailable, continue with Cartographer index/map tools unless the phase genuinely requires scout-style reconnaissance.
    - If a child repeatedly times out, fails tool calls, or returns unusable output, append timeout/fallback receipts and call `cartographer-compass` before substantial parent takeover or broad serial repair.
    - If no executable subagents are available, alert the user and ask whether to continue serially with the current agent. Only continue after approval and a fallback receipt.
@@ -212,139 +213,147 @@ If the plan is missing, ask the user whether to generate it first with the `plan
    - Continue the fix/check loop until green or until an unknown/blocking issue appears.
 
 10. **Use `cartographer-compass` for plan/scope decision checks**
-   - Do **not** use `cartographer-compass`/`oracle` as a routine substitute for `cartographer-auditor`. `cartographer-auditor` is the right agent for code correctness, validation item approval, and phase sign-off.
-   - Call `cartographer-compass`, or perform an approved serial oracle pass, only when implementation raises a decision-level concern:
-     - the plan appears to conflict with the current codebase
-     - phase ordering or dependencies may need to change
-     - a required library/API/tool behaves differently than the plan assumed
-     - the fix would expand scope beyond the current phase
-     - scout, pathfinder, and auditor disagree about correctness or scope
-     - the same command, tool, or subagent call fails repeatedly and the next action is unclear
-     - an unexpected side effect appears outside the current phase
-   - `cartographer-compass`/oracle should answer: is this still within the approved plan, should the phase/order/scope change, or should we stop and ask the user?
-   - Compass/oracle may recommend options, but it must not override stop conditions, auditor gates, or user approval requirements.
+
+- Do **not** use `cartographer-compass`/`oracle` as a routine substitute for `cartographer-auditor`. `cartographer-auditor` is the right agent for code correctness, validation item approval, and phase sign-off.
+- Call `cartographer-compass`, or perform an approved serial oracle pass, only when implementation raises a decision-level concern:
+  - the plan appears to conflict with the current codebase
+  - phase ordering or dependencies may need to change
+  - a required library/API/tool behaves differently than the plan assumed
+  - the fix would expand scope beyond the current phase
+  - scout, pathfinder, and auditor disagree about correctness or scope
+  - the same command, tool, or subagent call fails repeatedly and the next action is unclear
+  - an unexpected side effect appears outside the current phase
+- `cartographer-compass`/oracle should answer: is this still within the approved plan, should the phase/order/scope change, or should we stop and ask the user?
+- Compass/oracle may recommend options, but it must not override stop conditions, auditor gates, or user approval requirements.
 
 11. **Handle unknown or blocking issues**
-   - Stop and ask the user what to do if any of these occur after any useful `cartographer-compass`/oracle check:
-     - a library or API does not work as expected and requires a design choice
-     - an update causes unexpected side effects outside the current phase scope
-     - the plan conflicts with the current codebase
-     - tests reveal a product/behavior decision not covered by the plan
-     - a tool, command, or subagent call keeps failing after reasonable retries
-     - fixing the issue would require changing phase order or scope
-   - When stopping, explain:
-     - phase and checklist item affected
-     - what was attempted
-     - exact error or symptom
-     - likely causes
-     - options for proceeding
-     - `cartographer-compass`/oracle recommendation, if one was called
-     - current git status and whether any changes are uncommitted
+
+- Stop and ask the user what to do if any of these occur after any useful `cartographer-compass`/oracle check:
+  - a library or API does not work as expected and requires a design choice
+  - an update causes unexpected side effects outside the current phase scope
+  - the plan conflicts with the current codebase
+  - tests reveal a product/behavior decision not covered by the plan
+  - a tool, command, or subagent call keeps failing after reasonable retries
+  - fixing the issue would require changing phase order or scope
+- When stopping, explain:
+  - phase and checklist item affected
+  - what was attempted
+  - exact error or symptom
+  - likely causes
+  - options for proceeding
+  - `cartographer-compass`/oracle recommendation, if one was called
+  - current git status and whether any changes are uncommitted
 
 12. **Audit and validate the phase**
-   - Once quality tools are green and deterministic validation receipts exist, dispatch `cartographer-auditor` as the default phase semantic gate.
-   - `cartographer-auditor` must receive:
-     - selected phase text
-     - current diff/stat
-     - commands run, summarized outputs, and validation receipt IDs/paths
-     - checked checklist items
-     - unchecked validation items
-     - relevant proposal/map/fact graph references
-     - structured acceptance criteria used for the pathfinder handoff
-   - Ask `cartographer-auditor` to:
-     - review the code/artifact changes for correctness, maintainability, and scope control
-     - verify every phase validation item against deterministic receipts and targeted inspection
-     - check off validation items in `.plan/{topic}/plan.md` if the auditor can edit, or report exact items to check off
-     - identify required fixes before approval
-     - return an explicit `PASS`/`FAIL`
-   - If `cartographer-auditor` rejects or any validation item fails:
-     - do not commit
-     - pass the auditor findings back to `cartographer-pathfinder` or the approved fallback writer
-     - rerun quality tools and update validation receipts
-     - call `cartographer-auditor` again
-   - If `cartographer-auditor` is unavailable or times out, use built-in `reviewer`/`oracle` or serial review only with user-approved fallback and an explicit fallback receipt; do not silently accept the phase.
-   - Mirror approved validation status in `plan.nodes.jsonl` by setting matching `validation:P?.V?` nodes to `status: complete` when present.
-   - Repeat until `cartographer-auditor` passes (or approved fallback receipt records pass) and all phase validation items are checked off.
+
+- Once quality tools are green and deterministic validation receipts exist, dispatch `cartographer-auditor` as the default phase semantic gate.
+- `cartographer-auditor` must receive:
+  - selected phase text
+  - current diff/stat
+  - commands run, summarized outputs, and validation receipt IDs/paths
+  - checked checklist items
+  - unchecked validation items
+  - relevant proposal/map/fact graph references
+  - structured acceptance criteria used for the pathfinder handoff
+- Ask `cartographer-auditor` to:
+  - review the code/artifact changes for correctness, maintainability, and scope control
+  - verify every phase validation item against deterministic receipts and targeted inspection
+  - check off validation items in `.plan/{topic}/plan.md` if the auditor can edit, or report exact items to check off
+  - identify required fixes before approval
+  - return an explicit `PASS`/`FAIL`
+- If `cartographer-auditor` rejects or any validation item fails:
+  - do not commit
+  - pass the auditor findings back to `cartographer-pathfinder` or the approved fallback writer
+  - rerun quality tools and update validation receipts
+  - call `cartographer-auditor` again
+- If `cartographer-auditor` is unavailable or times out, use built-in `reviewer`/`oracle` or serial review only with user-approved fallback and an explicit fallback receipt; do not silently accept the phase.
+- Mirror approved validation status in `plan.nodes.jsonl` by setting matching `validation:P?.V?` nodes to `status: complete` when present.
+- Repeat until `cartographer-auditor` passes (or approved fallback receipt records pass) and all phase validation items are checked off.
 
 13. **Complete and commit the phase**
-   - Confirm all checklist and validation items for the phase are checked off in `.plan/{topic}/plan.md`.
-   - Mark the phase `complete` in `.plan/{topic}/plan.md` and in `plan.nodes.jsonl` when present. If the phase completed with no source changes, add a short no-op completion note explaining why.
-   - Run `git diff --check` when available.
-   - Run a final minimal quality gate for the phase if not already done after the latest fix.
-   - Stage only phase-related files, including `.plan/{topic}/plan.md`, `.plan/{topic}/plan.nodes.jsonl`, and `.plan/{topic}/plan.edges.jsonl` when changed.
-   - Do not stage unrelated user changes or generated caches unless required by the plan.
-   - Commit using a conventional commit message with a bullet list of major changes:
 
-     ```bash
-     git commit -m "feat({topic}): complete phase P1" \
-       -m "- Implemented <major change>" \
-       -m "- Added/updated validation for <area>" \
-       -m "- Checked off phase P1 tasks and validations"
-     ```
+- Confirm all checklist and validation items for the phase are checked off in `.plan/{topic}/plan.md`.
+- Mark the phase `complete` in `.plan/{topic}/plan.md` and in `plan.nodes.jsonl` when present. If the phase completed with no source changes, add a short no-op completion note explaining why.
+- Run `git diff --check` when available.
+- Run a final minimal quality gate for the phase if not already done after the latest fix.
+- Stage only phase-related files, including `.plan/{topic}/plan.md`, `.plan/{topic}/plan.nodes.jsonl`, and `.plan/{topic}/plan.edges.jsonl` when changed.
+- Do not stage unrelated user changes or generated caches unless required by the plan.
+- Commit using a conventional commit message with a bullet list of major changes:
 
-   - Choose the commit type based on the phase work:
-     - `feat` for user-visible capability
-     - `fix` for bug fixes
-     - `refactor` for behavior-preserving restructuring
-     - `test` for test-only work
-     - `docs` for documentation-only work
-     - `chore` for tooling/config/maintenance
-   - If a phase changes only planning artifacts, use `docs` or `chore` as the commit type and explain the no-op source result in the commit body.
-   - If a phase produces no file changes at all, do not create an empty commit unless the user explicitly asks. Mark/document the phase as no-op complete and explain why no commit was made.
+  ```bash
+  git commit -m "feat({topic}): complete phase P1" \
+    -m "- Implemented <major change>" \
+    -m "- Added/updated validation for <area>" \
+    -m "- Checked off phase P1 tasks and validations"
+  ```
+
+- Choose the commit type based on the phase work:
+  - `feat` for user-visible capability
+  - `fix` for bug fixes
+  - `refactor` for behavior-preserving restructuring
+  - `test` for test-only work
+  - `docs` for documentation-only work
+  - `chore` for tooling/config/maintenance
+- If a phase changes only planning artifacts, use `docs` or `chore` as the commit type and explain the no-op source result in the commit body.
+- If a phase produces no file changes at all, do not create an empty commit unless the user explicitly asks. Mark/document the phase as no-op complete and explain why no commit was made.
 
 14. **Continue to the next phase**
-   - After a successful phase commit or documented no-op completion:
-     - refresh `git status --short`
-     - optionally run `index_project.py ensure --root "$PWD" --json` if source files changed substantially
-     - select the next incomplete dependency-ready phase
-   - Repeat steps 5-13 until every phase is complete and validated.
+
+- After a successful phase commit or documented no-op completion:
+  - refresh `git status --short`
+  - optionally run `index_project.py ensure --root "$PWD" --json` if source files changed substantially
+  - select the next incomplete dependency-ready phase
+- Repeat steps 5-13 until every phase is complete and validated.
 
 15. **Final completion checks**
-   - Run cross-phase validation from `.plan/{topic}/plan.md`.
-   - Run the planning graph validator when available:
 
-     ```bash
-     python <plan-skill-dir>/scripts/validate_planning_graph.py --root "$PWD" --topic "{topic}"
-     ```
+- Run cross-phase validation from `.plan/{topic}/plan.md`.
+- Run the planning graph validator when available:
 
-   - Run the broadest available project quality gates again, typically check/lint/test/build.
-   - Ensure every phase checklist and validation item is checked off.
-   - Ensure each completed phase has a commit or documented no-op completion.
-   - Run a final `cartographer-auditor` semantic gate after deterministic final validation receipts pass; built-in reviewer/oracle or serial final review are fallback substitutes only with explicit fallback receipts.
-   - If final checks create fixes or plan/checkoff changes, assign them to the owning phase, rerun relevant checks/auditor, and create a conventional commit before final response.
-   - If final checks fail, delegate fixes to `cartographer-pathfinder` or the approved fallback writer, rerun checks, and dispatch `cartographer-auditor` if the fix changes code.
+  ```bash
+  python <plan-skill-dir>/scripts/validate_planning_graph.py --root "$PWD" --topic "{topic}"
+  ```
+
+- Run the broadest available project quality gates again, typically check/lint/test/build.
+- Ensure every phase checklist and validation item is checked off.
+- Ensure each completed phase has a commit or documented no-op completion.
+- Run a final `cartographer-auditor` semantic gate after deterministic final validation receipts pass; built-in reviewer/oracle or serial final review are fallback substitutes only with explicit fallback receipts.
+- If final checks create fixes or plan/checkoff changes, assign them to the owning phase, rerun relevant checks/auditor, and create a conventional commit before final response.
+- If final checks fail, delegate fixes to `cartographer-pathfinder` or the approved fallback writer, rerun checks, and dispatch `cartographer-auditor` if the fix changes code.
 
 16. **Finalize ADR intent after validation**
-   - Run this step only after deterministic final validation is green and before the final handoff.
-   - Inspect accepted proposal/plan ADR metadata. If `adr_required: true`, use `cartographer_adr` (or `python <plan-skill-dir>/scripts/adr_records.py`) to draft/write/validate a workflow ADR for `{topic}`.
-   - Workflow-generated ADR evidence must include:
-     - stable topic ID (`--topic {topic}`)
-     - passed validation receipt IDs from `.plan/{topic}/receipts.jsonl`
-     - phase/final commit IDs when available (`--source-commit <sha>`)
-     - a concise validation summary with no raw `.plan/_private/**` references and no brittle raw log paths
-   - Typical commands, keeping output shaped under the Clean Context Contract:
 
-     ```bash
-     cartographer_adr({"action":"draft","root":"$PWD","topic":"{topic}","maxOutputChars":8000})
-     cartographer_adr({"action":"write","root":"$PWD","topic":"{topic}","title":"<decision>","decision":"<decision>","context":"<context>","options":["<accepted option>","<alternative>"],"rationale":"<why>","domains":["<domain>"],"keywords":["<keyword>"],"validationReceipts":["<receipt-id>"],"sourceCommits":["<sha>"],"maxOutputChars":8000})
-     cartographer_adr({"action":"validate","root":"$PWD","maxOutputChars":8000})
-     ```
+- Run this step only after deterministic final validation is green and before the final handoff.
+- Inspect accepted proposal/plan ADR metadata. If `adr_required: true`, use `cartographer_adr` (or `python <plan-skill-dir>/scripts/adr_records.py`) to draft/write/validate a workflow ADR for `{topic}`.
+- Workflow-generated ADR evidence must include:
+  - stable topic ID (`--topic {topic}`)
+  - passed validation receipt IDs from `.plan/{topic}/receipts.jsonl`
+  - phase/final commit IDs when available (`--source-commit <sha>`)
+  - a concise validation summary with no raw `.plan/_private/**` references and no brittle raw log paths
+- Typical commands, keeping output shaped under the Clean Context Contract:
 
-   - If `adr_required: false`, append an `adr-not-required` receipt to `.plan/{topic}/receipts.jsonl` with `topic`, `reason`, `source: proposal-metadata`, `validation_receipts`, optional `source_commits`, `created_at`, and `status: skipped`. Do not silently skip.
-   - If ADR metadata is missing or conflicts with an obviously ADR-worthy change, stop and ask the user whether to create an ADR, update metadata, or record an `adr-not-required` receipt.
-   - Do not generate ADRs before validation evidence exists, do not include raw/private artifact paths, and do not make subagents mandatory for ADR finalization.
+  ```bash
+  cartographer_adr({"action":"draft","root":"$PWD","topic":"{topic}","maxOutputChars":8000})
+  cartographer_adr({"action":"write","root":"$PWD","topic":"{topic}","title":"<decision>","decision":"<decision>","context":"<context>","options":["<accepted option>","<alternative>"],"rationale":"<why>","domains":["<domain>"],"keywords":["<keyword>"],"validationReceipts":["<receipt-id>"],"sourceCommits":["<sha>"],"maxOutputChars":8000})
+  cartographer_adr({"action":"validate","root":"$PWD","maxOutputChars":8000})
+  ```
+
+- If `adr_required: false`, append an `adr-not-required` receipt to `.plan/{topic}/receipts.jsonl` with `topic`, `reason`, `source: proposal-metadata`, `validation_receipts`, optional `source_commits`, `created_at`, and `status: skipped`. Do not silently skip.
+- If ADR metadata is missing or conflicts with an obviously ADR-worthy change, stop and ask the user whether to create an ADR, update metadata, or record an `adr-not-required` receipt.
+- Do not generate ADRs before validation evidence exists, do not include raw/private artifact paths, and do not make subagents mandatory for ADR finalization.
 
 17. **Final response**
-   - Report:
-     - completed topic
-     - plan artifacts updated (`plan.md`, `plan.nodes.jsonl`, `plan.edges.jsonl`)
-     - phases completed
-     - commits created
-     - final quality commands run
-     - `cartographer-auditor` approval status or approved fallback receipt
-     - ADR outcome: generated ADR path/graph validation, `adr-not-required` receipt ID, or user-deferred decision
-     - any skipped/unavailable commands
-     - any residual risks or follow-up recommendations
+
+- Report:
+  - completed topic
+  - plan artifacts updated (`plan.md`, `plan.nodes.jsonl`, `plan.edges.jsonl`)
+  - phases completed
+  - commits created
+  - final quality commands run
+  - `cartographer-auditor` approval status or approved fallback receipt
+  - ADR outcome: generated ADR path/graph validation, `adr-not-required` receipt ID, or user-deferred decision
+  - any skipped/unavailable commands
+  - any residual risks or follow-up recommendations
 
 ## Delegation Prompt Templates
 
@@ -389,10 +398,20 @@ Structured handoff contract fields should be explicit in the `subagent(...)` cal
 {
   "acceptance": {
     "criteria": ["exact checklist IDs complete", "validation IDs addressed", "scope boundaries honored"],
-    "evidenceRequired": ["changed-files", "commands-run", "validation-output", "residual-risks", "diff-summary", "no-staged-files"]
+    "evidenceRequired": [
+      "changed-files",
+      "commands-run",
+      "validation-output",
+      "residual-risks",
+      "diff-summary",
+      "no-staged-files"
+    ]
   },
-  "async": {"enabled": true, "timeoutMs": 600000},
-  "control": {"stopRules": ["product/scope decision", "dependency conflict", "repeated tool failure", "out-of-scope file change"], "maxFinalizationTurns": 3},
+  "async": { "enabled": true, "timeoutMs": 600000 },
+  "control": {
+    "stopRules": ["product/scope decision", "dependency conflict", "repeated tool failure", "out-of-scope file change"],
+    "maxFinalizationTurns": 3
+  },
   "outputMode": "file-only",
   "helperSummaries": [".plan/{topic}/context-packs.jsonl:<context-id>", ".plan/{topic}/receipts.jsonl:<receipt-ids>"],
   "timeoutFallbackReceipt": ".plan/{topic}/receipts.jsonl"
