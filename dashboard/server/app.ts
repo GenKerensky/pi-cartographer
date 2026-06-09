@@ -4,6 +4,7 @@ import type { ContentfulStatusCode } from "hono/utils/http-status";
 import { apiFailure, apiSuccess } from "../shared/api.js";
 import type { DocumentKind } from "../shared/models.js";
 import { registerDashboardAssetRoutes } from "./assets.js";
+import { registerLiveReloadRoutes, type LiveReloadService } from "./live-reload.js";
 import {
 	discoverTopics,
 	readAdrCollection,
@@ -21,6 +22,7 @@ import { PathSafetyError } from "./safety.js";
 
 export type DashboardAppOptions = {
 	root?: string;
+	liveReload?: LiveReloadService;
 };
 
 export type ReadOnlyRouteDefinition = {
@@ -42,6 +44,8 @@ export const READ_ONLY_ROUTES: ReadOnlyRouteDefinition[] = [
 	{ method: "GET", path: "/api/adrs", description: "ADR Markdown and graph records" },
 	{ method: "GET", path: "/api/adrs/:id", description: "Single ADR by graph id or ADR id" },
 	{ method: "GET", path: "/api/index", description: "Project index manifest summary" },
+	{ method: "GET", path: "/api/events", description: "Server-sent live reload stream for safe planning changes" },
+	{ method: "GET", path: "/api/events/status", description: "Live reload connection/watch status metadata" },
 ];
 
 function nodeErrorCode(error: unknown): string | undefined {
@@ -148,6 +152,7 @@ export function createDashboardApp(options: DashboardAppOptions = {}): Hono {
 		}),
 	);
 	app.get("/api/index", (context) => routeJson(context, () => readIndexManifest(root)));
+	registerLiveReloadRoutes(app, options.liveReload);
 
 	registerDashboardAssetRoutes(app, { root });
 

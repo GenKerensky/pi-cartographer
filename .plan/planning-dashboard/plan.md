@@ -182,7 +182,7 @@ Do not introduce a Pi extension command for v1. The CLI is the product surface t
 
 ### Phase P2 — Live Reload Event Pipeline
 
-- **Status:** pending
+- **Status:** implemented
 - **Depends on:** P0
 - **Unlocks:** P4, P7
 - **Primary references:** `proposed:dashboard-server`, `constraint:plan-live-reload`, [F013], [F011]
@@ -201,17 +201,17 @@ Make the server observe safe `.plan/**` changes, invalidate affected cached data
 
 #### Checklist
 
-- [ ] **P2.T1** Add Chokidar as the selected watcher implementation and document dependency impact, ignore patterns, await-write-finish/atomic-write behavior, and known platform limitations [F023].
-- [ ] **P2.T2** Implement safe Chokidar watch registration for `.plan/**` with private-path exclusion and root-bound path normalization [F023].
-- [ ] **P2.T3** Implement debounced event coalescing, topic/global cache invalidation, and event payloads like `{ type, topic?, paths, changedAt }`.
-- [ ] **P2.T4** Implement `GET /api/events` and connection lifecycle handling for reconnects, heartbeat/keepalive, and stream closure.
-- [ ] **P2.T5** Add client-consumable event status metadata for connected, reconnecting, disconnected, and manual-refresh states.
+- [x] **P2.T1** Add Chokidar as the selected watcher implementation and document dependency impact, ignore patterns, await-write-finish/atomic-write behavior, and known platform limitations [F023].
+- [x] **P2.T2** Implement safe Chokidar watch registration for `.plan/**` with private-path exclusion and root-bound path normalization [F023].
+- [x] **P2.T3** Implement debounced event coalescing, topic/global cache invalidation, and event payloads like `{ type, topic?, paths, changedAt }`.
+- [x] **P2.T4** Implement `GET /api/events` and connection lifecycle handling for reconnects, heartbeat/keepalive, and stream closure.
+- [x] **P2.T5** Add client-consumable event status metadata for connected, reconnecting, disconnected, and manual-refresh states.
 
 #### Validation
 
-- [ ] **P2.V1** Run `npm run test:ts -- tests/dashboard/live-reload.test.ts`; expect temp-root create/edit/delete/rename events to produce debounced reload notifications and correct topic attribution.
-- [ ] **P2.V2** Run `npm run test:ts -- tests/dashboard/private-watch.test.ts`; expect `.plan/_private/**` changes and traversal attempts to produce no client-visible file details.
-- [ ] **P2.V3** Run `npm run typecheck`; expect event types, cache invalidation code, and stream handlers to pass strict checks.
+- [x] **P2.V1** Run `npm run test:ts -- tests/dashboard/live-reload.test.ts`; expect temp-root create/edit/delete/rename events to produce debounced reload notifications and correct topic attribution.
+- [x] **P2.V2** Run `npm run test:ts -- tests/dashboard/private-watch.test.ts`; expect `.plan/_private/**` changes and traversal attempts to produce no client-visible file details.
+- [x] **P2.V3** Run `npm run typecheck`; expect event types, cache invalidation code, and stream handlers to pass strict checks.
 
 #### Exit Criteria
 

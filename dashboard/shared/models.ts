@@ -195,6 +195,26 @@ export type AdrCollection = {
 	warnings: HealthIssue[];
 };
 
+export type LiveReloadEvent = {
+	id: string;
+	type: "planning-artifacts-changed" | "index-stale";
+	resource: "topic" | "global" | "index";
+	topic?: string;
+	paths: string[];
+	events: string[];
+	changedAt: string;
+};
+
+export type LiveReloadStatus = {
+	enabled: boolean;
+	state: "idle" | "watching" | "unavailable" | "closed" | "manual-refresh";
+	root?: string;
+	debounceMs: number;
+	heartbeatMs: number;
+	ignored: string[];
+	indexEvents: "summarized-as-stale-index";
+};
+
 export type TopicArtifacts = {
 	topic: TopicSummary;
 	documents: DashboardDocument[];

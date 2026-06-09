@@ -83,3 +83,33 @@ Findings:
 Residual risks:
 - Installed-mode client asset packaging remains intentionally deferred to P7 after P3 creates real Vite assets.
 - Cross-process stop is conservative but still depends on OS signal behavior; tests cover the Linux/source-checkout path used in this environment.
+
+## P2 Phase Audit — 2026-06-09T12:56:00+00:00
+
+PASS
+
+Required corrections: none.
+
+Auditor execution note:
+- Attempted `cartographer-auditor` subagent run for P2 after deterministic receipts passed; the run timed out. Parent performed this fallback audit from deterministic receipts, helper summaries, Context7 Chokidar documentation, and targeted code/search inspection.
+
+Validation receipts/helper summaries reviewed:
+- `receipt:P2:validation:2026-06-09T12:52:01+00:00` — `P2.V1` live reload watcher tests PASS.
+- `receipt:P2:validation:2026-06-09T12:52:11+00:00` — `P2.V2` private watch regression tests PASS.
+- `receipt:P2:validation:2026-06-09T12:52:20+00:00` — `P2.V3` typecheck PASS.
+- `receipt:P2:validation:2026-06-09T12:53:03+00:00` — `CV.V2` validate-topic PASS.
+- `receipt:P2:validation:2026-06-09T12:53:15+00:00` — `CV.V3` planning graph validation PASS.
+- `receipt:P2:validation:2026-06-09T12:53:43+00:00` — `CV.V1` full `npm run check` PASS.
+- Phase summary reports P2 status `implemented` with P2.T1–P2.T5 and P2.V1–P2.V3 completed.
+
+Findings:
+- `package.json` adds Chokidar and includes `dashboard/server/live-reload.ts` in script/build checks.
+- `dashboard/server/live-reload.ts` uses Chokidar with `ignoreInitial`, `atomic`, and `awaitWriteFinish`, ignores `.plan/_private/**`, normalizes root-bound paths, summarizes `.plan/_index/**` as `index-stale` without raw paths, debounces/coalesces events, and exposes subscriber/status primitives.
+- `dashboard/server/app.ts` registers GET-only `/api/events` and `/api/events/status` routes; the SSE stream sends status, reload, and heartbeat events with no write endpoints.
+- `dashboard/server/runtime.ts` starts the live reload service with the Hono runtime and closes it during normal shutdown and startup failure cleanup.
+- `dashboard/shared/models.ts` exposes client-consumable `LiveReloadEvent` and `LiveReloadStatus` models.
+- `tests/dashboard/live-reload.test.ts` covers topic attribution, create/delete changes, debouncing via the service, and SSE/status route behavior from temp fixtures.
+- `tests/dashboard/private-watch.test.ts` verifies `.plan/_private/**` and outside-root paths are ignored and `.plan/_index/**` events do not expose raw index paths.
+
+Residual risks:
+- Chokidar behavior can vary by platform; P2 uses conservative `awaitWriteFinish`/`atomic` settings and keeps watcher abstraction small. Broader browser/UI reconnect behavior remains for later client phases.

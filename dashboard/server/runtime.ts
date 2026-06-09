@@ -7,6 +7,7 @@ import path from "node:path";
 import { serve, type ServerType } from "@hono/node-server";
 import type { Hono } from "hono";
 import { createDashboardApp } from "./app.js";
+import { createLiveReloadService, type LiveReloadService } from "./live-reload.js";
 import { canonicalizeRoot } from "./safety.js";
 
 export const DASHBOARD_MODE = "read-only" as const;
@@ -69,6 +70,7 @@ export type DashboardServerHandle = {
 	app: Hono;
 	metadata: DashboardServerMetadata;
 	server: ServerType;
+	liveReload: LiveReloadService;
 	stop: () => Promise<DashboardStopResult>;
 };
 
@@ -344,8 +346,17 @@ export async function startDashboardServer(options: StartDashboardServerOptions 
 		});
 	}
 
-	const app = createDashboardApp({ root: location.root });
-	const { server, address } = await onceListening(app, host, port);
+	const liveReload = await createLiveReloadService({ root: location.root });
+	await liveReload.start();
+	const app = createDashboardApp({ root: location.root, liveReload });
+	let listened: Awaited<ReturnType<typeof onceListening>>;
+	try {
+		listened = await onceListening(app, host, port);
+	} catch (error) {
+		await liveReload.close();
+		throw error;
+	}
+	const { server, address } = listened;
 	const actualPort = address.port;
 	const url = dashboardUrl(host, actualPort);
 	const metadata: DashboardServerMetadata = {
@@ -370,6 +381,7 @@ export async function startDashboardServer(options: StartDashboardServerOptions 
 		app,
 		metadata,
 		server,
+		liveReload,
 		stop: async (): Promise<DashboardStopResult> => {
 			if (stopped) {
 				return {
@@ -384,6 +396,7 @@ export async function startDashboardServer(options: StartDashboardServerOptions 
 			stopped = true;
 			activeHandles.delete(metadata.rootHash);
 			await closeServer(server);
+			await liveReload.close();
 			await removeMetadataIfCurrent(metadata);
 			return {
 				status: "stopped",
@@ -400,6 +413,7 @@ export async function startDashboardServer(options: StartDashboardServerOptions 
 		await writeMetadata(location, metadata);
 	} catch (error) {
 		await closeServer(server);
+		await liveReload.close();
 		throw error;
 	}
 	activeHandles.set(metadata.rootHash, handle);
