@@ -52,3 +52,34 @@ Findings:
 Residual risks:
 - P0 intentionally provides API/data foundations only; CLI lifecycle, loopback binding, live reload, and browser UI remain in later phases.
 - The one-time Prettier baseline touched existing Markdown/TypeScript files beyond the dashboard to make strict full-repo checks enforceable.
+
+## P1 Phase Audit — 2026-06-09T12:36:00+00:00
+
+PASS
+
+Required corrections: none.
+
+Auditor execution note:
+- Attempted `cartographer-auditor` subagent run for P1, but the harness rejected execution because no OpenRouter API key/provider login was available. Parent performed this fallback audit from deterministic receipts, helper summaries, and targeted code/search inspection.
+
+Validation receipts/helper summaries reviewed:
+- `receipt:P1:validation:2026-06-09T12:32:07+00:00` — `P1.V1` CLI lifecycle tests PASS.
+- `receipt:P1:validation:2026-06-09T12:32:48+00:00` — `P1.V2` bounded bin-entry start/status/stop integration PASS.
+- `receipt:P1:validation:2026-06-09T12:32:18+00:00` — `P1.V3` script checks + typecheck PASS.
+- `receipt:P1:validation:2026-06-09T12:34:36+00:00` — `CV.V2` validate-topic PASS.
+- `receipt:P1:validation:2026-06-09T12:34:45+00:00` — `CV.V3` planning graph validation PASS.
+- `receipt:P1:validation:2026-06-09T12:35:10+00:00` — `CV.V1` full `npm run check` PASS.
+- Phase summary reports P1 status `implemented` with P1.T1–P1.T5 and P1.V1–P1.V3 completed.
+
+Findings:
+- `package.json` exposes `bin.cartographer-dashboard`, includes `bin`/`dashboard` package files, adds `@hono/node-server`, and provides `dashboard:build`/script-check wiring for runtime sources.
+- `bin/cartographer-dashboard.js` is executable, respawns with `--experimental-strip-types` for source-checkout execution, and imports `dashboard/server/cli.ts` without a separate build step.
+- `dashboard/server/cli.ts` implements `start`, `status`, and `stop` with `--root`, `--host`, `--port`, `--topic`, `--open`, and `--json` handling.
+- `dashboard/server/runtime.ts` defaults to loopback, rejects non-loopback hosts, starts Hono via `@hono/node-server`, stores metadata under `XDG_RUNTIME_DIR` or `os.tmpdir()` outside `.plan/`, keys metadata by canonical root hash, detects stale PID/start-token mismatches, and guards cross-process stop with command/start-token checks before `SIGTERM`.
+- `dashboard/server/assets.ts` registers GET-only runtime asset routes and serves a read-only fallback page until P3 produces client assets.
+- `tests/dashboard/cli.test.ts` uses `os.tmpdir()` fixture roots/runtime dirs, covers start/status/stop, JSON contracts, topic deep links, metadata outside `.plan/`, read-only health serving, cleanup, and rejection of `0.0.0.0`, `::`, and external hosts.
+- Planning artifacts are coherent after P1 status updates; validate-topic and planning graph validations pass with no warnings.
+
+Residual risks:
+- Installed-mode client asset packaging remains intentionally deferred to P7 after P3 creates real Vite assets.
+- Cross-process stop is conservative but still depends on OS signal behavior; tests cover the Linux/source-checkout path used in this environment.

@@ -3,6 +3,7 @@ import type { Context } from "hono";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 import { apiFailure, apiSuccess } from "../shared/api.js";
 import type { DocumentKind } from "../shared/models.js";
+import { registerDashboardAssetRoutes } from "./assets.js";
 import {
 	discoverTopics,
 	readAdrCollection,
@@ -147,6 +148,8 @@ export function createDashboardApp(options: DashboardAppOptions = {}): Hono {
 		}),
 	);
 	app.get("/api/index", (context) => routeJson(context, () => readIndexManifest(root)));
+
+	registerDashboardAssetRoutes(app, { root });
 
 	return app;
 }

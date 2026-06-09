@@ -133,7 +133,7 @@ Start with TypeScript quality tooling, temp fixture helpers, and safety utilitie
 
 ### Phase P1 — CLI Runtime and Packaging
 
-- **Status:** pending
+- **Status:** implemented
 - **Depends on:** P0
 - **Unlocks:** P6, P7
 - **Primary references:** `file:package.json`, `proposed:bin-cartographer-dashboard`, `proposed:dashboard-server`, `dependency:npm:hono`, [F001], [F006], [F019]
@@ -151,17 +151,17 @@ Expose an installed `cartographer-dashboard` CLI that owns the local Hono server
 
 #### Checklist
 
-- [ ] **P1.T1** Add `bin/cartographer-dashboard.js` and package manifest wiring for the selected top-level dashboard runtime/build layout [F021].
-- [ ] **P1.T2** Implement `start` with root validation, port selection, loopback host default, non-loopback host rejection, optional topic deep link, optional browser open, JSON output, and runtime asset serving hook.
-- [ ] **P1.T3** Implement `status` and `stop` using XDG runtime metadata or an `os.tmpdir` fallback outside `.plan/`, including stale PID cleanup and root-hash-specific status keys [F022].
-- [ ] **P1.T4** Update package bin/files/build-script scaffolding so dashboard runtime assets can be included after the P3 client build while transient build/test outputs remain excluded.
-- [ ] **P1.T5** Add lifecycle tests for start/status/stop on ephemeral ports and temporary project roots.
+- [x] **P1.T1** Add `bin/cartographer-dashboard.js` and package manifest wiring for the selected top-level dashboard runtime/build layout [F021].
+- [x] **P1.T2** Implement `start` with root validation, port selection, loopback host default, non-loopback host rejection, optional topic deep link, optional browser open, JSON output, and runtime asset serving hook.
+- [x] **P1.T3** Implement `status` and `stop` using XDG runtime metadata or an `os.tmpdir` fallback outside `.plan/`, including stale PID cleanup and root-hash-specific status keys [F022].
+- [x] **P1.T4** Update package bin/files/build-script scaffolding so dashboard runtime assets can be included after the P3 client build while transient build/test outputs remain excluded.
+- [x] **P1.T5** Add lifecycle tests for start/status/stop on ephemeral ports and temporary project roots.
 
 #### Validation
 
-- [ ] **P1.V1** Run `npm run test:ts -- tests/dashboard/cli.test.ts`; expect CLI contract, JSON output, ephemeral ports, root selection, topic deep links, status, stop behavior, and rejection of `0.0.0.0`, `::`, and other non-loopback hosts to pass.
-- [ ] **P1.V2** Run `node bin/cartographer-dashboard.js start --root "$(mktemp -d)" --host 127.0.0.1 --port 0 --json` in a bounded integration test or test harness; expect loopback-only URL, `mode: "read-only"`, PID/status metadata under XDG runtime/tmp storage outside `.plan/`, and clean shutdown [F022].
-- [ ] **P1.V3** Run `npm run check:scripts && npm run typecheck`; expect package entrypoints and TypeScript checks to pass.
+- [x] **P1.V1** Run `npm run test:ts -- tests/dashboard/cli.test.ts`; expect CLI contract, JSON output, ephemeral ports, root selection, topic deep links, status, stop behavior, and rejection of `0.0.0.0`, `::`, and other non-loopback hosts to pass.
+- [x] **P1.V2** Run `node bin/cartographer-dashboard.js start --root "$(mktemp -d)" --host 127.0.0.1 --port 0 --json` in a bounded integration test or test harness; expect loopback-only URL, `mode: "read-only"`, PID/status metadata under XDG runtime/tmp storage outside `.plan/`, and clean shutdown [F022].
+- [x] **P1.V3** Run `npm run check:scripts && npm run typecheck`; expect package entrypoints and TypeScript checks to pass.
 
 #### Exit Criteria
 
