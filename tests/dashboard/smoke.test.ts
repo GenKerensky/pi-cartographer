@@ -147,11 +147,35 @@ describe.skipIf(!hasBuiltAssets)("dashboard browser smoke", () => {
 			const topicResponse = await fetch(started.topicUrl);
 			expect(topicResponse.status).toBe(200);
 			const page = await browser.newPage();
-			await page.goto(started.url);
+			await page.goto(started.topicUrl);
 			await expect.poll(async () => page.locator("[data-dashboard-shell]").count(), { timeout: 10_000 }).toBe(1);
 			await page.getByRole("heading", { name: "Planning Dashboard" }).waitFor();
 			await page.getByRole("heading", { name: "Demo Proposal" }).first().waitFor();
+			await page.locator("[data-nav-item='graph']").click();
+			await expect
+				.poll(async () =>
+					page
+						.locator("[role='tab'][data-state='active']")
+						.evaluateAll((tabs) => tabs.map((tab) => tab.textContent ?? "")),
+				)
+				.toContain("Graph");
 			await page.locator("[data-graph-explorer]").waitFor();
+			await page.locator("[data-nav-item='documents']").click();
+			await expect
+				.poll(async () =>
+					page
+						.locator("[role='tab'][data-state='active']")
+						.evaluateAll((tabs) => tabs.map((tab) => tab.textContent ?? "")),
+				)
+				.toContain("Proposal");
+			await expect
+				.poll(async () => page.locator("a[data-reference='F002']").first().getAttribute("href"))
+				.toContain("https://reactflow.dev/examples/overview");
+			await page.setViewportSize({ width: 390, height: 850 });
+			await page.locator("[data-nav-item='overview']").click();
+			await expect
+				.poll(async () => page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth))
+				.toBeLessThanOrEqual(4);
 
 			const proposalPath = path.join(fixture.root, ".plan", fixture.topic, "proposal.md");
 			fs.writeFileSync(proposalPath, "# Demo Proposal Reloaded\n\nUpdated by smoke test for live reload.\n");

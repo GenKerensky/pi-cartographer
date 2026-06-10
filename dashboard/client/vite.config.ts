@@ -8,7 +8,7 @@ const srcDir = fileURLToPath(new URL("./src", import.meta.url));
 
 export default defineConfig({
 	root: clientRoot,
-	base: "./",
+	base: "/",
 	plugins: [react(), tailwindcss()],
 	resolve: {
 		alias: {

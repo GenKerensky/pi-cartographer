@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Activity, Boxes, FileText, GitBranch, Radar, ShieldCheck, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,17 +10,17 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
-import { DashboardReviewWorkflow } from "@/features/review-workflow";
+import { DashboardReviewWorkflow, type DashboardSectionId } from "@/features/review-workflow";
 import { dashboardApi } from "@/lib/api";
 import { useLiveConnection, type LiveConnectionState } from "@/lib/events";
 import { createLiveRefetchPlan } from "@/lib/live-refetch";
 import type { AdrCollection, DashboardOverview, TopicArtifacts } from "../../shared/models.js";
 
-const navigation = [
-	{ label: "Overview", icon: Activity, status: "ready" },
-	{ label: "Topics", icon: Boxes, status: "ready" },
-	{ label: "Documents", icon: FileText, status: "ready" },
-	{ label: "Graph", icon: GitBranch, status: "planned" },
+const navigation: { id: DashboardSectionId; label: string; icon: typeof Activity; status: "ready" }[] = [
+	{ id: "overview", label: "Overview", icon: Activity, status: "ready" },
+	{ id: "topics", label: "Topics", icon: Boxes, status: "ready" },
+	{ id: "documents", label: "Documents", icon: FileText, status: "ready" },
+	{ id: "graph", label: "Graph", icon: GitBranch, status: "ready" },
 ];
 
 const metrics = [
@@ -56,6 +56,27 @@ export function DashboardShell({
 	const [selectedTopic, setSelectedTopic] = useState<TopicArtifacts | undefined>(initialTopic);
 	const [adrs, setAdrs] = useState<AdrCollection | undefined>(initialAdrs);
 	const [loadError, setLoadError] = useState<string | undefined>();
+	const [activeSection, setActiveSection] = useState<DashboardSectionId>("overview");
+
+	const loadTopic = useCallback(
+		async (
+			topicId: string,
+			options: { updateLocation?: boolean; focusSection?: DashboardSectionId } = {},
+		): Promise<void> => {
+			try {
+				const topic = await dashboardApi.topic(topicId);
+				setSelectedTopic(topic);
+				setLoadError(undefined);
+				if (options.updateLocation && typeof window !== "undefined") {
+					window.history.pushState(null, "", `/topics/${encodeURIComponent(topicId)}`);
+				}
+				if (options.focusSection) setActiveSection(options.focusSection);
+			} catch (error) {
+				setLoadError(error instanceof Error ? error.message : String(error));
+			}
+		},
+		[],
+	);
 
 	useEffect(() => {
 		if (disableDataFetch) return undefined;
@@ -66,8 +87,12 @@ export function DashboardShell({
 				if (cancelled) return;
 				setOverview(nextOverview);
 				setAdrs(nextAdrs);
-				const firstTopic = nextOverview.topics[0]?.id;
-				if (firstTopic) setSelectedTopic(await dashboardApi.topic(firstTopic));
+				const routedTopic =
+					typeof window === "undefined"
+						? undefined
+						: decodeURIComponent(window.location.pathname.match(/^\/topics\/([^/]+)/)?.[1] ?? "");
+				const topicToLoad = routedTopic || nextOverview.topics[0]?.id;
+				if (topicToLoad) await loadTopic(topicToLoad, { focusSection: routedTopic ? "documents" : "overview" });
 				setLoadError(undefined);
 			} catch (error) {
 				if (!cancelled) setLoadError(error instanceof Error ? error.message : String(error));
@@ -77,7 +102,7 @@ export function DashboardShell({
 		return () => {
 			cancelled = true;
 		};
-	}, [disableDataFetch]);
+	}, [disableDataFetch, loadTopic]);
 
 	useEffect(() => {
 		if (disableDataFetch || !live.lastEvent) return;
@@ -102,6 +127,18 @@ export function DashboardShell({
 				.catch(() => undefined);
 	}, [disableDataFetch, live.lastEvent, selectedTopic]);
 
+	useEffect(() => {
+		const id = activeSection === "graph" ? "dashboard-section-graph" : `dashboard-section-${activeSection}`;
+		const timeout = window.setTimeout(() => {
+			document.getElementById(id)?.scrollIntoView({ block: "start", behavior: "smooth" });
+		}, 0);
+		return () => window.clearTimeout(timeout);
+	}, [activeSection, selectedTopic?.topic.id]);
+
+	const handleSectionNav = (section: DashboardSectionId): void => {
+		setActiveSection(section);
+	};
+
 	return (
 		<TooltipProvider>
 			<div className="min-h-screen text-foreground" data-dashboard-shell>
@@ -111,8 +148,8 @@ export function DashboardShell({
 				>
 					Skip to dashboard content
 				</a>
-				<div className="grid min-h-screen grid-cols-1 lg:grid-cols-[17rem_1fr]">
-					<aside className="border-b border-border/80 bg-card/70 backdrop-blur lg:border-b-0 lg:border-r">
+				<div className="grid min-h-screen grid-cols-1 lg:grid-cols-[17rem_minmax(0,1fr)]">
+					<aside className="border-b border-border/80 bg-card/70 backdrop-blur lg:sticky lg:top-0 lg:h-screen lg:border-b-0 lg:border-r">
 						<div className="flex h-16 items-center gap-3 px-5">
 							<div className="status-gradient flex size-10 items-center justify-center rounded-xl text-background shadow-lg shadow-cyan-500/20">
 								<Radar className="size-5" />
@@ -123,17 +160,20 @@ export function DashboardShell({
 							</div>
 						</div>
 						<Separator />
-						<nav className="grid gap-1 p-3" aria-label="Dashboard sections">
+						<nav className="flex gap-2 overflow-x-auto p-3 lg:grid lg:overflow-visible" aria-label="Dashboard sections">
 							{navigation.map((item) => (
 								<Button
 									key={item.label}
-									variant="ghost"
-									className="justify-start gap-3 rounded-lg px-3"
-									data-nav-item={item.label.toLowerCase()}
+									type="button"
+									variant={activeSection === item.id ? "secondary" : "ghost"}
+									className="shrink-0 justify-start gap-3 rounded-lg px-3 lg:w-full"
+									data-nav-item={item.id}
+									data-nav-active={activeSection === item.id}
+									onClick={() => handleSectionNav(item.id)}
 								>
 									<item.icon className="size-4" />
 									<span>{item.label}</span>
-									<Badge variant={item.status === "ready" ? "success" : "outline"} className="ml-auto">
+									<Badge variant="success" className="ml-auto hidden sm:inline-flex">
 										{item.status}
 									</Badge>
 								</Button>
@@ -170,10 +210,23 @@ export function DashboardShell({
 							</div>
 						</header>
 
-						<main id="dashboard-main" className="grid flex-1 gap-5 p-5 xl:grid-cols-[1fr_22rem]">
-							<section className="space-y-5">
+						<main
+							id="dashboard-main"
+							className="grid min-w-0 flex-1 gap-5 p-3 sm:p-5 xl:grid-cols-[minmax(0,1fr)_22rem]"
+						>
+							<section className="min-w-0 space-y-5">
 								{overview ? (
-									<DashboardReviewWorkflow overview={overview} selectedTopic={selectedTopic} adrs={adrs} />
+									<DashboardReviewWorkflow
+										overview={overview}
+										selectedTopic={selectedTopic}
+										selectedTopicId={selectedTopic?.topic.id}
+										adrs={adrs}
+										activeSection={activeSection}
+										onSectionChange={setActiveSection}
+										onTopicSelect={(topicId) =>
+											void loadTopic(topicId, { updateLocation: true, focusSection: "documents" })
+										}
+									/>
 								) : (
 									<div className="grid gap-4 md:grid-cols-3">
 										{metrics.map((metric) => (
@@ -227,7 +280,7 @@ export function DashboardShell({
 								) : null}
 							</section>
 
-							<aside className="min-w-0">
+							<aside className="min-w-0 max-w-full xl:block">
 								<Card className="h-full bg-card/70">
 									<CardHeader>
 										<CardTitle>Inspector</CardTitle>

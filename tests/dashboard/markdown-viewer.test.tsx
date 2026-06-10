@@ -12,11 +12,31 @@ describe("dashboard Markdown and document viewer", () => {
 		const fixture = createDashboardFixture();
 		const artifacts = await readTopicArtifacts(fixture.root, fixture.topic);
 		const index = createReferenceIndex(artifacts);
-		const markdown = "# Title\n\nUses [F001].\n\n```ts\nconst safe = true\n```\n\n<script>alert('x')</script>";
+		const markdown = [
+			"# Title",
+			"",
+			"Uses [F001] and [F002].",
+			"",
+			"| Feature | Status |",
+			"| --- | --- |",
+			"| Tables | work |",
+			"",
+			"- [x] task lists",
+			"",
+			"```ts",
+			"const safe = true",
+			"```",
+			"",
+			"<script>alert('x')</script>",
+		].join("\n");
 
 		const rendered = await renderMarkdownToHtml(markdown, index);
 
 		expect(rendered.html).toContain('data-reference="F001"');
+		expect(rendered.html).toContain('href="/api/files?path=README.md"');
+		expect(rendered.html).toContain('href="https://reactflow.dev/examples/overview"');
+		expect(rendered.html).toContain("<table");
+		expect(rendered.html).toContain('type="checkbox"');
 		expect(rendered.html).toContain('data-code-viewer="shiki"');
 		expect(rendered.html).toContain("const");
 		expect(rendered.html).not.toContain("<script>");

@@ -13,8 +13,22 @@ describe("dashboard reference resolver", () => {
 		const artifacts = await readTopicArtifacts(fixture.root, fixture.topic);
 		const index = createReferenceIndex(artifacts);
 
-		expect(resolveReference("F001", index)).toMatchObject({ status: "resolved", kind: "fact", id: "F001" });
+		expect(resolveReference("F001", index)).toMatchObject({
+			status: "resolved",
+			kind: "fact",
+			id: "F001",
+			href: "/api/files?path=README.md",
+			sourceId: "S001",
+		});
 		expect(resolveReference("F1", index)).toMatchObject({ status: "resolved", kind: "fact", id: "F001" });
+		expect(resolveReference("F002", index)).toMatchObject({
+			status: "resolved",
+			kind: "fact",
+			id: "F002",
+			href: "https://reactflow.dev/examples/overview",
+			external: true,
+			sourceId: "S002",
+		});
 		expect(resolveReference("phase:P0", index)).toMatchObject({ status: "resolved", kind: "phase", id: "phase:P0" });
 	});
 

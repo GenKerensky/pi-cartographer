@@ -21,7 +21,7 @@ describe("dashboard artifact reader", () => {
 		const serialized = JSON.stringify(artifacts);
 
 		expect(discovered.topics.map((topic) => topic.id)).toEqual([fixture.topic]);
-		expect(artifacts.topic.counts.factNodes).toBe(2);
+		expect(artifacts.topic.counts.factNodes).toBe(4);
 		expect(artifacts.documents.map((document) => document.kind)).toEqual(["proposal", "plan"]);
 		expect(artifacts.graph.nodes.map((node) => node.id)).toContain("F001");
 		expect(artifacts.graph.edges.map((edge) => edge.type)).toContain("supported_by");

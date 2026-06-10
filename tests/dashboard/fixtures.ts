@@ -28,7 +28,7 @@ export function createDashboardFixture(topic = "demo"): DashboardFixture {
 	fs.mkdirSync(adrGraphDir, { recursive: true });
 
 	fs.writeFileSync(path.join(root, "README.md"), "# Fixture repo\n", "utf8");
-	fs.writeFileSync(path.join(topicDir, "proposal.md"), "# Demo Proposal\n\nUses [F001].\n", "utf8");
+	fs.writeFileSync(path.join(topicDir, "proposal.md"), "# Demo Proposal\n\nUses [F001] and [F002].\n", "utf8");
 	fs.writeFileSync(path.join(topicDir, "plan.md"), "# Demo Plan\n\n### Phase P0 — Build\n", "utf8");
 	const privateFile = path.join(privateDir, "raw.log");
 	fs.writeFileSync(privateFile, "secret raw artifact\n", "utf8");
@@ -39,9 +39,19 @@ export function createDashboardFixture(topic = "demo"): DashboardFixture {
 	writeJsonl(path.join(topicDir, "map.edges.jsonl"), [{ from: `topic:${topic}`, to: "phase:P0", type: "contains" }]);
 	writeJsonl(path.join(topicDir, "facts.nodes.jsonl"), [
 		{ id: "S001", type: "source", title: "README", reference: "README.md:1" },
+		{
+			id: "S002",
+			type: "source",
+			title: "React Flow docs",
+			url: "https://reactflow.dev/examples/overview",
+		},
 		{ id: "F001", type: "fact", title: "Fact", raw_archive_path: `.plan/_private/${topic}/raw.log` },
+		{ id: "F002", type: "fact", title: "External graph source" },
 	]);
-	writeJsonl(path.join(topicDir, "facts.edges.jsonl"), [{ from: "F001", to: "S001", type: "supported_by" }]);
+	writeJsonl(path.join(topicDir, "facts.edges.jsonl"), [
+		{ from: "F001", to: "S001", type: "supported_by" },
+		{ from: "F002", to: "S002", type: "supported_by" },
+	]);
 	writeJsonl(path.join(topicDir, "plan.nodes.jsonl"), [
 		{ id: "phase:P0", type: "phase", phase_id: "P0", status: "in-progress", title: "Build" },
 		{ id: "task:P0.T1", type: "task", task_id: "P0.T1", phase_id: "P0", title: "Task" },

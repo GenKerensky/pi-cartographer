@@ -115,4 +115,14 @@
   .status-gradient {
     background: linear-gradient(135deg, #38bdf8, #34d399);
   }
+
+  .markdown-preview {
+    contain: paint;
+    overflow-x: clip;
+  }
+
+  [data-code-viewer="shiki"] {
+    max-width: 100%;
+    overflow-x: auto;
+  }
 }

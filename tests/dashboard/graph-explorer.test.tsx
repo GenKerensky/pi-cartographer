@@ -22,7 +22,7 @@ describe("dashboard graph explorer", () => {
 	it("is integrated into the topic workspace graph tab", async () => {
 		const fixture = createDashboardFixture();
 		const artifacts = await readTopicArtifacts(fixture.root, fixture.topic);
-		const html = renderToStaticMarkup(<TopicWorkspace artifacts={artifacts} />);
+		const html = renderToStaticMarkup(<TopicWorkspace artifacts={artifacts} activeSection="graph" />);
 
 		expect(html).toContain("Graph");
 		expect(html).toContain("data-graph-explorer");
