@@ -119,6 +119,18 @@ class WorkflowDocsTests(unittest.TestCase):
         self.assertIn("Do **not** reimplement server startup", text)
         self.assertIn(".plan/_private", text)
 
+    def test_readme_documents_dashboard_usage_and_safety(self) -> None:
+        text = (ROOT / "README.md").read_text(encoding="utf-8")
+
+        self.assertIn("## Planning dashboard", text)
+        self.assertIn("cartographer-dashboard start", text)
+        self.assertIn("/skill:dashboard", text)
+        self.assertIn("loopback-only", text)
+        self.assertIn("read-only", text)
+        self.assertIn("Live reload watches safe `.plan/**`", text)
+        self.assertIn("React Flow", text)
+        self.assertIn("npm run dashboard:build", text)
+
 
 if __name__ == "__main__":
     unittest.main()

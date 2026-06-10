@@ -23,6 +23,7 @@ _pi-cartographer is currently in active development and may not be production re
   - [Create a proposal](#create-a-proposal)
   - [Create a plan](#create-a-plan)
   - [Implement a plan](#implement-a-plan)
+- [Planning dashboard](#planning-dashboard)
 - [What gets written](#what-gets-written)
   - [JSONL graph artifacts](#jsonl-graph-artifacts)
 - [Retrieval scopes](#retrieval-scopes)
@@ -60,6 +61,7 @@ pi -e /path/to/pi-cartographer   # one-off local use
 | `proposal`                | Skill              | Creates `.plan/<topic>/proposal.md` plus project map and research fact JSONL artifacts.                                                                                                             |
 | `plan`                    | Skill              | Converts proposal/map/fact context into ordered phases, validations, and plan graph JSONL artifacts.                                                                                                |
 | `implement`               | Skill              | Executes an existing plan phase-by-phase with deterministic context, `cartographer-pathfinder` phase edits, quality gates, `cartographer-auditor` approval, plan updates, and conventional commits. |
+| `dashboard`               | Skill              | Starts, opens, checks, or stops the local read-only planning dashboard through the packaged `cartographer-dashboard` CLI.                                                                           |
 | `cartographer_index`      | Extension tool     | Wraps index actions such as `ensure`, `query`, `context`, `read`, `slice-jsonl`, `status`, and `log-miss`.                                                                                          |
 | `cartographer_jsonl`      | Extension tool     | Wraps JSONL actions such as `validate-topic`, `validate-file`, `validate-misses`, `list-misses`, `list`, `upsert`, and `seed-pi-facts`.                                                             |
 | `cartographer_evidence`   | Extension tool     | Imports/list private proposal artifacts under `.plan/_private/<topic>/` without exposing raw contents and writes commit-safe evidence manifests.                                                    |
@@ -67,6 +69,7 @@ pi -e /path/to/pi-cartographer   # one-off local use
 | `cartographer_artifacts`  | Extension tool     | Provides read-only compact summaries for topic validation, fact citations, receipts, context packs, evidence manifests, and phase acceptance handoffs.                                              |
 | `cartographer_validation` | Extension tool     | Parent-owned wrapper for validation commands and compact receipt output; it does not replace semantic auditor review.                                                                               |
 | `cartographer_adr`        | Extension tool     | Evaluates, drafts, creates, imports, validates, searches, and relates Architecture Decision Records.                                                                                                |
+| `cartographer-dashboard`  | CLI                | Runs the local loopback-only dashboard server and serves the React/Tailwind/shadcn planning UI for proposal, plan, graph, receipt, evidence, health, and document review.                           |
 
 Skill commands are available as `/skill:<name>` when pi skill commands are enabled.
 
@@ -193,6 +196,51 @@ flowchart TD
 ```
 
 Non-trivial implementation handoffs use structured acceptance for the pathfinder task before edits start, and `cartographer-auditor` reviews only after deterministic validation receipts pass. If a phase hits an unclear product, design, dependency, repeated timeout/fallback, or tooling decision, Cartographer records the receipt, uses `cartographer-compass` when escalation is needed, and stops to ask for direction.
+
+## Planning dashboard
+
+The dashboard is a local, loopback-only, read-only browser view over Cartographer artifacts. It reads proposal/plan/fact/map/receipt/context/evidence/ADR/index files and never writes `.plan/`, ADRs, index/cache files, or source files.
+
+Start it from the project you want to inspect:
+
+```bash
+cartographer-dashboard start --root "$PWD" --host 127.0.0.1 --port 0 --json
+```
+
+Start with a topic deep link:
+
+```bash
+cartographer-dashboard start --root "$PWD" --topic planning-dashboard --host 127.0.0.1 --port 0 --json
+```
+
+Check status or stop the server:
+
+```bash
+cartographer-dashboard status --root "$PWD" --json
+cartographer-dashboard stop --root "$PWD" --json
+```
+
+You can also ask pi to use the packaged skill:
+
+```text
+/skill:dashboard start planning-dashboard
+/skill:dashboard status
+/skill:dashboard stop
+```
+
+Dashboard behavior and safety boundaries:
+
+- The server defaults to loopback and rejects non-loopback hosts such as `0.0.0.0`, `::`, and LAN/public addresses.
+- Runtime metadata is stored under `XDG_RUNTIME_DIR` or an OS temp directory, keyed by repository root hash, not under `.plan/`.
+- Live reload watches safe `.plan/**` files, excludes `.plan/_private/**`, and summarizes `.plan/_index/**` changes as stale-index events.
+- The UI uses React, Tailwind CSS, shadcn/ui components, Shiki document/code highlighting, and React Flow graph visualization.
+- Private raw evidence should be imported through Cartographer private-artifact workflows and reviewed via sanitized evidence documents, not read directly in the dashboard or skill.
+
+In a source checkout, build client assets before package-like smoke checks or npm packaging:
+
+```bash
+npm run dashboard:build
+```
 
 ## What gets written
 
@@ -502,6 +550,12 @@ python skills/plan/scripts/adr_records.py list --root "$PWD" --json
 python skills/plan/scripts/adr_records.py query auth --root "$PWD" --json
 python skills/plan/scripts/adr_records.py validate --root "$PWD" --json
 
+# Start/check/stop the local read-only planning dashboard
+cartographer-dashboard start --root "$PWD" --host 127.0.0.1 --port 0 --json
+cartographer-dashboard start --root "$PWD" --topic "search-ui" --host 127.0.0.1 --port 0 --json
+cartographer-dashboard status --root "$PWD" --json
+cartographer-dashboard stop --root "$PWD" --json
+
 # Validate planning artifacts
 node --experimental-strip-types skills/plan/scripts/manage_jsonl.ts validate-topic --root "$PWD" --topic "search-ui" --json
 python skills/plan/scripts/validate_planning_graph.py --root "$PWD" --topic "search-ui" --json
@@ -555,4 +609,7 @@ npm run format:check
 npm run test
 npm run test:py
 npm run test:ts
+npm run dashboard:build
+npm run dashboard:check
+npm run test:browser -- tests/dashboard/client-shell.test.tsx
 ```

@@ -427,7 +427,7 @@ The skill should be documentation/procedure, not a second implementation of proc
 
 ### Phase P7 — Hardening, Docs, and Release Readiness
 
-- **Status:** pending
+- **Status:** implemented
 - **Depends on:** P1, P2, P3, P4, P5, P6
 - **Unlocks:** implementation handoff complete
 - **Primary references:** `file:README.md`, `file:package.json`, `file:AGENTS.md`, `external:taste-profile`, [F010], [F011], [F013], [F014], [F015]
@@ -447,20 +447,20 @@ Harden the complete dashboard feature for package use: full validation, docs, ac
 
 #### Checklist
 
-- [ ] **P7.T1** Add a small Playwright smoke suite for CLI + server + browser + live reload against disposable repositories with proposal/plan/fact/map/receipt/evidence/ADR artifacts [F024].
-- [ ] **P7.T2** Add private-leak and path-traversal regression tests across API, file viewer, live reload events, graph inspectors, and rendered Markdown links.
-- [ ] **P7.T3** Verify runtime asset packaging, dependency declarations, package `files`, build scripts, and installed-mode startup from the selected top-level dashboard package-like layout [F021].
-- [ ] **P7.T4** Update README/development docs for `cartographer-dashboard`, `/skill:dashboard`, read-only guarantees, live reload behavior, shadcn/Tailwind development, and temp-fixture testing rules.
-- [ ] **P7.T5** Perform tactile UI acceptance review for depth, feedback states, motion, focus rings, category colors, reduced-motion support, and non-color status labels.
-- [ ] **P7.T6** Update and accept, or explicitly supersede, draft ADR-0003 after final implementation validation receipts exist; if implementation choices materially change, rerun `cartographer_adr evaluate` before finalizing [F025].
+- [x] **P7.T1** Add a small Playwright smoke suite for CLI + server + browser + live reload against disposable repositories with proposal/plan/fact/map/receipt/evidence/ADR artifacts [F024].
+- [x] **P7.T2** Add private-leak and path-traversal regression tests across API, file viewer, live reload events, graph inspectors, and rendered Markdown links.
+- [x] **P7.T3** Verify runtime asset packaging, dependency declarations, package `files`, build scripts, and installed-mode startup from the selected top-level dashboard package-like layout [F021].
+- [x] **P7.T4** Update README/development docs for `cartographer-dashboard`, `/skill:dashboard`, read-only guarantees, live reload behavior, shadcn/Tailwind development, and temp-fixture testing rules.
+- [x] **P7.T5** Perform tactile UI acceptance review for depth, feedback states, motion, focus rings, category colors, reduced-motion support, and non-color status labels.
+- [x] **P7.T6** Update and accept, or explicitly supersede, draft ADR-0003 after final implementation validation receipts exist; if implementation choices materially change, rerun `cartographer_adr evaluate` before finalizing [F025].
 
 #### Validation
 
-- [ ] **P7.V1** Run `npm run check`; expect Python/TypeScript checks, lint/format checks, unit tests, and dashboard-specific tests to pass.
-- [ ] **P7.V2** Run `cartographer_jsonl validate-topic --root "$PWD" --topic planning-dashboard`; expect all proposal/plan/map/fact/receipt/context artifacts to validate.
-- [ ] **P7.V3** Run `python skills/plan/scripts/validate_planning_graph.py --root "$PWD" --topic planning-dashboard --json`; expect the final plan graph to validate after phase status updates.
-- [ ] **P7.V4** Run the Playwright smoke path or manually smoke-test `cartographer-dashboard start --root <temp-fixture-root> --open --json`, topic deep link, live reload, graph explorer, document viewer, and `cartographer-dashboard stop`; fixture setup may write `.plan/`, but the dashboard process itself must not write to the fixture `.plan/` [F024].
-- [ ] **P7.V5** Run the project-specific docs/skill/package checks added in earlier phases; expect CLI, skill, runtime asset documentation, and ADR-0003 finalization guidance to remain synchronized [F025].
+- [x] **P7.V1** Run `npm run check`; expect Python/TypeScript checks, lint/format checks, unit tests, and dashboard-specific tests to pass.
+- [x] **P7.V2** Run `cartographer_jsonl validate-topic --root "$PWD" --topic planning-dashboard`; expect all proposal/plan/map/fact/receipt/context artifacts to validate.
+- [x] **P7.V3** Run `python skills/plan/scripts/validate_planning_graph.py --root "$PWD" --topic planning-dashboard --json`; expect the final plan graph to validate after phase status updates.
+- [x] **P7.V4** Run the Playwright smoke path or manually smoke-test `cartographer-dashboard start --root <temp-fixture-root> --open --json`, topic deep link, live reload, graph explorer, document viewer, and `cartographer-dashboard stop`; fixture setup may write `.plan/`, but the dashboard process itself must not write to the fixture `.plan/` [F024].
+- [x] **P7.V5** Run the project-specific docs/skill/package checks added in earlier phases; expect CLI, skill, runtime asset documentation, and ADR-0003 finalization guidance to remain synchronized [F025].
 
 #### Exit Criteria
 
@@ -482,13 +482,13 @@ Do not mark implementation complete until deterministic checks and a semantic au
 
 ## Cross-Phase Validation
 
-- [ ] **CV.V1** After each phase that changes executable code, run the narrow phase tests and `npm run typecheck` before moving to the next phase.
-- [ ] **CV.V7** After P0 establishes TS quality tooling, run `npm run lint:ts && npm run format:prettier:check` after each TS/TSX-heavy phase.
-- [ ] **CV.V2** After any change to planning artifacts, run `cartographer_jsonl validate-topic --root "$PWD" --topic planning-dashboard`.
-- [ ] **CV.V3** After plan graph or phase-status updates, run `python skills/plan/scripts/validate_planning_graph.py --root "$PWD" --topic planning-dashboard --json`.
-- [ ] **CV.V4** Before final handoff, run `npm run check` and record validation output in `.plan/planning-dashboard/receipts.jsonl`.
-- [ ] **CV.V5** Confirm all tests and manual fixture commands arrange `.plan/`, index, evidence, and graph data under temporary/mock roots, not the real repository `.plan/` directory.
-- [ ] **CV.V6** Confirm the dashboard exposes no mutating UI controls or HTTP endpoints in v1.
+- [x] **CV.V1** After each phase that changes executable code, run the narrow phase tests and `npm run typecheck` before moving to the next phase.
+- [x] **CV.V7** After P0 establishes TS quality tooling, run `npm run lint:ts && npm run format:prettier:check` after each TS/TSX-heavy phase.
+- [x] **CV.V2** After any change to planning artifacts, run `cartographer_jsonl validate-topic --root "$PWD" --topic planning-dashboard`.
+- [x] **CV.V3** After plan graph or phase-status updates, run `python skills/plan/scripts/validate_planning_graph.py --root "$PWD" --topic planning-dashboard --json`.
+- [x] **CV.V4** Before final handoff, run `npm run check` and record validation output in `.plan/planning-dashboard/receipts.jsonl`.
+- [x] **CV.V5** Confirm all tests and manual fixture commands arrange `.plan/`, index, evidence, and graph data under temporary/mock roots, not the real repository `.plan/` directory.
+- [x] **CV.V6** Confirm the dashboard exposes no mutating UI controls or HTTP endpoints in v1.
 
 ## Open Questions
 
