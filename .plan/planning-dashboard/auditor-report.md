@@ -144,3 +144,32 @@ Findings:
 Residual risks:
 - P3 intentionally implements shell/design foundations only; real overview/topic/document/graph data binding remains in P4/P5.
 - `dashboard/client/dist/` is treated as transient build output and ignored until P7 final package asset verification decides the durable packaging path.
+
+## P4 Phase Audit — 2026-06-10T02:22:00+00:00
+
+PASS
+
+Required corrections: none.
+
+Auditor execution note:
+- External semantic auditor was not used for P4 because earlier implementation/audit subagents in this run were unavailable or timed out. Parent performed a fallback audit from deterministic receipts, helper summaries, and targeted code/test inspection.
+
+Validation receipts/helper summaries reviewed:
+- `receipt:P4:validation:2026-06-10T02:19:21+00:00` — `P4.V1` topic page render tests PASS.
+- `receipt:P4:validation:2026-06-10T02:19:27+00:00` — `P4.V2` reference resolver and Markdown viewer tests PASS.
+- `receipt:P4:validation:2026-06-10T02:19:33+00:00` — `P4.V3` live refetch UI tests PASS.
+- `receipt:P4:validation:2026-06-10T02:19:39+00:00` — `P4.V4` dashboard client build PASS.
+- Post-status-update validate-topic PASS and planning graph PASS with no errors/warnings.
+- Full `npm run check` passed before receipt recording.
+
+Findings:
+- `DashboardShell` now fetches `/api/overview` and the selected topic, renders overview/topics/topic workspace surfaces, and refetches affected visible resources when P2 live reload events arrive.
+- `dashboard/client/src/features/review-workflow.tsx` renders overview metrics, topic status/count cards, proposal/plan tabs, facts, evidence, receipts, health, and graph summaries from read-only API artifacts.
+- `dashboard/client/src/lib/reference-resolver.ts` resolves canonical and short fact references, sources, phases, tasks, validations, ADR tokens, and safe files while blocking `.plan/_private` paths.
+- `dashboard/client/src/lib/markdown.ts` escapes raw HTML, renders safe Markdown blocks, links references, and uses Shiki for code fences.
+- `dashboard/client/src/features/document-viewer.tsx` provides preview/source toggles, line anchors, copy-path action, warnings, reference summary badges, and blocked private/outside-root states.
+- P4 tests use temp fixture roots and verify the review surfaces, resolver semantics, Markdown/Shiki output, private/outside-root blocking, and live refetch decisions.
+
+Residual risks:
+- Shiki currently emits large dynamic language/theme chunks during the Vite build; this is a build warning only and can be revisited in P7 packaging/hardening if bundle size becomes a release concern.
+- P4 exposes graph summaries and entry points only; the full interactive React Flow explorer remains intentionally scoped to P5.

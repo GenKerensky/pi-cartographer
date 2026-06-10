@@ -280,7 +280,7 @@ Use copied shadcn/ui component code for local customization. Do not introduce a 
 
 ### Phase P4 — Overview, Topics, and Document Viewer
 
-- **Status:** pending
+- **Status:** implemented
 - **Depends on:** P2, P3
 - **Unlocks:** P5, P7
 - **Primary references:** `proposed:dashboard-client`, `proposed:dashboard-server`, `file:skills/plan/scripts/workflow_benchmark.py`, `file:skills/plan/scripts/manage_jsonl.ts`, `file:skills/plan/scripts/adr_records.py`, [F003], [F007], [F008], [F009], [F011], [F013]
@@ -299,19 +299,19 @@ Implement the primary human review workflow: overview metrics, topics list, topi
 
 #### Checklist
 
-- [ ] **P4.T1** Implement overview metrics and recent activity using topic artifacts, receipts, validation health, workflow metrics, and ADR summaries.
-- [ ] **P4.T2** Implement topics/plans listing with proposal/plan presence, lifecycle/status, current phase, validations, graph counts, receipts, evidence, and ADR links.
-- [ ] **P4.T3** Implement topic detail workspace with proposal, plan, facts, evidence, receipts, health, graph entry, and files tabs.
-- [ ] **P4.T4** Implement safe Markdown rendering, fact/source/map/plan/ADR/file reference resolver, broken/ambiguous link UI, and detail drawers.
-- [ ] **P4.T5** Implement Shiki document/code viewer with line numbers, line anchors, selected-line highlighting, copy path/link actions, preview/source toggle, and blocked-state UI.
-- [ ] **P4.T6** Wire live reload events so visible overview/topic/doc/health resources refetch when affected `.plan` files change.
+- [x] **P4.T1** Implement overview metrics and recent activity using topic artifacts, receipts, validation health, workflow metrics, and ADR summaries.
+- [x] **P4.T2** Implement topics/plans listing with proposal/plan presence, lifecycle/status, current phase, validations, graph counts, receipts, evidence, and ADR links.
+- [x] **P4.T3** Implement topic detail workspace with proposal, plan, facts, evidence, receipts, health, graph entry, and files tabs.
+- [x] **P4.T4** Implement safe Markdown rendering, fact/source/map/plan/ADR/file reference resolver, broken/ambiguous link UI, and detail drawers.
+- [x] **P4.T5** Implement Shiki document/code viewer with line numbers, line anchors, selected-line highlighting, copy path/link actions, preview/source toggle, and blocked-state UI.
+- [x] **P4.T6** Wire live reload events so visible overview/topic/doc/health resources refetch when affected `.plan` files change.
 
 #### Validation
 
-- [ ] **P4.V1** Run `npm run test:ts -- tests/dashboard/topic-pages.test.tsx`; expect overview, topics, topic workspace, health, receipts, evidence, and ADR summary views to render from temp fixtures.
-- [ ] **P4.V2** Run `npm run test:ts -- tests/dashboard/reference-resolver.test.ts tests/dashboard/markdown-viewer.test.tsx`; expect canonical fact citations, unambiguous short forms, broken/ambiguous links, Shiki output, line anchors, and blocked private/outside-root states to pass.
-- [ ] **P4.V3** Run `npm run test:ts -- tests/dashboard/live-refetch.test.tsx`; expect visible data to refresh after relevant debounced `.plan` events and show manual-refresh state when the event stream drops.
-- [ ] **P4.V4** Run the dashboard client build command; expect no rendering/build regressions from Shiki and Markdown dependencies.
+- [x] **P4.V1** Run `npm run test:ts -- tests/dashboard/topic-pages.test.tsx`; expect overview, topics, topic workspace, health, receipts, evidence, and ADR summary views to render from temp fixtures.
+- [x] **P4.V2** Run `npm run test:ts -- tests/dashboard/reference-resolver.test.ts tests/dashboard/markdown-viewer.test.tsx`; expect canonical fact citations, unambiguous short forms, broken/ambiguous links, Shiki output, line anchors, and blocked private/outside-root states to pass.
+- [x] **P4.V3** Run `npm run test:ts -- tests/dashboard/live-refetch.test.tsx`; expect visible data to refresh after relevant debounced `.plan` events and show manual-refresh state when the event stream drops.
+- [x] **P4.V4** Run the dashboard client build command; expect no rendering/build regressions from Shiki and Markdown dependencies.
 
 #### Exit Criteria
 

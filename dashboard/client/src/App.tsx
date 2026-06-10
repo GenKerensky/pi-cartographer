@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Activity, Boxes, FileText, GitBranch, Radar, ShieldCheck, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,7 +10,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
+import { DashboardReviewWorkflow } from "@/features/review-workflow";
+import { dashboardApi } from "@/lib/api";
 import { useLiveConnection, type LiveConnectionState } from "@/lib/events";
+import { createLiveRefetchPlan } from "@/lib/live-refetch";
+import type { DashboardOverview, TopicArtifacts } from "../../shared/models.js";
 
 const navigation = [
 	{ label: "Overview", icon: Activity, status: "ready" },
@@ -32,11 +37,63 @@ function statusVariant(state: LiveConnectionState): "success" | "warning" | "sec
 
 export type DashboardShellProps = {
 	liveStateOverride?: LiveConnectionState;
+	initialOverview?: DashboardOverview;
+	initialTopic?: TopicArtifacts;
+	disableDataFetch?: boolean;
 };
 
-export function DashboardShell({ liveStateOverride }: DashboardShellProps): React.JSX.Element {
+export function DashboardShell({
+	liveStateOverride,
+	initialOverview,
+	initialTopic,
+	disableDataFetch = false,
+}: DashboardShellProps): React.JSX.Element {
 	const live = useLiveConnection(liveStateOverride === undefined);
 	const liveState = liveStateOverride ?? live.state;
+	const [overview, setOverview] = useState<DashboardOverview | undefined>(initialOverview);
+	const [selectedTopic, setSelectedTopic] = useState<TopicArtifacts | undefined>(initialTopic);
+	const [loadError, setLoadError] = useState<string | undefined>();
+
+	useEffect(() => {
+		if (disableDataFetch) return undefined;
+		let cancelled = false;
+		async function load(): Promise<void> {
+			try {
+				const nextOverview = await dashboardApi.overview();
+				if (cancelled) return;
+				setOverview(nextOverview);
+				const firstTopic = nextOverview.topics[0]?.id;
+				if (firstTopic) setSelectedTopic(await dashboardApi.topic(firstTopic));
+				setLoadError(undefined);
+			} catch (error) {
+				if (!cancelled) setLoadError(error instanceof Error ? error.message : String(error));
+			}
+		}
+		void load();
+		return () => {
+			cancelled = true;
+		};
+	}, [disableDataFetch]);
+
+	useEffect(() => {
+		if (disableDataFetch || !live.lastEvent) return;
+		const resources = [
+			{ kind: "overview" as const },
+			{ kind: "health" as const },
+			...(selectedTopic ? [{ kind: "topic" as const, topic: selectedTopic.topic.id }] : []),
+		];
+		if (createLiveRefetchPlan(resources, live.lastEvent).length === 0) return;
+		void dashboardApi
+			.overview()
+			.then(setOverview)
+			.catch(() => undefined);
+		if (selectedTopic)
+			void dashboardApi
+				.topic(selectedTopic.topic.id)
+				.then(setSelectedTopic)
+				.catch(() => undefined);
+	}, [disableDataFetch, live.lastEvent, selectedTopic]);
+
 	return (
 		<TooltipProvider>
 			<div className="min-h-screen text-foreground" data-dashboard-shell>
@@ -107,52 +164,59 @@ export function DashboardShell({ liveStateOverride }: DashboardShellProps): Reac
 
 						<main id="dashboard-main" className="grid flex-1 gap-5 p-5 xl:grid-cols-[1fr_22rem]">
 							<section className="space-y-5">
-								<div className="grid gap-4 md:grid-cols-3">
-									{metrics.map((metric) => (
-										<Card key={metric.label} className="bg-card/75">
-											<CardHeader className="pb-2">
-												<CardDescription>{metric.label}</CardDescription>
-												<CardTitle className={`text-3xl ${metric.tone}`}>{metric.value}</CardTitle>
-											</CardHeader>
-										</Card>
-									))}
-								</div>
+								{overview ? (
+									<DashboardReviewWorkflow overview={overview} selectedTopic={selectedTopic} />
+								) : (
+									<div className="grid gap-4 md:grid-cols-3">
+										{metrics.map((metric) => (
+											<Card key={metric.label} className="bg-card/75">
+												<CardHeader className="pb-2">
+													<CardDescription>{metric.label}</CardDescription>
+													<CardTitle className={`text-3xl ${metric.tone}`}>{metric.value}</CardTitle>
+												</CardHeader>
+											</Card>
+										))}
+									</div>
+								)}
 
-								<Card className="overflow-hidden bg-card/80">
-									<CardHeader>
-										<div className="flex items-center justify-between gap-3">
-											<div>
-												<CardTitle>Workspace shell</CardTitle>
-												<CardDescription>
-													Foundation for overview, topic, document, health, and graph pages.
-												</CardDescription>
-											</div>
-											<Sparkles className="size-5 text-primary" />
-										</div>
-									</CardHeader>
-									<CardContent>
-										<Tabs defaultValue="overview">
-											<TabsList aria-label="Workspace tabs">
-												<TabsTrigger value="overview">Overview</TabsTrigger>
-												<TabsTrigger value="topic">Topic</TabsTrigger>
-												<TabsTrigger value="health">Health</TabsTrigger>
-											</TabsList>
-											<TabsContent value="overview" className="space-y-4 pt-4">
-												<Input aria-label="Search planning artifacts" placeholder="Search topics, facts, phases..." />
-												<div className="grid gap-3 md:grid-cols-2">
-													<Skeleton className="h-28" />
-													<Skeleton className="h-28" />
+								{loadError ? <Badge variant="warning">API unavailable: {loadError}</Badge> : null}
+								{!overview ? (
+									<Card className="overflow-hidden bg-card/80">
+										<CardHeader>
+											<div className="flex items-center justify-between gap-3">
+												<div>
+													<CardTitle>Workspace shell</CardTitle>
+													<CardDescription>
+														Foundation for overview, topic, document, health, and graph pages.
+													</CardDescription>
 												</div>
-											</TabsContent>
-											<TabsContent value="topic" className="pt-4 text-sm text-muted-foreground">
-												Topic routes and documents will bind to the P0 API in P4.
-											</TabsContent>
-											<TabsContent value="health" className="pt-4 text-sm text-muted-foreground">
-												Health panels will surface parse, missing artifact, private-path, and stale-index warnings.
-											</TabsContent>
-										</Tabs>
-									</CardContent>
-								</Card>
+												<Sparkles className="size-5 text-primary" />
+											</div>
+										</CardHeader>
+										<CardContent>
+											<Tabs defaultValue="overview">
+												<TabsList aria-label="Workspace tabs">
+													<TabsTrigger value="overview">Overview</TabsTrigger>
+													<TabsTrigger value="topic">Topic</TabsTrigger>
+													<TabsTrigger value="health">Health</TabsTrigger>
+												</TabsList>
+												<TabsContent value="overview" className="space-y-4 pt-4">
+													<Input aria-label="Search planning artifacts" placeholder="Search topics, facts, phases..." />
+													<div className="grid gap-3 md:grid-cols-2">
+														<Skeleton className="h-28" />
+														<Skeleton className="h-28" />
+													</div>
+												</TabsContent>
+												<TabsContent value="topic" className="pt-4 text-sm text-muted-foreground">
+													Topic routes and documents will bind to the P0 API in P4.
+												</TabsContent>
+												<TabsContent value="health" className="pt-4 text-sm text-muted-foreground">
+													Health panels will surface parse, missing artifact, private-path, and stale-index warnings.
+												</TabsContent>
+											</Tabs>
+										</CardContent>
+									</Card>
+								) : null}
 							</section>
 
 							<aside className="min-w-0">
