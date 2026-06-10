@@ -1,15 +1,17 @@
 import { AlertTriangle, CheckCircle2, GitBranch, HeartPulse, ReceiptText } from "lucide-react";
-import type { DashboardOverview, TopicArtifacts, TopicSummary } from "../../../shared/models.js";
+import type { AdrCollection, DashboardOverview, TopicArtifacts, TopicSummary } from "../../../shared/models.js";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DocumentViewer } from "@/features/document-viewer";
+import { GraphExplorer } from "@/features/graph-explorer";
 import { createReferenceIndex } from "@/lib/reference-resolver";
 
 export type DashboardReviewWorkflowProps = {
 	overview: DashboardOverview;
 	selectedTopic?: TopicArtifacts;
+	adrs?: AdrCollection;
 };
 
 function totalFacts(topic: TopicSummary): number {
@@ -95,7 +97,13 @@ export function TopicsList({ topics }: { topics: TopicSummary[] }): React.JSX.El
 	);
 }
 
-export function TopicWorkspace({ artifacts }: { artifacts: TopicArtifacts }): React.JSX.Element {
+export function TopicWorkspace({
+	artifacts,
+	adrs,
+}: {
+	artifacts: TopicArtifacts;
+	adrs?: AdrCollection;
+}): React.JSX.Element {
 	const referenceIndex = createReferenceIndex(artifacts);
 	const proposal = artifacts.documents.find((document) => document.kind === "proposal");
 	const plan = artifacts.documents.find((document) => document.kind === "plan");
@@ -136,8 +144,8 @@ export function TopicWorkspace({ artifacts }: { artifacts: TopicArtifacts }): Re
 					<TabsContent value="health" className="pt-4">
 						<HealthPanel artifacts={artifacts} />
 					</TabsContent>
-					<TabsContent value="graph" className="pt-4">
-						<GraphSummary artifacts={artifacts} />
+					<TabsContent value="graph" className="pt-4" forceMount>
+						<GraphExplorer artifacts={artifacts} adrs={adrs} />
 					</TabsContent>
 				</Tabs>
 			</CardContent>
@@ -210,31 +218,16 @@ function HealthPanel({ artifacts }: { artifacts: TopicArtifacts }): React.JSX.El
 	);
 }
 
-function GraphSummary({ artifacts }: { artifacts: TopicArtifacts }): React.JSX.Element {
-	return (
-		<div className="grid gap-3 md:grid-cols-2" data-graph-summary>
-			<Card>
-				<CardHeader>
-					<CardTitle>{artifacts.graph.nodes.length}</CardTitle>
-					<CardDescription>Graph nodes</CardDescription>
-				</CardHeader>
-			</Card>
-			<Card>
-				<CardHeader>
-					<CardTitle>{artifacts.graph.edges.length}</CardTitle>
-					<CardDescription>Graph edges</CardDescription>
-				</CardHeader>
-			</Card>
-		</div>
-	);
-}
-
-export function DashboardReviewWorkflow({ overview, selectedTopic }: DashboardReviewWorkflowProps): React.JSX.Element {
+export function DashboardReviewWorkflow({
+	overview,
+	selectedTopic,
+	adrs,
+}: DashboardReviewWorkflowProps): React.JSX.Element {
 	return (
 		<div className="space-y-5" data-review-workflow>
 			<OverviewMetrics overview={overview} />
 			<TopicsList topics={overview.topics} />
-			{selectedTopic ? <TopicWorkspace artifacts={selectedTopic} /> : null}
+			{selectedTopic ? <TopicWorkspace artifacts={selectedTopic} adrs={adrs} /> : null}
 		</div>
 	);
 }

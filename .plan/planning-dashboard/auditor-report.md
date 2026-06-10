@@ -173,3 +173,28 @@ Findings:
 Residual risks:
 - Shiki currently emits large dynamic language/theme chunks during the Vite build; this is a build warning only and can be revisited in P7 packaging/hardening if bundle size becomes a release concern.
 - P4 exposes graph summaries and entry points only; the full interactive React Flow explorer remains intentionally scoped to P5.
+
+## P5 Phase Audit — 2026-06-10T02:31:00+00:00
+
+PASS
+
+Required corrections: none.
+
+Auditor execution note:
+- Parent performed the P5 semantic audit from deterministic receipts, current React Flow documentation, helper summaries, and targeted code/test inspection.
+
+Validation receipts/helper summaries reviewed:
+- `receipt:P5:validation:2026-06-10T02:30:36+00:00` — `P5.V1` graph normalizer tests PASS.
+- `receipt:P5:validation:2026-06-10T02:30:42+00:00` — `P5.V2` graph explorer render/integration tests PASS.
+- `receipt:P5:validation:2026-06-10T02:30:49+00:00` — `P5.V3` dashboard client build PASS.
+
+Findings:
+- `dashboard/client/src/lib/graph-normalizer.ts` normalizes map/fact/plan nodes and edges, receipts, context packs, evidence files, and optional ADR records while preserving original IDs and unresolved endpoint warnings.
+- Receipt relationships are derived from validation IDs when present and from phase IDs as a safe fallback for compact receipts.
+- `dashboard/client/src/features/graph-explorer.tsx` uses `@xyflow/react` with custom nodes, MiniMap, Controls, Background, fitView, search, layer toggles, legends, selection, and inspector routing.
+- Graph inspector applies the same private/outside-root blocking semantics used by the document viewer before presenting route targets.
+- `TopicWorkspace` includes the graph explorer in the Graph tab, and Node-mode SSR tests use a static fallback while browser builds exercise the React Flow bundle.
+
+Residual risks:
+- Graph layout is deterministic column-based rather than a force/dagre layout; acceptable for v1 and can be refined after user feedback.
+- Bundle-size warnings remain from Shiki/React Flow dynamic assets and are deferred to P7 hardening/package review.

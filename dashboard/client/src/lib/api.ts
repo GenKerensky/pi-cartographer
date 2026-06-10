@@ -1,4 +1,5 @@
 import type {
+	AdrCollection,
 	ApiResponse,
 	DashboardDocument,
 	DashboardOverview,
@@ -26,6 +27,7 @@ export const dashboardApi = {
 	document: (topic: string, kind: "proposal" | "plan") =>
 		getJson<DashboardDocument>(`/api/topics/${encodeURIComponent(topic)}/docs/${kind}`),
 	graph: (topic: string) => getJson<TopicGraph>(`/api/topics/${encodeURIComponent(topic)}/graph`),
+	adrs: () => getJson<AdrCollection>("/api/adrs"),
 	file: (path: string) => getJson<DashboardDocument>(`/api/files?path=${encodeURIComponent(path)}`),
 	liveReloadStatus: () => getJson<LiveReloadStatus>("/api/events/status"),
 };

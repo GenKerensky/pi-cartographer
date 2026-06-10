@@ -14,7 +14,7 @@ import { DashboardReviewWorkflow } from "@/features/review-workflow";
 import { dashboardApi } from "@/lib/api";
 import { useLiveConnection, type LiveConnectionState } from "@/lib/events";
 import { createLiveRefetchPlan } from "@/lib/live-refetch";
-import type { DashboardOverview, TopicArtifacts } from "../../shared/models.js";
+import type { AdrCollection, DashboardOverview, TopicArtifacts } from "../../shared/models.js";
 
 const navigation = [
 	{ label: "Overview", icon: Activity, status: "ready" },
@@ -39,6 +39,7 @@ export type DashboardShellProps = {
 	liveStateOverride?: LiveConnectionState;
 	initialOverview?: DashboardOverview;
 	initialTopic?: TopicArtifacts;
+	initialAdrs?: AdrCollection;
 	disableDataFetch?: boolean;
 };
 
@@ -46,12 +47,14 @@ export function DashboardShell({
 	liveStateOverride,
 	initialOverview,
 	initialTopic,
+	initialAdrs,
 	disableDataFetch = false,
 }: DashboardShellProps): React.JSX.Element {
 	const live = useLiveConnection(liveStateOverride === undefined);
 	const liveState = liveStateOverride ?? live.state;
 	const [overview, setOverview] = useState<DashboardOverview | undefined>(initialOverview);
 	const [selectedTopic, setSelectedTopic] = useState<TopicArtifacts | undefined>(initialTopic);
+	const [adrs, setAdrs] = useState<AdrCollection | undefined>(initialAdrs);
 	const [loadError, setLoadError] = useState<string | undefined>();
 
 	useEffect(() => {
@@ -59,9 +62,10 @@ export function DashboardShell({
 		let cancelled = false;
 		async function load(): Promise<void> {
 			try {
-				const nextOverview = await dashboardApi.overview();
+				const [nextOverview, nextAdrs] = await Promise.all([dashboardApi.overview(), dashboardApi.adrs()]);
 				if (cancelled) return;
 				setOverview(nextOverview);
+				setAdrs(nextAdrs);
 				const firstTopic = nextOverview.topics[0]?.id;
 				if (firstTopic) setSelectedTopic(await dashboardApi.topic(firstTopic));
 				setLoadError(undefined);
@@ -86,6 +90,10 @@ export function DashboardShell({
 		void dashboardApi
 			.overview()
 			.then(setOverview)
+			.catch(() => undefined);
+		void dashboardApi
+			.adrs()
+			.then(setAdrs)
 			.catch(() => undefined);
 		if (selectedTopic)
 			void dashboardApi
@@ -165,7 +173,7 @@ export function DashboardShell({
 						<main id="dashboard-main" className="grid flex-1 gap-5 p-5 xl:grid-cols-[1fr_22rem]">
 							<section className="space-y-5">
 								{overview ? (
-									<DashboardReviewWorkflow overview={overview} selectedTopic={selectedTopic} />
+									<DashboardReviewWorkflow overview={overview} selectedTopic={selectedTopic} adrs={adrs} />
 								) : (
 									<div className="grid gap-4 md:grid-cols-3">
 										{metrics.map((metric) => (

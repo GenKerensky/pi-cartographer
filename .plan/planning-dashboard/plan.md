@@ -331,7 +331,7 @@ Focus this phase on reading and navigation. Do not begin the full graph explorer
 
 ### Phase P5 — Graph Explorer and Inspectors
 
-- **Status:** pending
+- **Status:** implemented
 - **Depends on:** P4
 - **Unlocks:** P7
 - **Primary references:** `proposed:dashboard-client`, `proposed:dashboard-server`, [F002], [F004], [F009], [F011]
@@ -349,17 +349,17 @@ Add the interactive graph view over normalized map, fact, plan, receipt/validati
 
 #### Checklist
 
-- [ ] **P5.T1** Implement graph normalization for map, source, fact, plan, validation, receipt, implementation, proposed-artifact, and ADR nodes/edges.
-- [ ] **P5.T2** Implement React Flow graph canvas with custom node/edge types, minimap, controls, background, fit-to-view, and accessible selection behavior [F002].
-- [ ] **P5.T3** Implement layer toggles, type filters, relationship filters, text search, and status/color legends.
-- [ ] **P5.T4** Implement node/edge click routing to inspectors, safe file/URL/document viewer targets, and warning states.
-- [ ] **P5.T5** Implement chain highlighting for proposal claim → fact → source and phase → files → validations → receipts.
+- [x] **P5.T1** Implement graph normalization for map, source, fact, plan, validation, receipt, implementation, proposed-artifact, and ADR nodes/edges.
+- [x] **P5.T2** Implement React Flow graph canvas with custom node/edge types, minimap, controls, background, fit-to-view, and accessible selection behavior [F002].
+- [x] **P5.T3** Implement layer toggles, type filters, relationship filters, text search, and status/color legends.
+- [x] **P5.T4** Implement node/edge click routing to inspectors, safe file/URL/document viewer targets, and warning states.
+- [x] **P5.T5** Implement chain highlighting for proposal claim → fact → source and phase → files → validations → receipts.
 
 #### Validation
 
-- [ ] **P5.V1** Run `npm run test:ts -- tests/dashboard/graph-normalizer.test.ts`; expect graph normalization from JSONL fixtures, original ID preservation, unresolved endpoint records, and ADR relationship inclusion to pass.
-- [ ] **P5.V2** Run `npm run test:ts -- tests/dashboard/graph-explorer.test.tsx`; expect React Flow render smoke tests, filter/search behavior, node/edge routing, and inspector integration to pass.
-- [ ] **P5.V3** Run the dashboard client build command; expect React Flow assets and graph UI to build without regressions.
+- [x] **P5.V1** Run `npm run test:ts -- tests/dashboard/graph-normalizer.test.ts`; expect graph normalization from JSONL fixtures, original ID preservation, unresolved endpoint records, and ADR relationship inclusion to pass.
+- [x] **P5.V2** Run `npm run test:ts -- tests/dashboard/graph-explorer.test.tsx`; expect React Flow render smoke tests, filter/search behavior, node/edge routing, and inspector integration to pass.
+- [x] **P5.V3** Run the dashboard client build command; expect React Flow assets and graph UI to build without regressions.
 
 #### Exit Criteria
 
