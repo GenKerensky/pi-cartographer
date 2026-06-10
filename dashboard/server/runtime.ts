@@ -1,9 +1,10 @@
-import { spawn } from "node:child_process";
+import { spawn, type ChildProcess } from "node:child_process";
 import { createHash } from "node:crypto";
 import { promises as fs } from "node:fs";
-import type { AddressInfo } from "node:net";
+import { createServer, type AddressInfo } from "node:net";
 import os from "node:os";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { serve, type ServerType } from "@hono/node-server";
 import type { Hono } from "hono";
 import { createDashboardApp } from "./app.js";
@@ -67,10 +68,11 @@ export type StartDashboardServerOptions = {
 };
 
 export type DashboardServerHandle = {
-	app: Hono;
 	metadata: DashboardServerMetadata;
-	server: ServerType;
-	liveReload: LiveReloadService;
+	app?: Hono;
+	server?: ServerType;
+	liveReload?: LiveReloadService;
+	child?: ChildProcess;
 	stop: () => Promise<DashboardStopResult>;
 };
 
@@ -102,6 +104,7 @@ export type DashboardStopResult = {
 };
 
 const activeHandles = new Map<string, DashboardServerHandle>();
+const START_SERVER_ENTRY_PATH = fileURLToPath(new URL("../start/.output/server/index.mjs", import.meta.url));
 
 function nodeErrorCode(error: unknown): string | undefined {
 	return typeof error === "object" && error !== null && "code" in error
@@ -334,6 +337,157 @@ function installSignalHandlers(handle: DashboardServerHandle): void {
 	process.once("SIGTERM", shutdown);
 }
 
+async function fileExists(filePath: string): Promise<boolean> {
+	try {
+		const stat = await fs.stat(filePath);
+		return stat.isFile();
+	} catch (error) {
+		if (nodeErrorCode(error) === "ENOENT" || nodeErrorCode(error) === "ENOTDIR") return false;
+		throw error;
+	}
+}
+
+async function reservePort(host: string, requestedPort: number): Promise<number> {
+	if (requestedPort !== 0) return requestedPort;
+	const server = createServer();
+	await new Promise<void>((resolve, reject) => {
+		server.once("error", reject);
+		server.listen(0, host, () => resolve());
+	});
+	const address = server.address();
+	await new Promise<void>((resolve, reject) => {
+		server.close((error?: Error) => (error ? reject(error) : resolve()));
+	});
+	if (!address || typeof address === "string") {
+		throw new DashboardRuntimeError("invalid-port", "Unable to reserve an ephemeral dashboard port");
+	}
+	return address.port;
+}
+
+async function waitForHttpReady(url: string, child: ChildProcess, timeoutMs = 8000): Promise<void> {
+	const started = Date.now();
+	let lastError: unknown;
+	while (Date.now() - started < timeoutMs) {
+		if (child.exitCode !== null) {
+			throw new DashboardRuntimeError(
+				"metadata-error",
+				`Dashboard child exited before becoming ready: ${child.exitCode}`,
+			);
+		}
+		try {
+			const response = await fetch(url, { headers: { accept: "text/html" } });
+			if (response.ok) return;
+			lastError = new Error(`Dashboard readiness returned HTTP ${response.status}`);
+		} catch (error) {
+			lastError = error;
+		}
+		await new Promise((resolve) => setTimeout(resolve, 100));
+	}
+	throw new DashboardRuntimeError("metadata-error", "Timed out waiting for TanStack Start dashboard to become ready", {
+		url,
+		lastError: lastError instanceof Error ? lastError.message : String(lastError),
+	});
+}
+
+function metadataFor(
+	location: DashboardMetadataLocation,
+	host: string,
+	actualPort: number,
+	pid: number,
+	processStartToken?: string,
+	topic?: string,
+): DashboardServerMetadata {
+	const url = dashboardUrl(host, actualPort);
+	const metadata: DashboardServerMetadata = {
+		pid,
+		root: location.root,
+		rootHash: location.rootHash,
+		host,
+		port: actualPort,
+		url,
+		mode: DASHBOARD_MODE,
+		startedAt: new Date().toISOString(),
+		metadataPath: location.metadataPath,
+		processStartToken,
+	};
+	if (topic) {
+		metadata.topic = topic;
+		metadata.topicUrl = topicUrl(url, topic);
+	}
+	return metadata;
+}
+
+async function startTanStackDashboardServer(
+	location: DashboardMetadataLocation,
+	host: string,
+	port: number,
+	options: StartDashboardServerOptions,
+): Promise<DashboardServerHandle> {
+	const actualPort = await reservePort(host, port);
+	const child = spawn(process.execPath, [START_SERVER_ENTRY_PATH], {
+		detached: true,
+		env: {
+			...process.env,
+			HOST: host,
+			PORT: String(actualPort),
+			CARTOGRAPHER_DASHBOARD_ROOT: location.root,
+		},
+		stdio: "ignore",
+	});
+	child.unref();
+	if (!child.pid) {
+		throw new DashboardRuntimeError("metadata-error", "Unable to start TanStack dashboard child process");
+	}
+	try {
+		await waitForHttpReady(dashboardUrl(host, actualPort), child);
+	} catch (error) {
+		if (child.pid) process.kill(child.pid, "SIGTERM");
+		throw error;
+	}
+
+	const metadata = metadataFor(
+		location,
+		host,
+		actualPort,
+		child.pid,
+		await readProcessStartToken(child.pid),
+		options.topic,
+	);
+	let stopped = false;
+	const handle: DashboardServerHandle = {
+		metadata,
+		child,
+		stop: async (): Promise<DashboardStopResult> => {
+			if (stopped) {
+				return {
+					status: "stopped",
+					stopped: true,
+					root: metadata.root,
+					rootHash: metadata.rootHash,
+					metadataPath: metadata.metadataPath,
+					previous: metadata,
+				};
+			}
+			stopped = true;
+			activeHandles.delete(metadata.rootHash);
+			if (isProcessAlive(metadata.pid)) process.kill(metadata.pid, "SIGTERM");
+			await waitForStopped(metadata, 3000);
+			await removeMetadataIfCurrent(metadata);
+			return {
+				status: "stopped",
+				stopped: true,
+				root: metadata.root,
+				rootHash: metadata.rootHash,
+				metadataPath: metadata.metadataPath,
+				previous: metadata,
+			};
+		},
+	};
+	await writeMetadata(location, metadata);
+	activeHandles.set(metadata.rootHash, handle);
+	return handle;
+}
+
 export async function startDashboardServer(options: StartDashboardServerOptions = {}): Promise<DashboardServerHandle> {
 	const host = normalizeLoopbackHost(options.host);
 	const port = normalizeDashboardPort(options.port);
@@ -344,6 +498,12 @@ export async function startDashboardServer(options: StartDashboardServerOptions 
 			pid: currentStatus.pid,
 			metadataPath: currentStatus.metadataPath,
 		});
+	}
+
+	if (await fileExists(START_SERVER_ENTRY_PATH)) {
+		const handle = await startTanStackDashboardServer(location, host, port, options);
+		if (options.installSignalHandlers === true) installSignalHandlers(handle);
+		return handle;
 	}
 
 	const liveReload = await createLiveReloadService({ root: location.root });
@@ -480,7 +640,12 @@ async function assertSafeToSignal(metadata: DashboardServerMetadata): Promise<vo
 		});
 	}
 	const command = await readProcessCommand(metadata.pid);
-	if (command && !command.includes("cartographer-dashboard") && !command.includes("dashboard/server/cli")) {
+	if (
+		command &&
+		!command.includes("cartographer-dashboard") &&
+		!command.includes("dashboard/server/cli") &&
+		!command.includes("dashboard/start/.output/server/index.mjs")
+	) {
 		throw new DashboardRuntimeError(
 			"unsafe-pid",
 			"Refusing to signal a pid that does not look like cartographer-dashboard",
@@ -551,6 +716,7 @@ export async function stopDashboardServer(
 	}
 
 	if (await waitForStopped(status, options.timeoutMs ?? 3000)) {
+		await removeMetadata(status.metadataPath);
 		return {
 			status: "stopped",
 			stopped: true,

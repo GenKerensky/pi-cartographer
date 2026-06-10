@@ -3,7 +3,6 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import type { ApiResponse, HealthReport } from "../../dashboard/shared/models.ts";
 import { createDashboardFixture } from "./fixtures.ts";
 
 const cliPath = path.resolve("bin", "cartographer-dashboard.js");
@@ -113,7 +112,7 @@ afterEach(async () => {
 });
 
 describe("cartographer-dashboard CLI", () => {
-	it("starts, reports status, serves read-only health, and stops with metadata outside .plan", async () => {
+	it("starts, reports status, serves the dashboard shell, and stops with metadata outside .plan", async () => {
 		const fixture = createDashboardFixture();
 		const runtimeDir = createRuntimeDir();
 		const child = spawn(
@@ -164,10 +163,13 @@ describe("cartographer-dashboard CLI", () => {
 		expect(started.metadataPath).not.toContain(`${path.sep}.plan${path.sep}`);
 		expect(fs.existsSync(started.metadataPath)).toBe(true);
 
-		const healthResponse = await fetch(`${started.url}/api/health`);
-		const health = (await healthResponse.json()) as ApiResponse<HealthReport>;
-		expect(healthResponse.status).toBe(200);
-		expect(health.data?.counts.topics).toBe(1);
+		const dashboardResponse = await fetch(started.url);
+		expect(dashboardResponse.status).toBe(200);
+		expect(await dashboardResponse.text()).toContain("Dashboard");
+
+		const topicResponse = await fetch(started.topicUrl);
+		expect(topicResponse.status).toBe(200);
+		expect(await topicResponse.text()).toContain(fixture.topic);
 
 		const status = parseJsonLine(runCli(["status", "--root", fixture.root, "--json"], runtimeDir).stdout) as {
 			ok: true;

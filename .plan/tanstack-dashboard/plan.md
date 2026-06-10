@@ -123,7 +123,7 @@ Use Context7 docs during implementation for exact current package names and comm
 
 ### Phase P1 — Start App Shell and CLI Bridge
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P0
 - **Unlocks:** P2
 - **Primary references:** `file:bin/cartographer-dashboard.js`, `file:dashboard/server/cli.ts`, `file:dashboard/server/runtime.ts`, `file:dashboard/server/assets.ts`, `file:README.md`, [F001], [F006], [F012]
@@ -141,17 +141,17 @@ Move the user-facing runtime boundary to the TanStack Start app while preserving
 
 #### Checklist
 
-- [ ] **P1.T1** Refactor runtime startup so `cartographer-dashboard start` launches the Start app build/handler on the selected loopback host and port.
-- [ ] **P1.T2** Preserve `status` and `stop` metadata semantics, including root-hash keys and runtime metadata outside `.plan/`.
-- [ ] **P1.T3** Map `--topic <topic>` to the Start `/topics/$topic` route without manual client `history.pushState` assumptions.
-- [ ] **P1.T4** Update source-checkout resolver behavior if Start build/server files require different import resolution than current `.ts` source execution.
-- [ ] **P1.T5** Keep the old runtime available as a fallback only until P2 route parity is validated.
+- [x] **P1.T1** Refactor runtime startup so `cartographer-dashboard start` launches the Start app build/handler on the selected loopback host and port.
+- [x] **P1.T2** Preserve `status` and `stop` metadata semantics, including root-hash keys and runtime metadata outside `.plan/`.
+- [x] **P1.T3** Map `--topic <topic>` to the Start `/topics/$topic` route without manual client `history.pushState` assumptions.
+- [x] **P1.T4** Update source-checkout resolver behavior if Start build/server files require different import resolution than current `.ts` source execution.
+- [x] **P1.T5** Keep the old runtime available as a fallback only until P2 route parity is validated.
 
 #### Validation
 
-- [ ] **P1.V1** Run `npm run test:ts -- tests/dashboard/cli.test.ts`; expect CLI lifecycle, JSON output, loopback host rejection, topic URL, status, and stop behavior to pass or be updated for equivalent Start behavior.
-- [ ] **P1.V2** Run a bounded manual or automated smoke command: `node bin/cartographer-dashboard.js start --root "$(mktemp -d)" --host 127.0.0.1 --port 0 --topic demo --json`; expect a Start route URL and clean shutdown.
-- [ ] **P1.V3** Run `npm run check:scripts && npm run typecheck`; expect CLI/runtime entrypoints to pass.
+- [x] **P1.V1** Run `npm run test:ts -- tests/dashboard/cli.test.ts`; expect CLI lifecycle, JSON output, loopback host rejection, topic URL, status, and stop behavior to pass or be updated for equivalent Start behavior.
+- [x] **P1.V2** Run a bounded manual or automated smoke command: `node bin/cartographer-dashboard.js start --root "$(mktemp -d)" --host 127.0.0.1 --port 0 --topic demo --json`; expect a Start route URL and clean shutdown.
+- [x] **P1.V3** Run `npm run check:scripts && npm run typecheck`; expect CLI/runtime entrypoints to pass.
 
 #### Exit Criteria
 
