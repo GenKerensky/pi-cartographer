@@ -2,204 +2,748 @@
 
 ## Description
 
-Retire the `cartographer-pathfinder` writer subagent and replace Cartographer's implementation workflow with a **single-writer, long-horizon coding loop** built on three context-engineering disciplines: just-in-time context curation, strategic **milestone-driven compaction**, and **persisted session state to file**.
+### At a glance
 
-Today the `implement` skill delegates each plan phase's edits to `cartographer-pathfinder`, a narrow single-phase writer subagent, while the parent owns sequencing, validation, and commits [F060][F061]. This proposal removes the writer subagent from the default path. The same parent agent performs the edits, but it is kept coherent over long horizons by **canonical, schema-validated state files** under `.cartographer/` — a single `state.json` current-truth snapshot, append-only JSONL history (`validation.jsonl`, `decisions.jsonl`, `events.jsonl`), a `plan.json` task graph, `working-set.json`, a `handoff.json` resumption index, and `config.toml` — that it rolls forward after every material action and compacts at explicit semantic milestones [F052][F070][F079]. Format follows purpose: JSON for current truth, JSONL for append-only evidence, TOML for stable config, and Markdown only for human-facing docs (this proposal, `plan.md`, ADRs, README) plus a *generated, non-authoritative* `status.md` view [F070][F075][C004]. Crucially, the agent **reads** state directly as files but **mutates** it only through a semantic state-transition ACI (Agent-Computer Interface) that validates JSON Schema + cross-file invariants and appends evidence — observable state, controlled writes [F083][C005]. Read-only specialist subagents (`cartographer-auditor`, `cartographer-compass`, `cartographer-archivist`) are retained, matching the pattern where sub-agents add the most value for isolated exploration and review rather than parallel writing [F009][F055][F066].
+| Area | Proposal |
+|---|---|
+| Default implementer | The parent agent becomes the single writer for long-horizon implementation work [F052][F055]. |
+| Retired default path | `cartographer-pathfinder` stops being the default writer subagent [F060][F061]. |
+| Durable execution state | `.cartographer/<topic>/state.json` stores the compact resume cursor, active IDs, working set, failures, receipt refs, journal refs, and resume instructions [F071][F092][F094]. |
+| Durable memory | `.cartographer/<topic>/journal.jsonl` stores only curated lessons/gotchas/constraints that must survive compaction [F095][C007]. |
+| Active-topic hint | `.cartographer/current.json` is optional, git-ignored, and non-authoritative [F096]. |
+| Source of truth | `.plan/<topic>/plan.md`, `plan.nodes.jsonl`, `plan.edges.jsonl`, `receipts.jsonl`, and `context-packs.jsonl` remain authoritative [F064][C006]. |
+| Write safety | Agents may read state files directly, but mutate them through a state-transition ACI that validates schemas + invariants [F083][C005]. |
+| Specialists retained | `cartographer-auditor`, `cartographer-compass`, and `cartographer-archivist` remain read-only specialists [F009][F055][F066]. |
 
-The reframe at the center of this proposal: the goal is not to *offload edit work to save context*, but to *externalize durable task state so the same editor can survive context churn* [F054].
+### Core thesis
+
+Retire the `cartographer-pathfinder` writer subagent and replace Cartographer's implementation workflow with a **single-writer, long-horizon coding loop** built on:
+
+1. just-in-time context curation;
+2. strategic **milestone-driven compaction**; and
+3. **persisted execution state to file**.
+
+The reframe at the center of this proposal:
+
+> The goal is not to *offload edit work to save context*; it is to *externalize durable task state so the same editor can survive context churn* [F054].
+
+### Current vs. proposed behavior
+
+| Today | Proposed |
+|---|---|
+| `implement` delegates each plan phase's edits to `cartographer-pathfinder`; the parent owns sequencing, validation, and commits [F060][F061]. | The same parent agent performs the edits and follows an explicit Orient → Select → Narrow → Inspect → Act → Validate → Record → Compact → Continue loop [F052]. |
+| Context durability depends heavily on conversation history and reactive compaction. | Resume-critical state lives in `.cartographer/<topic>/state.json` and a curated `.cartographer/<topic>/journal.jsonl` [F071][F092][F095]. |
+| Handoffs can create latency, error surface, and parent/subagent state drift [F063]. | One writer owns the working set; read-only subagents are used only for isolated review/exploration [F009][F055][F066]. |
+| Planning artifacts already live under `.plan/`. | `.plan/` stays authoritative; `.cartographer/` references it instead of duplicating it [F064][C006]. |
 
 ## Problem Statement
 
-Long-horizon coding fails less because the context window is too small and more because the context becomes a **polluted append-only event log**: the agent keeps re-reading obsolete hypotheses, dead-end tool output, stale plans, verbose diffs, and one-off reasoning that should no longer influence behavior [F032]. Recall degrades as the window fills (context rot), and both context rot and prefill latency scale with how much is in the window — not with the window's hard limit — so even 1M-token models degrade on long sessions [F001][F002][F017]. Peer-reviewed work on SWE-agents names the same failure: append-only maintenance and passively triggered compression cause context explosion, semantic drift, and degraded long-running reasoning [F026][F029].
+### 1. Context overload is the long-horizon failure mode
 
-Cartographer's current answer — delegate the writing to a fresh-context pathfinder subagent — does not solve this for the *parent*, and the project's own evidence shows it underperforms in practice. The sanitized `subagent-reliability` session recorded 107 subagent calls, 17 subagent errors, individual subagent turns of roughly 600s/566s/300s, 2,035 entries, four compactions, and tool/text outputs up to 166,878 characters — and the user reported that **worker agents left the parent to finish implementation anyway** [F063]. So the writer subagent added latency, error surface, and handoff overhead while still forcing the parent to carry and complete the work in a context that was being compacted reactively.
+Long-horizon coding fails less because the context window is too small and more because the context becomes a **polluted append-only event log** [F032].
 
-Most harnesses make this worse by compacting *the conversation* rather than *the project state*, which preserves the wrong thing [F034]. What is missing is a disciplined way for a single writer to keep a small, high-signal, **non-conversational** representation of the work — one that survives compaction and session resets because it lives on disk [F023][F048].
+Typical pollution includes:
+
+- obsolete hypotheses;
+- dead-end tool output;
+- stale plans;
+- verbose diffs;
+- one-off reasoning that should no longer influence behavior.
+
+This causes two compounding problems:
+
+- **Context rot:** recall degrades as the window fills [F001][F002].
+- **Latency and quality loss:** both context rot and prefill latency scale with how much is in the window, not merely with the model's maximum window size [F017].
+
+Peer-reviewed SWE-agent work names the same failure: append-only maintenance and passively triggered compression cause context explosion, semantic drift, and degraded long-running reasoning [F026][F029].
+
+### 2. Writer subagents do not fix parent-context overload
+
+Cartographer's current answer is to delegate writing to a fresh-context pathfinder subagent. That does not solve the problem for the **parent**.
+
+In the sanitized `subagent-reliability` session:
+
+| Signal | Observation |
+|---|---|
+| Subagent calls | 107 |
+| Subagent errors | 17 |
+| Long subagent turns | about 600s / 566s / 300s |
+| Session entries | 2,035 |
+| Compactions | 4 |
+| Largest tool/text outputs | up to 166,878 characters |
+| User-reported outcome | worker agents left the parent to finish implementation anyway [F063] |
+
+Result: the writer subagent added latency, error surface, and handoff overhead while the parent still had to carry and complete the work in a context compacted reactively.
+
+### 3. The missing capability
+
+Most harnesses compact **the conversation** rather than **the project state**, preserving the wrong thing [F034].
+
+Cartographer needs a disciplined way for a single writer to keep a small, high-signal, **non-conversational** representation of the work that:
+
+- lives on disk;
+- survives compaction and session resets;
+- references canonical `.plan` artifacts;
+- avoids duplicating the plan graph; and
+- avoids becoming another transcript log [F023][F048][C006][C007].
 
 ## Goals
 
-- **G1 — Single-writer loop.** Make a single focused writer the default implementer, running an explicit Orient → Select → Narrow → Inspect → Act → Validate → Record → Compact → Continue loop, and retire `cartographer-pathfinder` from the default `implement` path [F052][F055] (`goal:single-writer-loop`).
-- **G2 — Strategic compaction.** Replace reactive near-limit auto-compaction with **milestone-driven compaction** as an explicit workflow action, producing a factual, exact, validated state artifact rather than a narrative chat summary [F035][F036][F047] (`goal:milestone-compaction`).
-- **G3 — Persisted session state (canonical files + controlled writes).** Persist working memory as **canonical, schema-validated state files** under `.cartographer/` — `state.json` (current truth), `plan.json`, `working-set.json`, append-only `validation.jsonl`/`decisions.jsonl`/`events.jsonl`, `handoff.json`, and `config.toml` — that the agent reads directly but mutates only through a state-transition ACI validating schema + invariants; human understanding comes from generated, non-authoritative Markdown views. This lets the same editor survive context churn and resets by re-orienting from artifacts, not transcript memory [F070][F079][F083][C004][C005] (`goal:persisted-state`).
-- **G4 — Keep read-only specialists.** Preserve `cartographer-auditor`/`cartographer-compass`/`cartographer-archivist` as read-only specialists that explore/review in isolated context and return condensed results [F009][F066] (`goal:keep-readonly-specialists`).
-- **G5 — Reconcile the decision record.** Amend or supersede the writer-subagent portion of ADR-0002 so the documented decision stays coherent [F062] (`goal:reconcile-adr`).
-- **G6 — Reuse existing infrastructure.** Build on Cartographer's existing receipts/context-packs, Clean Context Contract, `validation_runner.py`, and `analyze_session.py` rather than inventing parallel machinery [F064][C001] (`goal:reuse-infrastructure`).
+| ID | Goal | Success criteria |
+|---|---|---|
+| G1 | **Single-writer loop** | A single focused writer is the default implementer and runs Orient → Select → Narrow → Inspect → Act → Validate → Record → Compact → Continue. `cartographer-pathfinder` leaves the default `implement` path [F052][F055] (`goal:single-writer-loop`). |
+| G2 | **Strategic compaction** | Reactive near-limit auto-compaction is replaced by milestone-driven compaction that produces a factual, exact, validated state snapshot instead of a narrative chat summary [F035][F036][F047] (`goal:milestone-compaction`). |
+| G3 | **Persisted execution state and curated journal** | `.cartographer/<topic>/state.json`, `.cartographer/<topic>/journal.jsonl`, and their schemas persist only resume-critical working memory. They reference `.plan` artifacts by path/hash and are mutated through a validating state-transition ACI [F071][F078][F083][F092][F094][F095][C006][C007] (`goal:persisted-state`). |
+| G4 | **Keep read-only specialists** | `cartographer-auditor`, `cartographer-compass`, and `cartographer-archivist` continue to explore/review in isolated context and return condensed results [F009][F066] (`goal:keep-readonly-specialists`). |
+| G5 | **Reconcile the decision record** | ADR-0002 is amended or superseded for the writer-subagent portion so the durable decision record remains coherent [F062] (`goal:reconcile-adr`). |
+| G6 | **Reuse existing infrastructure** | The design builds on `.plan` plan graphs, receipts/context-packs, Clean Context Contract, `validation_runner.py`, and `analyze_session.py` rather than inventing parallel machinery [F064][C001][F092] (`goal:reuse-infrastructure`). |
 
 ## Non-Goals
 
+### State and source-of-truth boundaries
+
+- **Not** replacing `.plan/<topic>/plan.md`, `plan.nodes.jsonl`, or `plan.edges.jsonl`; they remain authoritative for per-topic planning [F092][C006].
+- **Not** introducing a duplicate `plan.json` task graph yet; that belongs to the later `.cartographer`/docs migration if the project moves to JSON-backed generated Markdown [F092][F093].
+- **Not** generating human-readable derived Markdown views in this effort; those are deferred to the later JSON-backed documentation migration [F093].
+- **Not** turning `journal.jsonl` into a transcript, event stream, raw log, or receipt replacement; it is a scarce curated lessons journal [F095][C007].
+- **Not** making `.cartographer/current.json` authoritative or commit-worthy; it is a git-ignored local pointer that must be safe to delete or ignore [F096].
+
+### Subagent and runtime boundaries
+
 - **Not** removing read-only specialist subagents or banning subagents generally; only the *writer* subagent leaves the default path [F009][F055].
 - **Not** making the single-writer loop mandatory where it cannot run; serial/single-checkout operation and approved fallbacks remain supported and receipted [C002].
-- **Not** changing Pi's `pi-subagents` runtime or requiring external orchestration frameworks; this is implementable in Cartographer skills, agent definitions, docs, and helper scripts [C003].
-- **Not** building model fine-tuning (CAT/AgentFold train models); this proposal adopts their *patterns*, not their training pipelines [F027][F030].
+- **Not** changing Pi's `pi-subagents` runtime or requiring external orchestration frameworks [C003].
 - **Not** auto-merging worktrees or building parallel-writer orchestration; single-writer-per-worktree safety is preserved [F065].
+
+### Explicitly out of scope
+
+- **Not** building model fine-tuning such as CAT/AgentFold training pipelines; this proposal adopts their *patterns*, not their training systems [F027][F030].
 - **Not** committing raw logs, raw sessions, or private artifacts; raw evidence stays outside committed context [F043][C001].
 
 ## Background
 
-**Context engineering is the discipline of curating the smallest set of high-signal tokens** that produce the desired behavior, treating context as a finite resource with diminishing returns [F003]. Anthropic identifies three long-horizon techniques — compaction, structured note-taking (agentic memory), and sub-agent architectures — and is explicit that note-taking "excels for iterative development with clear milestones" while multi-agent architectures pay off for "complex research and analysis where parallel exploration pays dividends" [F004][F010]. Phase-by-phase code implementation is squarely in the note-taking-plus-compaction regime, not the parallel-writer regime.
+### Context engineering: the operating principle
 
-Anthropic's cookbook makes the levers precise and composable: **compaction** is a whole-transcript, lossy summary that handles all in-session growth; **tool-result clearing** is a sub-transcript, lossless-if-re-fetchable edit that drops bulky re-fetchable results at no inference cost; and **memory** is external storage that survives across sessions and is only as good as what the agent chose to save [F011][F012][F013][F015]. Critically, compaction reliably preserves high-level facts but loses obscure specifics (a probe preserved 3/3 high-level facts and 0/3 appendix specifics), and custom instructions *fully replace* the default summary prompt — so the compaction artifact must explicitly name the exact paths, symbols, and commands it must keep [F012]. The Claude Code memory docs add the load-bearing mechanism for this proposal: **project-root memory survives compaction because it is re-read from disk and re-injected, whereas conversation-only instructions are lost** [F023]; memory should be concise and specific to be followed reliably, and is "context, not enforced configuration" — hard gates need hooks/tooling [F021][F022][F025].
+Context engineering means curating the smallest set of high-signal tokens that produce the desired behavior, treating context as a finite resource with diminishing returns [F003].
 
-Two recent papers independently validate the design. **CAT (Context as a Tool)** elevates context maintenance to a callable tool over a structured workspace of *stable task semantics + condensed long-term memory + high-fidelity short-term interactions*, compressing proactively at milestones; its SWE-Compressor reaches 57.6% on SWE-Bench-Verified, beating ReAct and static-compression baselines under a bounded context budget [F027][F028]. **AgentFold** treats context as a cognitive workspace to be actively sculpted, "folding" at multiple scales — granular condensation to keep fine detail, deep consolidation to abstract finished sub-tasks — and a 30B model beats far larger models and leading proprietary agents on BrowseComp [F030][F031]. The user's design brief distills these into a concrete operating model: a four-layer working memory (mission/plan/ground-truth/scratch) where only the first three survive compaction [F033], tiered retention [F041], a forget-list to stop stale ideas resurfacing [F042], a single mandatory next action per snapshot [F045], rolling state over summary-of-chat [F048], a fixed resumption prompt [F050], and the full long-horizon loop that is "the long-horizon replacement for writer subagents" [F052].
+Anthropic identifies three relevant long-horizon techniques [F004][F010]:
 
-**The shape and mutation interface of agent state matter as much as the loop.** Two follow-on design conversations refine the persisted-state design. On **format**: for state the agent must repeatedly reload, update, diff, validate, and trust, use schema-constrained structured files, not Markdown — JSON for the current-truth snapshot (one canonical, schema-validatable, diff/patch-friendly file that can require a singular `next_action` and reject unknown fields), JSONL for append-only receipts/events (atomic records, no merge conflicts, compactable into the snapshot), TOML for stable config, and YAML avoided for canonical state (indentation/implicit-typing footguns that LLMs render subtly invalid) [F070][F071][F072][F073][F074]. Markdown is *demoted* to generated, non-authoritative views (`status.md`) so the agent never reads stale prose instead of structured truth [F075][F076]. The real win is JSON **plus schema plus invariants** — enums instead of free text, stable IDs everywhere, explicit size limits, and cross-file invariants (e.g. `next_action` singular, `current_phase_id` resolves in `plan.json`, completed tasks are not active, forbidden paths never overlap write paths) [F077][F078][F080][F081]. On **mutation**: the strongest pattern is a hybrid where the LLM reads state as files but changes it through an ACI of semantic state-transition commands (`task.complete --validation …`, `phase.advance`, `compact.generate`) that enforce preconditions and update multiple files atomically, while raw files stay observable/diffable/recoverable and an escape hatch permits direct edits (then re-validate) if the ACI is unavailable [F083][F084][F086][F087][F088][F090][F091]. This is the lesson of SWE-agent: a purpose-built Agent-Computer Interface materially improves agents' ability to navigate, edit, and test [F085].
+| Technique | Best use | Relevance here |
+|---|---|---|
+| Compaction | Manage in-session growth. | Useful, but lossy; must be milestone-driven and explicit. |
+| Structured note-taking / memory | Iterative development with clear milestones. | This proposal's main mechanism. |
+| Sub-agent architectures | Complex research/analysis where parallel exploration pays dividends. | Retained for read-only specialists, not default writing. |
 
-**Cartographer is already most of the way there.** It persists workflow state in `receipts.jsonl`/`context-packs.jsonl`, enforces a Clean Context Contract (~8KB/16KB budgets, raw output to `/tmp`, compact receipts), and ships `validation_runner.py` (deterministic receipts) and `analyze_session.py` (telemetry) [F064]. It already requires one writer per worktree and warns that "async does not make parallel writes safe" [F065]. ADR-0002 already made delegated writer work provisional pending deterministic receipts plus an auditor PASS — but it assumes a writer subagent exists, which is exactly the part this proposal revisits [F062].
+Phase-by-phase code implementation is primarily a **note-taking + compaction** problem, not a parallel-writer problem.
+
+### First-party primitives validate the shape
+
+Anthropic's cookbook separates the relevant levers [F011][F012][F013][F015]:
+
+| Lever | What it does | Design implication |
+|---|---|---|
+| **Compaction** | Whole-transcript, lossy summary for in-session growth. | Must explicitly preserve exact paths, symbols, commands, and next actions. |
+| **Tool-result clearing** | Drops bulky, re-fetchable tool results without inference cost. | Prefer re-opening files from disk over carrying old output. |
+| **Memory** | External storage that survives across sessions. | Store durable state on disk, not only in chat. |
+
+Important constraint: compaction preserves high-level facts better than obscure specifics. One probe preserved 3/3 high-level facts and 0/3 appendix specifics, and custom compaction instructions fully replace the default summary prompt [F012].
+
+Therefore, the compacted artifact must name the exact details it must keep.
+
+### Disk state survives compaction
+
+Claude Code memory docs provide the load-bearing mechanism:
+
+- project-root memory survives compaction because it is re-read from disk and re-injected [F023];
+- memory must be concise and specific to be followed reliably [F021][F022]; and
+- memory is context, not enforced configuration, so hard gates still need hooks/tooling [F025].
+
+### Research evidence
+
+| Source | Relevant pattern | Evidence |
+|---|---|---|
+| CAT (Context as a Tool) | Treat context maintenance as a callable tool over stable task semantics + condensed long-term memory + high-fidelity short-term interactions. Compress proactively at milestones. | SWE-Compressor reaches 57.6% on SWE-Bench-Verified, beating ReAct and static-compression baselines under a bounded context budget [F027][F028]. |
+| AgentFold | Treat context as a cognitive workspace to be actively sculpted: granular condensation for fine detail and deep consolidation for finished sub-tasks. | A 30B model beats far larger models and leading proprietary agents on BrowseComp [F030][F031]. |
+| User design brief | Defines the operational loop and state model. | Four-layer working memory where only mission/plan/ground-truth survive compaction [F033], tiered retention [F041], forget-list [F042], mandatory singular next action [F045], rolling state over chat summary [F048], fixed resumption prompt [F050], and the full long-horizon loop [F052]. |
+
+### State format and mutation interface
+
+The persisted-state design has two separate concerns: **shape** and **mutation**.
+
+#### Shape
+
+For state the agent must repeatedly reload, update, diff, validate, and trust, use schema-constrained structured files rather than Markdown [F070][F071][F072][F073][F074].
+
+| Format | Use in this proposal | Rationale |
+|---|---|---|
+| JSON | `state.json`, `current.json` | Canonical current-truth snapshot; schema-validatable; diff/patch friendly; can require exactly one `next_action`; can reject unknown fields [F071][F078]. |
+| JSONL | `journal.jsonl`, existing receipts | Append-only atomic records with compact entries and fewer merge conflicts [F072][F095]. |
+| TOML | Stable config later, if needed | Human-friendly configuration format [F073]. |
+| YAML | Avoid for canonical state | Indentation and implicit typing can produce subtle invalid state [F074]. |
+
+For this MVP, the durable state surface is intentionally small:
+
+- `.cartographer/<topic>/state.json`;
+- `.cartographer/<topic>/journal.jsonl`;
+- schemas for both;
+- existing `.plan` artifacts as authoritative plan/evidence/receipt history;
+- no generated Markdown views yet [F092][F093][F094][F095][C006][C007].
+
+The win is JSON/JSONL **plus schema plus invariants**: enums instead of free text, stable IDs everywhere, explicit size limits, and cross-file checks back to the current `.plan` graph and receipts [F078][F080][F081][F094].
+
+#### Mutation
+
+The strongest mutation pattern is hybrid [F083][F084][F086][F087][F088][F090][F091]:
+
+- agents read raw state files directly;
+- agents mutate state through semantic ACI commands with preconditions;
+- the ACI validates the result;
+- raw files remain observable, diffable, and recoverable;
+- direct edits are an escape hatch only, followed by validation.
+
+This mirrors SWE-agent's finding that a purpose-built Agent-Computer Interface materially improves agents' ability to navigate, edit, and test [F085].
+
+### Existing Cartographer foundations
+
+Cartographer already has most of the needed substrate [F064]:
+
+- durable workflow records in `receipts.jsonl` and `context-packs.jsonl`;
+- Clean Context Contract budgets (~8KB/16KB);
+- raw output redirected to `/tmp`;
+- compact validation receipts via `validation_runner.py`;
+- telemetry via `analyze_session.py`.
+
+It also already requires one writer per worktree and warns that "async does not make parallel writes safe" [F065].
+
+ADR-0002 made delegated writer work provisional pending deterministic receipts plus an auditor PASS, but it assumes a writer subagent exists. That assumption is the piece this proposal revisits [F062].
 
 ## Viability
 
-**This has been done, and it is well within reach.** The pattern is endorsed by Anthropic (compaction + structured note-taking + the survives-compaction-because-it-is-on-disk mechanism) [F004][F006][F023], demonstrated quantitatively by CAT on SWE-Bench-Verified [F028] and AgentFold on BrowseComp [F031], and specified end-to-end in the design brief [F052][F053][F055]. Anthropic's first-party primitives (`compact_20260112`, `clear_tool_uses_20250919`, `memory_20250818`) are a working reference for trigger/instructions/keep/exclude semantics [T001][T002][T003].
+### Feasibility summary
 
-Implementation cost is **moderate and low-risk** because it is mostly subtractive plus reuse:
+This has been done, and it is well within reach.
 
-- Removing the writer from the default path is a skill/doc/agent-definition edit, not a runtime change [C003][F061].
-- The state files extend existing receipts/context-packs and reuse the `manage_jsonl.ts` validator and `validation_runner.py` receipt patterns; JSON Schemas plus cross-file invariant checks are runnable outside the harness, and the state-transition ACI is a natural sibling of the existing `cartographer_*` tools [F064][F077][F089][C001].
-- A deterministic `compact.generate` ACI command folds append-only JSONL history into the `state.json` snapshot and *validates* it (singular `next_action`; `current_phase_id`/`next_action_id` resolve in `plan.json`; active working-set files exist; no forbidden/allowed path overlap; unique receipt IDs; completed tasks not active; unknown fields rejected), addressing the "instructions are not enforcement" risk with real checks [F077][F088][F053][R003][F025].
+The pattern is supported by:
 
-The hard parts are discipline and lossiness, not feasibility. A bad compacted summary becomes canonical and is worse than none [R001], persisted state is only as good as what is written [R002], and prompt-level rules are not hard gates [R003] — all mitigated by tiered retention, rolling updates, the compaction-as-validation step, and deterministic checks [F041][F047][F048][F053]. Removing a parallel writer also nominally reduces parallel write throughput [R004], but the project's own evidence shows the writer subagent was not actually offloading parallel work — it left the parent to finish [F063] — and genuinely independent topics still parallelize through the one-branch-per-topic worktree model [F065]. State-file proliferation could recreate the giant-context problem [R006]; this is bounded by explicit size limits, a small always-loaded snapshot/handoff plus on-demand JSONL detail, and the Clean Context Contract [F024][F078][C001]. Adding an ACI introduces its own risks — tool bugs becoming state bugs, opacity, and overengineering [R007] — mitigated by the hybrid model: the canonical files stay observable and schema-validatable outside the harness, with a direct-edit escape hatch that requires re-validation [F086][F090]. Finally, ADR-0002 must be reconciled rather than silently contradicted [R005][F062], which this proposal records as an explicit ADR obligation.
+- Anthropic's compaction + structured note-taking + disk-memory guidance [F004][F006][F023];
+- CAT's quantitative SWE-Bench-Verified result [F028];
+- AgentFold's BrowseComp result [F031];
+- the design brief's end-to-end loop [F052][F053][F055]; and
+- Anthropic's first-party primitives (`compact_20260112`, `clear_tool_uses_20250919`, `memory_20250818`) as working references for trigger/instructions/keep/exclude semantics [T001][T002][T003].
+
+### Why implementation cost is moderate
+
+| Work item | Why it is bounded |
+|---|---|
+| Retire default writer delegation | Mostly a skill/doc/agent-definition edit, not a runtime change [C003][F061]. |
+| Add MVP state contract | Adds `state.json`, `journal.jsonl`, and schemas while reusing existing `.plan` graphs, receipts/context-packs, `manage_jsonl.ts`, and `validation_runner.py` patterns [F064][F092][F094][F095][C001]. |
+| Add `compact.generate` / `state validate` | Deterministically rewrites/checks compact state and journal records against existing `.plan` artifacts: one `next_action`, IDs resolve, paths are valid, forbidden/write scopes do not overlap, receipt IDs exist, hashes match or state is stale, journal entries remain bounded and evidence-linked [F094][F095][C007][R003][F025]. |
+
+### Main risks and mitigations
+
+| Risk | Why it matters | Mitigation |
+|---|---|---|
+| Bad compacted snapshot becomes canonical [R001] | A wrong state file can mislead the next session. | Make compaction a validation step; require schema + invariant checks [F047]. |
+| Persisted state is only as good as what was written [R002] | Missing state is missing memory. | Use tiered retention, rolling updates, and explicit record/compact steps [F041][F048][F053]. |
+| Prompt rules are not hard gates [R003] | Agents can ignore instruction-level process. | Validate with deterministic checks and receipts [F025]. |
+| Reduced parallel write throughput [R004] | Removing a writer subagent reduces theoretical parallelism. | Accept this trade-off; evidence shows the writer subagent left the parent to finish anyway [F063]. Independent topics still use one-branch-per-topic worktrees [F065]. |
+| ADR drift [R005] | ADR-0002 currently documents the writer-subagent approach. | Reconcile it explicitly in the ADR step [F062]. |
+| State-file proliferation [R006] | Too many files can recreate the giant-context problem. | Keep `.plan` authoritative; add only `state.json`, `journal.jsonl`, schemas, and ignored `current.json`; enforce journal scarcity [F078][F092][F095][C006][C007]. |
+| ACI bugs / opacity / overengineering [R007] | Tool bugs can become state bugs. | Keep raw files observable and schema-validatable outside the harness; keep direct-edit escape hatch + validation [F086][F090]. |
 
 ## ADR Metadata
 
-- `adr_required`: true
-- `adr_reason`: This is a durable, cross-cutting workflow + architecture decision — it retires a standing subagent role, rewrites the default `implement` loop, introduces a new on-disk canonical state-artifact contract **and a state-transition ACI (read-as-files / mutate-via-validated-commands) as its enforcement half**, and revisits the writer-subagent portion of the already-accepted ADR-0002 [F060][F061][F062][F083][C005][R005]. Alternatives and rationale are supplied by the user's design brief (writer-subagents vs. single-writer context engineering) and the in-repo session evidence [F054][F055][F063], so this is not a directed choice lacking rationale.
-- `adr_options_status`: documented — Option A: keep `cartographer-pathfinder` as default writer (status quo per ADR-0002); Option B (proposed): single-writer context-engineering loop with milestone compaction + persisted canonical state files mutated through a state-transition ACI, read-only specialists retained; Option C: hybrid (writer subagent only for embarrassingly-parallel independent file sets). The proposal recommends Option B and will supersede/amend ADR-0002 accordingly.
-- `adr_tool_mode`: finalize-after-validation — generate or explicitly skip the ADR via `cartographer_adr` at implementation finalization, citing validation receipts and commits.
+| Field | Value |
+|---|---|
+| `adr_required` | `true` |
+| `adr_reason` | This is a durable, cross-cutting workflow + architecture decision: it retires a standing subagent role, rewrites the default `implement` loop, introduces a minimal on-disk execution-state contract, adds a state-transition ACI, and revisits the writer-subagent portion of ADR-0002 [F060][F061][F062][F083][C005][R005]. |
+| Alternatives/rationale | The user's design brief contrasts writer-subagents with single-writer context engineering, and in-repo session evidence shows the current pathfinder pattern underperformed [F054][F055][F063]. |
+| `adr_options_status` | Documented. Option A: keep `cartographer-pathfinder` as default writer. Option B (recommended): single-writer loop with milestone compaction, minimal `state.json`, curated `journal.jsonl`, ACI-mediated mutation, and retained read-only specialists. Option C: hybrid writer subagent only for embarrassingly parallel independent file sets. |
+| `adr_tool_mode` | Finalize after validation: generate or explicitly skip the ADR via `cartographer_adr` at implementation finalization, citing validation receipts and commits. |
 
 ## Design
 
-```mermaid
-flowchart TD
-  subgraph Removed
-    PF[cartographer-pathfinder writer subagent]
-  end
-  subgraph Loop[Single-writer long-horizon loop]
-    O[Orient: read state.json + plan.json + validation/decisions JSONL] --> S[Select: one next_action_id]
-    S --> N[Narrow: working_set.claim files via ACI]
-    N --> I[Inspect: re-open active files from disk]
-    I --> A[Act: small patch - parent writes]
-    A --> V[Validate: narrowest command; validation.record via ACI]
-    V --> R[Record: task.complete / decision.accept via ACI - atomic state+events update]
-    R --> C{Compaction trigger?}
-    C -- no --> S
-    C -- yes --> K[compact.generate: fold JSONL into state.json, refresh handoff.json + status.md, validate]
-    K --> O
-  end
-  Loop -. reads files directly .-> FILES[(observable .cartographer/ JSON + JSONL)]
-  Loop -. mutates only via .-> ACI[cartographer state ACI: schema + invariant validation]
-  ACI --> FILES
-  Loop -. milestone: deterministic receipts pass .-> AUD[cartographer-auditor PASS - read-only]
-  Loop -. decision/scope/repeated-failure .-> CMP[cartographer-compass - read-only]
-  PF -. retired .-> Loop
+### Design summary
+
+The design keeps planning and evidence where they already live, then adds only the state needed to resume safely.
+
+| Layer | Responsibility |
+|---|---|
+| `.plan/<topic>/...` | Authoritative plan graph, receipts, context packs, and proposal/plan prose [F064][C006]. |
+| `.cartographer/<topic>/state.json` | Compact current execution/resume snapshot [F071][F092][F094]. |
+| `.cartographer/<topic>/journal.jsonl` | Curated durable lessons and constraints only [F095][C007]. |
+| `.cartographer/current.json` | Optional ignored active-topic hint [F096]. |
+| State ACI | Controlled write path for state, journal, current pointer, and compaction validation [F083][C005]. |
+
+### Compaction and controlled context injection
+
+This design uses two separate operations that should not be conflated:
+
+| Operation | Writes project state? | Adds context to the agent? | Purpose |
+|---|---:|---:|---|
+| `compact.generate` | Yes | No | Rewrite and validate the durable execution snapshot on disk [F047][F048]. |
+| `state resume` / resume renderer | No | Yes | Render a bounded, structured context block from validated state for the next agent turn [F050][F096]. |
+
+This is **controlled context injection**, not arbitrary prompt injection. The injected content is rendered from validated JSON/JSONL and treated as data. It must not override system, developer, project, or latest-user instructions [F083][C005].
+
+**Compaction flow.**
+
+1. **Trigger.** A milestone fires: phase boundary, diagnosed failure, decision, file-set change, risky refactor, handoff, or context threshold [F035][F046].
+2. **Collect.** The ACI reads the current `state.json`, selected journal records, `.plan` plan graph refs, receipt refs, and active working-set metadata [F094][F095].
+3. **Reduce.** The parent proposes only durable facts: current cursor, next action, known failures, working set, receipt refs, selected journal refs, and stale/forget guidance [F036][F048].
+4. **Validate.** The ACI checks schema + invariants against `.plan` artifacts before accepting the new snapshot [F047][F094].
+5. **Commit.** The ACI atomically writes `state.json`, optionally appends a scarce `journal.jsonl` record, refreshes `current.json` when appropriate, and records validation evidence through existing receipts where needed [F049][F064][F095].
+6. **Reload.** The parent discards stale transcript assumptions and re-orients from disk [F048][F050].
+
+**Resume/context injection flow.**
+
+A resume renderer such as `cartographer state resume --topic <topic>` should output a small block with fixed sections:
+
+```text
+<CARTOGRAPHER_RESUME_CONTEXT version="1" source=".cartographer/<topic>/state.json">
+Topic: <topic>
+Source status: hashes-valid | stale
+Current phase: <phase id>
+Active tasks: <task ids>
+Next action: <one action>
+Working set: <write_allowed/read_only/forbidden paths>
+Known failures: <bounded list with receipt refs>
+Selected journal: <only referenced high-importance lessons>
+Validation refs: <receipt ids>
+Required first response: current phase, next action, files to inspect
+</CARTOGRAPHER_RESUME_CONTEXT>
 ```
 
-### Step 1 — Define the canonical `.cartographer/` state files (JSON/JSONL/TOML) + schemas
+The renderer must enforce these boundaries:
 
-**Purpose / outcome.** Establish strictly-structured, schema-validatable state that survives compaction and resets, so the single writer re-orients from canonical files instead of transcript memory. Format follows purpose; Markdown is demoted to generated, non-authoritative views [F070][F075][C004].
+- no raw logs, raw private paths, full command output, or unbounded file contents;
+- no executable instructions sourced from arbitrary state strings;
+- fixed instruction text comes from the skill/renderer, not from free-form `state.json` content;
+- state may select a `resume.template_id` and provide data fields, but should not carry a free-form prompt;
+- if `current.json` is stale or points at invalid state, ignore it and fall back to explicit topic selection [F096].
 
-**What it adds.** A `.cartographer/` state directory (per topic) [F079]:
+After injection, the agent must first report the current phase, singular next action, and files it will inspect. It must not edit until after that response [F050].
+
+```mermaid
+flowchart TD
+  PF["cartographer-pathfinder writer subagent"]
+  CUR[".cartographer/current.json (ignored local pointer)"]
+  ST[".cartographer/topic/state.json"]
+  J[".cartographer/topic/journal.jsonl"]
+
+  subgraph PLAN["Existing authoritative .plan topic artifacts"]
+    PM["plan.md"]
+    PN["plan.nodes.jsonl"]
+    PE["plan.edges.jsonl"]
+    PR["receipts.jsonl"]
+    CP["context-packs.jsonl"]
+  end
+
+  subgraph LOOP["Single-writer long-horizon loop"]
+    O["Orient: read current pointer, state, journal, and selected .plan artifacts"]
+    S["Select one next_action"]
+    N["Narrow: update working_set in state.json via ACI"]
+    I["Inspect: re-open active files from disk"]
+    A["Act: small patch - parent writes"]
+    V["Validate: narrowest command; append .plan receipt"]
+    R["Record: update state cursor; append important journal lesson only if warranted"]
+    C{"Compaction trigger?"}
+    K["compact.generate: rewrite state.json and validate state/journal against .plan"]
+
+    O --> S --> N --> I --> A --> V --> R --> C
+    C -->|no| S
+    C -->|yes| K --> O
+  end
+
+  ACI["cartographer state ACI: schema + invariant validation"]
+  AUD["cartographer-auditor PASS - read-only"]
+  CMP["cartographer-compass - read-only"]
+
+  PF -.->|retired| O
+  CUR -->|points to active topic| ST
+  CUR -->|points to active topic| J
+  O -->|reads| CUR
+  O -->|reads| ST
+  O -->|reads curated lessons| J
+  O -->|reads refs| PM
+  O -->|reads refs| PN
+  O -->|reads refs| PR
+  N -->|mutates state via| ACI
+  R -->|mutates state and journal via| ACI
+  K -->|mutates state via| ACI
+  ACI --> ST
+  ACI --> J
+  ACI --> CUR
+  ACI -->|validates IDs and hashes| PN
+  ACI -->|checks receipts| PR
+  V --> PR
+  R -->|milestone receipts pass| AUD
+  R -->|decision, scope, or repeated failure| CMP
+```
+
+### Implementation plan
+
+#### Step 1 — Define the minimal `.cartographer/` execution state
+
+**Outcome.** Establish strictly structured, schema-validatable execution/resume artifacts that survive compaction and resets without duplicating planning or recreating a transcript log [F071][F092][F094][F095][C006][C007].
+
+**Artifacts.**
 
 | Artifact | Format | Role | Key fields / notes |
 |---|---|---|---|
-| `state.json` | JSON (canonical) | Current truth | `schema_version`, `current_phase_id`, `focus`, `next_action_id` (singular), `active_task_ids`, `blocked`, `known_failures`, `last_validation_receipt_id`, `limits`; rejects unknown fields [F071][F078] |
-| `plan.json` | JSON | Task graph | phases → tasks with `id`/`status`/`depends_on`; mirrors/derives from the plan skill's `plan.nodes/edges` [F079] |
-| `working-set.json` | JSON | Scope lease | `mode: single_writer`; `active`/`read_only`/`forbidden` entries with reasons; forbidden ∩ write = ∅ [F040][F079] |
-| `validation.jsonl` | JSONL | Append-only receipts | `id`,`ts`,`command`,`status` enum,`summary`,`log_path`; raw logs out of context [F072][F043] |
-| `decisions.jsonl` | JSONL | Append-only ADR-lite | `id`,`ts`,`title`,`status`,`reason`,`impact[]`; optionally mirrored to human ADRs [F072][F039] |
-| `events.jsonl` | JSONL | Audit trail | append-only tool/action events; compactable into `state.json` [F072] |
-| `handoff.json` | JSON | Resumption | `resume_order[]`, `resume_instruction`, `must_ignore[]` (prior chat speculation, generated Markdown) [F050] |
-| `config.toml` | TOML | Stable config | `[compaction]` triggers, per-agent `[agents.*]` mode/allowed-tools, `pathfinder.enabled=false` [F074] |
-| `schemas/*.schema.json` | JSON Schema | Shape contract | state/plan/working-set/validation/decision; runnable outside the harness [F077] |
-| `status.md` | Markdown (generated) | Human view | rendered from `state.json`; `authoritative:false` so it is never treated as truth [F075][F076] |
+| `.cartographer/<topic>/state.json` | JSON (canonical) | Execution/resume snapshot | `schema_version`, `topic`, `source_refs`, `current_phase_id`, `active_task_ids`, `active_validation_ids`, singular `next_action`, `working_set`, `known_failures`, `last_validation_receipt_ids`, `journal_refs`, `resume`, `updated_at`; `resume` carries template/data refs rather than a free-form prompt; rejects unknown fields [F071][F078][F094]. |
+| `.cartographer/<topic>/journal.jsonl` | JSONL (canonical, curated) | Important lessons journal | Append-only records for durable gotchas, implementation insights, failed hypotheses worth not repeating, user constraints, and phase/milestone summaries [F095][C007]. |
+| `.cartographer/<topic>/schemas/state.schema.json` | JSON Schema | State contract | Validates the state snapshot; cross-file invariant checks resolve IDs and receipts against existing `.plan` artifacts [F077][F094]. |
+| `.cartographer/<topic>/schemas/journal.schema.json` | JSON Schema | Journal contract | Validates bounded, typed, evidence-linked journal records; rejects raw private references and oversized/transcript-like entries [F095][C007]. |
+| `.cartographer/current.json` | JSON (git-ignored/local) | Active-topic pointer | Optional, disposable hint: `active_topic`, `state_path`, `journal_path`, `worktree_id`, `git_branch`, `updated_at`; never authoritative [F096]. |
 
-State is governed by **schema + invariants**, not prose: enums instead of free text (`status` pending|active|blocked|complete|cancelled|superseded; validation unknown|passed|failed|skipped|waived; scope read_only|write_allowed|forbidden|generated|external), stable IDs everywhere (`phase_id`/`task_id`/`decision_id`/`validation_id`/`event_id`), explicit size limits, and cross-file invariants (singular `next_action`; `current_phase_id`/`next_action_id` resolve in `plan.json`; active working-set files exist; completed tasks not active; unique receipt IDs; unknown top-level fields rejected) [F077][F078][F080][F081]. Every record stays factual and exact — preserve exact paths/symbols/commands/assertions/decisions/next-action/non-goals; never store speculation, raw logs, or "we might" prose [F036].
+**Example files.** These examples show shape and intent; exact enum values and hash fields should be finalized in the schemas.
 
-**Files.** New artifacts under `.cartographer/`; reuse `data-artifact:.plan/{topic}/receipts.jsonl` and `data-artifact:.plan/{topic}/context-packs.jsonl` as canonical sources; validate JSONL with the `manage_jsonl.ts` pattern [F064]. Keep records small and tiered to avoid recreating a giant-context problem [F024][F078][R006].
+<details>
+<summary><code>.cartographer/current.json</code></summary>
 
-**Dependencies.** None (foundational).
+```json
+{
+  "schema_version": 1,
+  "active_topic": "example-topic",
+  "state_path": ".cartographer/example-topic/state.json",
+  "journal_path": ".cartographer/example-topic/journal.jsonl",
+  "root": "/path/to/project",
+  "worktree_id": "feature-example-topic",
+  "git_branch": "feature/example-topic",
+  "last_seen_commit": "abc1234",
+  "updated_at": "2026-06-10T05:40:00Z"
+}
+```
 
-**Risks.** State only as good as what is written [R002]; file proliferation [R006] — bounded by limits, schemas, and the Clean Context Contract [F078][C001].
+</details>
 
-### Step 2 — Add the state-management ACI (read files, mutate through tools)
+<details>
+<summary><code>.cartographer/&lt;topic&gt;/state.json</code></summary>
 
-**Purpose / outcome.** Make canonical state safe to mutate by routing all writes through a semantic Agent-Computer Interface, while keeping the files directly readable — *observable state, controlled writes* [F083][F087][C005].
+```json
+{
+  "schema_version": 1,
+  "topic": "example-topic",
+  "source_refs": {
+    "plan_md": {
+      "path": ".plan/example-topic/plan.md",
+      "sha256": "sha256:plan-md"
+    },
+    "plan_nodes": {
+      "path": ".plan/example-topic/plan.nodes.jsonl",
+      "sha256": "sha256:plan-nodes"
+    },
+    "plan_edges": {
+      "path": ".plan/example-topic/plan.edges.jsonl",
+      "sha256": "sha256:plan-edges"
+    },
+    "receipts": {
+      "path": ".plan/example-topic/receipts.jsonl",
+      "sha256": "sha256:receipts"
+    },
+    "context_packs": {
+      "path": ".plan/example-topic/context-packs.jsonl",
+      "sha256": "sha256:context-packs"
+    }
+  },
+  "current_phase_id": "P2",
+  "active_task_ids": ["P2.T1"],
+  "active_validation_ids": ["P2.V1"],
+  "next_action": {
+    "id": "next:P2.T1.inspect-active-files",
+    "kind": "inspect",
+    "summary": "Re-open the active implementation files and confirm the next edit target.",
+    "task_id": "P2.T1"
+  },
+  "working_set": {
+    "write_allowed": [
+      {
+        "path": "skills/implement/SKILL.md",
+        "reason": "Active phase updates the implement workflow."
+      }
+    ],
+    "read_only": [
+      {
+        "path": ".plan/example-topic/proposal.md",
+        "reason": "Proposal scope and non-goals."
+      }
+    ],
+    "forbidden": [
+      {
+        "path": ".plan/_private/**",
+        "reason": "Raw private inputs are never loaded into working context."
+      }
+    ]
+  },
+  "known_failures": [
+    {
+      "id": "failure:P2.V1:lint",
+      "summary": "Lint failed on the first attempt; rerun after the targeted formatter change.",
+      "status": "active",
+      "last_seen_receipt_id": "receipt:P2:validation:2026-06-10T05:35:00Z"
+    }
+  ],
+  "last_validation_receipt_ids": [
+    "receipt:P2:validation:2026-06-10T05:35:00Z"
+  ],
+  "journal_refs": [
+    "journal:20260610T053000Z:mermaid-rendering"
+  ],
+  "resume": {
+    "template_id": "cartographer.single_writer.resume.v1",
+    "resume_order": [
+      ".cartographer/example-topic/state.json",
+      ".cartographer/example-topic/journal.jsonl#journal:20260610T053000Z:mermaid-rendering",
+      ".plan/example-topic/plan.md",
+      ".plan/example-topic/receipts.jsonl",
+      "skills/implement/SKILL.md"
+    ],
+    "expected_first_response": [
+      "current_phase",
+      "next_action",
+      "files_to_inspect"
+    ],
+    "must_ignore": [
+      "prior chat speculation",
+      "stale generated snippets"
+    ]
+  },
+  "updated_at": "2026-06-10T05:40:00Z"
+}
+```
 
-**Detail.** Direct LLM editing of canonical JSON predictably drops/invents fields, corrupts JSON, marks tasks complete without validation, or violates cross-file invariants [F084]. Instead, expose **semantic state-transition commands** (not generic setters) [F088]: `task.start`/`task.block`/`task.complete --validation <id>`, `validation.record`, `decision.accept`, `working_set.claim`/`release`, `phase.advance --from <P> --to <P> --receipt <id>`, `compact.generate`, `handoff.refresh`, and `state validate`. Each command enforces preconditions, updates `state.json`/`plan.json`/`events.jsonl` **atomically**, and runs the validation stack after every mutation [F084][F089]. Four layers cooperate: (1) JSON Schema (shape), (2) invariant checks (cross-file logic), (3) ACI commands (allowed transitions), (4) Git diffs / human review (observability) [F089]. Raw files remain observable/diffable/recoverable, and a documented **escape hatch** allows direct edits only when the ACI is unavailable, followed by `cartographer state validate` [F086][F090]. The read path is unchanged: the agent may read `.cartographer/*.json` and `*.jsonl` directly [F083]. This mirrors the SWE-agent ACI result that purpose-built interfaces materially improve agent reliability [F085].
+</details>
 
-**Files.** `config:cartographer-state-aci` implemented in `file:extensions/cartographer-tools.ts` (and/or a `skills/plan/scripts/` helper), reusing `file:skills/plan/scripts/validation_runner.py` and `file:skills/plan/scripts/manage_jsonl.ts` patterns; `config.toml` supplies policy.
+<details>
+<summary><code>.cartographer/&lt;topic&gt;/journal.jsonl</code></summary>
 
-**Dependencies.** Step 1 (files + schemas).
+```jsonl
+{"id":"journal:20260610T053000Z:mermaid-rendering","ts":"2026-06-10T05:30:00Z","kind":"gotcha","phase_id":"proposal","task_ids":[],"summary":"Mermaid diagrams may fail to render when edges target subgraph IDs or labels with punctuation are unquoted.","impact":"Use explicit nodes with quoted labels and node-to-node edges in proposal diagrams.","evidence":[{"path":".plan/example-topic/proposal.md"},{"receipt_id":"receipt:proposal:validation:2026-06-10T05:16:48Z"}],"importance":4,"status":"active","tags":["mermaid","dashboard","docs"]}
+{"id":"journal:20260610T054500Z:scope-rule","ts":"2026-06-10T05:45:00Z","kind":"constraint","phase_id":"P2","task_ids":["P2.T1"],"summary":"Do not add a duplicate plan.json while .plan remains authoritative.","impact":"State validation should resolve phase/task/validation IDs against .plan/example-topic/plan.nodes.jsonl instead of maintaining a second plan graph.","evidence":[{"path":".plan/example-topic/proposal.md"}],"importance":5,"status":"active","tags":["state","scope","plan-graph"]}
+```
 
-**Risks.** ACI as a single point of failure / tool bugs / overengineering [R007] — mitigated by observable files, out-of-harness schema validation, and the escape hatch [F086][F090].
+</details>
 
-### Step 3 — Rewrite the `implement` skill as the single-writer loop
+**State invariants.** State is governed by schema + invariants, not prose. The MVP invariant set is intentionally small [F078][F080][F081][F094]:
 
-**Purpose / outcome.** Replace pathfinder delegation with the explicit Orient → Select → Narrow → Inspect → Act → Validate → Record → Compact → Continue loop performed by the parent [F052].
+- exactly one `next_action`;
+- `current_phase_id`, `active_task_ids`, and `active_validation_ids` resolve in `.plan/<topic>/plan.nodes.jsonl`;
+- working-set paths exist or are approved globs;
+- forbidden paths do not overlap write-allowed paths;
+- referenced receipt IDs exist in `.plan/<topic>/receipts.jsonl`;
+- `journal_refs` resolve to journal records when listed;
+- recorded source hashes match the current `.plan` artifacts or the state is marked stale.
 
-**Detail.** Per phase the parent: (1) **Orients** by reading `state.json`, `plan.json`, and the validation/decisions JSONL; (2) **Selects** the singular `next_action_id` [F045]; (3) **Narrows** via `working_set.claim` (scope + reason) before editing [F040]; (4) **Inspects** by re-opening only active files from disk — never trusting code "read 40 turns ago" [F038][F007]; (5) **Acts** with a small patch; (6) **Validates** with the narrowest useful command, recorded via `validation.record` [F049]; (7) **Records** the transition via `task.complete`/`decision.accept` (atomic state + `events.jsonl` update) while facts are fresh [F048][F087]; (8) **Compacts** if a trigger fires (Step 5); (9) **Continues** by re-orienting from artifacts. All mutations go through the ACI; reads hit files directly [F083].
+Every record stays factual and exact: preserve exact paths, symbols, commands, assertions, decisions, next action, and non-goals; never store speculation, raw logs, or "we might" prose [F036].
 
-**Files.** `file:skills/implement/SKILL.md` (primary rewrite) [F061]; remove `cartographer-pathfinder` as default writer and replace the Pathfinder delegation/acceptance sections with the loop and ACI-mediated state updates. Keep the deterministic-receipts-then-auditor gate (Step 6).
+**Journal discipline.** Append a journal record only when future context-reset-you would otherwise waste time, repeat a mistake, or miss an important constraint. Do not log:
 
-**Dependencies.** Steps 1–2 (the auditor gate from Step 6 is retained as part of the loop; see Step 6).
+- every tool call;
+- raw command output;
+- validation history already captured in `.plan/<topic>/receipts.jsonl`;
+- decisions significant enough to require an ADR [F095][C007].
 
-**Risks.** Loss of parallel write throughput [R004] — accepted, given the writer subagent left the parent to finish in practice [F063]; serial fallback already supported [C002].
+The skills must teach this explicitly so `journal.jsonl` remains a curated memory trail, not a second transcript.
 
-### Step 4 — Retire `cartographer-pathfinder` and confirm read-only specialists
+**Current pointer discipline.** `current.json` is intentionally weaker than per-topic state. On startup or after reboot, an agent may use it to discover the active topic in the current worktree, but must validate that:
 
-**Purpose / outcome.** Remove the writer subagent from the default path while explicitly retaining read-only specialists.
+- `state_path` exists;
+- root/branch hints are plausible;
+- the referenced state is not stale.
 
-**Detail.** Set `pathfinder.enabled=false` in `config.toml` and mark `file:.pi/agents/cartographer-pathfinder.md` retired/deprecated (optionally available behind an explicit opt-in for Option C parallel independent file sets) [F060][F074]. Update the README subagents table and role/tool matrix so writing is parent-owned and `cartographer-auditor`, `cartographer-compass`, and `cartographer-archivist` are documented as the retained read-only specialists — exactly the pattern where sub-agents add value [F009][F066][F055].
+If validation fails, ignore `current.json` and fall back to explicit user instruction, topic listing, or the most recently updated valid topic state [F096].
 
-**Files.** `file:.pi/agents/cartographer-pathfinder.md`; `file:README.md` (subagents table, role/tool matrix, quick-start `implement` diagram) [F064].
+**Files.** New `.cartographer/<topic>/state.json`, `.cartographer/<topic>/journal.jsonl`, corresponding schemas, and ignored `.cartographer/current.json`. Existing `.plan/<topic>/plan.md`, `plan.nodes.jsonl`, `plan.edges.jsonl`, `receipts.jsonl`, and `context-packs.jsonl` stay canonical and are referenced, not copied [F064][F092][C006].
+
+**Dependencies.** None.
+
+**Risks.** State quality [R002], drift from `.plan` [C006], and journal bloat [R006]. Mitigation: source hashes, validation invariants, and skill-level journal discipline [F094][F095][C007].
+
+#### Step 2 — Add the minimal state-management ACI
+
+**Outcome.** Make the state snapshot and journal safe to mutate while keeping the files directly readable: *observable state, controlled writes* [F083][F087][C005].
+
+**Why an ACI is needed.** Direct LLM editing of canonical JSON/JSONL can [F084]:
+
+- drop or invent fields;
+- corrupt JSON;
+- update state without evidence;
+- violate cross-file invariants.
+
+**Command surface.**
+
+| Command | Purpose |
+|---|---|
+| `current set` | Update the ignored active-topic pointer. |
+| `state init` | Create a valid initial topic state. |
+| `state validate` | Check schema + cross-file invariants. |
+| `state set-next` | Replace the singular next action. |
+| `state set-working-set` | Update write/read/forbidden scopes. |
+| `state record-validation-ref` | Add receipt references without duplicating receipts. |
+| `journal append` | Append a bounded, evidence-linked important lesson. |
+| `state mark-stale` | Mark state stale when source hashes no longer match. |
+| `compact.generate` | Rewrite compact state and validate it against `.plan`. |
+
+These commands update `state.json`, `journal.jsonl`, and `current.json` atomically where applicable; validate against existing `.plan` artifacts; and append or reference existing `.plan` validation receipts when workflow state materially changes [F084][F089][F094][F095].
+
+`journal append` requires kind, impact, evidence reference, and importance so routine chatter does not enter durable memory [C007].
+
+Raw files remain observable, diffable, and recoverable. The escape hatch is direct edits only when the ACI is unavailable, followed by `cartographer state validate` [F086][F090].
+
+**Files.** `config:cartographer-state-aci` in `file:extensions/cartographer-tools.ts` and/or a `skills/plan/scripts/` helper, reusing `file:skills/plan/scripts/validation_runner.py` and `file:skills/plan/scripts/manage_jsonl.ts` patterns.
+
+**Dependencies.** Step 1.
+
+**Risks.** ACI bugs, opacity, or overengineering [R007]. Mitigation: observable files, out-of-harness schema validation, and direct-edit + validate escape hatch [F086][F090].
+
+#### Step 3 — Rewrite the `implement` skill as the single-writer loop
+
+**Outcome.** Replace pathfinder delegation with the parent-owned long-horizon loop [F052].
+
+**Loop.**
+
+| Step | Action | State interaction |
+|---|---|---|
+| 1. Orient | Use explicit user instruction or valid `current.json`; read `state.json`, selected high-importance journal records, and referenced `.plan` artifacts. | Read only [F096]. |
+| 2. Select | Choose the singular `next_action`. | Update through ACI [F045]. |
+| 3. Narrow | Define the active `working_set` before editing. | Update `state.json` through ACI [F040]. |
+| 4. Inspect | Re-open active files from disk; do not trust code read many turns ago. | Refresh context from files [F038][F007]. |
+| 5. Act | Apply a small parent-owned patch. | Parent writes code/docs. |
+| 6. Validate | Run the narrowest useful command. | Record receipt in `.plan/<topic>/receipts.jsonl` [F049][F064]. |
+| 7. Record | Update cursor/receipt refs; append journal only for important lessons/gotchas/constraints. | Mutate state/journal through ACI [F048][F087][F095][C007]. |
+| 8. Compact | If a trigger fires, rewrite compact state. | `compact.generate` validates state + journal [F047][F053]. |
+| 9. Continue | Re-orient from artifacts. | Ignore stale transcript except latest user instruction [F050]. |
+
+All state, journal, and current-pointer mutations go through the ACI. `.plan` remains the plan/evidence source of truth [F083][F092][C006].
+
+**Files.** `file:skills/implement/SKILL.md` [F061]. Remove `cartographer-pathfinder` as default writer and replace Pathfinder delegation/acceptance sections with this loop and ACI-mediated state/journal updates. Keep the deterministic-receipts-then-auditor gate.
+
+**Dependencies.** Steps 1–2. The Step 6 auditor gate remains part of the loop.
+
+**Risks.** Loss of parallel write throughput [R004]. Accepted because the writer subagent left the parent to finish in practice [F063], and serial fallback remains supported [C002].
+
+#### Step 4 — Retire `cartographer-pathfinder` and confirm read-only specialists
+
+**Outcome.** Remove the writer subagent from the default path while preserving read-only specialist value.
+
+**Changes.**
+
+- Mark `file:.pi/agents/cartographer-pathfinder.md` retired/deprecated.
+- Optionally retain it behind explicit opt-in for Option C: embarrassingly parallel independent file sets [F060].
+- Update README subagent table and role/tool matrix.
+- Document writing as parent-owned.
+- Document `cartographer-auditor`, `cartographer-compass`, and `cartographer-archivist` as retained read-only specialists [F009][F066][F055].
+
+**Files.** `file:.pi/agents/cartographer-pathfinder.md`; `file:README.md` subagents table, role/tool matrix, and quick-start `implement` diagram [F064].
 
 **Dependencies.** Steps 1–3.
 
-**Risks.** Decision-record drift vs ADR-0002 [R005] — handled in Step 7.
+**Risks.** Decision-record drift vs. ADR-0002 [R005]. Handled in Step 7.
 
-### Step 5 — Milestone-driven compaction via the `compact.generate` command
+#### Step 5 — Milestone-driven compaction via `compact.generate`
 
-**Purpose / outcome.** Make compaction an explicit, validated state transition instead of emergency near-limit summarization.
+**Outcome.** Make compaction an explicit, validated state transition instead of emergency near-limit summarization.
 
-**Detail.** Define triggers (in `config.toml`): phase started/completed, test-failure diagnosed, decision made, file-set change, before switching areas, before a risky refactor, before handoff, and a configurable context-usage threshold (~60%, explicitly a heuristic) [F035][F046][F074]. On a trigger, `compact.generate` **folds append-only JSONL history into the `state.json` snapshot**, regenerates `handoff.json` and `status.md`, and validates schema + invariants: exactly one active `next_action`; `current_phase_id`/`next_action_id` resolve in `plan.json`; active working-set files exist; no stale failed command if a later passing receipt exists; unique receipt IDs; completed tasks not active; unknown fields rejected [F072][F077][F047][F053]. These are deterministic schema/invariant checks, not prompt text [R003][F025]. Custom compaction instructions must enumerate exact details to retain, since compaction otherwise drops obscure specifics [F012][F036]. After compaction the parent reloads artifacts (per `handoff.json`) and ignores prior chat except the latest user instruction [F048][F050].
+**Triggers.** Run `compact.generate` at meaningful boundaries [F035][F046]:
+
+- phase started;
+- phase completed;
+- test failure diagnosed;
+- decision made;
+- file-set changed;
+- before switching areas;
+- before risky refactor;
+- before handoff;
+- configurable context-usage threshold (~60%, explicitly heuristic).
+
+**What compaction does.**
+
+1. Rewrites `state.json` with the current cursor, working set, known failures, receipt refs, selected journal refs, and resume template/data refs.
+2. Validates schema + invariants against existing `.plan` artifacts.
+3. Validates that the journal remains bounded, typed, and evidence-linked [F047][F053][F094][F095].
+4. Optionally appends a phase-summary or lesson journal record only when the run produced a genuinely important insight [C007].
+5. Renders or points to a bounded resume-context block, then instructs the parent to reload from artifacts and ignore prior chat except the latest user instruction [F048][F050].
+
+These are deterministic checks, not prompt text [R003][F025]. Custom compaction instructions must enumerate exact details to retain because compaction otherwise drops obscure specifics [F012][F036].
 
 ```mermaid
 sequenceDiagram
   participant W as Single writer (parent)
   participant K as compact.generate (state ACI)
-  participant FS as .cartographer/ (state.json + JSONL) + receipts.jsonl
+  participant CUR as .cartographer/current.json
+  participant ST as .cartographer/topic/state.json
+  participant J as .cartographer/topic/journal.jsonl
+  participant PLAN as .plan/topic artifacts
   W->>W: milestone reached (phase done / decision / refactor)
-  W->>K: compact.generate --phase P?
-  K->>FS: read receipts + JSONL history + current state.json
-  K->>FS: fold history into state.json; refresh handoff.json + status.md
-  K->>K: validate schema + invariants (one next_action, IDs resolve, files exist, receipts unique)
-  K-->>W: PASS + reload instruction (or FAIL + corrections)
-  W->>W: discard transcript, re-orient from state.json/handoff.json
+  W->>K: compact.generate --topic <topic>
+  K->>PLAN: read plan graph + receipts/context refs
+  K->>J: read curated lessons and optionally append phase summary
+  K->>ST: rewrite compact execution/resume snapshot
+  K->>CUR: refresh local active-topic pointer when appropriate
+  K->>K: validate schema + invariants (one next_action, IDs resolve, receipts resolve, journal bounded)
+  K-->>W: PASS + bounded resume context (or FAIL + corrections)
+  W->>W: discard transcript, re-orient from injected context + state/journal + .plan refs
 ```
 
-**Files.** `config:cartographer-compact` (a command of `config:cartographer-state-aci`) in `file:extensions/cartographer-tools.ts` and/or a `skills/plan/scripts/` helper, mirroring `file:skills/plan/scripts/validation_runner.py`; phase receipts are the canonical compaction source [F049][F064].
+**Files.** `config:cartographer-compact` as a command of `config:cartographer-state-aci` in `file:extensions/cartographer-tools.ts` and/or a `skills/plan/scripts/` helper. `.plan/<topic>/receipts.jsonl` remains canonical validation history; `journal.jsonl` remains a curated lessons trail [F049][F064][F095].
 
-**Dependencies.** Steps 1–2 (files + ACI); reuses receipts.
+**Dependencies.** Steps 1–2; reuses existing `.plan` receipts.
 
-**Risks.** Bad snapshot becomes canonical [R001] — mitigated by the validation step [F047]; over-engineering — add only checks that pay off [F018].
+**Risks.** Bad snapshot [R001], journal bloat [R006], and overengineering. Mitigations: validation [F047], append criteria + schemas [C007], and only adding checks that pay off [F018].
 
-### Step 6 — Keep deterministic-receipts-then-auditor gating and add a fixed resumption prompt
+#### Step 6 — Keep deterministic-receipts-then-auditor gating and add controlled resume injection
 
-**Purpose / outcome.** Preserve the existing quality gate and harden against post-compaction amnesia.
+**Outcome.** Preserve the existing quality gate and harden against post-compaction amnesia without trusting arbitrary prompt text from state files.
 
-**Detail.** Retain: deterministic validation receipts → `cartographer-auditor` PASS → conventional commit, unchanged from the current `implement` discipline and ADR-0002 [F062]. Add a **fixed resumption prompt** (sourced from `handoff.json`) used after every compaction/session reset: resume from repository artifacts in `resume_order` (`state.json` → `decisions.jsonl` → `plan.json` → `working-set.json` → `validation.jsonl`), respond with current phase + the singular next action + files to inspect, and **do not edit until after that response** [F050][F014]. This operationalizes the assume-interruption mindset for a writer that may be compacted at any time.
+**Quality gate retained.**
 
-**Files.** `file:skills/implement/SKILL.md`; `file:.pi/agents/cartographer-auditor.md` (unchanged role); minor `file:skills/proposal/SKILL.md` / `file:skills/plan/SKILL.md` notes for the new artifacts.
+1. deterministic validation receipts;
+2. `cartographer-auditor` PASS;
+3. conventional commit [F062].
+
+**Controlled resume injection.** After compaction or resume, a fixed renderer loads artifacts in order:
+
+1. `state.json`;
+2. selected high-importance journal records;
+3. referenced `.plan` plan graph;
+4. receipts;
+5. context packs;
+6. active files [F050][F014][F096].
+
+It then injects a bounded `CARTOGRAPHER_RESUME_CONTEXT` block as context data. Fixed instructions live in the skill/renderer; state only provides validated data and a `resume.template_id`.
+
+Before editing, the agent responds with:
+
+- current phase;
+- singular next action;
+- files to inspect.
+
+Then it edits only after that response. This operationalizes the assume-interruption mindset for a writer that may be compacted at any time.
+
+**Files.** `file:skills/implement/SKILL.md`; `file:.pi/agents/cartographer-auditor.md` unchanged; minor `file:skills/proposal/SKILL.md` / `file:skills/plan/SKILL.md` notes for minimal state and journal artifacts.
 
 **Dependencies.** Steps 1–5.
 
-**Risks.** Resumption prompt is instruction-level [R003] — acceptable since the deterministic auditor/receipt gate remains the hard quality bar.
+**Risks.** Resumption prompt is instruction-level [R003]. Acceptable because deterministic receipts and auditor PASS remain the hard quality bar.
 
-### Step 7 — Reconcile ADR-0002 and update AGENTS.md / docs
+#### Step 7 — Reconcile ADR-0002 and update AGENTS.md / docs
 
-**Purpose / outcome.** Keep the decision record coherent and keep durable rules separate from live task state.
+**Outcome.** Keep the decision record coherent and keep durable rules separate from live task state.
 
-**Detail.** At implementation finalization, generate a new ADR (via `cartographer_adr`) that **supersedes or amends** the writer-subagent portion of ADR-0002, citing validation receipts and commits; ADR-0002's deterministic-receipts-then-auditor and least-privilege principles for *read-only* specialists remain in force [F062][R005]. Update README and AGENTS-style guidance so project instruction files hold **stable operating rules** — e.g. "read `.cartographer/*.json`/`*.jsonl` directly but mutate canonical state only via `cartographer state …`; after any direct edit run `cartographer state validate`", "run `npm run check` before commit" — not live task state [F051][F090][F021][F022]. Keep raw logs/sessions out of committed context [F043][C001].
+**ADR work.** At implementation finalization, generate a new ADR via `cartographer_adr` that supersedes or amends the writer-subagent portion of ADR-0002. Cite validation receipts and commits. ADR-0002's deterministic-receipts-then-auditor and least-privilege principles for read-only specialists remain in force [F062][R005].
 
-**Files.** `file:docs/adr/0002-require-auditable-cartographer-subagent-handoffs.md` (superseded/amended via new ADR); `file:README.md`; AGENTS.md.
+**Documentation rules to add.** Project instruction files should contain stable operating rules, not live task state [F051][F090][F021][F022][F095][F096][C007]:
+
+- read `.cartographer/<topic>/state.json` and curated journal entries directly;
+- mutate state/journal only through `cartographer state …` / `journal append` commands;
+- after any direct edit, run `cartographer state validate`;
+- append `journal.jsonl` only for important lessons/gotchas/constraints that would otherwise be rediscovered;
+- treat `.cartographer/current.json` as an ignored local hint only;
+- run `npm run check` before commit;
+- keep raw logs/sessions out of committed context [F043][C001].
+
+**Files.** `file:docs/adr/0002-require-auditable-cartographer-subagent-handoffs.md` superseded/amended via new ADR; `file:README.md`; AGENTS.md; `.gitignore` entry for `.cartographer/current.json`.
 
 **Dependencies.** Steps 1–6; validation receipts must exist before the ADR is written.
 

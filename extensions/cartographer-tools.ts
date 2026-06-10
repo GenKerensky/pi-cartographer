@@ -92,6 +92,36 @@ type CartographerArtifactsParams = OutputShapeParams & {
 	phaseId?: string;
 };
 
+type CartographerStateParams = OutputShapeParams & {
+	action:
+		| "state-init"
+		| "state-validate"
+		| "state-set-next"
+		| "state-set-working-set"
+		| "state-record-validation-ref"
+		| "state-mark-stale"
+		| "journal-append"
+		| "current-set"
+		| "compact-generate"
+		| "state-resume";
+	root?: string;
+	topic?: string;
+	nextAction?: unknown;
+	workingSet?: unknown;
+	receiptId?: string[];
+	record?: unknown;
+	reason?: string;
+	trigger?: string;
+	summary?: string;
+	impact?: string;
+	importance?: number;
+	evidence?: unknown;
+	worktreeId?: string;
+	gitBranch?: string;
+	lastSeenCommit?: string;
+	maxJournal?: number;
+};
+
 type CartographerValidationParams = OutputShapeParams & {
 	action: "run";
 	root?: string;
@@ -187,6 +217,7 @@ const extensionDir = path.dirname(fileURLToPath(import.meta.url));
 const packageRoot = path.dirname(extensionDir);
 const indexScript = path.join(packageRoot, "skills", "index-project", "scripts", "index_project.py");
 const jsonlScript = path.join(packageRoot, "skills", "plan", "scripts", "manage_jsonl.ts");
+const stateScript = path.join(packageRoot, "skills", "plan", "scripts", "cartographer_state.ts");
 const evidenceScript = path.join(packageRoot, "skills", "plan", "scripts", "private_artifacts.py");
 const sessionScript = path.join(packageRoot, "skills", "plan", "scripts", "analyze_session.py");
 const validationRunnerScript = path.join(packageRoot, "skills", "plan", "scripts", "validation_runner.py");
@@ -913,6 +944,89 @@ export default function cartographerTools(pi: PiApi): void {
 					"Cite summarized artifact ids/paths only; verify source files before editing.",
 					"Ask the parent for mutable cartographer_jsonl access only when an approved phase requires writes.",
 				],
+			});
+		},
+	});
+
+	pi.registerTool({
+		name: "cartographer_state",
+		label: "Cartographer State",
+		description:
+			"Manage minimal .cartographer execution state, curated journal records, current pointers, compaction, and resume context.",
+		promptSnippet: "Validate and mutate .cartographer state through semantic commands instead of direct JSON edits",
+		promptGuidelines: [
+			"Read .cartographer/<topic>/state.json and journal.jsonl directly when useful, but mutate them through cartographer_state commands.",
+			"Do not use cartographer_state to create a duplicate plan graph; .plan/<topic>/plan.md and plan JSONL remain authoritative.",
+			"Use journal-append only for important durable lessons/gotchas/constraints, not raw logs, receipts, transcripts, or routine tool calls.",
+			"Use compact-generate for validated state compaction; use state-resume for bounded read-only context injection data.",
+			"Treat .cartographer/current.json as a git-ignored local hint only; ignore it when stale or invalid.",
+		],
+		parameters: Type.Object({
+			action: Type.Union([
+				Type.Literal("state-init"),
+				Type.Literal("state-validate"),
+				Type.Literal("state-set-next"),
+				Type.Literal("state-set-working-set"),
+				Type.Literal("state-record-validation-ref"),
+				Type.Literal("state-mark-stale"),
+				Type.Literal("journal-append"),
+				Type.Literal("current-set"),
+				Type.Literal("compact-generate"),
+				Type.Literal("state-resume"),
+			]),
+			root: Type.Optional(Type.String({ description: "Project root. Defaults to current working directory." })),
+			topic: Type.String({ description: "Cartographer topic under .plan/ and .cartographer/." }),
+			nextAction: Type.Optional(Type.Any({ description: "Next action object for state-set-next." })),
+			workingSet: Type.Optional(Type.Any({ description: "Working set object for state-set-working-set." })),
+			receiptId: Type.Optional(
+				Type.Array(Type.String(), { description: "Receipt IDs for state-record-validation-ref." }),
+			),
+			record: Type.Optional(Type.Any({ description: "Journal record for journal-append." })),
+			reason: Type.Optional(Type.String({ description: "Staleness reason for state-mark-stale." })),
+			trigger: Type.Optional(Type.String({ description: "Milestone trigger for compact-generate." })),
+			summary: Type.Optional(Type.String({ description: "Optional important lesson summary for compact-generate." })),
+			impact: Type.Optional(Type.String({ description: "Optional important lesson impact for compact-generate." })),
+			importance: Type.Optional(Type.Number({ description: "Optional journal importance 1-5." })),
+			evidence: Type.Optional(Type.Any({ description: "Optional evidence array for compact-generate journal entry." })),
+			worktreeId: Type.Optional(Type.String({ description: "Optional worktree id for current-set." })),
+			gitBranch: Type.Optional(Type.String({ description: "Optional git branch for current-set." })),
+			lastSeenCommit: Type.Optional(Type.String({ description: "Optional commit SHA for current-set." })),
+			maxJournal: Type.Optional(Type.Number({ description: "Maximum selected journal records for state-resume." })),
+			maxOutputChars: Type.Optional(
+				Type.Number({ description: "Inline output budget before saving a full-output receipt." }),
+			),
+			outputPath: Type.Optional(Type.String({ description: "Optional full-output path for oversized output." })),
+			raw: Type.Optional(Type.Boolean({ description: "Return raw command output instead of a compact receipt." })),
+		}),
+		async execute(_toolCallId, rawParams, signal) {
+			const params = rawParams as CartographerStateParams;
+			const args: string[] = [
+				params.action,
+				"--root",
+				params.root || process.cwd(),
+				"--topic",
+				requireString(params.topic, "cartographer_state requires topic"),
+				"--json",
+			];
+			if (params.nextAction !== undefined) args.push("--next-action-json", JSON.stringify(params.nextAction));
+			if (params.workingSet !== undefined) args.push("--working-set-json", JSON.stringify(params.workingSet));
+			for (const id of params.receiptId || []) args.push("--receipt-id", id);
+			if (params.record !== undefined) args.push("--record-json", JSON.stringify(params.record));
+			if (params.reason) args.push("--reason", params.reason);
+			if (params.trigger) args.push("--trigger", params.trigger);
+			if (params.summary) args.push("--summary", params.summary);
+			if (params.impact) args.push("--impact", params.impact);
+			if (params.importance) args.push("--importance", String(params.importance));
+			if (params.evidence !== undefined) args.push("--evidence-json", JSON.stringify(params.evidence));
+			if (params.worktreeId) args.push("--worktree-id", params.worktreeId);
+			if (params.gitBranch) args.push("--git-branch", params.gitBranch);
+			if (params.lastSeenCommit) args.push("--last-seen-commit", params.lastSeenCommit);
+			if (params.maxJournal) args.push("--max-journal", String(params.maxJournal));
+			return runCommand("node", ["--experimental-strip-types", stateScript, ...args], signal, {
+				maxOutputChars: params.maxOutputChars,
+				outputPath: params.outputPath,
+				raw: params.raw,
+				label: `cartographer-state-${params.action}`,
 			});
 		},
 	});

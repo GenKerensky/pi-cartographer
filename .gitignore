@@ -32,3 +32,6 @@ pnpm-debug.log*
 dashboard/client/dist/
 tests/dashboard/__screenshots__/
 .vitest-attachments/
+
+# Local active Cartographer topic pointer (state/journal artifacts remain reviewable)
+.cartographer/current.json

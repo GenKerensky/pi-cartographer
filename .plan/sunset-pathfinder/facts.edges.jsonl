@@ -104,7 +104,7 @@
 {"from":"F073","to":"S008","type":"supported_by","evidence":"'YAML is worse than it looks'; 'I would not make it the canonical machine state format.'"}
 {"from":"F074","to":"S008","type":"supported_by","evidence":"'TOML is good for stable config, not live state'; config.toml example."}
 {"from":"F075","to":"S008","type":"supported_by","evidence":"'JSON/JSONL are canonical. Markdown is rendered from them for humans'; generated_views authoritative:false."}
-{"from":"F076","to":"S008","type":"supported_by","evidence":"'Best architecture: canonical state + rendered views'; status.md 'generated view, not source of truth'."}
+{"from":"F076","to":"S008","type":"supported_by","evidence":"'Best architecture: canonical state + rendered views'; generated Markdown view is not source of truth."}
 {"from":"F077","to":"S008","type":"supported_by","evidence":"'Use schemas aggressively'; schema file list and invariant list."}
 {"from":"F078","to":"S008","type":"supported_by","evidence":"'Keep state compact by design'; limits object; old detail to JSONL/logs/summaries."}
 {"from":"F079","to":"S008","type":"supported_by","evidence":"'Suggested canonical files' with state.json/plan.json/working-set.json/validation.jsonl/decisions.jsonl/handoff.json examples."}
@@ -133,3 +133,18 @@
 {"from":"F076","to":"F034","type":"related_to","evidence":"Canonical structured state vs generated views directly answers 'compact project state, not conversation'."}
 {"from":"R007","to":"F086","type":"mitigated_by","evidence":"Observable raw files keep state inspectable/recoverable despite the ACI."}
 {"from":"R007","to":"F090","type":"mitigated_by","evidence":"Escape hatch + 'cartographer state validate' after direct edits prevent ACI single-point-of-failure lockout."}
+{"from":"F092","to":"S018","type":"supported_by","evidence":"User directed the proposal to avoid duplicating .plan planning with plan.json."}
+{"from":"F093","to":"S018","type":"supported_by","evidence":"User directed removal of generated status Markdown and deferred generated Markdown to a later migration."}
+{"from":"F094","to":"S018","type":"supported_by","evidence":"User asked for minimum viable state to survive compaction while .plan remains authoritative."}
+{"from":"C006","to":"S018","type":"supported_by","evidence":"User scoped MVP state to avoid duplicate plan truth and generated Markdown."}
+{"from":"F092","to":"goal:persisted-state","type":"supports_goal","evidence":"Defines persisted state as compact execution cursor referencing .plan, not duplicate planning."}
+{"from":"F094","to":"goal:persisted-state","type":"supports_goal","evidence":"Defines state validation needed to survive compaction safely."}
+{"from":"C006","to":"goal:persisted-state","type":"supports_goal","evidence":"Constrains .cartographer to compact execution/resume state while .plan remains authoritative."}
+{"from":"R006","to":"F093","type":"mitigated_by","evidence":"Deferring generated Markdown views reduces state-file proliferation in the MVP."}
+{"from":"F095","to":"S019","type":"supported_by","evidence":"User selected journal naming and directed the skills to document only important lessons."}
+{"from":"F096","to":"S019","type":"supported_by","evidence":"User proposed an ephemeral git-ignored current.json for active-topic discovery after reboot/fresh context."}
+{"from":"C007","to":"S019","type":"supported_by","evidence":"User emphasized documenting only important lessons in the skills."}
+{"from":"F095","to":"goal:persisted-state","type":"supports_goal","evidence":"Adds a curated long-horizon memory trail that survives compaction without duplicating plan or receipts."}
+{"from":"F096","to":"goal:persisted-state","type":"supports_goal","evidence":"Helps fresh contexts discover the active topic/state after reboot without making current.json authoritative."}
+{"from":"C007","to":"goal:persisted-state","type":"supports_goal","evidence":"Constrains journal use so persisted memory stays compact and high-signal."}
+{"from":"R006","to":"C007","type":"mitigated_by","evidence":"Journal scarcity rules prevent the curated journal from becoming a giant context log."}
