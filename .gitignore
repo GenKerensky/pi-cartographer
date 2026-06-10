@@ -28,8 +28,10 @@ pnpm-debug.log*
 # Optional local run/output logs (raw command output; never commit)
 .plan/_runs/
 
-# Dashboard client build output (regenerated during packaging checks)
+# Dashboard build output (regenerated during packaging checks)
 dashboard/client/dist/
+dashboard/start/.output/
+dashboard/start/node_modules/
 tests/dashboard/__screenshots__/
 .vitest-attachments/
 

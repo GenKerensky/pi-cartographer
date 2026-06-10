@@ -1,0 +1,27 @@
+{"evidence":"packages.md describes package.json pi manifest resources.","from":"F900","source":"local_pi_docs_seed","to":"S900","type":"supported_by"}
+{"evidence":"packages.md documents gallery image metadata.","from":"F901","source":"local_pi_docs_seed","to":"S900","type":"supported_by"}
+{"evidence":"skills.md describes skill structure and frontmatter.","from":"F902","source":"local_pi_docs_seed","to":"S901","type":"supported_by"}
+{"evidence":"extensions.md documents pi.registerTool.","from":"F903","source":"local_pi_docs_seed","to":"S902","type":"supported_by"}
+{"evidence":"prompt-templates.md documents packaged prompt templates.","from":"F904","source":"local_pi_docs_seed","to":"S903","type":"supported_by"}
+{"evidence":"pi-subagents guidance emphasizes concrete role-specific child tasks and parent orchestration.","from":"F905","source":"local_pi_docs_seed","to":"S904","type":"supported_by"}
+{"from":"F001","to":"S005","type":"supported_by","evidence":"package.json dependencies, scripts, files, and bin fields show the current split stack."}
+{"from":"F002","to":"S006","type":"supported_by","evidence":"READ_ONLY_ROUTES lists GET-only dashboard API endpoints."}
+{"from":"F003","to":"S007","type":"supported_by","evidence":"live-reload.ts configures chokidar.watch, private path ignores, debouncing, and SSE routes."}
+{"from":"F004","to":"S008","type":"supported_by","evidence":"App.tsx owns React state and refetches through dashboardApi when live events arrive."}
+{"from":"F005","to":"S009","type":"supported_by","evidence":"models.ts defines LiveReloadEvent and LiveReloadStatus."}
+{"from":"F006","to":"S001","type":"supported_by","evidence":"TanStack Start docs show server.handlers in createFileRoute route files."}
+{"from":"F006","to":"S004","type":"supported_by","evidence":"Brave Search result for TanStack Start overview cites server routes, API routes, server functions, middleware/context, and full-stack builds."}
+{"from":"F007","to":"S001","type":"supported_by","evidence":"TanStack Start docs show tanstackStart() before viteReact() in vite.config.ts."}
+{"from":"F008","to":"S002","type":"supported_by","evidence":"TanStack DB docs show createCollection and useLiveQuery for reactive component data."}
+{"from":"F009","to":"S002","type":"supported_by","evidence":"TanStack DB quick-start docs show queryCollectionOptions with queryKey, queryFn, getKey, and mutation handlers."}
+{"from":"F010","to":"S003","type":"supported_by","evidence":"Chokidar README documents all events, ignored callbacks, ignoreInitial, awaitWriteFinish, and close()."}
+{"from":"F011","to":"S010","type":"supported_by","evidence":"ADR-0003 decision states the accepted current dashboard stack and usage guidance."}
+{"from":"F012","to":"S011","type":"supported_by","evidence":"README planning dashboard section states loopback-only, read-only, safe live reload, and private evidence constraints."}
+{"from":"F013","to":"S012","type":"supported_by","evidence":"live-reload.test.ts covers /api/events status/stream and safe topic changes."}
+{"from":"F013","to":"S013","type":"supported_by","evidence":"privacy-regressions tests cover GET-only routes and private path blocking."}
+{"from":"F014","to":"S014","type":"supported_by","evidence":"Project AGENTS.md requires tests to use temporary/mock project roots instead of the real .plan directory."}
+{"from":"F015","to":"S005","type":"supported_by","evidence":"package.json lacks the proposed TanStack packages; focused rg returned no matches elsewhere."}
+{"from":"F001","to":"file:package.json","type":"applies_to","evidence":"Manifest will need dependency/script/bin updates."}
+{"from":"F003","to":"file:dashboard/server/live-reload.ts","type":"applies_to","evidence":"Existing watcher should become the server-side realtime event source."}
+{"from":"F004","to":"file:dashboard/client/src/App.tsx","type":"applies_to","evidence":"Manual state and refetch effects should be replaced by collection/live-query state."}
+{"from":"F011","to":"file:docs/adr/0003-use-local-dashboard-stack-for-cartographer-planning-ui.md","type":"applies_to","evidence":"Architecture change should be recorded against the accepted dashboard stack ADR."}
