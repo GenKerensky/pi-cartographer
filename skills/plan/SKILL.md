@@ -40,6 +40,8 @@ Use or create/update these supporting artifacts when needed:
 - `.plan/{topic}/facts.nodes.jsonl`
 - `.plan/{topic}/facts.edges.jsonl`
 
+Do not create `.cartographer/` execution state during planning. Plans may include implementation phases for `.cartographer/<topic>/state.json`, curated `journal.jsonl`, schemas, and ignored `current.json`, but `.plan/{topic}/plan.md` and plan JSONL remain authoritative for the plan itself.
+
 `{topic}` is a concise summary of the user's requested topic in **3 words or less**. Prefer filesystem-safe lowercase kebab-case for paths.
 
 ## Procedure

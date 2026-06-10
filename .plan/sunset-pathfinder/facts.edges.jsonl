@@ -1,0 +1,150 @@
+{"from":"F001","to":"S001","type":"supported_by","evidence":"'as the number of tokens... increases, the model's ability to accurately recall... decreases'."}
+{"from":"F002","to":"S001","type":"supported_by","evidence":"'attention budget'; 'n^2 pairwise relationships'; 'performance gradient rather than a hard cliff'."}
+{"from":"F003","to":"S001","type":"supported_by","evidence":"'smallest possible set of high-signal tokens that maximize the likelihood of some desired outcome'."}
+{"from":"F004","to":"S001","type":"supported_by","evidence":"'compaction, structured note-taking, and multi-agent architectures'."}
+{"from":"F005","to":"S001","type":"supported_by","evidence":"'preserves architectural decisions, unresolved bugs, and implementation details... plus the five most recently accessed files'."}
+{"from":"F006","to":"S001","type":"supported_by","evidence":"'agent regularly writes notes persisted... outside of the context window... pulled back... at later times'."}
+{"from":"F007","to":"S001","type":"supported_by","evidence":"'maintain lightweight identifiers... dynamically load data into context at runtime'; just-in-time glob/grep."}
+{"from":"F008","to":"S001","type":"supported_by","evidence":"'One of the safest lightest touch forms of compaction is tool result clearing'."}
+{"from":"F009","to":"S001","type":"supported_by","evidence":"'returns only a condensed, distilled summary... (often 1,000-2,000 tokens)'; isolated detailed search context."}
+{"from":"F010","to":"S001","type":"supported_by","evidence":"'Note-taking excels for iterative development with clear milestones'."}
+{"from":"F011","to":"S002","type":"supported_by","evidence":"Summary table mapping compaction/clearing/memory to what each operates on."}
+{"from":"F012","to":"S002","type":"supported_by","evidence":"'RESULT: high-level 3/3 preserved, obscure 0/3 preserved'; custom instructions replace the default prompt."}
+{"from":"F013","to":"S002","type":"supported_by","evidence":"'cheapest of the three primitives: no inference cost'; re-fetch tradeoff depends on tools."}
+{"from":"F014","to":"S002","type":"supported_by","evidence":"'ALWAYS VIEW YOUR MEMORY DIRECTORY BEFORE DOING ANYTHING ELSE'; S2 with memory 4 reads vs 8 without."}
+{"from":"F015","to":"S002","type":"supported_by","evidence":"'Memory's value depends on the agent's judgment about what to write'."}
+{"from":"F016","to":"S002","type":"supported_by","evidence":"'a dedicated first session that sets up memory artifacts... Subsequent sessions open by reading those artifacts'."}
+{"from":"F017","to":"S002","type":"supported_by","evidence":"'Context rot and prefill latency scale with how much is in the window, not with the window's limit'."}
+{"from":"F018","to":"S002","type":"supported_by","evidence":"'which of the three problems does my workload actually have?' and the skip-a-primitive cases."}
+{"from":"F019","to":"S002","type":"supported_by","evidence":"'Programmatic tool calling (PTC) prevents large results from entering context at all'."}
+{"from":"F020","to":"S003","type":"supported_by","evidence":"CLAUDE.md vs auto memory; both loaded every session, treated as context not enforced configuration."}
+{"from":"F021","to":"S003","type":"supported_by","evidence":"'target under 200 lines'; 'Claude may pick one arbitrarily'; specific+concise followed more reliably."}
+{"from":"F022","to":"S003","type":"supported_by","evidence":"'Use 2-space indentation' vs 'format code properly'; 'Run npm test before committing'."}
+{"from":"F023","to":"S003","type":"supported_by","evidence":"'Project-root CLAUDE.md survives compaction... re-reads it from disk and re-injects it'."}
+{"from":"F024","to":"S003","type":"supported_by","evidence":"'first 200 lines of MEMORY.md, or the first 25KB... loaded at the start'; topic files load on demand."}
+{"from":"F025","to":"S003","type":"supported_by","evidence":"'use a PreToolUse hook instead'; 'not a hard enforcement layer'."}
+{"from":"F026","to":"S004","type":"supported_by","evidence":"Abstract: 'append-only context maintenance or passively triggered compression heuristics... context explosion, semantic drift, degraded reasoning'."}
+{"from":"F027","to":"S004","type":"supported_by","evidence":"Abstract: 'structured context workspace... stable task semantics, condensed long-term memory, high-fidelity short-term interactions... at appropriate milestones'."}
+{"from":"F028","to":"S004","type":"supported_by","evidence":"Abstract: '57.6% solved rate... significantly outperforms ReAct-based agents and static compression baselines... bounded context budget'."}
+{"from":"F029","to":"S005","type":"supported_by","evidence":"Abstract: 'ReAct-based agents suffer from context saturation... fixedly summarize... risk the irreversible loss of critical details'."}
+{"from":"F030","to":"S005","type":"supported_by","evidence":"Abstract: 'folding operation... granular condensations... or deep consolidations to abstract away entire multi-step sub-tasks'."}
+{"from":"F031","to":"S005","type":"supported_by","evidence":"Abstract: '36.2% on BrowseComp and 47.3% on BrowseComp-ZH... surpasses... o4-mini'."}
+{"from":"F032","to":"S006","type":"supported_by","evidence":"'the context becomes a polluted append-only event log'."}
+{"from":"F033","to":"S006","type":"supported_by","evidence":"Mission/Plan/Ground truth/Scratch; 'Only the first three should survive compaction'."}
+{"from":"F034","to":"S006","type":"supported_by","evidence":"'Most agent harnesses fail because they compact the conversation, not the project state'."}
+{"from":"F035","to":"S006","type":"supported_by","evidence":"Milestone list; 'compaction should be an explicit action in the workflow, not a last-resort cleanup'."}
+{"from":"F036","to":"S006","type":"supported_by","evidence":"Preserve exact paths/symbols/commands/assertions/decisions/next-action/non-goals; drop speculation/logs/'we might'."}
+{"from":"F037","to":"S006","type":"supported_by","evidence":".cartographer/ file listing (mission/plan/state/decisions/validation/working-set/handoff)."}
+{"from":"F038","to":"S006","type":"supported_by","evidence":"'Read state.md... Re-open only the relevant files... Context memory is not a database'."}
+{"from":"F039","to":"S006","type":"supported_by","evidence":"decisions.md append-only ADR-lite; 'prevents... relitigating already-settled issues after compaction'."}
+{"from":"F040","to":"S006","type":"supported_by","evidence":"'Do not edit files outside Active unless you first update working-set.md with a reason'."}
+{"from":"F041","to":"S006","type":"supported_by","evidence":"Tiered retention table (verbatim/exact/summarize-with-link/drop/collapse)."}
+{"from":"F042","to":"S006","type":"supported_by","evidence":"Forget/Ignore list; 'Agents often resurrect stale ideas after compaction'."}
+{"from":"F043","to":"S006","type":"supported_by","evidence":".logs/ raw files; validation.md references command + raw-log path + relevant error."}
+{"from":"F044","to":"S006","type":"supported_by","evidence":"'Use checklists as control flow, not documentation'; vague-item examples."}
+{"from":"F045","to":"S006","type":"supported_by","evidence":"'Force next action to be singular'; multiple next actions increase wrong-pick chance."}
+{"from":"F046","to":"S006","type":"supported_by","evidence":"Harness triggers; '60% threshold... third-party... treat it as a heuristic'."}
+{"from":"F047","to":"S006","type":"supported_by","evidence":"Compaction validation checks; 'A bad summary is worse than no summary'."}
+{"from":"F048","to":"S006","type":"supported_by","evidence":"'Prefer rolling state over summary of chat'; reload artifacts after discarding transcript."}
+{"from":"F049","to":"S006","type":"supported_by","evidence":"Phase-receipt JSON example (phase/status/changed_files/decisions/validation/next_phase)."}
+{"from":"F050","to":"S006","type":"supported_by","evidence":"Resumption prompt ordered read list; 'Do not edit until after that response'."}
+{"from":"F051","to":"S006","type":"supported_by","evidence":"'Avoid overloading CLAUDE.md / AGENTS.md'; good-vs-bad contents."}
+{"from":"F052","to":"S006","type":"supported_by","evidence":"Orient/Select/Narrow/Inspect/Act/Validate/Record/Compact/Continue; 'replacement for writer subagents'."}
+{"from":"F053","to":"S006","type":"supported_by","evidence":"cartographer-compact schema + checks; reload-and-ignore-prior-chat instruction."}
+{"from":"F054","to":"S006","type":"supported_by","evidence":"'externalize durable task state so the same editor can survive context churn'."}
+{"from":"F055","to":"S006","type":"supported_by","evidence":"Recommended stack list; 'better than parallel writer agents'."}
+{"from":"F060","to":"S015","type":"supported_by","evidence":"cartographer-pathfinder.md: narrow single-phase writer; must not commit/stage/append receipts/write ADRs."}
+{"from":"F061","to":"S010","type":"supported_by","evidence":"implement SKILL: 'delegates... phase edits/fixes to cartographer-pathfinder as the default phase writer'."}
+{"from":"F062","to":"S012","type":"supported_by","evidence":"ADR-0002 Decision text on provisional delegated work + deterministic receipts + auditor PASS."}
+{"from":"F063","to":"S013","type":"supported_by","evidence":"subagent-reliability problem table: 107 calls/17 errors/~600s turns/4 compactions/166,878 chars; workers left parent to finish."}
+{"from":"F064","to":"S011","type":"supported_by","evidence":"README Clean Context Contract + 'What gets written' (receipts.jsonl, context-packs.jsonl, 8KB/16KB, /tmp)."}
+{"from":"F064","to":"S016","type":"supported_by","evidence":"analyze_session.py session telemetry; validation_runner.py deterministic receipts referenced in skills."}
+{"from":"F065","to":"S014","type":"supported_by","evidence":"git-worktrees proposal: one writer per worktree; 'async does not make parallel writes safe'."}
+{"from":"F066","to":"S011","type":"supported_by","evidence":"README Cartographer subagents table listing archivist/auditor/compass/drafter/redactor roles."}
+{"from":"T001","to":"S002","type":"supported_by","evidence":"compact_20260112 trigger/instructions/pause_after_compaction details and default prompt."}
+{"from":"T002","to":"S002","type":"supported_by","evidence":"clear_tool_uses_20250919 trigger/keep/clear_at_least/exclude_tools; exclude_tools:[memory] note."}
+{"from":"T003","to":"S002","type":"supported_by","evidence":"memory_20250818 client-side file operations and check-memory-first protocol."}
+{"from":"R001","to":"S002","type":"supported_by","evidence":"compaction 0/3 obscure specifics preserved."}
+{"from":"R001","to":"S006","type":"supported_by","evidence":"'A bad summary is worse than no summary'."}
+{"from":"R002","to":"S002","type":"supported_by","evidence":"'Memory's value depends on the agent's judgment about what to write'."}
+{"from":"R003","to":"S003","type":"supported_by","evidence":"'instructions shape behavior but are not a hard enforcement layer'; use hooks."}
+{"from":"R004","to":"S001","type":"supported_by","evidence":"multi-agent 'where parallel exploration pays dividends' (read-only)."}
+{"from":"R005","to":"S012","type":"supported_by","evidence":"ADR-0002 applies when changing implementation/subagent workflows."}
+{"from":"R006","to":"S006","type":"supported_by","evidence":"'One giant PLAN.md eventually becomes the same problem as a giant context window'."}
+{"from":"C001","to":"S011","type":"supported_by","evidence":"README Clean Context Contract budgets and /tmp raw-output rule."}
+{"from":"C002","to":"S013","type":"supported_by","evidence":"subagent-reliability non-goal: serial fallback must remain supported."}
+{"from":"C003","to":"S013","type":"supported_by","evidence":"subagent-reliability non-goal: do not change pi-subagents runtime."}
+{"from":"F033","to":"F027","type":"related_to","evidence":"Brief's four-layer model mirrors CAT's stable/long-term/short-term structured workspace."}
+{"from":"F035","to":"F027","type":"related_to","evidence":"Milestone-driven compaction matches CAT proactive compression at milestones."}
+{"from":"F041","to":"F030","type":"related_to","evidence":"Tiered retention operationalizes AgentFold multi-scale folding (granular vs deep)."}
+{"from":"F052","to":"F004","type":"related_to","evidence":"The loop instantiates Anthropic's compaction + note-taking techniques for a single writer."}
+{"from":"F055","to":"F009","type":"related_to","evidence":"Recommended stack keeps read-only specialists (the sub-agent pattern Anthropic endorses)."}
+{"from":"F060","to":"file:.pi/agents/cartographer-pathfinder.md","type":"applies_to","evidence":"Agent definition file to be sunset/retired."}
+{"from":"F061","to":"file:skills/implement/SKILL.md","type":"applies_to","evidence":"implement skill rewritten to single-writer loop."}
+{"from":"F062","to":"file:docs/adr/0002-require-auditable-cartographer-subagent-handoffs.md","type":"applies_to","evidence":"ADR-0002 to be amended/superseded for the writer-subagent portion."}
+{"from":"F064","to":"file:README.md","type":"applies_to","evidence":"README subagent table, Clean Context Contract, and 'what gets written' updated for the new artifacts."}
+{"from":"F063","to":"goal:single-writer-loop","type":"supports_goal","evidence":"Session evidence motivates replacing the writer subagent with a single-writer context-engineering loop."}
+{"from":"F054","to":"goal:single-writer-loop","type":"supports_goal","evidence":"Externalize state rather than offload edits."}
+{"from":"F035","to":"goal:milestone-compaction","type":"supports_goal","evidence":"Milestone-driven compaction as an explicit workflow action."}
+{"from":"F037","to":"goal:persisted-state","type":"supports_goal","evidence":"Typed .cartographer/ state artifacts."}
+{"from":"R005","to":"goal:reconcile-adr","type":"raises_question","evidence":"Whether to supersede or amend ADR-0002; resolved by adr_required:true."}
+{"from":"R006","to":"C001","type":"mitigated_by","evidence":"Clean Context Contract budgets + small-index/on-demand split bound state-file bloat."}
+{"from":"R002","to":"F047","type":"mitigated_by","evidence":"Compaction-as-validation step verifies persisted state against the repo."}
+{"from":"R003","to":"F053","type":"mitigated_by","evidence":"Deterministic cartographer-compact checks back the invariants that prompts alone cannot enforce."}
+{"from":"F066","to":"goal:keep-readonly-specialists","type":"supports_goal","evidence":"Read-only Cartographer specialists already exist and match Anthropic's recommended sub-agent pattern."}
+{"from":"F064","to":"goal:reuse-infrastructure","type":"supports_goal","evidence":"receipts/context-packs, Clean Context Contract, validation_runner.py, analyze_session.py already exist."}
+{"from":"F062","to":"goal:reconcile-adr","type":"supports_goal","evidence":"ADR-0002 assumes a writer subagent; a new ADR must amend/supersede that portion."}
+{"from":"C004","to":"S007","type":"supported_by","evidence":"Direct user directive to use JSON/JSONL graph structures for agent state and Markdown only for human-readable artifacts."}
+{"from":"C004","to":"goal:persisted-state","type":"supports_goal","evidence":"Constrains how persisted session state is represented: strictly-structured ID-referenceable graphs."}
+{"from":"C004","to":"F049","type":"related_to","evidence":"Extends 'phase receipt as structured source of truth instead of prose' to the whole working memory."}
+{"from":"C004","to":"F037","type":"related_to","evidence":"Keeps the brief's split-into-typed-artifacts principle but realizes each layer as a JSON/JSONL graph."}
+{"from":"F070","to":"S008","type":"supported_by","evidence":"'for state the agent must repeatedly reload, update, diff, validate, and trust, use schema-constrained structured files'; format-by-purpose table."}
+{"from":"F071","to":"S008","type":"supported_by","evidence":"'JSON is best for current state'; schema-validatable, exact keys, singular next_action, reject unknown fields."}
+{"from":"F072","to":"S008","type":"supported_by","evidence":"'Use JSONL for history. Use JSON for current truth.'; append-only benefits list."}
+{"from":"F073","to":"S008","type":"supported_by","evidence":"'YAML is worse than it looks'; 'I would not make it the canonical machine state format.'"}
+{"from":"F074","to":"S008","type":"supported_by","evidence":"'TOML is good for stable config, not live state'; config.toml example."}
+{"from":"F075","to":"S008","type":"supported_by","evidence":"'JSON/JSONL are canonical. Markdown is rendered from them for humans'; generated_views authoritative:false."}
+{"from":"F076","to":"S008","type":"supported_by","evidence":"'Best architecture: canonical state + rendered views'; generated Markdown view is not source of truth."}
+{"from":"F077","to":"S008","type":"supported_by","evidence":"'Use schemas aggressively'; schema file list and invariant list."}
+{"from":"F078","to":"S008","type":"supported_by","evidence":"'Keep state compact by design'; limits object; old detail to JSONL/logs/summaries."}
+{"from":"F079","to":"S008","type":"supported_by","evidence":"'Suggested canonical files' with state.json/plan.json/working-set.json/validation.jsonl/decisions.jsonl/handoff.json examples."}
+{"from":"F080","to":"S008","type":"supported_by","evidence":"'Do not use natural language where enums would work'; status/validation/scope enum lists."}
+{"from":"F081","to":"S008","type":"supported_by","evidence":"'Add IDs everywhere'; 'This also makes compaction safer.'"}
+{"from":"F082","to":"S008","type":"supported_by","evidence":"'JSON patching is useful'; JSON Patch replace-op example as tool-level primitive."}
+{"from":"F083","to":"S009","type":"supported_by","evidence":"'LLM reads state as files. LLM changes state through tools.'; hybrid four-part model."}
+{"from":"F084","to":"S009","type":"supported_by","evidence":"'Why ACIs are better for state mutation'; failure-mode list; task complete --validation example."}
+{"from":"F085","to":"S009","type":"supported_by","evidence":"'This aligns with the broader ACI lesson from SWE-agent: interface design materially affects agent performance...'."}
+{"from":"F085","to":"S017","type":"supported_by","evidence":"SWE-agent (arXiv 2405.15793) introduces agent-computer interfaces enabling automated software engineering; improved navigation/editing/testing."}
+{"from":"F086","to":"S009","type":"supported_by","evidence":"'Why raw files are still important'; observability list; avoid opaque ACI-only store."}
+{"from":"F087","to":"S009","type":"supported_by","evidence":"'Best architecture: observable state, controlled writes'; Read/Write/Validation/Audit paths."}
+{"from":"F088","to":"S009","type":"supported_by","evidence":"'ACIs should expose semantic operations, not generic setters'; weak vs strong examples; command list."}
+{"from":"F089","to":"S009","type":"supported_by","evidence":"'Keep JSON Schema even with an ACI'; four layers; schema-vs-invariant catch lists."}
+{"from":"F090","to":"S009","type":"supported_by","evidence":"'How I'd implement this in Pi-Cartographer'; canonical/preferred/escape-hatch + harness rules."}
+{"from":"F091","to":"S009","type":"supported_by","evidence":"'Concrete rule of thumb' and 'an ACI that performs validated state transitions over plain, observable JSON/JSONL files.'"}
+{"from":"C005","to":"S009","type":"supported_by","evidence":"Hybrid model and harness rules: read files directly, mutate via ACI, escape hatch + revalidate."}
+{"from":"C005","to":"S017","type":"supported_by","evidence":"SWE-agent ACI result supports a purpose-built state-transition interface."}
+{"from":"R007","to":"S009","type":"supported_by","evidence":"ACI-only 'Cons': tool bugs become state bugs, opaque recovery, dependence, overengineering."}
+{"from":"C004","to":"F070","type":"related_to","evidence":"Format-by-purpose policy refines the JSON/JSONL-not-Markdown directive."}
+{"from":"C005","to":"goal:persisted-state","type":"supports_goal","evidence":"Defines how persisted state is mutated and validated: observable files + ACI write path."}
+{"from":"C005","to":"goal:reuse-infrastructure","type":"supports_goal","evidence":"State ACI extends existing cartographer tools/validation_runner rather than a new opaque store."}
+{"from":"F083","to":"goal:persisted-state","type":"supports_goal","evidence":"Read-as-files / mutate-through-tools is the core persisted-state interface."}
+{"from":"F077","to":"F053","type":"related_to","evidence":"Schema + invariant checks formalize the cartographer-compact validation checks."}
+{"from":"F084","to":"F049","type":"related_to","evidence":"Atomic ACI mutation pairs state updates with appended phase/validation receipts."}
+{"from":"F076","to":"F034","type":"related_to","evidence":"Canonical structured state vs generated views directly answers 'compact project state, not conversation'."}
+{"from":"R007","to":"F086","type":"mitigated_by","evidence":"Observable raw files keep state inspectable/recoverable despite the ACI."}
+{"from":"R007","to":"F090","type":"mitigated_by","evidence":"Escape hatch + 'cartographer state validate' after direct edits prevent ACI single-point-of-failure lockout."}
+{"from":"F092","to":"S018","type":"supported_by","evidence":"User directed the proposal to avoid duplicating .plan planning with plan.json."}
+{"from":"F093","to":"S018","type":"supported_by","evidence":"User directed removal of generated status Markdown and deferred generated Markdown to a later migration."}
+{"from":"F094","to":"S018","type":"supported_by","evidence":"User asked for minimum viable state to survive compaction while .plan remains authoritative."}
+{"from":"C006","to":"S018","type":"supported_by","evidence":"User scoped MVP state to avoid duplicate plan truth and generated Markdown."}
+{"from":"F092","to":"goal:persisted-state","type":"supports_goal","evidence":"Defines persisted state as compact execution cursor referencing .plan, not duplicate planning."}
+{"from":"F094","to":"goal:persisted-state","type":"supports_goal","evidence":"Defines state validation needed to survive compaction safely."}
+{"from":"C006","to":"goal:persisted-state","type":"supports_goal","evidence":"Constrains .cartographer to compact execution/resume state while .plan remains authoritative."}
+{"from":"R006","to":"F093","type":"mitigated_by","evidence":"Deferring generated Markdown views reduces state-file proliferation in the MVP."}
+{"from":"F095","to":"S019","type":"supported_by","evidence":"User selected journal naming and directed the skills to document only important lessons."}
+{"from":"F096","to":"S019","type":"supported_by","evidence":"User proposed an ephemeral git-ignored current.json for active-topic discovery after reboot/fresh context."}
+{"from":"C007","to":"S019","type":"supported_by","evidence":"User emphasized documenting only important lessons in the skills."}
+{"from":"F095","to":"goal:persisted-state","type":"supports_goal","evidence":"Adds a curated long-horizon memory trail that survives compaction without duplicating plan or receipts."}
+{"from":"F096","to":"goal:persisted-state","type":"supports_goal","evidence":"Helps fresh contexts discover the active topic/state after reboot without making current.json authoritative."}
+{"from":"C007","to":"goal:persisted-state","type":"supports_goal","evidence":"Constrains journal use so persisted memory stays compact and high-signal."}
+{"from":"R006","to":"C007","type":"mitigated_by","evidence":"Journal scarcity rules prevent the curated journal from becoming a giant context log."}

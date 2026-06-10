@@ -66,16 +66,25 @@ class WorkflowDocsTests(unittest.TestCase):
         self.assertIn("final `cartographer-auditor` semantic gate", implement)
         self.assertIn("deterministic validation receipts first", readme)
 
-    def test_pathfinder_structured_acceptance_contract_is_documented(self) -> None:
+    def test_single_writer_state_workflow_is_documented(self) -> None:
         implement = (ROOT / "skills/implement/SKILL.md").read_text(encoding="utf-8")
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
+        pathfinder = (ROOT / ".pi/agents/cartographer-pathfinder.md").read_text(encoding="utf-8")
 
-        for text, name in [(implement, "implement"), (readme, "readme")]:
-            self.assertIn("cartographer-pathfinder", text, name)
-            self.assertIn("structured acceptance", text, name)
-            self.assertIn("default phase writer", text, name)
-        self.assertIn("non-trivial phase handoff", implement)
-        self.assertIn("non-trivial phase handoff requires structured acceptance", readme)
+        for text, name in [(implement, "implement"), (readme, "readme"), (agents, "agents")]:
+            self.assertIn(".cartographer", text, name)
+            self.assertIn("journal", text, name)
+            self.assertIn("current.json", text, name)
+        self.assertIn("current/parent agent is the default writer", implement)
+        self.assertIn("parent/current agent is the default writer", readme)
+        self.assertIn("cartographer_state", implement)
+        self.assertIn("state-resume", implement)
+        self.assertIn("compact-generate", implement)
+        self.assertIn("Deprecated legacy", pathfinder)
+        self.assertIn("not the default phase writer", pathfinder)
+        self.assertNotIn("Use `cartographer-pathfinder` as the default phase writer", implement)
+        self.assertNotIn("cartographer-pathfinder` is the default scoped phase writer", readme)
 
     def test_timeout_fallback_receipts_and_compass_escalation_are_documented(self) -> None:
         implement = (ROOT / "skills/implement/SKILL.md").read_text(encoding="utf-8")

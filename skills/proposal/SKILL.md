@@ -33,6 +33,8 @@ Create or update ignored private-input files only when the user explicitly provi
 - `.plan/_private/{topic}/` — raw private proposal inputs; never commit, index, or cite directly.
 - `.plan/_private/_inbox/<id>/` — optional temporary staging when a topic must be confirmed before final placement.
 
+Do not create `.cartographer/` execution state during proposal writing. If a proposal recommends long-horizon implementation state, it should keep `.plan/` authoritative and describe `.cartographer/<topic>/state.json`, curated `journal.jsonl`, schemas, and ignored `current.json` as implementation/resume artifacts only.
+
 `{topic}` is a concise summary of the user's requested topic in **3 words or less**. Prefer a filesystem-safe lowercase kebab-case topic for paths, and use the same topic in the proposal heading exactly as `# {topic} Proposal`.
 
 ## Procedure

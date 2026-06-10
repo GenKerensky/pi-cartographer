@@ -139,6 +139,24 @@ describe("cartographer tool registration", () => {
 		expect(payload.suggested_subagent_contract.verify_commands).toEqual(["npm run test:ts"]);
 	});
 
+	it("registers and runs the Cartographer state tool in a temp project", async () => {
+		const project = tempProjectWithTopic();
+		const stateTool = registeredTools().find((tool) => tool.name === "cartographer_state");
+		if (!stateTool) throw new Error("cartographer_state was not registered");
+
+		expect(stateTool.promptGuidelines?.join("\n")).toContain("mutate them through cartographer_state commands");
+		const init = await stateTool.execute("tool-call", { action: "state-init", root: project, topic: "demo" });
+		const initPayload = JSON.parse(init.content[0].text);
+		expect(init.isError).toBeUndefined();
+		expect(initPayload.ok).toBe(true);
+
+		const resume = await stateTool.execute("tool-call", { action: "state-resume", root: project, topic: "demo" });
+		const resumePayload = JSON.parse(resume.content[0].text);
+		expect(resume.isError).toBeUndefined();
+		expect(resumePayload.context).toContain("CARTOGRAPHER_RESUME_CONTEXT");
+		expect(resumePayload.read_only).toBe(true);
+	});
+
 	it("runs validation wrapper and writes compatible receipts in a temp project", async () => {
 		const project = fs.mkdtempSync(path.join(os.tmpdir(), "cartographer-validation-tool-"));
 		const validationTool = registeredTools().find((tool) => tool.name === "cartographer_validation");

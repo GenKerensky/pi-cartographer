@@ -1,9 +1,9 @@
 ---
 name: "implement"
-description: "Pi Cartographer implementation workflow: execute .plan/<topic>/plan.md phase-by-phase using deterministic context, cartographer-pathfinder phase writing, cartographer-auditor gates, optional compass checks, quality gates, and conventional commits."
-version: 5
+description: "Pi Cartographer implementation workflow: execute .plan/<topic>/plan.md phase-by-phase with a single parent writer, minimal .cartographer state, milestone compaction, deterministic receipts, read-only specialist gates, and conventional commits."
+version: 6
 created: "2026-06-06"
-updated: "2026-06-08"
+updated: "2026-06-10"
 ---
 
 # Pi Cartographer Implement
@@ -12,14 +12,13 @@ updated: "2026-06-08"
 
 Use this skill when the user asks to implement an existing `.plan/{topic}/plan.md` plan, especially one produced by the `plan` skill.
 
-This skill executes the plan phase-by-phase. It delegates:
+This skill executes the plan phase-by-phase. The **current/parent agent is the default writer**. It may ask read-only specialists for review or decision advice, but it does not delegate routine phase edits to `cartographer-pathfinder`.
 
-- codebase lookups and context gathering to deterministic Cartographer tools plus focused lexical search; optional `scout` only when context is still insufficient
-- actual phase edits/fixes to `cartographer-pathfinder` as the default phase writer; built-in `worker` is an approved fallback only
-- phase and final semantic review to `cartographer-auditor` after deterministic validation receipts pass; built-in `reviewer` is an approved fallback only
-- decision-level scope/dependency/repeated-failure assessment to `cartographer-compass` when needed
+The implementation loop is:
 
-The orchestrating/current agent owns sequencing, quality gates, checklist updates, commits, timeout/fallback receipts, stop decisions, and final reporting.
+```text
+Orient → Select → Narrow → Inspect → Act → Validate → Record → Compact → Continue
+```
 
 ## Required Input
 
@@ -36,6 +35,11 @@ Supporting artifacts, when present:
 - `.plan/{topic}/map.edges.jsonl`
 - `.plan/{topic}/facts.nodes.jsonl`
 - `.plan/{topic}/facts.edges.jsonl`
+- `.plan/{topic}/receipts.jsonl`
+- `.plan/{topic}/context-packs.jsonl`
+- `.cartographer/{topic}/state.json`
+- `.cartographer/{topic}/journal.jsonl`
+- `.cartographer/current.json` as an optional ignored local hint only
 - `.plan/_index/project-graph.sqlite`
 - `.plan/_index/project-graph-manifest.json`
 
@@ -43,455 +47,368 @@ If the plan is missing, ask the user whether to generate it first with the `plan
 
 ## Core Rules
 
+### Source-of-truth boundaries
+
+- `.plan/{topic}/plan.md`, `plan.nodes.jsonl`, `plan.edges.jsonl`, `receipts.jsonl`, and `context-packs.jsonl` remain authoritative for planning, checkoff, validation history, and implementation handoff context.
+- `.cartographer/{topic}/state.json` is only compact execution/resume state.
+- `.cartographer/{topic}/journal.jsonl` is only a curated durable lessons journal.
+- `.cartographer/current.json` is git-ignored, local, non-authoritative, and safe to ignore when stale.
+- Do not introduce a duplicate `plan.json` task graph or generated human Markdown state views such as `status.md`.
+
+### Single-writer execution
+
 - Work one phase at a time in dependency order.
-- Do not start a phase until all phases it depends on are complete and committed, or explicitly documented as no-op completed.
-- Prefer plan/map JSONL, `cartographer_index query/read`, focused `rg`/grep, and selective file reads for lookups/context before code edits. Use `scout` only when this deterministic and lexical context is insufficient or the phase spans complex unfamiliar architecture.
-- Use `cartographer-pathfinder` as default phase writer for code/config/doc/test edits and fixes. The main agent should not make substantial edits unless the user approves serial fallback and a fallback receipt records why the child writer was not used.
-- Structured acceptance is mandatory for every non-trivial phase handoff to `cartographer-pathfinder` or fallback `worker`; include exact checklist IDs, validation IDs, scope boundaries, allowed files, changed-files evidence, commands/receipt requirements, residual-risk reporting, and stop rules.
-- Check off plan checklist items in `.plan/{topic}/plan.md` only after verifying completion, and mirror status changes in `plan.nodes.jsonl` when present.
-- Run all available relevant quality tools until green: typecheck, lint, build, tests, format/check, and phase-specific validations. Record deterministic validation receipts before semantic review.
-- Dispatch `cartographer-auditor` after quality tools are green and deterministic validation receipts exist.
-- `cartographer-auditor` must review the code/artifact diff and validate/check off phase validation items; a `PASS` is the default phase semantic gate.
-- Use `cartographer-compass` for plan/scope/dependency decisions, not routine code review. `cartographer-auditor` remains the normal phase/final semantic validation authority.
-- If auditor or validation fails, delegate fixes to `cartographer-pathfinder`, rerun quality tools, and call `cartographer-auditor` again.
-- After repeated child timeouts, tool failures, or unusable handoffs, write timeout/fallback receipts and ask `cartographer-compass` for an escalation recommendation before substantial parent takeover.
-- Commit at the end of each completed phase using a conventional commit message. If the phase is a true no-op, mark it complete with an explanatory note and avoid an empty commit.
-- Stop and ask the user what to do when an unknown/blocking issue appears.
+- The current/parent agent writes code/docs/tests by default.
+- Do not launch `cartographer-pathfinder` as the routine implementation writer. If a legacy writer handoff is explicitly requested by the user, record it as an opt-in fallback/legacy path with scope, stop rules, evidence requirements, and a fallback receipt.
+- Use `cartographer-auditor` as the default read-only phase semantic gate after deterministic validation receipts pass.
+- Use `cartographer-compass` for decision-level scope/dependency/repeated-failure questions, not routine code review.
+- Use `cartographer-archivist` only for isolated missing research compression.
+
+### State and journal mutation
+
+- Agents may read `.cartographer/{topic}/state.json`, `.cartographer/{topic}/journal.jsonl`, and `.cartographer/current.json` directly.
+- Mutate state through `cartographer_state` / `cartographer_state.ts` semantic commands when available:
+  - `state-init`
+  - `state-validate`
+  - `state-set-next`
+  - `state-set-working-set`
+  - `state-record-validation-ref`
+  - `journal-append`
+  - `current-set`
+  - `compact-generate`
+  - `state-resume`
+- Direct edits to state files are an escape hatch only. After any direct edit, run `cartographer state validate` or the helper equivalent before trusting the result.
+- Append `journal.jsonl` records only for important lessons/gotchas/constraints that would otherwise be rediscovered after compaction. Do not store routine tool calls, raw logs, full command output, validation history already captured in receipts, transcripts, or ADR-worthy decisions.
+
+### Validation and gates
+
+- Run all relevant quality tools until green: format/check, typecheck, lint, tests, build, and phase-specific validation.
+- Record deterministic validation receipts before semantic review.
+- `cartographer-auditor` must review the code/artifact diff and validation evidence; a PASS is the **default phase semantic gate**.
+- The final implementation uses a **final `cartographer-auditor` semantic gate** after broad validation receipts pass.
+- If validation or auditor review fails, apply a scoped fix, rerun affected checks, and request auditor review again.
+- Stop and ask the user when a product/scope/dependency decision is not covered by the plan.
 
 ## Procedure
 
-1. **Derive topic and locate the plan**
-   - Summarize the requested plan topic in 3 words or less.
-   - Locate `.plan/{topic}/plan.md`.
-   - If no exact topic path exists, search `.plan/*/plan.md` for a likely matching plan and confirm with the user if ambiguous.
-   - If only a legacy `.plan/{topic}/implementation.md` exists, ask the user whether to use it as the plan or migrate it to `.plan/{topic}/plan.md`.
-   - Read the plan completely.
-   - Read supporting proposal/map/fact/index artifacts when available.
-   - Identify:
-     - phases and phase IDs
-     - phase statuses
-     - phase dependencies
-     - unchecked checklist items
-     - unchecked validation items
-     - cross-phase validation commands
-     - open questions
-     - ADR metadata (`adr_required`, `adr_reason`, `adr_options_status`, and `adr_tool_mode`) from the accepted proposal/plan when present
-   - If open questions block implementation, ask the user before proceeding.
-   - If ADR metadata is missing for an architecture-significant plan, treat it as ambiguous and ask whether to evaluate with `cartographer_adr` before finalization.
+### 1. Derive topic and locate the plan
 
-2. **Inspect subagents and choose execution mode**
-   - Call the subagent list action before delegating whenever the subagent tool is available.
-   - Required preferred Cartographer agents:
-     - `cartographer-pathfinder` for single-phase implementation edits
-     - `cartographer-auditor` for semantic review after deterministic validation receipts pass
-   - Useful optional Cartographer agents:
-     - `cartographer-compass` for ambiguous plan/scope/dependency decisions, plan drift, repeated agent/tool failures, and unknown blockers
-     - `cartographer-drafter` for repairing flawed proposal/plan artifacts
-   - Built-in `worker`, `reviewer`, `oracle`, `planner`, and `scout` are explicit fallback/substitution choices, not defaults. Use built-in `scout` only for missing/ambiguous context after index/map plus focused `search`/`rg` checks, or for complex unfamiliar architecture, and only with approved fallback.
-   - If `cartographer-pathfinder` is unavailable, do not proceed automatically. Ask the user whether to:
-     - substitute built-in `worker` or another editing-capable agent
-     - run pathfinder duties serially with the current agent
-     - stop until `cartographer-pathfinder` is available
-       Record the approved substitution or serial mode as a fallback receipt before substantial edits.
-   - If `cartographer-auditor` is unavailable, ask whether to substitute built-in `reviewer`/`oracle` or run that role serially. Do not silently skip review; record the fallback receipt before accepting any phase. If `scout` is unavailable, continue with Cartographer index/map tools unless the phase genuinely requires scout-style reconnaissance.
-   - If a child repeatedly times out, fails tool calls, or returns unusable output, append timeout/fallback receipts and call `cartographer-compass` before substantial parent takeover or broad serial repair.
-   - If no executable subagents are available, alert the user and ask whether to continue serially with the current agent. Only continue after approval and a fallback receipt.
+- Summarize the requested plan topic in 3 words or less.
+- Locate `.plan/{topic}/plan.md`.
+- If no exact topic path exists, search `.plan/*/plan.md` for likely matches and confirm with the user if ambiguous.
+- Read the plan completely.
+- Read supporting proposal/map/fact/index artifacts when available.
+- Identify:
+  - phases and phase IDs;
+  - phase statuses;
+  - phase dependencies;
+  - unchecked checklist items;
+  - unchecked validation items;
+  - cross-phase validation commands;
+  - open questions;
+  - ADR metadata (`adr_required`, `adr_reason`, `adr_options_status`, and `adr_tool_mode`) from the accepted proposal/plan when present.
+- If open questions block implementation, ask the user before proceeding.
+- If ADR metadata is missing for an architecture-significant plan, treat it as ambiguous and ask whether to evaluate with `cartographer_adr` before finalization.
 
-3. **Preflight repository safety**
-   - Check `git status --short`.
-   - If there are pre-existing uncommitted changes not created by this workflow, stop and ask the user how to proceed before editing.
-   - Record the current branch and commit SHA.
-   - Ensure `.plan/{topic}/plan.md`, `.plan/{topic}/plan.nodes.jsonl`, and `.plan/{topic}/plan.edges.jsonl` are included in the phase workflow so checkbox/status updates are committed with the phase.
-   - Do not stage or commit unrelated user changes.
-   - Do not commit `.plan/_index/project-graph.sqlite` or other index/cache artifacts unless they are already tracked or the user explicitly wants them committed.
+### 2. Inspect subagents and choose specialist mode
 
-4. **Refresh implementation context**
-   - Load/use the `index-project` skill when available. In the Pi Cartographer package, prefer `../index-project/SKILL.md` relative to this `SKILL.md`.
-   - Run `ensure` before starting implementation so the index is created or re-indexed only when stale:
+Call the subagent list action before delegating whenever the subagent tool is available.
 
-     ```bash
-     python <index-project-skill-dir>/scripts/index_project.py ensure --root "$PWD" --json
-     ```
+Preferred Cartographer agents:
 
-   - The indexer must ensure `.plan/_index/` is present in the target project's `.gitignore`; do not commit the generated SQLite index/cache unless the user explicitly asks.
-   - Do not create `.plan/{topic}/map.graph.json` by default; it duplicates the shared SQLite index. Only request a raw JSON slice for explicit debugging or offline review.
-   - When supported, use `slice-jsonl --out-dir ".plan/{topic}"` if `map.nodes.jsonl` or `map.edges.jsonl` are missing/thin, then validate with `cartographer_jsonl validate-topic`. Let scout verify/refine them only if deterministic output plus focused `rg`/grep checks are inadequate.
-   - If indexing fails, report the error and ask the user whether to continue with manual discovery using `rg`/grep and selective reads. Do not silently skip indexing.
+| Agent                    | Role                                                                    |
+| ------------------------ | ----------------------------------------------------------------------- |
+| `cartographer-auditor`   | Read-only semantic review after deterministic validation receipts pass. |
+| `cartographer-compass`   | Decision advice for scope, dependency, repeated failure, or plan drift. |
+| `cartographer-archivist` | Isolated missing research compression only.                             |
 
-5. **Select the next executable phase**
-   - Choose the first incomplete phase whose dependencies are complete.
-   - Verify dependencies are acyclic and completed phases have commits or documented no-op completions.
-   - If the next incomplete phase depends on an incomplete phase, stop and explain the dependency mismatch.
-   - Mark the selected phase `in-progress` in `.plan/{topic}/plan.md` and in `plan.nodes.jsonl` when present.
-   - For the selected phase, collect:
-     - objective
-     - checklist task IDs
-     - validation item IDs
-     - declared validation commands/manual checks
-     - source references
-     - risks/mitigations
-     - notes for implementation agent
+`cartographer-pathfinder` is retired/deprecated from the default implementation path. Built-in `worker`, `reviewer`, `oracle`, `planner`, and `scout` are explicit fallback/substitution choices, not defaults.
 
-6. **Create a bounded retrieval plan and gather phase context; use `scout` only when needed**
-   - Before phase context gathering or optional scout, write a short retrieval plan with 5-10 targeted probes derived from the selected phase. Include exact identifiers, filenames, tests, scripts, commands, config keys, generated artifacts, error strings, and constrained generic terms.
-   - Run bounded rationale retrieval in `.plan/` for the active topic and explicitly related topics only, including sanitized `evidence/` docs when they inform the active plan. Treat retrieved rationale as historical evidence requiring freshness checks before it influences implementation.
-   - Keep source-code retrieval and rationale retrieval separate: code probes should exclude `.plan/**`; rationale probes should explicitly target `.plan/` and must never include raw `.plan/_private/**` inputs.
-   - First use `.plan/{topic}/plan.md`, map JSONL, fact JSONL, deterministic validation reports, `cartographer_index query/read`, focused `rg`/grep searches, and selective file reads to gather phase context. For concrete code evidence, search exact identifiers, filenames, scripts, tests, commands, and error strings before relying on broad indexed snippets. Do not read entire large files or raw generated artifacts when targeted indexed context or lexical hits are enough.
-   - Delegate to `scout`, or approved serial scout role, only if this index/map plus lexical context is missing, contradictory, or too broad for a safe `cartographer-pathfinder` handoff. If using scout, provide:
-     - the selected phase text
-     - `.plan/{topic}/plan.md`
-     - relevant proposal/map/fact artifacts
-     - index path and map JSONL paths
-     - any known `rg`/grep findings and exact identifiers or filenames to verify
-   - Ask scout to start with focused `rg`/grep for concrete code evidence, cross-check index/map context, and return:
-     - likely files to edit
-     - files to avoid/edit carefully
-     - existing symbols/components/functions to reuse
-     - tests or validation commands related to the phase
-     - generated artifacts or scripts that must be run
-     - risks and hidden dependencies
-     - any mismatch between the plan and current code
-   - If scout discovers the phase is invalid or blocked by missing prerequisites, stop and ask the user unless the fix is clearly within the phase scope.
+If `cartographer-auditor` is unavailable, ask whether to substitute built-in `reviewer`/`oracle` or run that role serially. Do not silently skip review; record an explicit fallback receipt before accepting any phase.
 
-7. **Delegate implementation edits to `cartographer-pathfinder`**
-   - Delegate actual code/config/doc/test edits to `cartographer-pathfinder`, the default phase writer, or to an approved fallback `worker`/serial pathfinder role only after recording the fallback reason.
-   - Use structured acceptance for every non-trivial phase handoff. If the subagent tool has an acceptance schema, populate it; if not, put the same structured acceptance contract in the prompt and record the contract/receipt path. Criteria must include the exact checklist IDs, validation IDs, scope boundaries, allowed/candidate files, changed-files evidence, commands to run when known, validation receipt requirements, residual-risk reporting, and stop rules for unrelated changes or product/scope decisions.
-   - Provide:
-     - selected phase text
-     - exact unchecked checklist items for the phase
-     - exact validation IDs and known commands/manual checks
-     - scout findings or a note that deterministic context was sufficient
-     - relevant map/fact graph references and context-pack path
-     - explicit instruction not to commit
-     - explicit instruction to avoid unrelated changes
-     - timeout/fallback receipt requirements and stop rules
-   - `cartographer-pathfinder` should:
-     - make the code/config/doc/test changes needed for the phase
-     - add/update tests when the phase requires or implies them
-     - run targeted checks when practical
-     - write/report validation receipt information when practical
-     - report changed files, commands run, residual risks, and checklist items believed complete
-   - If pathfinder reports a blocker, repeated tool failure, timeout, or plan mismatch, decide whether it is a known fixable implementation issue. If not, ask `cartographer-compass` for a decision recommendation before substantial parent takeover, then stop and ask the user when required.
+If specialist calls repeatedly time out, fail tools, or return unusable output, append timeout/fallback receipts and call `cartographer-compass` before substantial parent takeover or broad serial repair.
 
-8. **Verify checklist items and update the plan**
-   - Inspect `cartographer-pathfinder` (or approved fallback writer) output and relevant diffs.
-   - For each phase checklist item:
-     - verify the expected output exists
-     - verify relevant code/tests/docs changed as needed
-     - change `- [ ] **P?.T?**` to `- [x] **P?.T?**` only when complete
-   - Mirror completed task status in `plan.nodes.jsonl` by setting matching `task:P?.T?` nodes to `status: complete` when present.
-   - Leave incomplete items unchecked and delegate additional `cartographer-pathfinder` fixes as needed.
-   - Do not check off validation items yet unless the corresponding validation has actually passed. Validation items should be checked by changing `- [ ] **P?.V?**` to `- [x] **P?.V?**` only after command output or `cartographer-auditor` approval proves the item passed.
+### 3. Preflight repository safety
 
-9. **Run quality tools until green**
-   - Discover quality commands from:
-     - plan validation items
-     - `package.json` scripts
-     - project docs such as `AGENTS.md`, `README.md`, or plan notes
-     - language/tooling config files
-   - Run all available relevant checks. Typical order:
-     1. format check or formatter if project policy allows
-     2. typecheck/check
-     3. lint
-     4. tests
-     5. build
-     6. phase-specific validation commands
-   - Examples:
-     - `npm run check`
-     - `npm run lint`
-     - `npm run test`
-     - `npm run build`
-     - `npm run typecheck`
-     - `pnpm ...`, `yarn ...`, `bun ...`, `pytest`, `cargo test`, `go test ./...` as appropriate
-   - If a command is unavailable, record it as unavailable rather than failed.
-   - If a command fails:
-     - capture the failure output
-     - delegate a targeted fix to `cartographer-pathfinder` or the approved fallback writer
-     - rerun the failed command and any dependent checks
-   - Limit routine repair loops to **3 pathfinder fix attempts per distinct failing command or validation item**.
-   - If the same command/validation still fails after 3 scoped fix attempts, write timeout/fallback receipts as appropriate, call `cartographer-compass` for a decision-level assessment, and then stop to ask the user unless compass identifies a clearly safe in-scope next step.
-   - Continue the fix/check loop until green or until an unknown/blocking issue appears.
+- Check `git status --short`.
+- If there are pre-existing uncommitted changes not created by this workflow, stop and ask the user how to proceed before editing.
+- Record the current branch and commit SHA.
+- Ensure `.plan/{topic}/plan.md`, `plan.nodes.jsonl`, and `plan.edges.jsonl` are included in the phase workflow so checkbox/status updates are committed with the phase.
+- Do not stage or commit unrelated user changes.
+- Do not commit `.plan/_index/project-graph.sqlite` or other index/cache artifacts unless they are already tracked or the user explicitly wants them committed.
 
-10. **Use `cartographer-compass` for plan/scope decision checks**
+### 4. Refresh implementation context
 
-- Do **not** use `cartographer-compass`/`oracle` as a routine substitute for `cartographer-auditor`. `cartographer-auditor` is the right agent for code correctness, validation item approval, and phase sign-off.
-- Call `cartographer-compass`, or perform an approved serial oracle pass, only when implementation raises a decision-level concern:
-  - the plan appears to conflict with the current codebase
-  - phase ordering or dependencies may need to change
-  - a required library/API/tool behaves differently than the plan assumed
-  - the fix would expand scope beyond the current phase
-  - scout, pathfinder, and auditor disagree about correctness or scope
-  - the same command, tool, or subagent call fails repeatedly and the next action is unclear
-  - an unexpected side effect appears outside the current phase
-- `cartographer-compass`/oracle should answer: is this still within the approved plan, should the phase/order/scope change, or should we stop and ask the user?
-- Compass/oracle may recommend options, but it must not override stop conditions, auditor gates, or user approval requirements.
-
-11. **Handle unknown or blocking issues**
-
-- Stop and ask the user what to do if any of these occur after any useful `cartographer-compass`/oracle check:
-  - a library or API does not work as expected and requires a design choice
-  - an update causes unexpected side effects outside the current phase scope
-  - the plan conflicts with the current codebase
-  - tests reveal a product/behavior decision not covered by the plan
-  - a tool, command, or subagent call keeps failing after reasonable retries
-  - fixing the issue would require changing phase order or scope
-- When stopping, explain:
-  - phase and checklist item affected
-  - what was attempted
-  - exact error or symptom
-  - likely causes
-  - options for proceeding
-  - `cartographer-compass`/oracle recommendation, if one was called
-  - current git status and whether any changes are uncommitted
-
-12. **Audit and validate the phase**
-
-- Once quality tools are green and deterministic validation receipts exist, dispatch `cartographer-auditor` as the default phase semantic gate.
-- `cartographer-auditor` must receive:
-  - selected phase text
-  - current diff/stat
-  - commands run, summarized outputs, and validation receipt IDs/paths
-  - checked checklist items
-  - unchecked validation items
-  - relevant proposal/map/fact graph references
-  - structured acceptance criteria used for the pathfinder handoff
-- Ask `cartographer-auditor` to:
-  - review the code/artifact changes for correctness, maintainability, and scope control
-  - verify every phase validation item against deterministic receipts and targeted inspection
-  - check off validation items in `.plan/{topic}/plan.md` if the auditor can edit, or report exact items to check off
-  - identify required fixes before approval
-  - return an explicit `PASS`/`FAIL`
-- If `cartographer-auditor` rejects or any validation item fails:
-  - do not commit
-  - pass the auditor findings back to `cartographer-pathfinder` or the approved fallback writer
-  - rerun quality tools and update validation receipts
-  - call `cartographer-auditor` again
-- If `cartographer-auditor` is unavailable or times out, use built-in `reviewer`/`oracle` or serial review only with user-approved fallback and an explicit fallback receipt; do not silently accept the phase.
-- Mirror approved validation status in `plan.nodes.jsonl` by setting matching `validation:P?.V?` nodes to `status: complete` when present.
-- Repeat until `cartographer-auditor` passes (or approved fallback receipt records pass) and all phase validation items are checked off.
-
-13. **Complete and commit the phase**
-
-- Confirm all checklist and validation items for the phase are checked off in `.plan/{topic}/plan.md`.
-- Mark the phase `complete` in `.plan/{topic}/plan.md` and in `plan.nodes.jsonl` when present. If the phase completed with no source changes, add a short no-op completion note explaining why.
-- Run `git diff --check` when available.
-- Run a final minimal quality gate for the phase if not already done after the latest fix.
-- Stage only phase-related files, including `.plan/{topic}/plan.md`, `.plan/{topic}/plan.nodes.jsonl`, and `.plan/{topic}/plan.edges.jsonl` when changed.
-- Do not stage unrelated user changes or generated caches unless required by the plan.
-- Commit using a conventional commit message with a bullet list of major changes:
-
-  ```bash
-  git commit -m "feat({topic}): complete phase P1" \
-    -m "- Implemented <major change>" \
-    -m "- Added/updated validation for <area>" \
-    -m "- Checked off phase P1 tasks and validations"
-  ```
-
-- Choose the commit type based on the phase work:
-  - `feat` for user-visible capability
-  - `fix` for bug fixes
-  - `refactor` for behavior-preserving restructuring
-  - `test` for test-only work
-  - `docs` for documentation-only work
-  - `chore` for tooling/config/maintenance
-- If a phase changes only planning artifacts, use `docs` or `chore` as the commit type and explain the no-op source result in the commit body.
-- If a phase produces no file changes at all, do not create an empty commit unless the user explicitly asks. Mark/document the phase as no-op complete and explain why no commit was made.
-
-14. **Continue to the next phase**
-
-- After a successful phase commit or documented no-op completion:
-  - refresh `git status --short`
-  - optionally run `index_project.py ensure --root "$PWD" --json` if source files changed substantially
-  - select the next incomplete dependency-ready phase
-- Repeat steps 5-13 until every phase is complete and validated.
-
-15. **Final completion checks**
-
-- Run cross-phase validation from `.plan/{topic}/plan.md`.
-- Run the planning graph validator when available:
-
-  ```bash
-  python <plan-skill-dir>/scripts/validate_planning_graph.py --root "$PWD" --topic "{topic}"
-  ```
-
-- Run the broadest available project quality gates again, typically check/lint/test/build.
-- Ensure every phase checklist and validation item is checked off.
-- Ensure each completed phase has a commit or documented no-op completion.
-- Run a final `cartographer-auditor` semantic gate after deterministic final validation receipts pass; built-in reviewer/oracle or serial final review are fallback substitutes only with explicit fallback receipts.
-- If final checks create fixes or plan/checkoff changes, assign them to the owning phase, rerun relevant checks/auditor, and create a conventional commit before final response.
-- If final checks fail, delegate fixes to `cartographer-pathfinder` or the approved fallback writer, rerun checks, and dispatch `cartographer-auditor` if the fix changes code.
-
-16. **Finalize ADR intent after validation**
-
-- Run this step only after deterministic final validation is green and before the final handoff.
-- Inspect accepted proposal/plan ADR metadata. If `adr_required: true`, use `cartographer_adr` (or `python <plan-skill-dir>/scripts/adr_records.py`) to draft/write/validate a workflow ADR for `{topic}`.
-- Workflow-generated ADR evidence must include:
-  - stable topic ID (`--topic {topic}`)
-  - passed validation receipt IDs from `.plan/{topic}/receipts.jsonl`
-  - phase/final commit IDs when available (`--source-commit <sha>`)
-  - a concise validation summary with no raw `.plan/_private/**` references and no brittle raw log paths
-- Typical commands, keeping output shaped under the Clean Context Contract:
-
-  ```bash
-  cartographer_adr({"action":"draft","root":"$PWD","topic":"{topic}","maxOutputChars":8000})
-  cartographer_adr({"action":"write","root":"$PWD","topic":"{topic}","title":"<decision>","decision":"<decision>","context":"<context>","options":["<accepted option>","<alternative>"],"rationale":"<why>","domains":["<domain>"],"keywords":["<keyword>"],"validationReceipts":["<receipt-id>"],"sourceCommits":["<sha>"],"maxOutputChars":8000})
-  cartographer_adr({"action":"validate","root":"$PWD","maxOutputChars":8000})
-  ```
-
-- If `adr_required: false`, append an `adr-not-required` receipt to `.plan/{topic}/receipts.jsonl` with `topic`, `reason`, `source: proposal-metadata`, `validation_receipts`, optional `source_commits`, `created_at`, and `status: skipped`. Do not silently skip.
-- If ADR metadata is missing or conflicts with an obviously ADR-worthy change, stop and ask the user whether to create an ADR, update metadata, or record an `adr-not-required` receipt.
-- Do not generate ADRs before validation evidence exists, do not include raw/private artifact paths, and do not make subagents mandatory for ADR finalization.
-
-17. **Final response**
-
-- Report:
-  - completed topic
-  - plan artifacts updated (`plan.md`, `plan.nodes.jsonl`, `plan.edges.jsonl`)
-  - phases completed
-  - commits created
-  - final quality commands run
-  - `cartographer-auditor` approval status or approved fallback receipt
-  - ADR outcome: generated ADR path/graph validation, `adr-not-required` receipt ID, or user-deferred decision
-  - any skipped/unavailable commands
-  - any residual risks or follow-up recommendations
-
-## Delegation Prompt Templates
-
-Performance rules:
-
-- Follow the Clean Context Contract: normal LLM-facing outputs should stay near 8KB, expanded diagnostics near 16KB, and larger outputs should be represented by compact receipts with `summary`, `references`, `counts`, `token_estimate`, `truncated`, `full_output_path`, `verification`, and `next_actions`.
-- Before each phase handoff, write or update a compact `.plan/{topic}/context-packs.jsonl` record with the phase ID, budget, relevant references, verified files, candidate files, open questions, and validation commands.
-- After each significant command, subagent handoff, timeout, fallback substitution, or phase decision, append a `.plan/{topic}/receipts.jsonl` record instead of relying on transcript continuity. Timeout/fallback receipts should include child name, attempt count, timeout/error summary, control fields used when available, fallback approved by the user, `cartographer-compass` recommendation when repeated, and residual risk. Validation receipts should include commands, exit codes/results, durations, changed-file hashes when available, and validation IDs satisfied.
-- Use `python skills/plan/scripts/validation_runner.py --receipt-file .plan/{topic}/receipts.jsonl --phase-id <P?> --validation-id <P?.V?> --command "<check>" --json` for repeatable validation receipts when available. During repair loops, run targeted checks first and use `--skip-if-unchanged` only when a previous passed receipt has the same file hash set; still run one final full gate before phase signoff.
-- Keep raw command/search/session output in `/tmp/pi-cartographer-runs/` by default; use ignored `.plan/_runs/` only when explicitly useful for local replay, and never cite or commit raw run logs.
-- Do not inline large scout/research/planner/pathfinder/auditor outputs into later prompts; pass artifact paths, receipt IDs, and concise summaries. Use `outputMode: "file-only"` for large child outputs.
-- Prefer `cartographer_index context`, `repo-map`, `read`, safe `search`, `cartographer_jsonl validate-topic`, focused `rg`/grep, and selective reads before launching optional scout.
-- Do not ask child agents to dump SQLite schemas, grep entire large drafts, or read whole local docs unless targeted indexed reads and focused lexical searches are insufficient.
-- Use `cartographer-pathfinder` as the default phase writer, `cartographer-auditor` for phase/final code/artifact semantic validation after deterministic receipts pass, and `cartographer-compass` only for decision/scope consistency or repeated child failures. Built-in worker/reviewer/oracle remain fallback substitutes only.
-
-Retrieval and lifecycle contract for implementation:
-
-- Lifecycle states are `draft`, `accepted`, `planned`, `in-progress`, `implemented`, `superseded`, and `stale`. Implement only from active `planned`/`in-progress` artifacts; treat `superseded` or `stale` artifacts as historical rationale requiring user or `cartographer-compass`/oracle confirmation before use.
-- Candidate/verified metadata uses `candidate`, `verified`, and `verification` fields. `cartographer-pathfinder` handoffs should not rely on candidate-only files for edit instructions unless the child is explicitly told to verify first.
-- Retrieval misses that materially change implementation should be appended to `.plan/_retrieval/misses.jsonl` with `failure_type`, `original_query`, `expanded_queries`, `retrieval_modes`, `expected_terms`, `eventual_hit`, and `resolution`.
-- Retrieval scopes are `code`, `plans`, and `all`, with `code` as the default. Implementation source-code retrieval should exclude `.plan/**`; rationale retrieval should search `.plan/` only through bounded probes for the active or explicitly related topics, including sanitized evidence docs when relevant. Raw `.plan/_private/**` inputs are off limits during implementation unless a phase explicitly tests private intake with synthetic fixtures.
-- ADR finalization is metadata-gated: after final validation, `adr_required: true` should produce a validated `cartographer_adr` workflow ADR, while `adr_required: false` should produce an explicit `adr-not-required` receipt with a short reason.
-
-Role-scoped least-privilege Cartographer tool examples for delegated agents in this workflow (`scout`, `cartographer-pathfinder`/fallback `worker`, `cartographer-auditor`/fallback `reviewer`, and optional `cartographer-compass`/`oracle`/`planner`):
+Load/use the `index-project` skill when available. Run `ensure` before starting implementation so the index is created or re-indexed only when stale:
 
 ```bash
-cartographer_index({"action":"ensure","root":"$PWD"})
-cartographer_index({"action":"query","root":"$PWD","topic":"{topic}","limit":10})
-cartographer_index({"action":"read","root":"$PWD","path":"<project-relative-path>"})
-cartographer_index({"action":"read","root":"$PWD","nodeId":"<indexed-node-id>"})
-cartographer_jsonl({"action":"validate-topic","root":"$PWD","topic":"{topic}"})
-cartographer_evidence({"action":"list","root":"$PWD","topic":"{topic}"})
-cartographer_adr({"action":"draft","root":"$PWD","topic":"{topic}","maxOutputChars":8000})
-cartographer_adr({"action":"validate","root":"$PWD","maxOutputChars":8000})
+python skills/index-project/scripts/index_project.py ensure --root "$PWD" --json
 ```
 
-When launching delegated agents through pi-subagents, include the package extension path `extensions/cartographer-tools.ts` in the child tool/extension configuration when supported so needed tools are callable. Apply a least-privilege child tool policy: do not grant every child full mutable JSONL/private/ADR/receipt authority, raw `.plan/_private/**` access, ADR write actions, or broad receipt append authority. The parent owns canonical plan/checkoff/receipt/ADR writes unless a structured acceptance contract explicitly scopes a pathfinder edit. Prefer `cartographer_artifacts` summaries (`context-pack-summary`, `receipt-summary`, `validate-topic-summary`, `fact-citation-summary`) and `cartographer_index` query/read/context summaries for child handoffs; use `cartographer_session` only for explicitly authorized session/evidence redaction work. If custom helper tools are unavailable in the child, generate equivalent helper summaries in the parent/CLI first, pass their paths, and write fallback receipts for substituted validation/audit paths. Do not ask agents to inspect the SQLite file manually when the index tool can answer the question. Do not ask agents to read raw `.plan/_private/**` inputs; use sanitized `.plan/{topic}/evidence/` docs instead.
+The indexer must ensure `.plan/_index/` is present in `.gitignore`; do not commit generated SQLite/cache artifacts unless explicitly requested.
 
-Structured handoff contract fields should be explicit in the `subagent(...)` call when supported, or copied into the prompt when not supported:
+If indexing fails, report the error and ask whether to continue with manual discovery using `rg`/grep and selective reads. Do not silently skip indexing.
 
-```json
-{
-  "acceptance": {
-    "criteria": ["exact checklist IDs complete", "validation IDs addressed", "scope boundaries honored"],
-    "evidenceRequired": [
-      "changed-files",
-      "commands-run",
-      "validation-output",
-      "residual-risks",
-      "diff-summary",
-      "no-staged-files"
-    ]
-  },
-  "async": { "enabled": true, "timeoutMs": 600000 },
-  "control": {
-    "stopRules": ["product/scope decision", "dependency conflict", "repeated tool failure", "out-of-scope file change"],
-    "maxFinalizationTurns": 3
-  },
-  "outputMode": "file-only",
-  "helperSummaries": [".plan/{topic}/context-packs.jsonl:<context-id>", ".plan/{topic}/receipts.jsonl:<receipt-ids>"],
-  "timeoutFallbackReceipt": ".plan/{topic}/receipts.jsonl"
-}
+### 5. Orient from state and select the next executable phase
+
+1. If `.cartographer/current.json` exists, treat it as a hint only. Validate that it points to the requested topic/state and ignore it if stale or invalid.
+2. Initialize or validate topic state when the helper is available:
+
+   ```bash
+   node --experimental-strip-types skills/plan/scripts/cartographer_state.ts state-init --root "$PWD" --topic "{topic}" --json
+   node --experimental-strip-types skills/plan/scripts/cartographer_state.ts state-validate --root "$PWD" --topic "{topic}" --json
+   ```
+
+3. If resuming after compaction, render bounded context data:
+
+   ```bash
+   node --experimental-strip-types skills/plan/scripts/cartographer_state.ts state-resume --root "$PWD" --topic "{topic}" --json
+   ```
+
+4. Before editing after resume, respond with:
+   - current phase;
+   - singular next action;
+   - files to inspect.
+5. Choose the first incomplete phase whose dependencies are complete.
+6. Verify dependencies are acyclic and completed phases have commits or documented no-op completions.
+7. Mark the selected phase `in-progress` in `.plan/{topic}/plan.md` and in `plan.nodes.jsonl` when present.
+8. Set a singular `next_action` and initial `working_set` through state commands when available.
+
+### 6. Create a retrieval plan and gather focused phase context
+
+Before gathering phase context, write a short **retrieval plan** with 5–10 targeted probes derived from the selected phase. Include exact identifiers, filenames, tests, scripts, commands, config keys, generated artifacts, error strings, and constrained generic terms.
+
+Use bounded **rationale retrieval** in `.plan/` for the active topic and explicitly related topics only. Treat retrieved rationale as **historical evidence** requiring freshness checks before it influences implementation.
+
+Keep retrieval scopes separate:
+
+- code probes should exclude `.plan/**`;
+- rationale probes should explicitly target `.plan/`;
+- raw `.plan/_private/**` inputs are off limits unless a phase explicitly tests private intake using synthetic fixtures.
+
+Prefer:
+
+- `.plan/{topic}/plan.md`;
+- map/fact JSONL;
+- deterministic validation reports;
+- `cartographer_index query/read/context`;
+- focused `rg`/grep searches;
+- selective `read` calls.
+
+Use `scout` only when this deterministic and lexical context is missing, contradictory, or too broad for safe editing.
+
+### 7. Execute the single-writer loop
+
+For each small unit of work inside the selected phase:
+
+| Loop step | Required behavior                                                                                 |
+| --------- | ------------------------------------------------------------------------------------------------- |
+| Orient    | Reload current state, selected journal records, phase text, receipts, and active files from disk. |
+| Select    | Choose exactly one next action.                                                                   |
+| Narrow    | Update `working_set` before editing: write-allowed, read-only, and forbidden paths.               |
+| Inspect   | Re-open active files from disk; never rely on code read many turns ago.                           |
+| Act       | Apply a small parent-owned patch.                                                                 |
+| Validate  | Run the narrowest useful check and append a deterministic validation receipt when appropriate.    |
+| Record    | Update state cursor/receipt refs; append a journal record only for important durable lessons.     |
+| Compact   | On milestone triggers, run `compact-generate`.                                                    |
+| Continue  | Re-orient from artifacts and ignore stale chat assumptions.                                       |
+
+Compaction triggers include phase start/end, diagnosed test failure, decision made, file-set change, before switching areas, before risky refactor, before handoff, and a configurable context-usage threshold.
+
+### 8. Verify checklist items and update the plan
+
+- For each phase checklist item:
+  - verify the expected output exists;
+  - verify relevant code/tests/docs changed as needed;
+  - change `- [ ] **P?.T?**` to `- [x] **P?.T?**` only when complete.
+- Mirror completed task status in `plan.nodes.jsonl` by setting matching `task:P?.T?` nodes to `status: complete` when present.
+- Do not check off validation items until the command or auditor evidence proves the item passed.
+
+### 9. Run quality tools until green
+
+Discover quality commands from:
+
+- plan validation items;
+- `package.json` scripts;
+- project docs such as `AGENTS.md`, `README.md`, or plan notes;
+- language/tooling config files.
+
+Typical order:
+
+1. format check or formatter if project policy allows;
+2. typecheck/check;
+3. lint;
+4. tests;
+5. build;
+6. phase-specific validation commands.
+
+Examples:
+
+- `npm run check:scripts`
+- `npm run typecheck`
+- `npm run lint:ts`
+- `npm run test`
+- `npm run check`
+
+If a command is unavailable, record it as unavailable rather than failed. If a command fails, capture a compact failure summary, apply a scoped fix, rerun the failed command and dependent checks, and record receipts.
+
+Limit routine repair loops to 3 scoped fix attempts per distinct failing command. If the same command still fails, write timeout/fallback receipts, call `cartographer-compass`, and stop to ask the user unless the next step is clearly safe and in scope.
+
+### 10. Audit and validate the phase
+
+Once quality tools are green and deterministic validation receipts exist, dispatch `cartographer-auditor` as the default read-only phase semantic gate.
+
+Provide the auditor:
+
+- selected phase text;
+- current diff/stat;
+- commands run, summarized outputs, and validation receipt IDs/paths;
+- checked checklist items;
+- unchecked validation items;
+- relevant proposal/map/fact references;
+- state/journal/compaction evidence when relevant.
+
+Ask for explicit PASS/FAIL. If the auditor rejects or any validation item fails:
+
+1. apply a scoped fix;
+2. rerun affected checks;
+3. update receipts/state;
+4. call `cartographer-auditor` again.
+
+Repeat until auditor passes, or an approved fallback receipt records semantic review outcome.
+
+### 11. Commit completed phases
+
+At the end of each completed phase:
+
+- update `.plan/{topic}/plan.md` phase status and checkboxes;
+- update `plan.nodes.jsonl` statuses;
+- run/update relevant validation receipts;
+- ensure `git status --short` contains only intended files;
+- commit with a conventional commit message.
+
+If the phase is a true no-op, mark it complete with an explanatory note and avoid an empty commit.
+
+### 12. Final implementation validation and ADR handling
+
+After all phases are complete:
+
+1. Run full project validation, usually `npm run check`.
+2. Run topic validation:
+
+   ```bash
+   node --experimental-strip-types skills/plan/scripts/manage_jsonl.ts validate-topic --root "$PWD" --topic "{topic}" --json
+   ```
+
+3. Run planning graph validation:
+
+   ```bash
+   python skills/plan/scripts/validate_planning_graph.py --root "$PWD" --topic "{topic}" --json
+   ```
+
+4. Run the final `cartographer-auditor` semantic gate.
+5. If `adr_required: true`, run `cartographer_adr` after deterministic validation and cite validation receipt IDs/source commits.
+6. If `adr_required: false`, record the reason and, when applicable, an `adr-not-required` receipt.
+
+The ADR must cite sanitized evidence docs or validation receipt IDs, not raw `.plan/_private/**` paths or brittle raw logs.
+
+## Receipt Discipline
+
+After each significant command, specialist handoff, timeout, fallback substitution, phase decision, compaction, or validation gate, append a compact `.plan/{topic}/receipts.jsonl` record instead of relying on transcript continuity.
+
+Validation receipts should include:
+
+- command;
+- exit code/result;
+- duration;
+- changed-file hashes when available;
+- validation IDs satisfied;
+- summarized output or first failure block.
+
+Use the validation runner when available:
+
+```bash
+python skills/plan/scripts/validation_runner.py \
+  --receipt-file .plan/{topic}/receipts.jsonl \
+  --phase-id <P?> \
+  --validation-id <P?.V?> \
+  --command "<check>" \
+  --json
 ```
 
-### Optional Scout
+Timeout/fallback receipts should include:
+
+- child/tool attempted;
+- attempt count;
+- timeout or failure summary;
+- control fields used when available;
+- fallback approved;
+- `cartographer-compass` recommendation when repeated;
+- outcome;
+- residual risk.
+
+## Lifecycle, Retrieval, and Least-Privilege Contract
+
+- Lifecycle states are `draft`, `accepted`, `planned`, `in-progress`, `implemented`, `superseded`, and `stale`.
+- Implement only from active `planned`/`in-progress` artifacts; treat `superseded` or `stale` artifacts as historical rationale requiring user or `cartographer-compass` confirmation before use.
+- Candidate/verified metadata uses `candidate`, `verified`, and `verification` fields. Do not rely on candidate-only files for edit instructions unless you verify first.
+- Retrieval scopes are `code`, `plans`, and `all`, with `code` as the default.
+- Implementation source-code retrieval should exclude `.plan/**`; rationale retrieval should search `.plan/` only through bounded probes.
+- Raw `.plan/_private/**` inputs are off limits during implementation unless a phase explicitly uses synthetic fixtures.
+- Apply a least-privilege child tool policy. Do not give every child full mutable JSONL/private/ADR/receipt authority, raw private paths, ADR write actions, or broad receipt append authority.
+- The parent owns canonical plan/checkoff/receipt/ADR writes unless a structured contract explicitly scopes otherwise.
+
+## Prompt Snippets
+
+### Auditor handoff
 
 ```text
-Inspect implementation context for phase <PHASE_ID> of .plan/{topic}/plan.md only where deterministic Cartographer index/map context plus focused lexical checks are insufficient.
-Start from cartographer_index query/read and .plan/{topic}/map.nodes.jsonl, map.edges.jsonl, facts.nodes.jsonl, and facts.edges.jsonl when present. Then use focused `rg`/grep for exact identifiers, filenames, tests, scripts, commands, generated artifacts, and error strings. Do not rediscover the repo broadly or read whole large files unless indexed snippets and lexical hits are insufficient.
-Return likely files to edit, files to avoid/edit carefully, reusable symbols, tests/validation commands, generated artifacts/scripts, risks, and any mismatch between the phase plan and current code.
-Do not edit files.
+Review phase <PHASE_ID> for topic <topic> after deterministic validation receipts passed.
+Use .plan/<topic>/plan.md, plan graph artifacts, relevant proposal/map/fact summaries,
+current diff/stat, receipt IDs, and state/journal evidence when relevant.
+Return PASS/FAIL with required corrections. Stay read-only.
 ```
 
-### Pathfinder
+### Compass handoff
 
 ```text
-Implement phase <PHASE_ID> from .plan/{topic}/plan.md as cartographer-pathfinder, the default phase writer.
-Use the deterministic context summary, optional scout findings, source artifacts, context-pack path, and helper summary paths provided. Prefer `cartographer_artifacts` context-pack/receipt/validation summaries and `cartographer_index` query/read summaries; if custom tools are unavailable, cite the parent-generated summaries. Complete only the listed unchecked checklist items for this phase. Make code/config/doc/test changes as needed. Do not commit or stage files. Avoid unrelated changes. Run targeted checks if practical and write/report validation receipt information.
-Structured acceptance (mandatory for non-trivial phase handoffs):
-- Complete checklist IDs: <P?.T?>
-- Address validation IDs: <P?.V?>
-- Stay within scope and allowed files: <paths/scope>
-- Cite helper summary paths: <context/receipt/artifact/index summaries>
-- Provide changed-files summary, commands run, receipt paths/IDs, validation evidence, acceptance criteria status, no-staged-files evidence, and residual risks.
-- Do not modify files outside the phase scope unless explicitly justified.
-- Report residual risks/blockers and stop for unknown design/product decisions, repeated tool failures, or changes outside the phase.
-Suggested subagent controls: `acceptance` with the bullets above, `async: {"enabled": true, "timeoutMs": 600000}`, `control.stopRules` matching the stop bullets, `outputMode: "file-only"`, and `timeoutFallbackReceipt: ".plan/{topic}/receipts.jsonl"`.
-Report changed files, commands run, checklist items completed, acceptance status, validation status/evidence, no-staged-files evidence, and residual risks/blockers.
+Advise on this scope/dependency/repeated-failure issue for topic <topic>.
+Use proposal/plan references, receipt summaries, and current failure context.
+Answer whether the next action is within the approved plan, needs phase/order/scope change,
+or should stop for user direction. Stay read-only.
 ```
 
-### Pathfinder Fix
+### Legacy pathfinder opt-in only
 
 ```text
-Fix the failures found while validating phase <PHASE_ID>. Use the command output/auditor findings below. You have read access to the index tool commands and may run ensure/read if you need fresh indexed context; use focused `rg`/grep for exact failing identifiers, files, tests, or errors. Keep the fix scoped to this phase. Do not commit. Report changed files, commands run, receipt updates, and residual risks.
+Use cartographer-pathfinder only when the user explicitly requests a legacy writer handoff.
+Record why the retired writer path is being used, pass exact checklist/validation IDs,
+allowed files, stop rules, evidence requirements, and require no commits/staging.
 ```
 
-### Compass
+## Pitfalls
 
-```text
-Evaluate this decision-level blocker for phase <PHASE_ID>. Do not review code line-by-line. Use provided read-only `cartographer_artifacts` receipt/context/validation summaries and `cartographer_index` query/read summaries, or parent-generated summary paths when helper tools are unavailable. Determine whether the issue is within the approved plan, requires a phase/order/scope change, or should be escalated to the user. Consider proposal goals/non-goals, phase dependencies, current codebase constraints, quality-tool output, deterministic context, timeout/fallback receipts with `control` fields, and pathfinder/auditor/optional-scout findings. Return recommended options and any stop condition before substantial parent takeover.
-```
-
-### Auditor
-
-```text
-Review phase <PHASE_ID> implementation after deterministic validation receipts pass. Check the current diff, commands run, checked checklist items, unchecked validation items, structured acceptance criteria, receipt IDs/paths, helper summary paths, and source artifacts. Use `cartographer_artifacts` receipt/context/validation summaries and targeted `cartographer_index` reads when freshness or references are uncertain, or cite parent-generated summaries if helper tools are unavailable. Verify correctness, scope control, maintainability, no-staged-files evidence, and every validation item for this phase. Remain read-only: report exact validation items that may be checked off by the parent rather than editing them. Return PASS/FAIL and reject with required fixes for any issue.
-```
-
-## Stop Conditions
-
-Stop and ask the user before continuing when:
-
-- required subagents are unavailable and the user has not approved substitution or serial fallback
-- there are unrelated pre-existing uncommitted changes
-- the plan is missing or ambiguous
-- a phase dependency is incomplete or cyclic
-- an unknown design/product decision blocks implementation
-- a library/tool/API behaves differently than expected and requires a choice
-- quality tools fail after 3 scoped pathfinder repair attempts for the same command/validation item
-- pathfinder/auditor/subagent calls repeatedly fail and `cartographer-compass` has been consulted before substantial parent takeover
-- fixing the issue would require expanding scope beyond the current phase
-- committing would include unrelated files
-- ADR metadata is missing or contradictory for an ADR-worthy implementation and the user has not chosen create/update/skip
+- Do not skip deterministic validation before auditor review.
+- Do not treat `.cartographer/current.json` as authoritative.
+- Do not append routine events or raw logs to `journal.jsonl`.
+- Do not add `plan.json` or generated Markdown state views.
+- Do not continue from stale transcript memory after compaction; reload from state/journal/plan artifacts.
+- Do not mark checklist or validation items complete without evidence.
+- Do not silently skip ADR handling when `adr_required` metadata exists.
+- Do not use `cartographer-compass` as a substitute for the auditor semantic gate.
+- Do not read raw `.plan/_private/**` inputs.
 
 ## Verification Checklist
 
-Before final completion, verify:
+Before finalizing an implementation, verify:
 
-- `.plan/{topic}/plan.md` exists.
-- `.gitignore` contains `.plan/_index/` when indexing succeeded.
-- Every phase is checked off or otherwise clearly marked complete.
-- Every checklist item is checked off.
-- Every validation item is checked off by `cartographer-auditor` approval or verified command output, or by an approved fallback receipt.
-- Phase/task/validation statuses in `plan.nodes.jsonl` are consistent with checked Markdown items when the file exists.
-- All phase dependencies were respected.
-- All available quality tools are green or explicitly documented as unavailable/skipped with a reason.
-- `cartographer-auditor` approved the final code/artifacts for each phase, or an approved fallback receipt records the semantic gate outcome.
-- Each phase with changes has a conventional commit.
-- If `adr_required: true`, `cartographer_adr draft/write/validate` ran after final validation and the ADR path/validation receipt is recorded.
-- If `adr_required: false`, `.plan/{topic}/receipts.jsonl` contains an `adr-not-required` receipt with a reason and validation receipt references.
-- Final `git status --short` has no unexpected unstaged/uncommitted changes.
+- `.plan/{topic}/plan.md` exists and every implemented phase is marked complete.
+- `plan.nodes.jsonl` mirrors phase/task/validation statuses.
+- `.cartographer/{topic}/state.json` validates or the absence of state is intentionally receipted for a legacy plan.
+- `journal.jsonl` contains only curated important lessons, if any.
+- `.cartographer/current.json` is ignored/non-authoritative.
+- `.gitignore` contains `.plan/_index/`, `.plan/_private/`, and `.cartographer/current.json` when relevant.
+- Every validation item is checked off by verified command output, `cartographer-auditor` approval, or an approved fallback receipt.
+- Full project validation passed or any failure has explicit user-approved residual risk.
+- The final `cartographer-auditor` PASS, or approved fallback semantic review receipt, exists.
+- ADR intent from the proposal/plan was honored: `cartographer_adr` ran when `adr_required: true`, or an `adr-not-required` receipt exists when false.
