@@ -198,3 +198,24 @@ Findings:
 Residual risks:
 - Graph layout is deterministic column-based rather than a force/dagre layout; acceptable for v1 and can be refined after user feedback.
 - Bundle-size warnings remain from Shiki/React Flow dynamic assets and are deferred to P7 hardening/package review.
+
+## P6 Phase Audit — 2026-06-10T02:34:00+00:00
+
+PASS
+
+Required corrections: none.
+
+Validation receipts/helper summaries reviewed:
+- `receipt:P6:validation:2026-06-10T02:33:51+00:00` — `P6.V1` dashboard skill docs test PASS.
+- `receipt:P6:validation:2026-06-10T02:33:58+00:00` — `P6.V2` script checks PASS.
+- `receipt:P6:manual-skill-review:2026-06-10T02:34:05+00:00` — `P6.V3` manual skill review PASS.
+
+Findings:
+- `skills/dashboard/SKILL.md` has valid Pi skill frontmatter and a specific description for start/open/status/stop dashboard requests.
+- The skill states that the dashboard is local, loopback-only, and read-only and must not mutate `.plan/`, ADRs, index/cache files, or source files.
+- Start, topic deep-link, status, and stop examples use the `cartographer-dashboard` CLI JSON contract.
+- The skill calls `cartographer-dashboard` from PATH first and documents the package-relative `../../bin/cartographer-dashboard.js` fallback without duplicating server logic.
+- Workflow docs tests verify the frontmatter, CLI contract, read-only/loopback language, fallback path, and `.plan/_private` safety references.
+
+Residual risks:
+- Future CLI contract changes should update `skills/dashboard/SKILL.md` and the docs test in the same change.

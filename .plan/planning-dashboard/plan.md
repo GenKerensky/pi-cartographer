@@ -379,7 +379,7 @@ Reuse P4 drawers and resolver code. Do not create a second graph-specific detail
 
 ### Phase P6 — Dashboard Skill
 
-- **Status:** pending
+- **Status:** implemented
 - **Depends on:** P1
 - **Unlocks:** P7
 - **Primary references:** `file:package.json`, `proposed:skills-dashboard`, `proposed:bin-cartographer-dashboard`, [F005], [F006], [F012]
@@ -398,16 +398,16 @@ Add the thin packaged Pi skill that invokes the installed dashboard CLI for star
 
 #### Checklist
 
-- [ ] **P6.T1** Add `skills/dashboard/SKILL.md` with purpose, usage examples, read-only statement, and CLI invocation contract.
-- [ ] **P6.T2** Document topic deep-link behavior and status/stop examples using the CLI JSON contract.
-- [ ] **P6.T3** Add package-relative fallback guidance for missing PATH entry without embedding server startup logic in the skill.
-- [ ] **P6.T4** Add tests or documentation checks that verify the skill exists, has valid frontmatter, and references the installed CLI contract.
+- [x] **P6.T1** Add `skills/dashboard/SKILL.md` with purpose, usage examples, read-only statement, and CLI invocation contract.
+- [x] **P6.T2** Document topic deep-link behavior and status/stop examples using the CLI JSON contract.
+- [x] **P6.T3** Add package-relative fallback guidance for missing PATH entry without embedding server startup logic in the skill.
+- [x] **P6.T4** Add tests or documentation checks that verify the skill exists, has valid frontmatter, and references the installed CLI contract.
 
 #### Validation
 
-- [ ] **P6.V1** Run `python -m unittest discover tests -p test_workflow_docs.py` or the updated docs/skill validation test; expect the dashboard skill frontmatter and examples to validate.
-- [ ] **P6.V2** Run `npm run check:scripts`; expect packaged skill paths and extension script checks to pass.
-- [ ] **P6.V3** Manually verify `skills/dashboard/SKILL.md` does not duplicate server code or imply write access.
+- [x] **P6.V1** Run `python -m unittest discover tests -p test_workflow_docs.py` or the updated docs/skill validation test; expect the dashboard skill frontmatter and examples to validate.
+- [x] **P6.V2** Run `npm run check:scripts`; expect packaged skill paths and extension script checks to pass.
+- [x] **P6.V3** Manually verify `skills/dashboard/SKILL.md` does not duplicate server code or imply write access.
 
 #### Exit Criteria
 

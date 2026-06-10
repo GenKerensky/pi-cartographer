@@ -103,6 +103,22 @@ class WorkflowDocsTests(unittest.TestCase):
         self.assertIn("cartographer_adr query/show", text)
         self.assertIn("ADR graph JSONL", text)
 
+    def test_dashboard_skill_documents_read_only_cli_contract(self) -> None:
+        text = (ROOT / "skills/dashboard/SKILL.md").read_text(encoding="utf-8")
+
+        self.assertIn('name: "dashboard"', text)
+        self.assertIn("description:", text)
+        self.assertIn("cartographer-dashboard start", text)
+        self.assertIn("cartographer-dashboard status", text)
+        self.assertIn("cartographer-dashboard stop", text)
+        self.assertIn("--topic planning-dashboard", text)
+        self.assertIn("--json", text)
+        self.assertIn("read-only", text)
+        self.assertIn("loopback-only", text)
+        self.assertIn("../../bin/cartographer-dashboard.js", text)
+        self.assertIn("Do **not** reimplement server startup", text)
+        self.assertIn(".plan/_private", text)
+
 
 if __name__ == "__main__":
     unittest.main()
