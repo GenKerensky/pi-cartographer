@@ -75,13 +75,13 @@
 {"id":"validation:P6.V2","type":"validation","validation_id":"P6.V2","phase_id":"P6","title":"Run prettier check","status":"complete","source":"plan.md","command":"npm run format:prettier:check"}
 {"id":"validation:P6.V3","type":"validation","validation_id":"P6.V3","phase_id":"P6","title":"Search for prose-only mutation instructions","status":"complete","source":"plan.md"}
 {"id":"validation:P6.V4","type":"validation","validation_id":"P6.V4","phase_id":"P6","title":"Run npm run check:scripts","status":"complete","source":"plan.md","command":"npm run check:scripts"}
-{"id":"phase:P7","type":"phase","phase_id":"P7","title":"Final Validation and ADR","status":"pending","depends_on":["P6"],"source":"plan.md","references":["F005","F014","F017","F028"]}
-{"id":"task:P7.T1","type":"task","task_id":"P7.T1","phase_id":"P7","title":"Run full project validation","status":"pending","source":"plan.md"}
-{"id":"task:P7.T2","type":"task","task_id":"P7.T2","phase_id":"P7","title":"Run topic and graph validation","status":"pending","source":"plan.md"}
-{"id":"task:P7.T3","type":"task","task_id":"P7.T3","phase_id":"P7","title":"Run final semantic audit","status":"pending","source":"plan.md"}
-{"id":"task:P7.T4","type":"task","task_id":"P7.T4","phase_id":"P7","title":"Create ADR","status":"pending","source":"plan.md"}
+{"id":"phase:P7","type":"phase","phase_id":"P7","title":"Final Validation and ADR","status":"in-progress","depends_on":["P6"],"source":"plan.md","references":["F005","F014","F017","F028"]}
+{"id":"task:P7.T1","type":"task","task_id":"P7.T1","phase_id":"P7","title":"Run full project validation","status":"complete","source":"plan.md"}
+{"id":"task:P7.T2","type":"task","task_id":"P7.T2","phase_id":"P7","title":"Run topic and graph validation","status":"complete","source":"plan.md"}
+{"id":"task:P7.T3","type":"task","task_id":"P7.T3","phase_id":"P7","title":"Run final semantic audit","status":"complete","source":"plan.md"}
+{"id":"task:P7.T4","type":"task","task_id":"P7.T4","phase_id":"P7","title":"Create ADR","status":"complete","source":"plan.md"}
 {"id":"task:P7.T5","type":"task","task_id":"P7.T5","phase_id":"P7","title":"Request and record final human approval","status":"pending","source":"plan.md"}
-{"id":"validation:P7.V1","type":"validation","validation_id":"P7.V1","phase_id":"P7","title":"Run npm run check","status":"pending","source":"plan.md","command":"npm run check"}
-{"id":"validation:P7.V2","type":"validation","validation_id":"P7.V2","phase_id":"P7","title":"Run validate-topic","status":"pending","source":"plan.md","command":"node --experimental-strip-types skills/plan/scripts/manage_jsonl.ts validate-topic --root \"$PWD\" --topic harness-implement-loop --json"}
-{"id":"validation:P7.V3","type":"validation","validation_id":"P7.V3","phase_id":"P7","title":"Run validate_planning_graph.py","status":"pending","source":"plan.md","command":"python skills/plan/scripts/validate_planning_graph.py --root \"$PWD\" --topic harness-implement-loop --json"}
-{"id":"validation:P7.V4","type":"validation","validation_id":"P7.V4","phase_id":"P7","title":"Run ADR validation","status":"pending","source":"plan.md","command":"python skills/plan/scripts/adr_records.py validate --root \"$PWD\" --json"}
+{"id":"validation:P7.V1","type":"validation","validation_id":"P7.V1","phase_id":"P7","title":"Run npm run check","status":"complete","source":"plan.md","command":"npm run check"}
+{"id":"validation:P7.V2","type":"validation","validation_id":"P7.V2","phase_id":"P7","title":"Run validate-topic","status":"complete","source":"plan.md","command":"node --experimental-strip-types skills/plan/scripts/manage_jsonl.ts validate-topic --root \"$PWD\" --topic harness-implement-loop --json"}
+{"id":"validation:P7.V3","type":"validation","validation_id":"P7.V3","phase_id":"P7","title":"Run validate_planning_graph.py","status":"complete","source":"plan.md","command":"python skills/plan/scripts/validate_planning_graph.py --root \"$PWD\" --topic harness-implement-loop --json"}
+{"id":"validation:P7.V4","type":"validation","validation_id":"P7.V4","phase_id":"P7","title":"Run ADR validation","status":"complete","source":"plan.md","command":"python skills/plan/scripts/adr_records.py validate --root \"$PWD\" --json"}

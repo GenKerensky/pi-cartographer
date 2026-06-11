@@ -377,7 +377,7 @@ Be explicit: users approve gates; tools enforce prerequisites; agents do not imp
 
 ### Phase P7 — Final Validation and ADR
 
-- **Status:** pending
+- **Status:** in-progress
 - **Depends on:** P6
 - **Unlocks:** none
 - **Primary references:** `file:package.json`, `file:docs/adr/0004-use-single-writer-cartographer-implementation-state.md`, `file:docs/adr/0002-require-auditable-cartographer-subagent-handoffs.md`, [F005], [F014], [F017], [F028]
@@ -395,18 +395,18 @@ Validate the complete workflow hardening implementation and record the architect
 
 #### Checklist
 
-- [ ] **P7.T1** Run full project validation and fix any failures.
-- [ ] **P7.T2** Run topic validation and planning graph validation for `harness-implement-loop`.
-- [ ] **P7.T3** Run final semantic audit through `cartographer_handoff auditor` if available, otherwise record an explicit fallback receipt.
-- [ ] **P7.T4** Create an ADR with `cartographer_adr` covering deterministic workflow wrappers, lifecycle gates, automatic implementation phase advancement, human approval receipts for major gates, and subagent dependency evaluation.
-- [ ] **P7.T5** Request final human approval with `cartographer_transition request-approval --gate implementation` and record approval with `cartographer_transition approve --gate implementation` when the human approves.
+- [x] **P7.T1** Run full project validation and fix any failures.
+- [x] **P7.T2** Run topic validation and planning graph validation for `harness-implement-loop`.
+- [x] **P7.T3** Run final semantic audit through `cartographer_handoff auditor` if available, otherwise record an explicit fallback receipt.
+- [x] **P7.T4** Create an ADR with `cartographer_adr` covering deterministic workflow wrappers, lifecycle gates, automatic implementation phase advancement, human approval receipts for major gates, and subagent dependency evaluation.
+- [ ] **P7.T5** Request final human approval with `cartographer_transition request-approval --gate implementation` and record approval with `cartographer_transition approve --gate implementation` when the human approves. _(approval requested; awaiting human approval)_.
 
 #### Validation
 
-- [ ] **P7.V1** Run `npm run check`; expect pass.
-- [ ] **P7.V2** Run `node --experimental-strip-types skills/plan/scripts/manage_jsonl.ts validate-topic --root "$PWD" --topic harness-implement-loop --json`; expect pass.
-- [ ] **P7.V3** Run `python skills/plan/scripts/validate_planning_graph.py --root "$PWD" --topic harness-implement-loop --json`; expect pass.
-- [ ] **P7.V4** Run `python skills/plan/scripts/adr_records.py validate --root "$PWD" --json`; expect pass.
+- [x] **P7.V1** Run `npm run check`; expect pass.
+- [x] **P7.V2** Run `node --experimental-strip-types skills/plan/scripts/manage_jsonl.ts validate-topic --root "$PWD" --topic harness-implement-loop --json`; expect pass.
+- [x] **P7.V3** Run `python skills/plan/scripts/validate_planning_graph.py --root "$PWD" --topic harness-implement-loop --json`; expect pass.
+- [x] **P7.V4** Run `python skills/plan/scripts/adr_records.py validate --root "$PWD" --json`; expect pass.
 
 #### Exit Criteria
 
