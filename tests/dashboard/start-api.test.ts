@@ -206,7 +206,12 @@ describe("dashboard Start read-only API parity", () => {
 			await fetch(`${url}/api/topics/${fixture.topic}/docs`),
 		);
 		expect(docsPayload.ok).toBe(true);
-		expect(docsPayload.data?.documents.map((document) => document.kind)).toEqual(["proposal", "plan"]);
+		expect(docsPayload.data?.documents.map((document) => document.kind)).toEqual([
+			"proposal",
+			"requirements",
+			"design",
+			"plan",
+		]);
 
 		const proposalPayload = await responseJson<DashboardDocument>(
 			await fetch(`${url}/api/topics/${fixture.topic}/docs/proposal`),

@@ -32,14 +32,7 @@
     "kind": "task",
     "summary": "Update workflow skill docs and tests to consume requirements/design artifacts and preserve traceability.",
     "phase_id": "P3",
-    "task_ids": [
-      "P3.T1",
-      "P3.T2",
-      "P3.T3",
-      "P3.T4",
-      "P3.T5",
-      "P3.T6"
-    ]
+    "task_ids": ["P3.T1", "P3.T2", "P3.T3", "P3.T4", "P3.T5", "P3.T6"]
   },
   "working_set": {
     "write_allowed": [
@@ -146,15 +139,8 @@
       ".plan/proposal-design-split/plan.md",
       ".plan/proposal-design-split/receipts.jsonl"
     ],
-    "expected_first_response": [
-      "current_phase",
-      "next_action",
-      "files_to_inspect"
-    ],
-    "must_ignore": [
-      "prior chat speculation",
-      "stale generated snippets"
-    ]
+    "expected_first_response": ["current_phase", "next_action", "files_to_inspect"],
+    "must_ignore": ["prior chat speculation", "stale generated snippets"]
   },
   "updated_at": "2026-06-11T13:56:42Z",
   "compaction": {
