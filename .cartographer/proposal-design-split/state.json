@@ -17,7 +17,7 @@
     },
     "receipts": {
       "path": ".plan/proposal-design-split/receipts.jsonl",
-      "sha256": "sha256:a33d4154d0330d522b91c21d5507930961f0d2f51326ad04ba1a63825a545ccc"
+      "sha256": "sha256:0410d3b1375ef4be8bdd860c2024facf6e14e28d8d14d735d17dcd70270d3f62"
     },
     "context_packs": {
       "path": ".plan/proposal-design-split/context-packs.jsonl",
@@ -120,7 +120,11 @@
     "receipt:P6:validation:2026-06-11T13:52:24+00:00",
     "receipt:P6:validation:2026-06-11T13:55:41+00:00",
     "receipt:P6:validation:2026-06-11T13:56:25+00:00",
-    "receipt:proposal-design-split:P6-final-auditor-pass:2026-06-11T13:54:00Z"
+    "receipt:proposal-design-split:P6-final-auditor-pass:2026-06-11T13:54:00Z",
+    "receipt:P6:validation:2026-06-11T22:50:47+00:00",
+    "receipt:P6:validation:2026-06-11T22:50:53+00:00",
+    "receipt:P6:validation:2026-06-11T22:51:30+00:00",
+    "receipt:proposal-design-split:P6-refresh-auditor-pass:2026-06-11T22:55:00Z"
   ],
   "journal_refs": [
     "journal:20260611T061742Z:compact",
@@ -142,7 +146,7 @@
     "expected_first_response": ["current_phase", "next_action", "files_to_inspect"],
     "must_ignore": ["prior chat speculation", "stale generated snippets"]
   },
-  "updated_at": "2026-06-11T13:56:42Z",
+  "updated_at": "2026-06-11T22:53:37Z",
   "compaction": {
     "trigger": "final-implementation",
     "compacted_at": "2026-06-11T13:56:42Z"
