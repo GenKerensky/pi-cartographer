@@ -71,7 +71,7 @@ Create shared contracts and helper utilities for deterministic workflow wrappers
 
 #### Scope
 
-- Define lifecycle state and transition types for proposal, plan, implementation, phase, and final implementation gates.
+- Define lifecycle state and transition types for proposal, plan, implementation, automatic phase, explicitly human-gated phase, and final implementation gates.
 - Define shared receipt/context-pack/approval metadata helpers.
 - Define approver identity resolution from explicit CLI/tool input, `.cartographer/config.toml`, `git config user.name`, then system username [F030].
 - Add temp-root fixtures that include `.plan`, `.cartographer`, receipts, context packs, and minimal plan/proposal artifacts.
@@ -124,10 +124,10 @@ Implement the foundational deterministic gate artifacts: generic receipts, conte
 
 - [ ] **P1.T1** Implement schema-checked `cartographer_receipt append` for fallback, timeout, audit, compass, phase, output-capture, approval, rejection, transition, no-op, legacy-bypass, and residual-risk receipts [F025].
 - [ ] **P1.T2** Implement `cartographer_context_pack create/update` using bounded summaries, verified artifact paths, receipt IDs, phase/gate metadata, and Clean Context output shaping [F022].
-- [ ] **P1.T3** Implement `cartographer_transition status` to report lifecycle state, blocking prerequisites, missing receipts/context packs, pending human approvals, and next allowed commands [F028].
+- [ ] **P1.T3** Implement `cartographer_transition status` to report lifecycle state, blocking prerequisites, missing receipts/context packs, pending human approvals for major gates or explicitly human-gated phases, and next allowed commands [F028].
 - [ ] **P1.T4** Implement `cartographer_transition request-approval` to verify deterministic prerequisites, write/update context pack, append ready-for-human-review receipt, and stop [F029].
 - [ ] **P1.T5** Implement `cartographer_transition approve/reject` with deterministic approver resolution, auditable approval/rejection receipts, lifecycle advancement/blocking, and residual-risk capture [F029][F030].
-- [ ] **P1.T6** Implement `cartographer_transition advance` for machine-only transitions whose deterministic prerequisites are satisfied and no human approval is required.
+- [ ] **P1.T6** Implement `cartographer_transition advance` for automatic transitions whose deterministic prerequisites are satisfied and no human approval is required, including normal implementation phase-to-phase advancement.
 - [ ] **P1.T7** Register `cartographer_receipt`, `cartographer_context_pack`, and `cartographer_transition` extension tools with compact output and next-action guidance.
 
 #### Validation
@@ -261,7 +261,7 @@ Implement the wrapper that makes the single-writer implementation loop enforceab
 - [ ] **P4.T2** Implement `cartographer_implement step` to reload artifacts, report one next action, and refuse work without singular next_action and working_set.
 - [ ] **P4.T3** Implement `cartographer_implement record` to record validation refs and update state after command receipts.
 - [ ] **P4.T4** Implement `cartographer_implement compact` to call `compact-generate`, validate state, render `state-resume`, and bridge Pi compaction metadata without treating transcript compaction as validation evidence [F003].
-- [ ] **P4.T5** Implement `cartographer_implement finalize` to block if phases remain pending, run full validation/topic/graph checks, require final audit/ADR handling, and request final human approval [F004][F013].
+- [ ] **P4.T5** Implement `cartographer_implement finalize` to block if phases remain pending, run full validation/topic/graph checks, require final audit/ADR handling, and request final human approval for the whole feature [F004][F013].
 - [ ] **P4.T6** Add extension guardrails that route implement prompts to wrapper-first guidance and warn/block unsafe edits when active wrapper state is missing or working_set excludes paths.
 
 #### Validation
@@ -343,7 +343,7 @@ Update user-facing skills and docs so skills route through deterministic wrapper
 #### Scope
 
 - Rewrite proposal/plan/implement skill procedures to call wrappers for all artifact/state transitions.
-- Document full lifecycle and human approval commands.
+- Document full lifecycle, automatic phase advancement, and human approval commands for proposal, plan, explicitly human-gated phases, and final implementation.
 - Update README and AGENTS with wrapper-first rules.
 - Add docs tests that forbid misleading prose-only instructions for deterministic gates.
 
@@ -352,8 +352,8 @@ Update user-facing skills and docs so skills route through deterministic wrapper
 - [ ] **P6.T1** Update `skills/proposal/SKILL.md` so proposal init/fact append/finalize/ADR sync use wrapper commands, not manual JSONL writes by default.
 - [ ] **P6.T2** Update `skills/plan/SKILL.md` so plan graph generation/finalize/status/validation completion use wrapper commands.
 - [ ] **P6.T3** Update `skills/implement/SKILL.md` so implementation starts, advances, compacts, gates, and finalizes through `cartographer_implement` and `cartographer_transition`.
-- [ ] **P6.T4** Update README and AGENTS with the full lifecycle, human approval commands, config file behavior, and deterministic tool responsibilities.
-- [ ] **P6.T5** Update docs tests to assert wrapper-first routing, no prose-only status/checkoff/finalization claims, and human approval gate documentation.
+- [ ] **P6.T4** Update README and AGENTS with the full lifecycle, automatic implementation phase advancement, human approval commands for major gates, config file behavior, and deterministic tool responsibilities.
+- [ ] **P6.T5** Update docs tests to assert wrapper-first routing, no prose-only status/checkoff/finalization claims, automatic phase advancement by default, and human approval gate documentation for major gates.
 - [ ] **P6.T6** Update package/tool references and examples for all new wrappers.
 
 #### Validation
@@ -391,14 +391,14 @@ Validate the complete workflow hardening implementation and record the architect
 - Run full project validation.
 - Validate this topic's plan/proposal artifacts.
 - Run final auditor gate through the new or best-available deterministic handoff path.
-- Create or update ADR documenting deterministic workflow enforcement, lifecycle transitions, human approval receipts, and subagent dependency evaluation.
+- Create or update ADR documenting deterministic workflow enforcement, lifecycle transitions, automatic implementation phase advancement, human approval receipts for major gates, and subagent dependency evaluation.
 
 #### Checklist
 
 - [ ] **P7.T1** Run full project validation and fix any failures.
 - [ ] **P7.T2** Run topic validation and planning graph validation for `harness-implement-loop`.
 - [ ] **P7.T3** Run final semantic audit through `cartographer_handoff auditor` if available, otherwise record an explicit fallback receipt.
-- [ ] **P7.T4** Create an ADR with `cartographer_adr` covering deterministic workflow wrappers, lifecycle gates, human approval receipts, and subagent dependency evaluation.
+- [ ] **P7.T4** Create an ADR with `cartographer_adr` covering deterministic workflow wrappers, lifecycle gates, automatic implementation phase advancement, human approval receipts for major gates, and subagent dependency evaluation.
 - [ ] **P7.T5** Request final human approval with `cartographer_transition request-approval --gate implementation` and record approval with `cartographer_transition approve --gate implementation` when the human approves.
 
 #### Validation
@@ -410,7 +410,7 @@ Validate the complete workflow hardening implementation and record the architect
 
 #### Exit Criteria
 
-The project enforces proposal, plan, implementation, phase, and final implementation lifecycle transitions through deterministic tools with explicit human approval gates.
+The project enforces proposal, plan, implementation phase, and final implementation lifecycle transitions through deterministic tools, with explicit human approval gates for proposal-to-plan, plan-to-implementation, explicitly marked phase stops, and final implementation approval.
 
 #### Risks and Mitigations
 
@@ -444,9 +444,9 @@ None. The user resolved the planning questions on 2026-06-11.
 
 ## Handoff Guidance
 
-- Execute phases in dependency order and stop at every human approval gate.
+- Execute phases in dependency order. Stop for human approval at proposal-to-plan, plan-to-implementation, final implementation approval, and only those implementation phases that the plan explicitly marks as human-gated.
 - Use the parent/current agent as the writer; do not delegate implementation to `cartographer-pathfinder` by default.
 - Keep generated test artifacts under temp roots.
 - Use deterministic wrappers for state/artifact mutations as soon as each wrapper exists; until then, use existing low-level tools and record fallback/manual receipts.
-- After each phase, validate, create/update context pack, run auditor/handoff gate, request human approval, and only then advance.
+- After each normal implementation phase, validate, create/update context pack, run auditor/handoff gate, compact state, and advance automatically to the next phase. Request human approval only for explicitly human-gated phases or final implementation approval.
 - Finalization must create an ADR because the approved proposal marks this work architecture-significant.

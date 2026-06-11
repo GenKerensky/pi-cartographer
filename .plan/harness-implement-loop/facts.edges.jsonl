@@ -64,3 +64,5 @@
 {"from":"F031","to":"F028","type":"supported_by","evidence":"The resolved decisions define command naming, approval, enforcement, and dependency-evaluation behavior for lifecycle transition tooling."}
 {"from":"F031","to":"F017","type":"supported_by","evidence":"The resolved subagent strategy keeps evaluation first, then compares other extensions before building a native runner."}
 {"from":"F031","to":"S014","type":"supported_by","evidence":"receipt:harness-implement-loop:open-questions-resolved records the user's selections for command naming, CI approver identity, edit guardrails, and subagent dependency strategy."}
+{"from":"F032","to":"S014","type":"supported_by","evidence":"The user clarified that the intended human approval gates are proposal to plan, plan to implementation, and implementation to finalization; implementation phases should be automatic unless the plan calls for intervention."}
+{"from":"F032","to":"F029","type":"related_to","evidence":"F032 narrows human approval receipts to major gates and explicitly human-gated phases."}

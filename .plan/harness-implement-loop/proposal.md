@@ -33,7 +33,7 @@ That same session had normal Pi transcript compactions, but those compactions di
 - Do not make `.cartographer` authoritative for planning, validation history, or checklist truth [F005][F015].
 - Do not auto-commit, auto-stage, or silently accept phase completion without deterministic evidence and an auditor/fallback gate [F014].
 - Do not remove existing deterministic primitive commands such as `cartographer_state`, `cartographer_index`, `cartographer_jsonl`, `cartographer_validation`, `cartographer_evidence`, or `cartographer_adr`; new wrappers should orchestrate and enforce around them [F007][F018].
-- Do not remove the human from approval points. Instead, make human approval explicit, durable, and tool-mediated through `cartographer_transition approve`, so the workflow stops at intended gates and resumes only after an auditable approval receipt exists [F028][F029].
+- Do not remove the human from major approval points. Instead, make human approval explicit, durable, and tool-mediated through `cartographer_transition approve` for proposal approval, plan approval, and final implementation approval. Normal implementation phases should advance automatically after deterministic criteria pass unless the plan explicitly marks a phase as requiring human approval [F028][F029].
 - Do not require a full external orchestrator service for the first iteration. Prefer project-local Pi extension command/tool wrappers for implement execution and subagent handoffs, while leaving room for SDK-level runtime orchestration later [F009][F012].
 - Do not implement product-specific TanStack dashboard work in this proposal; that session is evidence for a workflow defect [F001].
 
@@ -127,8 +127,7 @@ proposal-draft
   -> plan-approved
   -> implementation-in-progress
   -> phase-in-progress(Pn)
-  -> phase-ready-for-human-review(Pn)
-  -> phase-approved(Pn)
+  -> phase-complete(Pn)
   -> next phase-in-progress(Pn+1)
   -> implementation-ready-for-human-review
   -> implemented
@@ -138,7 +137,7 @@ Core commands:
 
 - `cartographer_transition status --topic <topic>`: prints current lifecycle state, blocking gates, required validations, pending human approvals, and next allowed commands.
 - `cartographer_transition request-approval --topic <topic> --gate <proposal|plan|phase|implementation> [--phase-id Pn]`: verifies deterministic prerequisites, writes a review bundle/context pack if needed, records a `ready-for-human-review` receipt, and stops.
-- `cartographer_transition approve --topic <topic> --gate <proposal|plan|phase|implementation> [--phase-id Pn] [--approved-by <human>] --summary <text>`: records human approval, advances lifecycle state, and unlocks the next transition. If `--approved-by` is omitted, resolve the approver from `.cartographer/config.toml` first, then `git config user.name`, then the system username.
+- `cartographer_transition approve --topic <topic> --gate <proposal|plan|implementation|phase> [--phase-id Pn] [--approved-by <human>] --summary <text>`: records human approval, advances lifecycle state, and unlocks the next transition. `phase` approval is only required when the plan explicitly marks that phase as human-gated. If `--approved-by` is omitted, resolve the approver from `.cartographer/config.toml` first, then `git config user.name`, then the system username.
 - `cartographer_transition reject --topic <topic> --gate <...> --reason <text>`: records rejection, leaves or moves the lifecycle to blocked/rework, and sets the next required action.
 - `cartographer_transition advance --topic <topic> --to <state>`: machine-only transition for gates that do not require human approval, allowed only when all deterministic prerequisites and receipts exist.
 
@@ -146,9 +145,10 @@ Human-in-the-loop behavior:
 
 - Proposal finalization stops at `proposal-ready-for-human-review` after deterministic validation, context pack creation, and auditor PASS. The human approves with `cartographer_transition approve --gate proposal`. Only then may planning start.
 - Plan finalization stops at `plan-ready-for-human-review` after plan graph validation, dependency checks, context pack creation, and auditor PASS. The human approves with `cartographer_transition approve --gate plan`. Only then may implementation start.
-- Each implementation phase stops at `phase-ready-for-human-review(Pn)` after validation receipts, plan status synchronization, context pack creation, state compaction/resume, and auditor PASS/fallback. The human approves with `cartographer_transition approve --gate phase --phase-id Pn`. Only then may the wrapper start the next phase.
+- Normal implementation phases do **not** stop for human approval. After phase validation receipts, plan status synchronization, context pack creation, state compaction/resume, and auditor PASS/fallback, `cartographer_transition advance --to phase-complete --phase-id Pn` may advance automatically to the next executable phase.
+- A phase stops for human approval only when the plan explicitly marks it as human-gated, such as `human_approval_required: true`, a phase-level transition prerequisite, or an unresolved decision requiring user direction. In that case it enters `phase-ready-for-human-review(Pn)`, and the human approves with `cartographer_transition approve --gate phase --phase-id Pn`.
 - Final implementation stops at `implementation-ready-for-human-review` after full project validation, topic/graph validation, final auditor gate, ADR handling, and clean state. The human approves with `cartographer_transition approve --gate implementation`. Only then may the topic be marked `implemented`.
-- Human approval receipts must include approver identity or local label, timestamp, approved artifact/receipt IDs, summary, and any accepted residual risk. Approval receipts do not replace deterministic validation; they authorize crossing a gate after validation exists.
+- Human approval receipts must include approver identity or local label, timestamp, approved artifact/receipt IDs, summary, and any accepted residual risk. Approval receipts do not replace deterministic validation; they authorize crossing a major gate, or an explicitly human-gated phase, after validation exists.
 - Approver identity resolution is deterministic and local-only: `--approved-by` wins when supplied; otherwise read `.cartographer/config.toml` (gitignored) for a configured approver such as `approver = "John Doe"` or `[transition] approved_by = "John Doe"`; otherwise use `git config user.name`; otherwise use the system username. The value must be non-secret and human-readable, never an auth token or signature.
 
 `cartographer_transition` should update or coordinate:
@@ -225,7 +225,7 @@ This makes the wrapper a deterministic control plane, not an autonomous hidden w
 
 Add temp-root tests for:
 
-- `cartographer_transition` blocks every lifecycle transition until deterministic prerequisites and required human approval receipts exist; request/approve/reject flows update lifecycle state and receipts without bypassing validation.
+- `cartographer_transition` blocks major lifecycle transitions until deterministic prerequisites and required human approval receipts exist; normal implementation phase transitions require deterministic prerequisites but not human approval unless the phase is explicitly human-gated. Request/approve/reject flows update lifecycle state and receipts without bypassing validation.
 - `cartographer_proposal init/finalize` creates expected proposal artifacts, rejects missing citation/evidence/audit prerequisites, and never truncates existing useful artifacts.
 - `cartographer_fact` wrappers enforce source/fact/support shape and reject unsupported cited facts.
 - `cartographer_plan generate-graph/finalize` creates plan graph JSONL from Markdown, detects dependency cycles/status drift, and requires deterministic validation/audit evidence.

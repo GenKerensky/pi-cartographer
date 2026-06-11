@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "topic": "harness-implement-loop",
-  "source_status": "hashes-valid",
+  "source_status": "stale",
   "source_refs": {
     "plan_md": {
       "path": ".plan/harness-implement-loop/plan.md",
@@ -134,9 +134,10 @@
       "stale generated snippets"
     ]
   },
-  "updated_at": "2026-06-11T05:05:08Z",
+  "updated_at": "2026-06-11T05:32:30Z",
   "compaction": {
     "trigger": "phase-complete",
     "compacted_at": "2026-06-11T05:03:34Z"
-  }
+  },
+  "stale_reason": "Plan/proposal clarification changed plan.md, receipts, and context packs after P0 commit."
 }
