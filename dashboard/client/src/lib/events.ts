@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { writeLatestLiveReloadEvent, writeLiveStatus } from "./dashboard-db.js";
 import type { LiveReloadEvent, LiveReloadStatus } from "../../../shared/models.js";
 
 export type LiveConnectionState = "connected" | "reconnecting" | "disconnected" | "manual-refresh";
@@ -25,10 +26,12 @@ export function useLiveConnection(enabled = true): LiveConnectionSnapshot {
 		source.addEventListener("error", () => setSnapshot((current) => ({ ...current, state: "reconnecting" })));
 		source.addEventListener("status", (event) => {
 			const status = JSON.parse((event as MessageEvent<string>).data) as LiveReloadStatus;
+			writeLiveStatus(status);
 			setSnapshot({ state: status.enabled ? "connected" : "manual-refresh", status });
 		});
 		source.addEventListener("reload", (event) => {
 			const lastEvent = JSON.parse((event as MessageEvent<string>).data) as LiveReloadEvent;
+			writeLatestLiveReloadEvent(lastEvent);
 			setSnapshot((current) => ({ ...current, state: "connected", lastEvent }));
 		});
 		return () => {
