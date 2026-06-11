@@ -83,7 +83,9 @@ def render_requirement(req: dict[str, Any], scenarios: list[dict[str, Any]], top
     if req.get("renamed_from"):
         lines.append(f"- Renamed from: {req['renamed_from']}")
     if req.get("supersedes"):
-        lines.append(f"- Supersedes: {', '.join(map(str, req['supersedes'] if isinstance(req['supersedes'], list) else [req['supersedes']]))}")
+        lines.append(
+            f"- Supersedes: {', '.join(map(str, req['supersedes'] if isinstance(req['supersedes'], list) else [req['supersedes']]))}"
+        )
     if receipt_ids:
         lines.append(f"- Fold receipts: {', '.join(receipt_ids)}")
     lines.extend(["", str(req.get("statement") or "No statement provided.").strip(), ""])
@@ -169,7 +171,13 @@ def fold(root: Path, topic: str, split_domain: bool, receipt_ids: list[str]) -> 
             "created_at": dt.datetime.now(dt.UTC).replace(microsecond=0).isoformat(),
         },
     )
-    return {"ok": True, "topic": topic, "changed": sorted(set(changed)), "count": len(requirements), "receipt_id": receipt_id}
+    return {
+        "ok": True,
+        "topic": topic,
+        "changed": sorted(set(changed)),
+        "count": len(requirements),
+        "receipt_id": receipt_id,
+    }
 
 
 def validate_fold(root: Path, topic: str) -> dict[str, Any]:
@@ -183,7 +191,9 @@ def validate_fold(root: Path, topic: str) -> dict[str, Any]:
     has_skip = any(r.get("type") == "requirements-fold-skip" and r.get("status") == "approved" for r in receipts)
     errors: list[str] = []
     if not (has_receipt or has_skip):
-        errors.append("Requirement deltas require a requirements-fold receipt or approved requirements-fold-skip receipt")
+        errors.append(
+            "Requirement deltas require a requirements-fold receipt or approved requirements-fold-skip receipt"
+        )
     duplicates = find_durable_duplicates(root)
     if duplicates:
         errors.append(f"Duplicate durable requirement IDs: {duplicates}")
@@ -202,7 +212,11 @@ def main() -> int:
         p.add_argument("--receipt-id", action="append", default=[])
     args = parser.parse_args()
     root = Path(args.root).resolve()
-    result = fold(root, args.topic, args.split_domain, args.receipt_id) if args.command == "fold" else validate_fold(root, args.topic)
+    result = (
+        fold(root, args.topic, args.split_domain, args.receipt_id)
+        if args.command == "fold"
+        else validate_fold(root, args.topic)
+    )
     if args.json:
         print(json.dumps(result, indent=2, sort_keys=True))
     else:

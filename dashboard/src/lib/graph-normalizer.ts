@@ -8,7 +8,16 @@ import type {
 	TopicArtifacts,
 } from "../shared/models.js";
 
-export type GraphLayer = "map" | "facts" | "plan" | "requirements" | "design" | "receipts" | "context" | "evidence" | "adr";
+export type GraphLayer =
+	| "map"
+	| "facts"
+	| "plan"
+	| "requirements"
+	| "design"
+	| "receipts"
+	| "context"
+	| "evidence"
+	| "adr";
 
 export type NormalizedGraphNode = {
 	id: string;

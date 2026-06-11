@@ -159,7 +159,9 @@ class RequirementsRecordsTests(unittest.TestCase):
             self.assertEqual(self.run_helper(root, "validate-fold").returncode, 0)
 
             (root / "docs" / "requirements").mkdir(parents=True)
-            (root / "docs" / "requirements.md").write_text("# Requirements\n\n### REQ-DUP-001 — A\n\n", encoding="utf-8")
+            (root / "docs" / "requirements.md").write_text(
+                "# Requirements\n\n### REQ-DUP-001 — A\n\n", encoding="utf-8"
+            )
             (root / "docs" / "requirements" / "workflow.md").write_text(
                 "# Requirements\n\n### REQ-DUP-001 — B\n\n", encoding="utf-8"
             )

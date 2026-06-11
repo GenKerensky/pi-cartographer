@@ -517,7 +517,18 @@ async function topicSummary(root: string, topic: string): Promise<TopicSummary> 
 	const receipts = await readJsonlFile(safeRoot, topicPath(topic, "receipts.jsonl"), topic);
 	const contextPacks = await readJsonlFile(safeRoot, topicPath(topic, "context-packs.jsonl"), topic);
 	const evidence = await readEvidence(safeRoot, topic);
-	const [mapNodes, mapEdges, factNodes, factEdges, planNodes, planEdges, requirementNodes, requirementEdges, designNodes, designEdges] = graphResults;
+	const [
+		mapNodes,
+		mapEdges,
+		factNodes,
+		factEdges,
+		planNodes,
+		planEdges,
+		requirementNodes,
+		requirementEdges,
+		designNodes,
+		designEdges,
+	] = graphResults;
 	return {
 		id: topic,
 		name: topic,

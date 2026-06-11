@@ -347,7 +347,7 @@ Only change dashboard UI if necessary for existing tests/surfaces to represent n
 
 ### Phase P6 — Final Validation and ADR
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P5
 - **Unlocks:** none
 - **Primary references:** `file:skills/proposal/SKILL.md`, `file:skills/plan/SKILL.md`, `file:skills/implement/SKILL.md`, `file:README.md`, `docs/adr`, [F011], [F012], [F014], [F016], [F018]
@@ -366,20 +366,20 @@ Run full validation, validate this topic's artifacts and planning graph, obtain 
 
 #### Checklist
 
-- [ ] **P6.T1** Run full project validation and record deterministic receipts.
-- [ ] **P6.T2** Validate `.plan/proposal-design-split` topic artifacts and planning graph.
-- [ ] **P6.T3** Obtain final read-only `cartographer-auditor` PASS for implementation diff and validation receipts.
-- [ ] **P6.T4** Create/write the workflow architecture ADR with `cartographer_adr`, citing validation receipt IDs/source commits.
-- [ ] **P6.T5** Validate ADR graph and confirm the ADR records Cartographer-native requirements/design/fold workflow and OpenSpec-compatible-not-dependent boundary.
-- [ ] **P6.T6** Confirm no hard OpenSpec runtime dependency, no raw private references, no real `.plan/_private/**` test data, and no duplicate plan truth were introduced.
+- [x] **P6.T1** Run full project validation and record deterministic receipts.
+- [x] **P6.T2** Validate `.plan/proposal-design-split` topic artifacts and planning graph.
+- [x] **P6.T3** Obtain final read-only `cartographer-auditor` PASS for implementation diff and validation receipts.
+- [x] **P6.T4** Create/write the workflow architecture ADR with `cartographer_adr`, citing validation receipt IDs/source commits.
+- [x] **P6.T5** Validate ADR graph and confirm the ADR records Cartographer-native requirements/design/fold workflow and OpenSpec-compatible-not-dependent boundary.
+- [x] **P6.T6** Confirm no hard OpenSpec runtime dependency, no raw private references, no real `.plan/_private/**` test data, and no duplicate plan truth were introduced.
 
 #### Validation
 
-- [ ] **P6.V1** Run `npm run check` and confirm it passes.
-- [ ] **P6.V2** Run `node --experimental-strip-types skills/plan/scripts/manage_jsonl.ts validate-topic --root "$PWD" --topic proposal-design-split --json` and confirm it passes.
-- [ ] **P6.V3** Run `python skills/plan/scripts/validate_planning_graph.py --root "$PWD" --topic proposal-design-split --json` and confirm it passes.
-- [ ] **P6.V4** Run `python skills/plan/scripts/adr_records.py validate --root "$PWD" --json` after ADR creation and confirm it passes.
-- [ ] **P6.V5** Run `rg -n "openspec" package.json requirements-dev.txt pyproject.toml` and confirm no required OpenSpec dependency was added unless explicitly justified.
+- [x] **P6.V1** Run `npm run check` and confirm it passes.
+- [x] **P6.V2** Run `node --experimental-strip-types skills/plan/scripts/manage_jsonl.ts validate-topic --root "$PWD" --topic proposal-design-split --json` and confirm it passes.
+- [x] **P6.V3** Run `python skills/plan/scripts/validate_planning_graph.py --root "$PWD" --topic proposal-design-split --json` and confirm it passes.
+- [x] **P6.V4** Run `python skills/plan/scripts/adr_records.py validate --root "$PWD" --json` after ADR creation and confirm it passes.
+- [x] **P6.V5** Run `rg -n "openspec" package.json requirements-dev.txt pyproject.toml` and confirm no required OpenSpec dependency was added unless explicitly justified.
 
 #### Exit Criteria
 
@@ -399,13 +399,13 @@ This phase finalizes evidence. Do not skip ADR handling: the accepted proposal e
 
 ## Cross-Phase Validation
 
-- [ ] **XV1** `node --experimental-strip-types skills/plan/scripts/manage_jsonl.ts validate-topic --root "$PWD" --topic proposal-design-split --json` passes after plan creation and after final implementation.
-- [ ] **XV2** `python skills/plan/scripts/validate_planning_graph.py --root "$PWD" --topic proposal-design-split --json` passes after plan creation and after final implementation.
-- [ ] **XV3** `npm run check:scripts` passes after helper/script changes.
-- [ ] **XV4** `npm run test:py` and `npm run test:ts` pass after validator/tool/dashboard changes.
-- [ ] **XV5** `npm run check` passes before final acceptance.
-- [ ] **XV6** Final `cartographer-auditor` PASS is recorded after deterministic receipts.
-- [ ] **XV7** `cartographer_adr` writes or confirms the required ADR after validation evidence exists.
+- [x] **XV1** `node --experimental-strip-types skills/plan/scripts/manage_jsonl.ts validate-topic --root "$PWD" --topic proposal-design-split --json` passes after plan creation and after final implementation.
+- [x] **XV2** `python skills/plan/scripts/validate_planning_graph.py --root "$PWD" --topic proposal-design-split --json` passes after plan creation and after final implementation.
+- [x] **XV3** `npm run check:scripts` passes after helper/script changes.
+- [x] **XV4** `npm run test:py` and `npm run test:ts` pass after validator/tool/dashboard changes.
+- [x] **XV5** `npm run check` passes before final acceptance.
+- [x] **XV6** Final `cartographer-auditor` PASS is recorded after deterministic receipts.
+- [x] **XV7** `cartographer_adr` writes or confirms the required ADR after validation evidence exists.
 
 ## Open Questions
 

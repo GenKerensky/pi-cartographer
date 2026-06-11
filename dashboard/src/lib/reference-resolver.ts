@@ -1,6 +1,15 @@
 import type { AdrCollection, AdrSummary, GraphNode, TopicArtifacts } from "../shared/models.js";
 
-export type ReferenceKind = "fact" | "source" | "requirement" | "design" | "phase" | "task" | "validation" | "adr" | "file";
+export type ReferenceKind =
+	| "fact"
+	| "source"
+	| "requirement"
+	| "design"
+	| "phase"
+	| "task"
+	| "validation"
+	| "adr"
+	| "file";
 export type ReferenceStatus = "resolved" | "missing" | "ambiguous" | "blocked";
 
 export type ResolvedReference = {
@@ -204,7 +213,8 @@ export function resolveReference(input: string, index: ReferenceIndex): Resolved
 		return { input: trimmed, kind: "fact", status: "missing", message: `No fact reference found for ${trimmed}` };
 	}
 	if (/^S\d+$/i.test(trimmed)) return resolveMap(trimmed, "source", index.sources, index);
-	if (/^(REQ|SCN|AC)-[A-Z0-9_.-]+$/i.test(trimmed)) return resolveMap(trimmed.toUpperCase(), "requirement", index.requirements, index);
+	if (/^(REQ|SCN|AC)-[A-Z0-9_.-]+$/i.test(trimmed))
+		return resolveMap(trimmed.toUpperCase(), "requirement", index.requirements, index);
 	if (/^DES-[A-Z0-9_.-]+$/i.test(trimmed)) return resolveMap(trimmed.toUpperCase(), "design", index.designs, index);
 	if (trimmed.startsWith("phase:")) return resolveMap(trimmed, "phase", index.phases, index);
 	if (trimmed.startsWith("task:")) return resolveMap(trimmed, "task", index.tasks, index);

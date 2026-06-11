@@ -200,7 +200,12 @@ class WorkflowDocsTests(unittest.TestCase):
         drafter = (ROOT / ".pi/agents/cartographer-drafter.md").read_text(encoding="utf-8")
         combined = "\n".join([auditor, compass, drafter])
 
-        for needle in ["requirements.nodes.jsonl", "requirements.edges.jsonl", "design.nodes.jsonl", "design.edges.jsonl"]:
+        for needle in [
+            "requirements.nodes.jsonl",
+            "requirements.edges.jsonl",
+            "design.nodes.jsonl",
+            "design.edges.jsonl",
+        ]:
             self.assertIn(needle, combined)
         self.assertIn("read-only summaries", combined)
         self.assertIn("core user workflow", compass)

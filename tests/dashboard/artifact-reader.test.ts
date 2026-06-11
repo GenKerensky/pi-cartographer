@@ -22,7 +22,12 @@ describe("dashboard artifact reader", () => {
 
 		expect(discovered.topics.map((topic) => topic.id)).toEqual([fixture.topic]);
 		expect(artifacts.topic.counts.factNodes).toBe(4);
-		expect(artifacts.documents.map((document) => document.kind)).toEqual(["proposal", "requirements", "design", "plan"]);
+		expect(artifacts.documents.map((document) => document.kind)).toEqual([
+			"proposal",
+			"requirements",
+			"design",
+			"plan",
+		]);
 		expect(artifacts.topic.counts.requirementNodes).toBe(1);
 		expect(artifacts.topic.counts.designNodes).toBe(1);
 		expect(artifacts.graph.nodes.map((node) => node.id)).toContain("F001");

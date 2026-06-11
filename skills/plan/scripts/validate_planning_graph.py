@@ -291,8 +291,13 @@ def validate_requirement_records(
             for field in ["title", "requirement_id"]:
                 if not record.get(field):
                     errors.append(f"Missing {field} in {label} record {index}")
-            if record.get("requirement_id") and by_id.get(str(record.get("requirement_id")), {}).get("type") != "requirement":
-                errors.append(f"Scenario {record_id} references missing requirement_id {record.get('requirement_id')!r}")
+            if (
+                record.get("requirement_id")
+                and by_id.get(str(record.get("requirement_id")), {}).get("type") != "requirement"
+            ):
+                errors.append(
+                    f"Scenario {record_id} references missing requirement_id {record.get('requirement_id')!r}"
+                )
         if record.get("status") and record.get("status") not in REQUIREMENT_STATUSES:
             errors.append(f"Invalid requirement status {record.get('status')!r} in {label} record {index}")
         for field in ["scenario_refs", "fact_refs", "source_refs", "durable_refs"]:
@@ -330,7 +335,15 @@ def validate_requirement_edges(
 
 DESIGN_NODE_TYPES = {"design-decision", "design-alternative", "design-component", "design-risk"}
 DESIGN_STATUSES = {"proposed", "accepted", "rejected", "superseded", "implemented"}
-DESIGN_EDGE_TYPES = {"satisfies", "supported_by", "constrained_by", "alternative_to", "mitigates", "risk_of", "related_to"}
+DESIGN_EDGE_TYPES = {
+    "satisfies",
+    "supported_by",
+    "constrained_by",
+    "alternative_to",
+    "mitigates",
+    "risk_of",
+    "related_to",
+}
 
 
 def markdown_anchors(text: str) -> set[str]:
@@ -369,7 +382,11 @@ def validate_design_records(
     fact_ids: set[str],
     errors: list[str],
 ) -> None:
-    satisfying_edges = {str(edge.get("from")) for edge in edges if edge.get("type") == "satisfies" and str(edge.get("to")) in requirement_ids}
+    satisfying_edges = {
+        str(edge.get("from"))
+        for edge in edges
+        if edge.get("type") == "satisfies" and str(edge.get("to")) in requirement_ids
+    }
     for index, record in enumerate(records, start=1):
         record_id = str(record.get("id") or "")
         record_type = record.get("type")
@@ -392,8 +409,15 @@ def validate_design_records(
             if str(ref) not in fact_ids:
                 errors.append(f"Design node {record_id} references missing fact {ref!r}")
         infrastructure_rationale = record.get("infrastructure_only_rationale")
-        has_infrastructure_rationale = isinstance(infrastructure_rationale, str) and bool(infrastructure_rationale.strip())
-        if record_type == "design-decision" and record.get("status") == "accepted" and record_id not in satisfying_edges and not has_infrastructure_rationale:
+        has_infrastructure_rationale = isinstance(infrastructure_rationale, str) and bool(
+            infrastructure_rationale.strip()
+        )
+        if (
+            record_type == "design-decision"
+            and record.get("status") == "accepted"
+            and record_id not in satisfying_edges
+            and not has_infrastructure_rationale
+        ):
             errors.append(
                 f"Accepted design decision {record_id} must satisfy a requirement/scenario or include non-empty infrastructure_only_rationale"
             )
@@ -679,8 +703,12 @@ def main() -> int:
 
     map_ids = validate_unique_ids(map_nodes, topic_dir / "map.nodes.jsonl", errors)
     fact_ids_all = validate_unique_ids(fact_nodes, topic_dir / "facts.nodes.jsonl", errors)
-    source_ids_for_requirements = {str(node.get("id")) for node in fact_nodes if node.get("type") == "source" and node.get("id")}
-    fact_ids_for_requirements = {str(node.get("id")) for node in fact_nodes if node.get("type") == "fact" and node.get("id")}
+    source_ids_for_requirements = {
+        str(node.get("id")) for node in fact_nodes if node.get("type") == "source" and node.get("id")
+    }
+    fact_ids_for_requirements = {
+        str(node.get("id")) for node in fact_nodes if node.get("type") == "fact" and node.get("id")
+    }
     plan_ids = validate_unique_ids(plan_nodes, topic_dir / "plan.nodes.jsonl", errors)
     requirement_ids = validate_unique_ids(requirement_nodes, topic_dir / "requirements.nodes.jsonl", errors)
     design_ids = validate_unique_ids(design_nodes, topic_dir / "design.nodes.jsonl", errors)
@@ -694,7 +722,9 @@ def main() -> int:
         requirement_nodes, "requirements.nodes.jsonl", fact_ids_for_requirements, source_ids_for_requirements, errors
     )
     validate_requirement_edges(requirement_edges, "requirements.edges.jsonl", allowed_ids, errors)
-    validate_design_records(topic_dir, design_nodes, design_edges, "design.nodes.jsonl", requirement_ids, fact_ids_for_requirements, errors)
+    validate_design_records(
+        topic_dir, design_nodes, design_edges, "design.nodes.jsonl", requirement_ids, fact_ids_for_requirements, errors
+    )
     validate_design_edges(design_edges, "design.edges.jsonl", allowed_ids, db_path, errors)
     validate_file_references(
         root,

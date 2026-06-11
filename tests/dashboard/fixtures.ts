@@ -29,8 +29,16 @@ export function createDashboardFixture(topic = "demo"): DashboardFixture {
 
 	fs.writeFileSync(path.join(root, "README.md"), "# Fixture repo\n", "utf8");
 	fs.writeFileSync(path.join(topicDir, "proposal.md"), "# Demo Proposal\n\nUses [F001] and [F002].\n", "utf8");
-	fs.writeFileSync(path.join(topicDir, "requirements.md"), "# Demo Requirements\n\nImplements [REQ-DEMO-001].\n", "utf8");
-	fs.writeFileSync(path.join(topicDir, "design.md"), "# Demo Design\n\n## Decision One\n\nSatisfies [REQ-DEMO-001].\n", "utf8");
+	fs.writeFileSync(
+		path.join(topicDir, "requirements.md"),
+		"# Demo Requirements\n\nImplements [REQ-DEMO-001].\n",
+		"utf8",
+	);
+	fs.writeFileSync(
+		path.join(topicDir, "design.md"),
+		"# Demo Design\n\n## Decision One\n\nSatisfies [REQ-DEMO-001].\n",
+		"utf8",
+	);
 	fs.writeFileSync(path.join(topicDir, "plan.md"), "# Demo Plan\n\n### Phase P0 — Build\n", "utf8");
 	const privateFile = path.join(privateDir, "raw.log");
 	fs.writeFileSync(privateFile, "secret raw artifact\n", "utf8");
@@ -71,7 +79,9 @@ export function createDashboardFixture(topic = "demo"): DashboardFixture {
 			status: "accepted",
 		},
 	]);
-	writeJsonl(path.join(topicDir, "requirements.edges.jsonl"), [{ from: "REQ-DEMO-001", to: "F001", type: "supported_by" }]);
+	writeJsonl(path.join(topicDir, "requirements.edges.jsonl"), [
+		{ from: "REQ-DEMO-001", to: "F001", type: "supported_by" },
+	]);
 	writeJsonl(path.join(topicDir, "design.nodes.jsonl"), [
 		{
 			id: "DES-DEMO-001",
@@ -83,7 +93,9 @@ export function createDashboardFixture(topic = "demo"): DashboardFixture {
 			requirement_refs: ["REQ-DEMO-001"],
 		},
 	]);
-	writeJsonl(path.join(topicDir, "design.edges.jsonl"), [{ from: "DES-DEMO-001", to: "REQ-DEMO-001", type: "satisfies" }]);
+	writeJsonl(path.join(topicDir, "design.edges.jsonl"), [
+		{ from: "DES-DEMO-001", to: "REQ-DEMO-001", type: "satisfies" },
+	]);
 	writeJsonl(path.join(topicDir, "receipts.jsonl"), [
 		{
 			id: "receipt:P0.V1",
