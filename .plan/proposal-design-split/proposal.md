@@ -31,9 +31,10 @@ The missing layer is a durable behavioral requirements/spec lifecycle. Without i
 4. **Preserve existing research rigor.** Keep current map/fact graph creation, detailed research, citations, validation, and audit posture; only change where the resulting material is finalized [F003].
 5. **Use OpenSpec-compatible concepts without hard dependency.** Borrow proposal/specs/design/tasks separation, ADDED/MODIFIED/REMOVED deltas, and scenarios, but keep Cartographer's graph-native internals [F004][F005][F006][F012].
 6. **Improve traceability.** Link requirements to proposal goals/non-goals, facts, risks, design decisions, plan tasks, validations, receipts, and eventual durable requirements in `docs/requirements.md` [F011][F013][F014].
-7. **Preserve existing plan/implement authority.** The new requirements/design phases should feed the existing plan phase; they should not replace `plan.md`, `plan.nodes.jsonl`, `receipts.jsonl`, or implementation state rules [F009][F010].
-8. **Fold accepted deltas into durable requirements.** After implementation/archive, merge accepted topic-local requirement deltas into `docs/requirements.md` in the same spirit that ADRs live durably under `docs/adr` [F014].
-9. **Keep future OpenSpec import/export trivial.** Cartographer should stay native, but its requirement change types, scenarios, domains, archive/fold lifecycle, and artifact dependencies should map cleanly to current OpenSpec concepts so adapters can be added later without schema rework [F016][F017][F018].
+7. **Expose requirements/design in discovery surfaces.** Make requirements and design artifacts visible through the dashboard, graph explorer, reference resolver, and project index without exposing raw private inputs.
+8. **Preserve existing plan/implement authority.** The new requirements/design phases should feed the existing plan phase; they should not replace `plan.md`, `plan.nodes.jsonl`, `receipts.jsonl`, or implementation state rules [F009][F010].
+9. **Fold accepted deltas into durable requirements.** After implementation/archive, merge accepted topic-local requirement deltas into `docs/requirements.md` in the same spirit that ADRs live durably under `docs/adr` [F014].
+10. **Keep future OpenSpec import/export trivial.** Cartographer should stay native, but its requirement change types, scenarios, domains, archive/fold lifecycle, and artifact dependencies should map cleanly to current OpenSpec concepts so adapters can be added later without schema rework [F016][F017][F018].
 
 ## Non-Goals
 
@@ -124,8 +125,8 @@ Each requirement should have a stable ID, domain, priority, change type, source 
 Create a design phase that consumes proposal + requirements + map/fact graphs and emits:
 
 - `.plan/<topic>/design.md` — human-readable architecture and design narrative;
-- `.plan/<topic>/design.nodes.jsonl` — design decision, alternative, component, interface, migration, risk, and validation-strategy nodes;
-- `.plan/<topic>/design.edges.jsonl` — typed edges linking design nodes to requirements, facts, map nodes/files, alternatives, plan phases, validations, and receipts.
+- `.plan/<topic>/design.nodes.jsonl` — MVP design decision, alternative, component, and risk nodes;
+- `.plan/<topic>/design.edges.jsonl` — typed edges linking design nodes to requirements, facts, alternatives, constraints, and risk mitigations.
 
 This should follow the same human Markdown + machine JSONL pattern already used for plans, because structured design-to-requirement references are valuable enough to include from the start [F015].
 
@@ -166,7 +167,7 @@ Plan phases should include requirement references in phase/task metadata, and va
 
 **Primary references:** `file:skills/plan/SKILL.md`, `file:skills/implement/SKILL.md`, [F009], [F010].
 
-### 5. Extend validators and artifact summaries
+### 5. Extend validators, artifact summaries, and discovery surfaces
 
 Extend existing topic validation rather than creating a separate validation stack [F011]. Validation should check:
 
@@ -180,7 +181,15 @@ Extend existing topic validation rather than creating a separate validation stac
 - plan phases/tasks reference requirement and design IDs when they implement behavior;
 - no raw private references or unsupported source claims enter new artifacts.
 
-**Primary references:** `file:skills/plan/scripts/manage_jsonl.ts`, `file:skills/plan/scripts/validate_planning_graph.py`, [F011], [F013].
+Dashboard, reference resolver, and index surfaces should also understand the new artifact layer:
+
+- topic documents include `requirements.md` and `design.md` alongside proposal and plan documents;
+- topic counts include requirement/design node and edge totals;
+- graph explorer layers can show requirement and design records;
+- reference resolution recognizes `REQ-*`, `SCN-*`, `AC-*`, and `DES-*` IDs;
+- project indexing treats committed `.plan/<topic>/requirements.md` and `.plan/<topic>/design.md` as `plans` scope, while durable `docs/requirements.md` / `docs/requirements/<domain>.md` remain durable repository documentation in normal code/all retrieval scopes.
+
+**Primary references:** `file:skills/plan/scripts/manage_jsonl.ts`, `file:skills/plan/scripts/validate_planning_graph.py`, `file:dashboard/src/server/artifact-reader.ts`, `file:dashboard/src/lib/reference-resolver.ts`, `file:skills/index-project/SKILL.md`, [F011], [F013].
 
 ### 6. Add OpenSpec-compatible adapter points later
 
@@ -236,9 +245,9 @@ Follow OpenSpec's current lifecycle shape where it helps: verify implementation 
 | Future OpenSpec import/export reveals a missing concept. | Preserve mappings for change folders, specs, domains, scenarios, ADDED/MODIFIED/REMOVED and RENAMED-style change types, sync, archive, validation, and schema metadata from the start [F016][F017][F018]. |
 | Existing proposals/plans break. | Support legacy proposal-with-design topics during migration and only require new artifacts for newly accepted topics after the split. |
 
-## Open Questions
+## Resolved Scope Decisions
 
-1. Requirements and design graph artifacts should be required by scope/risk of change, like ADRs. Small changes that do not impact a core user workflow do not need requirements/design graph artifacts; they can remain lightweight unless another risk factor makes the behavioral contract valuable.
-2. Use the **Decision + Alternative** schema first for `design.nodes.jsonl` / `design.edges.jsonl`: support `design-decision`, `design-alternative`, `design-component`, and `design-risk` nodes, plus edges such as `satisfies`, `supported_by`, `constrained_by`, and `alternative_to`. Document full implementation traceability (`design-interface`, `validation-strategy`, `implemented_by`, `validated_by`, richer file/plan links) as a fast-follow after the basic design graph is in place.
-3. Confirm the durable requirements file layout from current OpenSpec behavior during planning. The intended direction is `docs/requirements.md` first, with split/domain files only when needed, while preserving a clean mapping from OpenSpec `specs/<domain>/spec.md` to Cartographer durable requirements sections/files [F016][F017][F018].
-4. The first implementation should include only Cartographer-native requirements and fold-to-docs support. It should not include OpenSpec import/export yet, but must keep concepts mapped cleanly enough that a later adapter is trivial [F012][F016][F017][F018].
+1. Requirements and design graph artifacts are scope-gated, like ADRs. Small changes that do not impact a core user workflow do not need requirements/design graph artifacts by default unless another risk factor makes the behavioral contract valuable.
+2. The implemented design graph MVP uses the **Decision + Alternative** schema: `design-decision`, `design-alternative`, `design-component`, and `design-risk` nodes, plus edges such as `satisfies`, `supported_by`, `constrained_by`, `mitigates`, and `alternative_to`. Full implementation traceability (`design-interface`, `validation-strategy`, `implemented_by`, `validated_by`, richer file/plan links) remains a fast-follow.
+3. Durable requirements fold into `docs/requirements.md` first, with split/domain files under `docs/requirements/<domain>.md` only when needed. The fold lifecycle preserves stable requirement/scenario IDs, source topic metadata, and fold receipt references.
+4. The first implementation is Cartographer-native only. It includes requirements/design graph validation, workflow guidance, durable requirements folding, dashboard/index/reference visibility, and ADR-0007; OpenSpec import/export remains deferred but intentionally straightforward.
