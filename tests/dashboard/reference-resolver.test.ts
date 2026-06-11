@@ -29,6 +29,16 @@ describe("dashboard reference resolver", () => {
 			external: true,
 			sourceId: "S002",
 		});
+		expect(resolveReference("REQ-DEMO-001", index)).toMatchObject({
+			status: "resolved",
+			kind: "requirement",
+			id: "REQ-DEMO-001",
+		});
+		expect(resolveReference("DES-DEMO-001", index)).toMatchObject({
+			status: "resolved",
+			kind: "design",
+			id: "DES-DEMO-001",
+		});
 		expect(resolveReference("phase:P0", index)).toMatchObject({ status: "resolved", kind: "phase", id: "phase:P0" });
 	});
 
@@ -45,7 +55,18 @@ describe("dashboard reference resolver", () => {
 
 	it("extracts Markdown reference tokens", () => {
 		expect(
-			extractReferenceTokens("Uses [F001], [S001], phase:P0, task:P0.T1, validation:P0.V1, and ADR-0001."),
-		).toEqual(["F001", "S001", "phase:P0", "task:P0.T1", "validation:P0.V1", "ADR-0001"]);
+			extractReferenceTokens(
+				"Uses [F001], [S001], [REQ-DEMO-001], [DES-DEMO-001], phase:P0, task:P0.T1, validation:P0.V1, and ADR-0001.",
+			),
+		).toEqual([
+			"F001",
+			"S001",
+			"REQ-DEMO-001",
+			"DES-DEMO-001",
+			"phase:P0",
+			"task:P0.T1",
+			"validation:P0.V1",
+			"ADR-0001",
+		]);
 	});
 });

@@ -5,11 +5,11 @@
   "source_refs": {
     "plan_md": {
       "path": ".plan/proposal-design-split/plan.md",
-      "sha256": "sha256:b881d62f3ec6bd0a070d9cbb2275316da23daab91a03c25ec19289f2df3e8ea6"
+      "sha256": "sha256:b5b41c224602ac3fbb768df9e8ccef0ce15f997a1dd8d08f27614da20a6cb7f4"
     },
     "plan_nodes": {
       "path": ".plan/proposal-design-split/plan.nodes.jsonl",
-      "sha256": "sha256:1dc5a0d6074f58c5cac1961b11e88e4c02142b75d99f2c805b2e4b354e2ad731"
+      "sha256": "sha256:1a348018e61355e748dd7626bf99423d37c8249baca5b9d5e8480be186d9077d"
     },
     "plan_edges": {
       "path": ".plan/proposal-design-split/plan.edges.jsonl",
@@ -17,11 +17,11 @@
     },
     "receipts": {
       "path": ".plan/proposal-design-split/receipts.jsonl",
-      "sha256": "sha256:d046428073f1b039e833ea25b2b52768f14d66574fca16f80fa8547b63f796d6"
+      "sha256": "sha256:89ca3fef98104d0ef82a7c0912c2504fd2d9b79c3a3bc2d315a85df8bfb51341"
     },
     "context_packs": {
       "path": ".plan/proposal-design-split/context-packs.jsonl",
-      "sha256": "sha256:ee5e5293421232461a2c16f6f5366580fdd1143369dfae8f69aced010f4cac2b"
+      "sha256": "sha256:e7d7bd64ca710c2b20ff1c81251708b550efefbc6db7dc129743f04a91de93e9"
     }
   },
   "current_phase_id": "P0",
@@ -118,14 +118,19 @@
     "receipt:proposal-design-split:P3-auditor-pass:2026-06-11T13:36:00Z",
     "receipt:P4:validation:2026-06-11T13:40:20+00:00",
     "receipt:P4:validation:2026-06-11T13:42:35+00:00",
-    "receipt:proposal-design-split:P4-auditor-pass:2026-06-11T13:41:00Z"
+    "receipt:proposal-design-split:P4-auditor-pass:2026-06-11T13:41:00Z",
+    "receipt:P5:validation:2026-06-11T13:47:36+00:00",
+    "receipt:P5:validation:2026-06-11T13:47:21+00:00",
+    "receipt:P5:validation:2026-06-11T13:50:28+00:00",
+    "receipt:proposal-design-split:P5-auditor-pass:2026-06-11T13:49:00Z"
   ],
   "journal_refs": [
     "journal:20260611T061742Z:compact",
     "journal:20260611T132105Z:compact",
     "journal:20260611T133243Z:compact",
     "journal:20260611T133732Z:compact",
-    "journal:20260611T134246Z:compact"
+    "journal:20260611T134246Z:compact",
+    "journal:20260611T135042Z:compact"
   ],
   "resume": {
     "template_id": "cartographer.single_writer.resume.v1",
@@ -145,10 +150,10 @@
       "stale generated snippets"
     ]
   },
-  "updated_at": "2026-06-11T13:42:46Z",
+  "updated_at": "2026-06-11T13:50:42Z",
   "compaction": {
-    "trigger": "phase-end P4",
-    "compacted_at": "2026-06-11T13:42:46Z"
+    "trigger": "phase-end P5",
+    "compacted_at": "2026-06-11T13:50:42Z"
   },
   "stale_reason": "P1 plan/status/receipts/context packs changed after phase-end validation; regenerating compact state from authoritative artifacts."
 }

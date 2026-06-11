@@ -1,6 +1,6 @@
 import type { AdrCollection, AdrSummary, GraphNode, TopicArtifacts } from "../shared/models.js";
 
-export type ReferenceKind = "fact" | "source" | "phase" | "task" | "validation" | "adr" | "file";
+export type ReferenceKind = "fact" | "source" | "requirement" | "design" | "phase" | "task" | "validation" | "adr" | "file";
 export type ReferenceStatus = "resolved" | "missing" | "ambiguous" | "blocked";
 
 export type ResolvedReference = {
@@ -23,6 +23,8 @@ export type ReferenceIndex = {
 	topic?: string;
 	facts: Map<string, GraphNode>;
 	sources: Map<string, GraphNode>;
+	requirements: Map<string, GraphNode>;
+	designs: Map<string, GraphNode>;
 	phases: Map<string, GraphNode>;
 	tasks: Map<string, GraphNode>;
 	validations: Map<string, GraphNode>;
@@ -113,6 +115,8 @@ export function createReferenceIndex(topicArtifacts: TopicArtifacts, adrs?: AdrC
 		topic: topicArtifacts.topic.id,
 		facts: new Map(),
 		sources: new Map(),
+		requirements: new Map(),
+		designs: new Map(),
 		phases: new Map(),
 		tasks: new Map(),
 		validations: new Map(),
@@ -128,6 +132,8 @@ export function createReferenceIndex(topicArtifacts: TopicArtifacts, adrs?: AdrC
 	for (const node of topicArtifacts.graph.nodes) {
 		if (node.id.startsWith("F")) addNode(index.facts, node);
 		if (node.id.startsWith("S")) addNode(index.sources, node);
+		if (/^(REQ|SCN|AC)-/.test(node.id)) addNode(index.requirements, node);
+		if (node.id.startsWith("DES-")) addNode(index.designs, node);
 		if (node.phaseId || node.id.startsWith("phase:")) addNode(index.phases, node);
 		if (node.taskId || node.id.startsWith("task:")) addNode(index.tasks, node);
 		if (node.validationId || node.id.startsWith("validation:")) addNode(index.validations, node);
@@ -198,6 +204,8 @@ export function resolveReference(input: string, index: ReferenceIndex): Resolved
 		return { input: trimmed, kind: "fact", status: "missing", message: `No fact reference found for ${trimmed}` };
 	}
 	if (/^S\d+$/i.test(trimmed)) return resolveMap(trimmed, "source", index.sources, index);
+	if (/^(REQ|SCN|AC)-[A-Z0-9_.-]+$/i.test(trimmed)) return resolveMap(trimmed.toUpperCase(), "requirement", index.requirements, index);
+	if (/^DES-[A-Z0-9_.-]+$/i.test(trimmed)) return resolveMap(trimmed.toUpperCase(), "design", index.designs, index);
 	if (trimmed.startsWith("phase:")) return resolveMap(trimmed, "phase", index.phases, index);
 	if (trimmed.startsWith("task:")) return resolveMap(trimmed, "task", index.tasks, index);
 	if (trimmed.startsWith("validation:")) return resolveMap(trimmed, "validation", index.validations, index);
@@ -225,7 +233,7 @@ export function resolveReference(input: string, index: ReferenceIndex): Resolved
 
 export function extractReferenceTokens(markdown: string): string[] {
 	const tokens = new Set<string>();
-	for (const match of markdown.matchAll(/\[([FS]\d+)\]/gi)) {
+	for (const match of markdown.matchAll(/\[((?:[FS]\d+)|(?:(?:REQ|SCN|AC|DES)-[A-Z0-9_.-]+))\]/gi)) {
 		const token = match.at(1);
 		if (token) tokens.add(token);
 	}

@@ -52,7 +52,7 @@ type JsonlReadResult = {
 	issues: HealthIssue[];
 };
 
-type TopicDocumentKind = "proposal" | "plan";
+type TopicDocumentKind = "proposal" | "requirements" | "design" | "plan";
 
 type GraphFileSpec = {
 	source: GraphRecordSource;
@@ -189,12 +189,14 @@ export async function readTopicDocuments(
 	topic: string,
 ): Promise<{ documents: DashboardDocument[]; issues: HealthIssue[] }> {
 	const proposal = await topicDocument(root, topic, "proposal");
+	const requirements = await topicDocument(root, topic, "requirements");
+	const design = await topicDocument(root, topic, "design");
 	const plan = await topicDocument(root, topic, "plan");
 	return {
-		documents: [proposal.document, plan.document].filter(
+		documents: [proposal.document, requirements.document, design.document, plan.document].filter(
 			(document): document is DashboardDocument => document !== undefined,
 		),
-		issues: dedupeIssues([...proposal.issues, ...plan.issues]),
+		issues: dedupeIssues([...proposal.issues, ...requirements.issues, ...design.issues, ...plan.issues]),
 	};
 }
 
@@ -206,6 +208,10 @@ function topicGraphSpecs(topic: string): GraphFileSpec[] {
 		{ source: "facts.edges", relativePath: topicPath(topic, "facts.edges.jsonl"), kind: "edge" },
 		{ source: "plan.nodes", relativePath: topicPath(topic, "plan.nodes.jsonl"), kind: "node" },
 		{ source: "plan.edges", relativePath: topicPath(topic, "plan.edges.jsonl"), kind: "edge" },
+		{ source: "requirements.nodes", relativePath: topicPath(topic, "requirements.nodes.jsonl"), kind: "node" },
+		{ source: "requirements.edges", relativePath: topicPath(topic, "requirements.edges.jsonl"), kind: "edge" },
+		{ source: "design.nodes", relativePath: topicPath(topic, "design.nodes.jsonl"), kind: "node" },
+		{ source: "design.edges", relativePath: topicPath(topic, "design.edges.jsonl"), kind: "edge" },
 	];
 }
 
@@ -511,7 +517,7 @@ async function topicSummary(root: string, topic: string): Promise<TopicSummary> 
 	const receipts = await readJsonlFile(safeRoot, topicPath(topic, "receipts.jsonl"), topic);
 	const contextPacks = await readJsonlFile(safeRoot, topicPath(topic, "context-packs.jsonl"), topic);
 	const evidence = await readEvidence(safeRoot, topic);
-	const [mapNodes, mapEdges, factNodes, factEdges, planNodes, planEdges] = graphResults;
+	const [mapNodes, mapEdges, factNodes, factEdges, planNodes, planEdges, requirementNodes, requirementEdges, designNodes, designEdges] = graphResults;
 	return {
 		id: topic,
 		name: topic,
@@ -525,6 +531,10 @@ async function topicSummary(root: string, topic: string): Promise<TopicSummary> 
 			factEdges: factEdges?.records.length ?? 0,
 			planNodes: planNodes?.records.length ?? 0,
 			planEdges: planEdges?.records.length ?? 0,
+			requirementNodes: requirementNodes?.records.length ?? 0,
+			requirementEdges: requirementEdges?.records.length ?? 0,
+			designNodes: designNodes?.records.length ?? 0,
+			designEdges: designEdges?.records.length ?? 0,
 			receipts: receipts.records.length,
 			contextPacks: contextPacks.records.length,
 			evidenceFiles: evidence.files.length,

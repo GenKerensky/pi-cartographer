@@ -300,7 +300,7 @@ If a first implementation of the fold helper is too large, scope it to determini
 
 ### Phase P5 — Dashboard, Index, and Artifact Summaries
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P4
 - **Unlocks:** P6
 - **Primary references:** `file:README.md`, `file:skills/plan/scripts/manage_jsonl.ts`, `file:skills/plan/scripts/validate_planning_graph.py`, `artifact:requirements.nodes.jsonl`, `artifact:design.nodes.jsonl`, [F011], [F013], [F015], [F017]
@@ -318,17 +318,17 @@ Make the new requirements/design/durable-requirements artifacts visible to exist
 
 #### Checklist
 
-- [ ] **P5.T1** Extend `cartographer_artifacts` / `manage_jsonl.ts` summaries to include requirements and design graph summaries when present.
-- [ ] **P5.T2** Update dashboard/server artifact reader, graph normalizer, and fixtures to include requirements/design documents and graph layers safely.
-- [ ] **P5.T3** Update index-project tests/docs so `.plan/<topic>/requirements.md`, `.plan/<topic>/design.md`, and durable `docs/requirements.md` are retrievable in appropriate scopes.
-- [ ] **P5.T4** Add reference resolver support for requirement/design IDs in Markdown viewers and graph views where applicable.
-- [ ] **P5.T5** Add tests that requirements/design summaries do not expose `.plan/_private/**` paths and stay compact.
+- [x] **P5.T1** Extend `cartographer_artifacts` / `manage_jsonl.ts` summaries to include requirements and design graph summaries when present.
+- [x] **P5.T2** Update dashboard/server artifact reader, graph normalizer, and fixtures to include requirements/design documents and graph layers safely.
+- [x] **P5.T3** Update index-project tests/docs so `.plan/<topic>/requirements.md`, `.plan/<topic>/design.md`, and durable `docs/requirements.md` are retrievable in appropriate scopes.
+- [x] **P5.T4** Add reference resolver support for requirement/design IDs in Markdown viewers and graph views where applicable.
+- [x] **P5.T5** Add tests that requirements/design summaries do not expose `.plan/_private/**` paths and stay compact.
 
 #### Validation
 
-- [ ] **P5.V1** Run `npm run test:ts -- tests/cartographer_tools.test.ts tests/dashboard/artifact-reader.test.ts tests/dashboard/graph-normalizer.test.ts tests/dashboard/reference-resolver.test.ts` and confirm artifact/dashboard behavior passes.
-- [ ] **P5.V2** Run `python -m unittest tests.test_index_project` and confirm retrieval scope behavior passes.
-- [ ] **P5.V3** Run `npm run dashboard:check` if dashboard code changed.
+- [x] **P5.V1** Run `npm run test:ts -- tests/cartographer_tools.test.ts tests/dashboard/artifact-reader.test.ts tests/dashboard/graph-normalizer.test.ts tests/dashboard/reference-resolver.test.ts` and confirm artifact/dashboard behavior passes.
+- [x] **P5.V2** Run `python -m unittest discover tests -p 'test_index_project.py'` and confirm retrieval scope behavior passes.
+- [x] **P5.V3** Run `npm run dashboard:check` if dashboard code changed.
 
 #### Exit Criteria
 

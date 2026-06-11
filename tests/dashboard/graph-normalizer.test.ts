@@ -40,6 +40,8 @@ describe("dashboard graph normalizer", () => {
 		const graph = normalizeTopicGraph(artifacts, adrFixture());
 
 		expect(graph.nodes.some((node) => node.id === "F001" && node.layer === "facts")).toBe(true);
+		expect(graph.nodes.some((node) => node.id === "REQ-DEMO-001" && node.layer === "requirements")).toBe(true);
+		expect(graph.nodes.some((node) => node.id === "DES-DEMO-001" && node.layer === "design")).toBe(true);
 		expect(graph.nodes.some((node) => node.layer === "receipts")).toBe(true);
 		expect(graph.nodes.some((node) => node.layer === "evidence")).toBe(true);
 		expect(graph.nodes.some((node) => node.layer === "context")).toBe(true);

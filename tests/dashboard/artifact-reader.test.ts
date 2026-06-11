@@ -22,8 +22,12 @@ describe("dashboard artifact reader", () => {
 
 		expect(discovered.topics.map((topic) => topic.id)).toEqual([fixture.topic]);
 		expect(artifacts.topic.counts.factNodes).toBe(4);
-		expect(artifacts.documents.map((document) => document.kind)).toEqual(["proposal", "plan"]);
+		expect(artifacts.documents.map((document) => document.kind)).toEqual(["proposal", "requirements", "design", "plan"]);
+		expect(artifacts.topic.counts.requirementNodes).toBe(1);
+		expect(artifacts.topic.counts.designNodes).toBe(1);
 		expect(artifacts.graph.nodes.map((node) => node.id)).toContain("F001");
+		expect(artifacts.graph.nodes.map((node) => node.id)).toContain("REQ-DEMO-001");
+		expect(artifacts.graph.nodes.map((node) => node.id)).toContain("DES-DEMO-001");
 		expect(artifacts.graph.edges.map((edge) => edge.type)).toContain("supported_by");
 		expect(artifacts.receipts[0].id).toBe("receipt:P0.V1");
 		expect(artifacts.contextPacks[0].id).toBe("context:demo:P0");
