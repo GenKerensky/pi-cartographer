@@ -34,5 +34,6 @@ dashboard/node_modules/
 tests/dashboard/__screenshots__/
 .vitest-attachments/
 
-# Local active Cartographer topic pointer (state/journal artifacts remain reviewable)
+# Local active Cartographer topic pointer and local workflow config (state/journal artifacts remain reviewable)
 .cartographer/current.json
+.cartographer/config.toml

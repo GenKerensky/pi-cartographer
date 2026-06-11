@@ -128,6 +128,30 @@ class WorkflowDocsTests(unittest.TestCase):
         self.assertIn("Do **not** reimplement server startup", text)
         self.assertIn(".plan/_private", text)
 
+    def test_wrapper_first_lifecycle_docs_are_documented(self) -> None:
+        proposal = (ROOT / "skills/proposal/SKILL.md").read_text(encoding="utf-8")
+        plan = (ROOT / "skills/plan/SKILL.md").read_text(encoding="utf-8")
+        implement = (ROOT / "skills/implement/SKILL.md").read_text(encoding="utf-8")
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
+
+        self.assertIn("cartographer_proposal", proposal)
+        self.assertIn("cartographer_fact", proposal)
+        self.assertIn("cartographer_proposal finalize", proposal)
+        self.assertIn("cartographer_plan generate-graph", plan)
+        self.assertIn("cartographer_plan_status set", plan)
+        self.assertIn("validation-complete-item", plan)
+        self.assertIn("cartographer_plan finalize", plan)
+        self.assertIn("cartographer_implement start", implement)
+        self.assertIn("cartographer_implement step", implement)
+        self.assertIn("cartographer_implement finalize", implement)
+        self.assertIn("cartographer_transition", implement)
+        for text, name in [(implement, "implement"), (readme, "readme"), (agents, "agents")]:
+            self.assertIn("Automatic phase advancement", text, name)
+            self.assertIn("human approval", text, name)
+            self.assertIn("cartographer_handoff auditor", text, name)
+            self.assertIn("prose-only", text, name)
+
     def test_readme_documents_dashboard_usage_and_safety(self) -> None:
         text = (ROOT / "README.md").read_text(encoding="utf-8")
 

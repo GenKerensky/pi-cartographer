@@ -39,6 +39,10 @@ Do not create `.cartographer/` execution state during proposal writing. If a pro
 
 ## Procedure
 
+### Wrapper-first mutation contract
+
+Use deterministic wrappers for proposal mutations whenever available. Prefer `cartographer_proposal init`/`proposal-init` for proposal skeleton creation, `cartographer_fact`/`fact-*` for source-backed fact/source/support edges, `cartographer_proposal adr-sync` after `cartographer_adr evaluate`, and `cartographer_proposal finalize` for final deterministic validation, fact citation checks, sanitized evidence checks, auditor PASS receipt checks, and lifecycle transition. Do not manually append proposal receipts, hand-edit fact JSONL, or cross proposal lifecycle gates as a prose-only step unless a wrapper is unavailable and an explicit fallback receipt documents the substitute checks.
+
 1. **Derive the topic and initialize files**
    - Summarize the user's proposal topic in 3 words or less.
    - If the topic is ambiguous enough that scope cannot be inferred, ask one clarifying question before proceeding.
@@ -261,8 +265,8 @@ Do not create `.cartographer/` execution state during proposal writing. If a pro
      ```
 
    - Correct any deterministic validation failures before launching an auditor. Do not ask a child to hand-check raw JSONL as a substitute for this validation when the tool or CLI can run.
-   - After deterministic validation passes, launch `cartographer-auditor` as the default final semantic gate. Provide the proposal path, map/fact artifact paths, sanitized evidence paths when relevant, deterministic validation output or receipt IDs, and a requirement for an explicit `PASS`/`FAIL` decision.
-   - Built-in `reviewer`/`oracle` or a serial current-agent validation pass are fallback substitutes only when `cartographer-auditor` is unavailable, times out, or the user approves substitution. Each fallback must write an explicit fallback receipt in `.plan/{topic}/receipts.jsonl` with the attempted auditor, reason, substitute/manual reviewer used, deterministic validation receipt IDs, files reviewed, outcome, and residual risks.
+   - After deterministic validation passes, route the final semantic gate through `cartographer_handoff auditor` when available so proposal/map/fact artifact summaries, acceptance criteria, validation receipt IDs, report path, and PASS/FAIL schema are captured deterministically. If the wrapper is unavailable, launch `cartographer-auditor` directly and record an explicit fallback receipt.
+   - Built-in `reviewer`/`oracle` or a serial current-agent validation pass are fallback substitutes only when `cartographer_handoff auditor` or `cartographer-auditor` is unavailable, times out, or the user approves substitution. Each fallback must write an explicit fallback receipt in `.plan/{topic}/receipts.jsonl` with the attempted auditor, reason, substitute/manual reviewer used, deterministic validation receipt IDs, files reviewed, outcome, and residual risks.
    - If the JSONL validator cannot run, stop or ask the user before accepting the proposal unless the user approves a manual fallback; record a fallback receipt that includes the failed command/tool, error summary, manual checks performed, and remaining risk.
    - The deterministic/auditor validation pass must check that:
      - dependencies are declared and appear valid

@@ -64,6 +64,15 @@ If the plan is missing, ask the user whether to generate it first with the `plan
 - Use `cartographer-compass` for decision-level scope/dependency/repeated-failure questions, not routine code review.
 - Use `cartographer-archivist` only for isolated missing research compression.
 
+### Wrapper-first lifecycle contract
+
+- Use `cartographer_implement start`/`implement-start` to initialize or resume implementation state, set the active phase, and enforce plan approval prerequisites.
+- Use `cartographer_implement step`/`implement-step` to select the next executable phase and keep the working set narrow.
+- Use `cartographer_implement record`/`implement-record` to record validation refs and phase evidence, `cartographer_implement compact`/`implement-compact` for milestone compaction, and `cartographer_implement finalize`/`implement-finalize` for final prerequisite checks.
+- Use `cartographer_transition` for proposal/plan/final implementation approval gates and for explicitly human-gated phases; approval gates require a human approver label in non-interactive/CI contexts.
+- Automatic phase advancement is the default after validation receipts, `cartographer_handoff auditor` PASS capture, plan/checklist status updates, and commit complete the current phase. Stop for user approval only when the plan or transition metadata marks a human-gated phase, a scope/product decision is unresolved, or a fallback receipt says approval is required.
+- Do not manually append lifecycle receipts, manually cross approval gates, or manually advance phase state as a prose-only step unless the wrapper is unavailable and an explicit fallback receipt documents the substitute checks.
+
 ### State and journal mutation
 
 - Agents may read `.cartographer/{topic}/state.json`, `.cartographer/{topic}/journal.jsonl`, and `.cartographer/current.json` directly.
@@ -126,7 +135,7 @@ Preferred Cartographer agents:
 
 If `cartographer-auditor` is unavailable, ask whether to substitute built-in `reviewer`/`oracle` or run that role serially. Do not silently skip review; record an explicit fallback receipt before accepting any phase.
 
-If specialist calls repeatedly time out, fail tools, or return unusable output, append timeout/fallback receipts and call `cartographer-compass` before substantial parent takeover or broad serial repair.
+If specialist calls repeatedly time out, fail tools, or return unusable output, record timeout/fallback receipts through `cartographer_handoff fallback` or `cartographer_receipt`, then call `cartographer-compass` before substantial parent takeover or broad serial repair.
 
 ### 3. Preflight repository safety
 
@@ -256,7 +265,7 @@ Limit routine repair loops to 3 scoped fix attempts per distinct failing command
 
 ### 10. Audit and validate the phase
 
-Once quality tools are green and deterministic validation receipts exist, dispatch `cartographer-auditor` as the default read-only phase semantic gate.
+Once quality tools are green and deterministic validation receipts exist, route the semantic gate through `cartographer_handoff auditor` when available so the context pack, validation receipt IDs, artifact summaries, acceptance criteria, report path, PASS/FAIL outcome, and fallback metadata are captured deterministically. If `cartographer_handoff` is not yet available, dispatch `cartographer-auditor` as the read-only phase semantic gate and record an explicit fallback receipt.
 
 Provide the auditor:
 
@@ -268,12 +277,12 @@ Provide the auditor:
 - relevant proposal/map/fact references;
 - state/journal/compaction evidence when relevant.
 
-Ask for explicit PASS/FAIL. If the auditor rejects or any validation item fails:
+Ask for explicit PASS/FAIL and capture the report with `cartographer_handoff auditor` or an approved fallback receipt. If the auditor rejects or any validation item fails:
 
 1. apply a scoped fix;
 2. rerun affected checks;
-3. update receipts/state;
-4. call `cartographer-auditor` again.
+3. update receipts/state through `cartographer_validation`, `cartographer_implement record`, and `cartographer_state`;
+4. call `cartographer-auditor` again and capture it through `cartographer_handoff auditor`.
 
 Repeat until auditor passes, or an approved fallback receipt records semantic review outcome.
 
@@ -281,13 +290,25 @@ Repeat until auditor passes, or an approved fallback receipt records semantic re
 
 At the end of each completed phase:
 
-- update `.plan/{topic}/plan.md` phase status and checkboxes;
-- update `plan.nodes.jsonl` statuses;
-- run/update relevant validation receipts;
+- synchronize `.plan/{topic}/plan.md` phase status and checkboxes through `cartographer_plan_status`/`plan-status-set` where available;
+- synchronize `plan.nodes.jsonl` statuses through `cartographer_plan_status`/`plan-status-set` where available;
+- run/update relevant validation receipts through `cartographer_validation`;
 - ensure `git status --short` contains only intended files;
 - commit with a conventional commit message.
 
-If the phase is a true no-op, mark it complete with an explanatory note and avoid an empty commit.
+A phase commit is a checkpoint, **not a stopping point**. After the commit succeeds, immediately re-orient from disk, validate/resume state, select the next incomplete dependency-unblocked phase, and continue the loop in the same assistant turn when context and tool budget allow.
+
+Stop after a phase commit only when one of these conditions is true:
+
+- the next phase, plan metadata, or transition status explicitly marks the phase as human-gated;
+- the next required transition is a major human approval gate: proposal-to-plan, plan-to-implementation, or final implementation approval;
+- validation/fallback/auditor evidence leaves an unresolved blocker or residual risk needing user direction;
+- repository safety checks find unrelated user changes or ambiguous intended files;
+- the user explicitly asked for only one phase or asked to stop after the phase.
+
+When continuing automatically, still create/update the phase context pack, compact/resume state through `cartographer_implement compact`/`cartographer_state`, set the next action/working set, and avoid carrying stale transcript assumptions across the phase boundary.
+
+If the phase is a true no-op, mark it complete through `cartographer_plan_status` with an explanatory note, avoid an empty commit, then apply the same automatic-continuation rules.
 
 ### 12. Final implementation validation and ADR handling
 
@@ -306,15 +327,16 @@ After all phases are complete:
    python skills/plan/scripts/validate_planning_graph.py --root "$PWD" --topic "{topic}" --json
    ```
 
-4. Run the final `cartographer-auditor` semantic gate.
+4. Run the final `cartographer-auditor` semantic gate and capture it through `cartographer_handoff auditor`.
 5. If `adr_required: true`, run `cartographer_adr` after deterministic validation and cite validation receipt IDs/source commits.
-6. If `adr_required: false`, record the reason and, when applicable, an `adr-not-required` receipt.
+6. If `adr_required: false`, record the reason and, when applicable, an `adr-not-required` receipt through `cartographer_receipt` or `receipt-append`.
+7. Run `cartographer_implement finalize`/`implement-finalize` to enforce final prerequisites before reporting completion.
 
 The ADR must cite sanitized evidence docs or validation receipt IDs, not raw `.plan/_private/**` paths or brittle raw logs.
 
 ## Receipt Discipline
 
-After each significant command, specialist handoff, timeout, fallback substitution, phase decision, compaction, or validation gate, append a compact `.plan/{topic}/receipts.jsonl` record instead of relying on transcript continuity.
+After each significant command, specialist handoff, timeout, fallback substitution, phase decision, compaction, or validation gate, append a compact `.plan/{topic}/receipts.jsonl` record through `cartographer_validation`, `cartographer_handoff`, `cartographer_transition`, `cartographer_implement record`, or `cartographer_receipt`/`receipt-append` instead of relying on transcript continuity.
 
 Validation receipts should include:
 

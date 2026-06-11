@@ -1,0 +1,87 @@
+{"id":"plan:harness-implement-loop","type":"plan","title":"harness-implement-loop Plan","description":"Machine-readable root node for deterministic Cartographer workflow enforcement implementation plan.","source":"plan.md","lifecycle":"planned"}
+{"id":"phase:P0","type":"phase","phase_id":"P0","title":"Contracts and Shared Runtime","status":"complete","depends_on":[],"source":"plan.md","references":["F007","F018","F028","F029","F030","C001"]}
+{"id":"task:P0.T1","type":"task","task_id":"P0.T1","phase_id":"P0","title":"Add shared lifecycle/receipt/approval types","status":"complete","source":"plan.md"}
+{"id":"task:P0.T2","type":"task","task_id":"P0.T2","phase_id":"P0","title":"Implement deterministic approver resolver","status":"complete","source":"plan.md"}
+{"id":"task:P0.T3","type":"task","task_id":"P0.T3","phase_id":"P0","title":"Add atomic JSON/JSONL update helpers","status":"complete","source":"plan.md"}
+{"id":"task:P0.T4","type":"task","task_id":"P0.T4","phase_id":"P0","title":"Add temp-root fixture builders","status":"complete","source":"plan.md"}
+{"id":"task:P0.T5","type":"task","task_id":"P0.T5","phase_id":"P0","title":"Ensure .cartographer/config.toml gitignore behavior","status":"complete","source":"plan.md"}
+{"id":"validation:P0.V1","type":"validation","validation_id":"P0.V1","phase_id":"P0","title":"Run approver/contract TS tests","status":"complete","source":"plan.md"}
+{"id":"validation:P0.V2","type":"validation","validation_id":"P0.V2","phase_id":"P0","title":"Run npm run check:scripts","status":"complete","source":"plan.md","command":"npm run check:scripts"}
+{"id":"validation:P0.V3","type":"validation","validation_id":"P0.V3","phase_id":"P0","title":"Verify temp-root-only artifacts","status":"complete","source":"plan.md"}
+{"id":"phase:P1","type":"phase","phase_id":"P1","title":"Receipts, Context Packs, and Transitions","status":"complete","depends_on":["P0"],"source":"plan.md","references":["F022","F025","F028","F029","F030"]}
+{"id":"task:P1.T1","type":"task","task_id":"P1.T1","phase_id":"P1","title":"Implement generic receipt append","status":"complete","source":"plan.md"}
+{"id":"task:P1.T2","type":"task","task_id":"P1.T2","phase_id":"P1","title":"Implement context pack create/update","status":"complete","source":"plan.md"}
+{"id":"task:P1.T3","type":"task","task_id":"P1.T3","phase_id":"P1","title":"Implement transition status","status":"complete","source":"plan.md"}
+{"id":"task:P1.T4","type":"task","task_id":"P1.T4","phase_id":"P1","title":"Implement transition request-approval","status":"complete","source":"plan.md"}
+{"id":"task:P1.T5","type":"task","task_id":"P1.T5","phase_id":"P1","title":"Implement transition approve/reject","status":"complete","source":"plan.md"}
+{"id":"task:P1.T6","type":"task","task_id":"P1.T6","phase_id":"P1","title":"Implement transition advance","status":"complete","source":"plan.md"}
+{"id":"task:P1.T7","type":"task","task_id":"P1.T7","phase_id":"P1","title":"Register receipt/context/transition tools","status":"complete","source":"plan.md"}
+{"id":"validation:P1.V1","type":"validation","validation_id":"P1.V1","phase_id":"P1","title":"Run transition gate tests","status":"complete","source":"plan.md"}
+{"id":"validation:P1.V2","type":"validation","validation_id":"P1.V2","phase_id":"P1","title":"Run receipt schema tests","status":"complete","source":"plan.md"}
+{"id":"validation:P1.V3","type":"validation","validation_id":"P1.V3","phase_id":"P1","title":"Run context-pack tests","status":"complete","source":"plan.md"}
+{"id":"validation:P1.V4","type":"validation","validation_id":"P1.V4","phase_id":"P1","title":"Run npm run check:scripts","status":"complete","source":"plan.md","command":"npm run check:scripts"}
+{"id":"phase:P2","type":"phase","phase_id":"P2","title":"Proposal and Fact Wrappers","status":"complete","depends_on":["P1"],"source":"plan.md","references":["F019","F020","F023","F027"]}
+{"id":"task:P2.T1","type":"task","task_id":"P2.T1","phase_id":"P2","title":"Implement proposal init","status":"complete","source":"plan.md"}
+{"id":"task:P2.T2","type":"task","task_id":"P2.T2","phase_id":"P2","title":"Implement fact source/fact/support wrappers","status":"complete","source":"plan.md"}
+{"id":"task:P2.T3","type":"task","task_id":"P2.T3","phase_id":"P2","title":"Implement proposal ADR sync","status":"complete","source":"plan.md"}
+{"id":"task:P2.T4","type":"task","task_id":"P2.T4","phase_id":"P2","title":"Implement proposal finalize","status":"complete","source":"plan.md"}
+{"id":"task:P2.T5","type":"task","task_id":"P2.T5","phase_id":"P2","title":"Register proposal/fact wrappers","status":"complete","source":"plan.md"}
+{"id":"validation:P2.V1","type":"validation","validation_id":"P2.V1","phase_id":"P2","title":"Run proposal init tests","status":"complete","source":"plan.md"}
+{"id":"validation:P2.V2","type":"validation","validation_id":"P2.V2","phase_id":"P2","title":"Run fact wrapper tests","status":"complete","source":"plan.md"}
+{"id":"validation:P2.V3","type":"validation","validation_id":"P2.V3","phase_id":"P2","title":"Run proposal finalize tests","status":"complete","source":"plan.md"}
+{"id":"validation:P2.V4","type":"validation","validation_id":"P2.V4","phase_id":"P2","title":"Run npm run check:scripts","status":"complete","source":"plan.md","command":"npm run check:scripts"}
+{"id":"phase:P3","type":"phase","phase_id":"P3","title":"Plan Graph, Status, and Validation Wrappers","status":"complete","depends_on":["P1"],"source":"plan.md","references":["F021","F023","F024","F026"]}
+{"id":"task:P3.T1","type":"task","task_id":"P3.T1","phase_id":"P3","title":"Implement plan graph generation","status":"complete","source":"plan.md"}
+{"id":"task:P3.T2","type":"task","task_id":"P3.T2","phase_id":"P3","title":"Implement plan finalize","status":"complete","source":"plan.md"}
+{"id":"task:P3.T3","type":"task","task_id":"P3.T3","phase_id":"P3","title":"Implement plan status set","status":"complete","source":"plan.md"}
+{"id":"task:P3.T4","type":"task","task_id":"P3.T4","phase_id":"P3","title":"Implement validation complete-item","status":"complete","source":"plan.md"}
+{"id":"task:P3.T5","type":"task","task_id":"P3.T5","phase_id":"P3","title":"Register plan/status wrappers","status":"complete","source":"plan.md"}
+{"id":"validation:P3.V1","type":"validation","validation_id":"P3.V1","phase_id":"P3","title":"Run plan graph generation tests","status":"complete","source":"plan.md"}
+{"id":"validation:P3.V2","type":"validation","validation_id":"P3.V2","phase_id":"P3","title":"Run status sync tests","status":"complete","source":"plan.md"}
+{"id":"validation:P3.V3","type":"validation","validation_id":"P3.V3","phase_id":"P3","title":"Run validation completion tests","status":"complete","source":"plan.md"}
+{"id":"validation:P3.V4","type":"validation","validation_id":"P3.V4","phase_id":"P3","title":"Run plan finalize approval tests","status":"complete","source":"plan.md"}
+{"id":"validation:P3.V5","type":"validation","validation_id":"P3.V5","phase_id":"P3","title":"Run npm run check:scripts","status":"complete","source":"plan.md","command":"npm run check:scripts"}
+{"id":"phase:P4","type":"phase","phase_id":"P4","title":"Implement Runner and Harness Guards","status":"complete","depends_on":["P1"],"source":"plan.md","references":["F001","F002","F003","F004","F007","F013"]}
+{"id":"task:P4.T1","type":"task","task_id":"P4.T1","phase_id":"P4","title":"Implement implement start","status":"complete","source":"plan.md"}
+{"id":"task:P4.T2","type":"task","task_id":"P4.T2","phase_id":"P4","title":"Implement implement step","status":"complete","source":"plan.md"}
+{"id":"task:P4.T3","type":"task","task_id":"P4.T3","phase_id":"P4","title":"Implement implement record","status":"complete","source":"plan.md"}
+{"id":"task:P4.T4","type":"task","task_id":"P4.T4","phase_id":"P4","title":"Implement implement compact","status":"complete","source":"plan.md"}
+{"id":"task:P4.T5","type":"task","task_id":"P4.T5","phase_id":"P4","title":"Implement implement finalize","status":"complete","source":"plan.md"}
+{"id":"task:P4.T6","type":"task","task_id":"P4.T6","phase_id":"P4","title":"Add extension guardrails","status":"complete","source":"plan.md"}
+{"id":"validation:P4.V1","type":"validation","validation_id":"P4.V1","phase_id":"P4","title":"Run implement start tests","status":"complete","source":"plan.md"}
+{"id":"validation:P4.V2","type":"validation","validation_id":"P4.V2","phase_id":"P4","title":"Run compact/resume tests","status":"complete","source":"plan.md"}
+{"id":"validation:P4.V3","type":"validation","validation_id":"P4.V3","phase_id":"P4","title":"Run finalize pending-phase tests","status":"complete","source":"plan.md"}
+{"id":"validation:P4.V4","type":"validation","validation_id":"P4.V4","phase_id":"P4","title":"Run guardrail tests","status":"complete","source":"plan.md"}
+{"id":"validation:P4.V5","type":"validation","validation_id":"P4.V5","phase_id":"P4","title":"Run npm run check:scripts","status":"complete","source":"plan.md","command":"npm run check:scripts"}
+{"id":"phase:P5","type":"phase","phase_id":"P5","title":"Subagent Handoff Wrapper","status":"complete","depends_on":["P1"],"source":"plan.md","references":["F014","F016","F017"]}
+{"id":"task:P5.T1","type":"task","task_id":"P5.T1","phase_id":"P5","title":"Implement auditor handoff","status":"complete","source":"plan.md"}
+{"id":"task:P5.T2","type":"task","task_id":"P5.T2","phase_id":"P5","title":"Implement compass handoff","status":"complete","source":"plan.md"}
+{"id":"task:P5.T3","type":"task","task_id":"P5.T3","phase_id":"P5","title":"Implement retry/output-capture handling","status":"complete","source":"plan.md"}
+{"id":"task:P5.T4","type":"task","task_id":"P5.T4","phase_id":"P5","title":"Implement fallback receipt recording","status":"complete","source":"plan.md"}
+{"id":"task:P5.T5","type":"task","task_id":"P5.T5","phase_id":"P5","title":"Record subagent reliability metrics","status":"complete","source":"plan.md"}
+{"id":"task:P5.T6","type":"task","task_id":"P5.T6","phase_id":"P5","title":"Register handoff wrapper","status":"complete","source":"plan.md"}
+{"id":"validation:P5.V1","type":"validation","validation_id":"P5.V1","phase_id":"P5","title":"Run auditor handoff tests","status":"complete","source":"plan.md"}
+{"id":"validation:P5.V2","type":"validation","validation_id":"P5.V2","phase_id":"P5","title":"Run compass wrapper tests","status":"complete","source":"plan.md"}
+{"id":"validation:P5.V3","type":"validation","validation_id":"P5.V3","phase_id":"P5","title":"Run dependency evaluation tests","status":"complete","source":"plan.md"}
+{"id":"validation:P5.V4","type":"validation","validation_id":"P5.V4","phase_id":"P5","title":"Run npm run check:scripts","status":"complete","source":"plan.md","command":"npm run check:scripts"}
+{"id":"phase:P6","type":"phase","phase_id":"P6","title":"Workflow Integration and Documentation","status":"complete","depends_on":["P2","P3","P4","P5"],"source":"plan.md","references":["F018","F028","F029"]}
+{"id":"task:P6.T1","type":"task","task_id":"P6.T1","phase_id":"P6","title":"Update proposal skill","status":"complete","source":"plan.md"}
+{"id":"task:P6.T2","type":"task","task_id":"P6.T2","phase_id":"P6","title":"Update plan skill","status":"complete","source":"plan.md"}
+{"id":"task:P6.T3","type":"task","task_id":"P6.T3","phase_id":"P6","title":"Update implement skill","status":"complete","source":"plan.md"}
+{"id":"task:P6.T4","type":"task","task_id":"P6.T4","phase_id":"P6","title":"Update README and AGENTS","status":"complete","source":"plan.md"}
+{"id":"task:P6.T5","type":"task","task_id":"P6.T5","phase_id":"P6","title":"Update workflow docs tests","status":"complete","source":"plan.md"}
+{"id":"task:P6.T6","type":"task","task_id":"P6.T6","phase_id":"P6","title":"Update package/tool references","status":"complete","source":"plan.md"}
+{"id":"validation:P6.V1","type":"validation","validation_id":"P6.V1","phase_id":"P6","title":"Run workflow docs tests","status":"complete","source":"plan.md","command":"python -m unittest discover tests -p 'test_workflow_docs.py'"}
+{"id":"validation:P6.V2","type":"validation","validation_id":"P6.V2","phase_id":"P6","title":"Run prettier check","status":"complete","source":"plan.md","command":"npm run format:prettier:check"}
+{"id":"validation:P6.V3","type":"validation","validation_id":"P6.V3","phase_id":"P6","title":"Search for prose-only mutation instructions","status":"complete","source":"plan.md"}
+{"id":"validation:P6.V4","type":"validation","validation_id":"P6.V4","phase_id":"P6","title":"Run npm run check:scripts","status":"complete","source":"plan.md","command":"npm run check:scripts"}
+{"id":"phase:P7","type":"phase","phase_id":"P7","title":"Final Validation and ADR","status":"complete","depends_on":["P6"],"source":"plan.md","references":["F005","F014","F017","F028"]}
+{"id":"task:P7.T1","type":"task","task_id":"P7.T1","phase_id":"P7","title":"Run full project validation","status":"complete","source":"plan.md"}
+{"id":"task:P7.T2","type":"task","task_id":"P7.T2","phase_id":"P7","title":"Run topic and graph validation","status":"complete","source":"plan.md"}
+{"id":"task:P7.T3","type":"task","task_id":"P7.T3","phase_id":"P7","title":"Run final semantic audit","status":"complete","source":"plan.md"}
+{"id":"task:P7.T4","type":"task","task_id":"P7.T4","phase_id":"P7","title":"Create ADR","status":"complete","source":"plan.md"}
+{"id":"task:P7.T5","type":"task","task_id":"P7.T5","phase_id":"P7","title":"Request and record final human approval","status":"complete","source":"plan.md"}
+{"id":"validation:P7.V1","type":"validation","validation_id":"P7.V1","phase_id":"P7","title":"Run npm run check","status":"complete","source":"plan.md","command":"npm run check"}
+{"id":"validation:P7.V2","type":"validation","validation_id":"P7.V2","phase_id":"P7","title":"Run validate-topic","status":"complete","source":"plan.md","command":"node --experimental-strip-types skills/plan/scripts/manage_jsonl.ts validate-topic --root \"$PWD\" --topic harness-implement-loop --json"}
+{"id":"validation:P7.V3","type":"validation","validation_id":"P7.V3","phase_id":"P7","title":"Run validate_planning_graph.py","status":"complete","source":"plan.md","command":"python skills/plan/scripts/validate_planning_graph.py --root \"$PWD\" --topic harness-implement-loop --json"}
+{"id":"validation:P7.V4","type":"validation","validation_id":"P7.V4","phase_id":"P7","title":"Run ADR validation","status":"complete","source":"plan.md","command":"python skills/plan/scripts/adr_records.py validate --root \"$PWD\" --json"}

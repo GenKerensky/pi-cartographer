@@ -100,6 +100,43 @@ describe("cartographer tool registration", () => {
 		expect(JSON.stringify(validationTool?.parameters)).toContain("timeoutSec");
 	});
 
+	it("registers proposal, fact, and plan wrappers", () => {
+		const tools = registeredTools();
+		const proposalTool = tools.find((tool) => tool.name === "cartographer_proposal") as RegisteredTool & {
+			parameters?: unknown;
+		};
+		const factTool = tools.find((tool) => tool.name === "cartographer_fact") as RegisteredTool & {
+			parameters?: unknown;
+		};
+		const planTool = tools.find((tool) => tool.name === "cartographer_plan") as RegisteredTool & {
+			parameters?: unknown;
+		};
+		const statusTool = tools.find((tool) => tool.name === "cartographer_plan_status") as RegisteredTool & {
+			parameters?: unknown;
+		};
+
+		expect(proposalTool).toBeTruthy();
+		expect(proposalTool?.promptGuidelines?.join("\n")).toContain("init");
+		expect(JSON.stringify(proposalTool?.parameters)).toContain("adr-sync");
+		expect(factTool).toBeTruthy();
+		expect(factTool?.promptGuidelines?.join("\n")).toContain("supported_by");
+		expect(JSON.stringify(factTool?.parameters)).toContain("support-fact");
+		expect(planTool).toBeTruthy();
+		expect(JSON.stringify(planTool?.parameters)).toContain("generate-graph");
+		expect(statusTool).toBeTruthy();
+		expect(statusTool?.promptGuidelines?.join("\n")).toContain("manually editing plan status");
+		const implementTool = tools.find((tool) => tool.name === "cartographer_implement") as RegisteredTool & {
+			parameters?: unknown;
+		};
+		expect(implementTool).toBeTruthy();
+		expect(JSON.stringify(implementTool?.parameters)).toContain("finalize");
+		const handoffTool = tools.find((tool) => tool.name === "cartographer_handoff") as RegisteredTool & {
+			parameters?: unknown;
+		};
+		expect(handoffTool).toBeTruthy();
+		expect(JSON.stringify(handoffTool?.parameters)).toContain("auditor");
+	});
+
 	it("runs artifact summaries through the registered read-only tool", async () => {
 		const project = tempProjectWithTopic();
 		const artifactTool = registeredTools().find((tool) => tool.name === "cartographer_artifacts");

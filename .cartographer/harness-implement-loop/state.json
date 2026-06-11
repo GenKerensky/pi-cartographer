@@ -1,0 +1,145 @@
+{
+  "schema_version": 1,
+  "topic": "harness-implement-loop",
+  "source_status": "hashes-valid",
+  "source_refs": {
+    "plan_md": {
+      "path": ".plan/harness-implement-loop/plan.md",
+      "sha256": "sha256:b56094b654abb62b17fc18aa79d1f1b0357ca5f59aed73bdd7c0eda8b41efb5c"
+    },
+    "plan_nodes": {
+      "path": ".plan/harness-implement-loop/plan.nodes.jsonl",
+      "sha256": "sha256:4a1bc2054f13a0546fd92432931317679808b7a22d9e893cbc69766176aebdd5"
+    },
+    "plan_edges": {
+      "path": ".plan/harness-implement-loop/plan.edges.jsonl",
+      "sha256": "sha256:70c163543aa34253f277cd750159142bd18fe9e9917cd6f07c7151cc9eeca124"
+    },
+    "receipts": {
+      "path": ".plan/harness-implement-loop/receipts.jsonl",
+      "sha256": "sha256:6b0475e5eb3c5ed7c4288df8fdb391f4a7276b27124efc1f35a62d8271627080"
+    },
+    "context_packs": {
+      "path": ".plan/harness-implement-loop/context-packs.jsonl",
+      "sha256": "sha256:d79ddf310c539c3202a342c65b8293fd9dc510533967fcb93590f4437ad7cdf0"
+    }
+  },
+  "current_phase_id": "P2",
+  "active_task_ids": [],
+  "active_validation_ids": [],
+  "next_action": {
+    "id": "complete",
+    "kind": "done",
+    "summary": "harness-implement-loop implementation complete; all phases, final validation, ADR, audit, and human approval recorded."
+  },
+  "working_set": {
+    "write_allowed": [
+      {
+        "path": "skills/plan/scripts/cartographer_workflow.ts",
+        "reason": "P5 handoff wrapper implementation"
+      },
+      {
+        "path": "tests/cartographer_workflow.test.ts",
+        "reason": "P5 handoff tests"
+      },
+      {
+        "path": "extensions/cartographer-tools.ts",
+        "reason": "P5 extension tool registration"
+      },
+      {
+        "path": ".plan/harness-implement-loop/plan.md",
+        "reason": "P5 phase status/checklist updates"
+      },
+      {
+        "path": ".plan/harness-implement-loop/plan.nodes.jsonl",
+        "reason": "P5 phase/task/validation status updates"
+      },
+      {
+        "path": ".plan/harness-implement-loop/receipts.jsonl",
+        "reason": "P5 validation/audit receipts"
+      },
+      {
+        "path": ".plan/harness-implement-loop/context-packs.jsonl",
+        "reason": "P5 context pack"
+      }
+    ],
+    "read_only": [
+      {
+        "path": ".pi/agents/cartographer-auditor.md",
+        "reason": "P5 auditor role reference"
+      },
+      {
+        "path": ".pi/agents/cartographer-compass.md",
+        "reason": "P5 compass role reference"
+      },
+      {
+        "path": ".pi/agents/cartographer-archivist.md",
+        "reason": "P5 archivist role reference"
+      },
+      {
+        "path": ".pi/agents/cartographer-redactor.md",
+        "reason": "P5 redactor role reference"
+      }
+    ],
+    "forbidden": [
+      {
+        "path": ".plan/_private/**",
+        "reason": "raw private inputs are off-limits"
+      },
+      {
+        "path": ".plan/_index/**",
+        "reason": "generated index/cache artifacts"
+      }
+    ]
+  },
+  "known_failures": [],
+  "last_validation_receipt_ids": [
+    "receipt:P0:validation:2026-06-11T05:02:46+00:00",
+    "receipt:P0:validation:2026-06-11T05:02:50+00:00",
+    "receipt:P0:validation:2026-06-11T05:03:01+00:00",
+    "receipt:P0:validation:2026-06-11T05:03:24+00:00",
+    "receipt:P1:validation:2026-06-11T05:42:01+00:00",
+    "receipt:P3:validation:2026-06-11T13:18:57+00:00",
+    "receipt:P3:validation:2026-06-11T13:20:49+00:00",
+    "receipt:P4:validation:2026-06-11T13:30:56+00:00",
+    "receipt:P4:validation:2026-06-11T13:32:12+00:00",
+    "receipt:P5:validation:2026-06-11T13:54:47+00:00",
+    "receipt:P5:validation:2026-06-11T13:55:33+00:00",
+    "receipt:harness-implement-loop:audit:2026-06-11T13:57:19Z",
+    "receipt:P6:validation:2026-06-11T14:05:16+00:00",
+    "receipt:P6:validation:2026-06-11T14:09:21+00:00",
+    "receipt:harness-implement-loop:audit:2026-06-11T14:09:14Z",
+    "receipt:P7:validation:2026-06-11T14:12:11+00:00",
+    "receipt:P7:validation:2026-06-11T14:17:29+00:00",
+    "receipt:harness-implement-loop:audit:2026-06-11T14:16:46Z",
+    "receipt:harness-implement-loop:transition:2026-06-11T14:16:52Z",
+    "receipt:implementation:validation:2026-06-11T17:50:10+00:00",
+    "receipt:harness-implement-loop:audit:2026-06-11T17:50:48Z",
+    "receipt:harness-implement-loop:approval:2026-06-11T17:51:01Z",
+    "receipt:implementation:validation:2026-06-11T17:51:27+00:00"
+  ],
+  "journal_refs": [
+    "journal:20260611T050334Z:compact",
+    "journal:20260611T054231Z:compact",
+    "journal:20260611T061914Z:compact",
+    "journal:20260611T132107Z:compact",
+    "journal:20260611T133225Z:compact"
+  ],
+  "resume": {
+    "template_id": "cartographer.single_writer.resume.v1",
+    "resume_order": [
+      ".cartographer/harness-implement-loop/state.json",
+      ".cartographer/harness-implement-loop/journal.jsonl",
+      ".plan/harness-implement-loop/plan.md",
+      ".plan/harness-implement-loop/receipts.jsonl"
+    ],
+    "expected_first_response": ["current_phase", "next_action", "files_to_inspect"],
+    "must_ignore": ["prior chat speculation", "stale generated snippets"]
+  },
+  "updated_at": "2026-06-11T17:51:40Z",
+  "compaction": {
+    "trigger": "phase-end",
+    "compacted_at": "2026-06-11T13:32:25Z"
+  },
+  "stale_reason": "P3 plan, plan.nodes, receipts, and context pack artifacts updated after validation/audit."
+}

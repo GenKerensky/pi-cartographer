@@ -123,16 +123,117 @@ type CartographerStateParams = OutputShapeParams & {
 };
 
 type CartographerValidationParams = OutputShapeParams & {
-	action: "run";
+	action: "run" | "complete-item";
 	root?: string;
-	command: string;
+	topic?: string;
+	command?: string;
 	phaseId?: string;
 	validationId?: string[];
-	receiptFile: string;
+	receiptFile?: string;
 	maxOutputChars?: number;
 	fullOutputDir?: string;
 	skipIfUnchanged?: boolean;
 	timeoutSec?: number;
+};
+
+type CartographerReceiptParams = OutputShapeParams & {
+	action: "append";
+	root?: string;
+	topic?: string;
+	kind?: string;
+	summary?: string;
+	phaseId?: string;
+	receiptId?: string;
+};
+
+type CartographerContextPackParams = OutputShapeParams & {
+	action: "create" | "update";
+	root?: string;
+	topic?: string;
+	phaseId?: string;
+	summary?: string;
+	artifact?: string[];
+	validationReceipt?: string[];
+};
+
+type CartographerTransitionParams = OutputShapeParams & {
+	action: "status" | "request-approval" | "approve" | "reject" | "advance";
+	root?: string;
+	topic?: string;
+	gate?: string;
+	phaseId?: string;
+	summary?: string;
+	approvedBy?: string;
+	reason?: string;
+	to?: string;
+	ci?: boolean;
+};
+
+type CartographerProposalParams = OutputShapeParams & {
+	action: "init" | "finalize" | "adr-sync";
+	root?: string;
+	topic?: string;
+	title?: string;
+	summary?: string;
+	adrRequired?: boolean;
+	adrReason?: string;
+	adrOptionsStatus?: string;
+	adrToolMode?: string;
+	overrideRationale?: string;
+};
+
+type CartographerFactParams = OutputShapeParams & {
+	action: "add-source" | "add-fact" | "support-fact";
+	root?: string;
+	topic?: string;
+	title?: string;
+	url?: string;
+	factId?: string;
+	sourceId?: string;
+	id?: string;
+};
+
+type CartographerPlanParams = OutputShapeParams & {
+	action: "generate-graph" | "finalize";
+	root?: string;
+	topic?: string;
+	summary?: string;
+};
+
+type CartographerPlanStatusParams = OutputShapeParams & {
+	action: "set";
+	root?: string;
+	topic?: string;
+	id?: string;
+	status?: string;
+};
+
+type CartographerImplementParams = OutputShapeParams & {
+	action: "start" | "step" | "record" | "compact" | "finalize";
+	root?: string;
+	topic?: string;
+	path?: string;
+	receiptId?: string[];
+	trigger?: string;
+	summary?: string;
+};
+
+type CartographerHandoffParams = OutputShapeParams & {
+	action: "auditor" | "compass" | "archivist" | "redactor" | "fallback" | "output-capture" | "dependency-evaluation";
+	root?: string;
+	topic?: string;
+	phaseId?: string;
+	decision?: string;
+	reportPath?: string;
+	summary?: string;
+	role?: string;
+	output?: string;
+	artifact?: string[];
+	acceptanceCriterion?: string[];
+	recommendation?: string;
+	validationReceipt?: string[];
+	failureMode?: string;
+	fallback?: string;
 };
 
 type CartographerEvidenceParams = OutputShapeParams & {
@@ -218,6 +319,7 @@ const packageRoot = path.dirname(extensionDir);
 const indexScript = path.join(packageRoot, "skills", "index-project", "scripts", "index_project.py");
 const jsonlScript = path.join(packageRoot, "skills", "plan", "scripts", "manage_jsonl.ts");
 const stateScript = path.join(packageRoot, "skills", "plan", "scripts", "cartographer_state.ts");
+const workflowScript = path.join(packageRoot, "skills", "plan", "scripts", "cartographer_workflow.ts");
 const evidenceScript = path.join(packageRoot, "skills", "plan", "scripts", "private_artifacts.py");
 const sessionScript = path.join(packageRoot, "skills", "plan", "scripts", "analyze_session.py");
 const validationRunnerScript = path.join(packageRoot, "skills", "plan", "scripts", "validation_runner.py");
@@ -1042,14 +1144,15 @@ export default function cartographerTools(pi: PiApi): void {
 			"Provide timeoutSec for bounded commands; failure and timeout receipts include a decision field for fallback handling.",
 		],
 		parameters: Type.Object({
-			action: Type.Literal("run"),
+			action: Type.Union([Type.Literal("run"), Type.Literal("complete-item")]),
 			root: Type.Optional(Type.String({ description: "Project root. Defaults to current working directory." })),
-			command: Type.String({ description: "Validation command to run via the shell." }),
+			topic: Type.Optional(Type.String({ description: "Cartographer topic under .plan/ for complete-item." })),
+			command: Type.Optional(Type.String({ description: "Validation command to run via the shell." })),
 			phaseId: Type.Optional(Type.String({ description: "Plan phase ID, such as P4." })),
 			validationId: Type.Optional(
 				Type.Array(Type.String(), { description: "Validation IDs satisfied by this command." }),
 			),
-			receiptFile: Type.String({ description: "Receipt JSONL file to append." }),
+			receiptFile: Type.Optional(Type.String({ description: "Receipt JSONL file to append." })),
 			maxOutputChars: Type.Optional(Type.Number({ description: "Inline output budget." })),
 			fullOutputDir: Type.Optional(Type.String({ description: "Directory for oversized validation logs." })),
 			skipIfUnchanged: Type.Optional(
@@ -1061,6 +1164,25 @@ export default function cartographerTools(pi: PiApi): void {
 		}),
 		async execute(_toolCallId, rawParams, signal) {
 			const params = rawParams as CartographerValidationParams;
+			if (params.action === "complete-item") {
+				const validationId = params.validationId?.[0];
+				const args = [
+					"validation-complete-item",
+					"--root",
+					params.root || process.cwd(),
+					"--topic",
+					requireString(params.topic, "cartographer_validation complete-item requires topic"),
+					"--validation-id",
+					requireString(validationId, "cartographer_validation complete-item requires validationId"),
+					"--json",
+				];
+				return runCommand("node", ["--experimental-strip-types", workflowScript, ...args], signal, {
+					maxOutputChars: params.maxOutputChars,
+					outputPath: params.outputPath,
+					raw: params.raw,
+					label: "cartographer-validation-complete-item",
+				});
+			}
 			const args: string[] = [
 				"--root",
 				params.root || process.cwd(),
@@ -1081,6 +1203,468 @@ export default function cartographerTools(pi: PiApi): void {
 				outputPath: params.outputPath,
 				raw: params.raw,
 				label: "cartographer-validation-run",
+			});
+		},
+	});
+
+	pi.registerTool({
+		name: "cartographer_receipt",
+		label: "Cartographer Receipt",
+		description: "Append schema-checked workflow receipts for Cartographer topics.",
+		promptSnippet: "Append compact workflow receipts for transitions, approvals, decisions, and outputs",
+		promptGuidelines: [
+			"Use this for non-command workflow receipts; use cartographer_validation for command validation receipts.",
+			"Keep summaries compact and avoid raw private paths or logs.",
+		],
+		parameters: Type.Object({
+			action: Type.Literal("append"),
+			root: Type.Optional(Type.String({ description: "Project root. Defaults to current working directory." })),
+			topic: Type.String({ description: "Cartographer topic under .plan/." }),
+			kind: Type.String({ description: "Receipt kind supported by cartographer_workflow.ts." }),
+			summary: Type.String({ description: "Compact receipt summary." }),
+			phaseId: Type.Optional(Type.String({ description: "Optional phase id." })),
+			receiptId: Type.Optional(Type.String({ description: "Optional explicit receipt id." })),
+			maxOutputChars: Type.Optional(Type.Number({ description: "Inline output budget." })),
+			outputPath: Type.Optional(Type.String({ description: "Optional full-output path for oversized output." })),
+			raw: Type.Optional(Type.Boolean({ description: "Return raw command output instead of a compact receipt." })),
+		}),
+		async execute(_toolCallId, rawParams, signal) {
+			const params = rawParams as CartographerReceiptParams;
+			const args = [
+				"receipt-append",
+				"--root",
+				params.root || process.cwd(),
+				"--topic",
+				requireString(params.topic, "cartographer_receipt append requires topic"),
+				"--kind",
+				requireString(params.kind, "cartographer_receipt append requires kind"),
+				"--summary",
+				requireString(params.summary, "cartographer_receipt append requires summary"),
+				"--json",
+			];
+			if (params.phaseId) args.push("--phase-id", params.phaseId);
+			if (params.receiptId) args.push("--receipt-id", params.receiptId);
+			return runCommand("node", ["--experimental-strip-types", workflowScript, ...args], signal, {
+				maxOutputChars: params.maxOutputChars,
+				outputPath: params.outputPath,
+				raw: params.raw,
+				label: "cartographer-receipt-append",
+			});
+		},
+	});
+
+	pi.registerTool({
+		name: "cartographer_context_pack",
+		label: "Cartographer Context Pack",
+		description: "Create or update compact Cartographer context packs.",
+		promptSnippet: "Create or update phase/topic context packs for clean handoffs",
+		promptGuidelines: [
+			"Context packs should cite artifact paths and receipt ids, not raw transcript/log content.",
+			"Use update when refreshing an existing phase context pack.",
+		],
+		parameters: Type.Object({
+			action: Type.Union([Type.Literal("create"), Type.Literal("update")]),
+			root: Type.Optional(Type.String({ description: "Project root. Defaults to current working directory." })),
+			topic: Type.String({ description: "Cartographer topic under .plan/." }),
+			phaseId: Type.String({ description: "Phase id for the context pack." }),
+			summary: Type.String({ description: "Compact context summary." }),
+			artifact: Type.Optional(Type.Array(Type.String(), { description: "Artifact paths to cite." })),
+			validationReceipt: Type.Optional(Type.Array(Type.String(), { description: "Validation receipt ids to cite." })),
+			maxOutputChars: Type.Optional(Type.Number({ description: "Inline output budget." })),
+			outputPath: Type.Optional(Type.String({ description: "Optional full-output path for oversized output." })),
+			raw: Type.Optional(Type.Boolean({ description: "Return raw command output instead of a compact receipt." })),
+		}),
+		async execute(_toolCallId, rawParams, signal) {
+			const params = rawParams as CartographerContextPackParams;
+			const args = [
+				params.action === "create" ? "context-pack-create" : "context-pack-update",
+				"--root",
+				params.root || process.cwd(),
+				"--topic",
+				requireString(params.topic, "cartographer_context_pack requires topic"),
+				"--phase-id",
+				requireString(params.phaseId, "cartographer_context_pack requires phaseId"),
+				"--summary",
+				requireString(params.summary, "cartographer_context_pack requires summary"),
+				"--json",
+			];
+			for (const artifact of params.artifact || []) args.push("--artifact", artifact);
+			for (const receipt of params.validationReceipt || []) args.push("--validation-receipt", receipt);
+			return runCommand("node", ["--experimental-strip-types", workflowScript, ...args], signal, {
+				maxOutputChars: params.maxOutputChars,
+				outputPath: params.outputPath,
+				raw: params.raw,
+				label: `cartographer-context-pack-${params.action}`,
+			});
+		},
+	});
+
+	pi.registerTool({
+		name: "cartographer_transition",
+		label: "Cartographer Transition",
+		description: "Inspect and record deterministic Cartographer lifecycle transitions and approval gates.",
+		promptSnippet: "Status, request, approve, reject, or advance Cartographer lifecycle gates",
+		promptGuidelines: [
+			"Use approve for major human approval gates and explicitly human-gated phases only.",
+			"Use advance for automatic implementation phase progression after deterministic prerequisites pass.",
+			"Require approvedBy for CI/non-interactive approvals.",
+		],
+		parameters: Type.Object({
+			action: Type.Union([
+				Type.Literal("status"),
+				Type.Literal("request-approval"),
+				Type.Literal("approve"),
+				Type.Literal("reject"),
+				Type.Literal("advance"),
+			]),
+			root: Type.Optional(Type.String({ description: "Project root. Defaults to current working directory." })),
+			topic: Type.String({ description: "Cartographer topic under .plan/." }),
+			gate: Type.Optional(Type.String({ description: "Approval/transition gate." })),
+			phaseId: Type.Optional(Type.String({ description: "Optional phase id." })),
+			summary: Type.Optional(Type.String({ description: "Transition summary." })),
+			approvedBy: Type.Optional(Type.String({ description: "Explicit human approver label." })),
+			reason: Type.Optional(Type.String({ description: "Rejection reason." })),
+			to: Type.Optional(Type.String({ description: "Lifecycle state for advance." })),
+			ci: Type.Optional(Type.Boolean({ description: "Require explicit approvedBy for approval." })),
+			maxOutputChars: Type.Optional(Type.Number({ description: "Inline output budget." })),
+			outputPath: Type.Optional(Type.String({ description: "Optional full-output path for oversized output." })),
+			raw: Type.Optional(Type.Boolean({ description: "Return raw command output instead of a compact receipt." })),
+		}),
+		async execute(_toolCallId, rawParams, signal) {
+			const params = rawParams as CartographerTransitionParams;
+			const command = params.action === "status" ? "transition-status" : `transition-${params.action}`;
+			const args = [
+				command,
+				"--root",
+				params.root || process.cwd(),
+				"--topic",
+				requireString(params.topic, "cartographer_transition requires topic"),
+				"--json",
+			];
+			if (params.gate) args.push("--gate", params.gate);
+			if (params.phaseId) args.push("--phase-id", params.phaseId);
+			if (params.summary) args.push("--summary", params.summary);
+			if (params.approvedBy) args.push("--approved-by", params.approvedBy);
+			if (params.reason) args.push("--reason", params.reason);
+			if (params.to) args.push("--to", params.to);
+			if (params.ci) args.push("--ci");
+			return runCommand("node", ["--experimental-strip-types", workflowScript, ...args], signal, {
+				maxOutputChars: params.maxOutputChars,
+				outputPath: params.outputPath,
+				raw: params.raw,
+				label: `cartographer-transition-${params.action}`,
+			});
+		},
+	});
+
+	pi.registerTool({
+		name: "cartographer_plan",
+		label: "Cartographer Plan",
+		description: "Generate and finalize Cartographer plan graph artifacts.",
+		promptSnippet: "Generate plan graph artifacts and route plan finalization through deterministic gates",
+		promptGuidelines: [
+			"Use generate-graph after drafting or editing plan.md.",
+			"Use finalize only after deterministic validation and a plan auditor PASS or approved fallback exists.",
+		],
+		parameters: Type.Object({
+			action: Type.Union([Type.Literal("generate-graph"), Type.Literal("finalize")]),
+			root: Type.Optional(Type.String({ description: "Project root. Defaults to current working directory." })),
+			topic: Type.String({ description: "Cartographer topic under .plan/." }),
+			summary: Type.Optional(Type.String({ description: "Finalize/context summary." })),
+			maxOutputChars: Type.Optional(Type.Number({ description: "Inline output budget." })),
+			outputPath: Type.Optional(Type.String({ description: "Optional full-output path for oversized output." })),
+			raw: Type.Optional(Type.Boolean({ description: "Return raw command output instead of a compact receipt." })),
+		}),
+		async execute(_toolCallId, rawParams, signal) {
+			const params = rawParams as CartographerPlanParams;
+			const args = [
+				params.action === "generate-graph" ? "plan-generate-graph" : "plan-finalize",
+				"--root",
+				params.root || process.cwd(),
+				"--topic",
+				requireString(params.topic, "cartographer_plan requires topic"),
+				"--json",
+			];
+			if (params.summary) args.push("--summary", params.summary);
+			return runCommand("node", ["--experimental-strip-types", workflowScript, ...args], signal, {
+				maxOutputChars: params.maxOutputChars,
+				outputPath: params.outputPath,
+				raw: params.raw,
+				label: `cartographer-plan-${params.action}`,
+			});
+		},
+	});
+
+	pi.registerTool({
+		name: "cartographer_plan_status",
+		label: "Cartographer Plan Status",
+		description: "Atomically update plan.md and plan.nodes.jsonl phase/task status.",
+		promptSnippet: "Synchronize plan Markdown checkboxes/status with plan graph nodes",
+		promptGuidelines: [
+			"Use set instead of manually editing plan status or checklist items.",
+			"Rollback is expected when Markdown and JSONL cannot both be updated safely.",
+		],
+		parameters: Type.Object({
+			action: Type.Literal("set"),
+			root: Type.Optional(Type.String({ description: "Project root. Defaults to current working directory." })),
+			topic: Type.String({ description: "Cartographer topic under .plan/." }),
+			id: Type.String({ description: "Phase, task, or validation id such as P3, P3.T1, or P3.V1." }),
+			status: Type.String({ description: "Status: pending, in-progress, complete, or blocked." }),
+			maxOutputChars: Type.Optional(Type.Number({ description: "Inline output budget." })),
+			outputPath: Type.Optional(Type.String({ description: "Optional full-output path for oversized output." })),
+			raw: Type.Optional(Type.Boolean({ description: "Return raw command output instead of a compact receipt." })),
+		}),
+		async execute(_toolCallId, rawParams, signal) {
+			const params = rawParams as CartographerPlanStatusParams;
+			const args = [
+				"plan-status-set",
+				"--root",
+				params.root || process.cwd(),
+				"--topic",
+				requireString(params.topic, "cartographer_plan_status requires topic"),
+				"--id",
+				requireString(params.id, "cartographer_plan_status set requires id"),
+				"--status",
+				requireString(params.status, "cartographer_plan_status set requires status"),
+				"--json",
+			];
+			return runCommand("node", ["--experimental-strip-types", workflowScript, ...args], signal, {
+				maxOutputChars: params.maxOutputChars,
+				outputPath: params.outputPath,
+				raw: params.raw,
+				label: "cartographer-plan-status-set",
+			});
+		},
+	});
+
+	pi.registerTool({
+		name: "cartographer_implement",
+		label: "Cartographer Implement",
+		description: "Start, step, record, compact, and finalize deterministic implementation state gates.",
+		promptSnippet: "Control implementation start/step/record/compact/finalize gates",
+		promptGuidelines: [
+			"Use start before implementation edits to initialize state and select the first executable phase.",
+			"Use step to reload state and check working-set guardrails before edits.",
+			"Use finalize only after all phases are complete and final audit/ADR handling exists.",
+		],
+		parameters: Type.Object({
+			action: Type.Union([
+				Type.Literal("start"),
+				Type.Literal("step"),
+				Type.Literal("record"),
+				Type.Literal("compact"),
+				Type.Literal("finalize"),
+			]),
+			root: Type.Optional(Type.String({ description: "Project root. Defaults to current working directory." })),
+			topic: Type.String({ description: "Cartographer topic under .plan/." }),
+			path: Type.Optional(Type.String({ description: "Optional path to check against active working_set for step." })),
+			receiptId: Type.Optional(Type.Array(Type.String(), { description: "Validation receipt ids for record." })),
+			trigger: Type.Optional(Type.String({ description: "Compaction trigger for compact." })),
+			summary: Type.Optional(Type.String({ description: "Compact/finalize summary." })),
+			maxOutputChars: Type.Optional(Type.Number({ description: "Inline output budget." })),
+			outputPath: Type.Optional(Type.String({ description: "Optional full-output path for oversized output." })),
+			raw: Type.Optional(Type.Boolean({ description: "Return raw command output instead of a compact receipt." })),
+		}),
+		async execute(_toolCallId, rawParams, signal) {
+			const params = rawParams as CartographerImplementParams;
+			const args = [
+				`implement-${params.action}`,
+				"--root",
+				params.root || process.cwd(),
+				"--topic",
+				requireString(params.topic, "cartographer_implement requires topic"),
+				"--json",
+			];
+			if (params.path) args.push("--path", params.path);
+			for (const id of params.receiptId || []) args.push("--receipt-id", id);
+			if (params.trigger) args.push("--trigger", params.trigger);
+			if (params.summary) args.push("--summary", params.summary);
+			return runCommand("node", ["--experimental-strip-types", workflowScript, ...args], signal, {
+				maxOutputChars: params.maxOutputChars,
+				outputPath: params.outputPath,
+				raw: params.raw,
+				label: `cartographer-implement-${params.action}`,
+			});
+		},
+	});
+
+	pi.registerTool({
+		name: "cartographer_handoff",
+		label: "Cartographer Handoff",
+		description: "Capture deterministic Cartographer specialist handoff outcomes and fallback receipts.",
+		promptSnippet: "Record auditor/compass handoff reports, schema outcomes, and fallbacks",
+		promptGuidelines: [
+			"Use auditor after deterministic validation receipts and a context pack exist.",
+			"Treat missing, empty, or schema-invalid specialist output as harness failure, not semantic FAIL.",
+			"Record fallback receipts for timeout, usage limit, schema mismatch, or approved substitute reviewers.",
+		],
+		parameters: Type.Object({
+			action: Type.Union([
+				Type.Literal("auditor"),
+				Type.Literal("compass"),
+				Type.Literal("archivist"),
+				Type.Literal("redactor"),
+				Type.Literal("fallback"),
+				Type.Literal("output-capture"),
+				Type.Literal("dependency-evaluation"),
+			]),
+			root: Type.Optional(Type.String({ description: "Project root. Defaults to current working directory." })),
+			topic: Type.String({ description: "Cartographer topic under .plan/." }),
+			phaseId: Type.String({ description: "Phase id for the handoff." }),
+			decision: Type.Optional(Type.String({ description: "PASS/FAIL or structured compass decision." })),
+			reportPath: Type.Optional(Type.String({ description: "Report path for auditor/output capture." })),
+			summary: Type.String({ description: "Compact handoff summary." }),
+			role: Type.Optional(Type.String({ description: "Role for output-capture." })),
+			output: Type.Optional(Type.String({ description: "Raw structured specialist output for output-capture." })),
+			artifact: Type.Optional(Type.Array(Type.String(), { description: "Artifact summaries for auditor context." })),
+			acceptanceCriterion: Type.Optional(
+				Type.Array(Type.String(), { description: "Acceptance criteria for auditor review." }),
+			),
+			recommendation: Type.Optional(
+				Type.String({ description: "Dependency recommendation: keep, patch, or replace." }),
+			),
+			validationReceipt: Type.Optional(Type.Array(Type.String(), { description: "Validation receipt ids." })),
+			failureMode: Type.Optional(Type.String({ description: "Fallback failure mode." })),
+			fallback: Type.Optional(Type.String({ description: "Approved fallback reviewer/role." })),
+			maxOutputChars: Type.Optional(Type.Number({ description: "Inline output budget." })),
+			outputPath: Type.Optional(Type.String({ description: "Optional full-output path for oversized output." })),
+			raw: Type.Optional(Type.Boolean({ description: "Return raw command output instead of a compact receipt." })),
+		}),
+		async execute(_toolCallId, rawParams, signal) {
+			const params = rawParams as CartographerHandoffParams;
+			const command =
+				params.action === "fallback"
+					? "handoff-fallback"
+					: params.action === "output-capture"
+						? "handoff-output-capture"
+						: params.action === "dependency-evaluation"
+							? "handoff-dependency-evaluation"
+							: `handoff-${params.action}`;
+			const args = [
+				command,
+				"--root",
+				params.root || process.cwd(),
+				"--topic",
+				requireString(params.topic, "cartographer_handoff requires topic"),
+				"--phase-id",
+				requireString(params.phaseId, "cartographer_handoff requires phaseId"),
+				"--summary",
+				requireString(params.summary, "cartographer_handoff requires summary"),
+				"--json",
+			];
+			if (params.decision) args.push("--decision", params.decision);
+			if (params.reportPath) args.push("--report-path", params.reportPath);
+			if (params.role) args.push("--role", params.role);
+			if (params.output) args.push("--output", params.output);
+			if (params.recommendation) args.push("--recommendation", params.recommendation);
+			for (const artifact of params.artifact || []) args.push("--artifact", artifact);
+			for (const criterion of params.acceptanceCriterion || []) args.push("--acceptance-criterion", criterion);
+			for (const receipt of params.validationReceipt || []) args.push("--validation-receipt", receipt);
+			if (params.failureMode) args.push("--failure-mode", params.failureMode);
+			if (params.fallback) args.push("--fallback", params.fallback);
+			return runCommand("node", ["--experimental-strip-types", workflowScript, ...args], signal, {
+				maxOutputChars: params.maxOutputChars,
+				outputPath: params.outputPath,
+				raw: params.raw,
+				label: `cartographer-handoff-${params.action}`,
+			});
+		},
+	});
+
+	pi.registerTool({
+		name: "cartographer_proposal",
+		label: "Cartographer Proposal",
+		description: "Initialize, finalize, and synchronize ADR metadata for proposal artifacts.",
+		promptSnippet: "Create/reconcile proposal artifacts and route proposal finalization through deterministic gates",
+		promptGuidelines: [
+			"Use init before proposal drafting instead of manually creating topic files.",
+			"Use adr-sync after cartographer_adr evaluate or with an explicit override rationale.",
+			"Use finalize only after deterministic validation and a proposal auditor PASS or approved fallback exists.",
+		],
+		parameters: Type.Object({
+			action: Type.Union([Type.Literal("init"), Type.Literal("finalize"), Type.Literal("adr-sync")]),
+			root: Type.Optional(Type.String({ description: "Project root. Defaults to current working directory." })),
+			topic: Type.String({ description: "Cartographer topic under .plan/." }),
+			title: Type.Optional(Type.String({ description: "Proposal title for init." })),
+			summary: Type.Optional(Type.String({ description: "Finalize/context summary." })),
+			adrRequired: Type.Optional(Type.Boolean({ description: "Whether ADR is required." })),
+			adrReason: Type.Optional(Type.String({ description: "ADR evaluation reason." })),
+			adrOptionsStatus: Type.Optional(Type.String({ description: "ADR options status." })),
+			adrToolMode: Type.Optional(Type.String({ description: "ADR tool mode." })),
+			overrideRationale: Type.Optional(Type.String({ description: "Explicit override rationale." })),
+			maxOutputChars: Type.Optional(Type.Number({ description: "Inline output budget." })),
+			outputPath: Type.Optional(Type.String({ description: "Optional full-output path for oversized output." })),
+			raw: Type.Optional(Type.Boolean({ description: "Return raw command output instead of a compact receipt." })),
+		}),
+		async execute(_toolCallId, rawParams, signal) {
+			const params = rawParams as CartographerProposalParams;
+			const command = params.action === "adr-sync" ? "proposal-adr-sync" : `proposal-${params.action}`;
+			const args = [
+				command,
+				"--root",
+				params.root || process.cwd(),
+				"--topic",
+				requireString(params.topic, "cartographer_proposal requires topic"),
+				"--json",
+			];
+			if (params.title) args.push("--title", params.title);
+			if (params.summary) args.push("--summary", params.summary);
+			if (params.adrRequired !== undefined) args.push("--adr-required", params.adrRequired ? "true" : "false");
+			if (params.adrReason) args.push("--adr-reason", params.adrReason);
+			if (params.adrOptionsStatus) args.push("--adr-options-status", params.adrOptionsStatus);
+			if (params.adrToolMode) args.push("--adr-tool-mode", params.adrToolMode);
+			if (params.overrideRationale) args.push("--override-rationale", params.overrideRationale);
+			return runCommand("node", ["--experimental-strip-types", workflowScript, ...args], signal, {
+				maxOutputChars: params.maxOutputChars,
+				outputPath: params.outputPath,
+				raw: params.raw,
+				label: `cartographer-proposal-${params.action}`,
+			});
+		},
+	});
+
+	pi.registerTool({
+		name: "cartographer_fact",
+		label: "Cartographer Fact",
+		description: "Add source-backed facts and supported_by edges to proposal fact graphs.",
+		promptSnippet: "Append source-backed facts through deterministic JSONL upserts",
+		promptGuidelines: [
+			"Use add-source, add-fact, and support-fact instead of manually editing fact JSONL.",
+			"Every durable fact should have a supported_by edge to a source before proposal finalization.",
+		],
+		parameters: Type.Object({
+			action: Type.Union([Type.Literal("add-source"), Type.Literal("add-fact"), Type.Literal("support-fact")]),
+			root: Type.Optional(Type.String({ description: "Project root. Defaults to current working directory." })),
+			topic: Type.String({ description: "Cartographer topic under .plan/." }),
+			title: Type.Optional(Type.String({ description: "Source or fact title." })),
+			url: Type.Optional(Type.String({ description: "Optional source URL." })),
+			factId: Type.Optional(Type.String({ description: "Fact node id for support-fact." })),
+			sourceId: Type.Optional(Type.String({ description: "Source node id." })),
+			id: Type.Optional(Type.String({ description: "Optional explicit node id." })),
+			maxOutputChars: Type.Optional(Type.Number({ description: "Inline output budget." })),
+			outputPath: Type.Optional(Type.String({ description: "Optional full-output path for oversized output." })),
+			raw: Type.Optional(Type.Boolean({ description: "Return raw command output instead of a compact receipt." })),
+		}),
+		async execute(_toolCallId, rawParams, signal) {
+			const params = rawParams as CartographerFactParams;
+			const args = [
+				`fact-${params.action}`,
+				"--root",
+				params.root || process.cwd(),
+				"--topic",
+				requireString(params.topic, "cartographer_fact requires topic"),
+				"--json",
+			];
+			if (params.title) args.push("--title", params.title);
+			if (params.url) args.push("--url", params.url);
+			if (params.factId) args.push("--fact-id", params.factId);
+			if (params.sourceId) args.push("--source-id", params.sourceId);
+			if (params.id) args.push("--id", params.id);
+			return runCommand("node", ["--experimental-strip-types", workflowScript, ...args], signal, {
+				maxOutputChars: params.maxOutputChars,
+				outputPath: params.outputPath,
+				raw: params.raw,
+				label: `cartographer-fact-${params.action}`,
 			});
 		},
 	});

@@ -1,0 +1,5 @@
+DECISION: FAIL
+SUMMARY: P4 deterministic receipts pass, but semantic review found a state-discipline blocker: the implement runner selects an executable phase and returns it, yet does not set `.cartographer/<topic>/state.json.current_phase_id` to that phase. This can make `implement-step` report a stale/currently wrong phase before P5.
+REQUIRED_CORRECTIONS:
+- Set and validate `current_phase_id` during `implement-start` for the selected executable phase, not merely `next_action.phase_id`. References: `skills/plan/scripts/cartographer_workflow.ts:1113-1143`, `skills/plan/scripts/cartographer_state.ts:250-257`, `skills/plan/scripts/cartographer_workflow.ts:1180-1188`.
+- Add temp-root regression coverage where an earlier phase is already complete and `implement-start` selects a later phase; assert state `current_phase_id`, returned `phase_id`, and `implement-step.current_phase_id` all match. Current tests only cover initial P0 selection: `tests/cartographer_workflow.test.ts:390-402`.

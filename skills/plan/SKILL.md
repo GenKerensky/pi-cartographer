@@ -46,6 +46,10 @@ Do not create `.cartographer/` execution state during planning. Plans may includ
 
 ## Procedure
 
+### Wrapper-first mutation contract
+
+Use deterministic wrappers for plan mutations whenever available. Prefer `cartographer_plan generate-graph`/`plan-generate-graph` to derive `plan.nodes.jsonl` and `plan.edges.jsonl`, `cartographer_plan_status set`/`plan-status-set` for phase/task/validation status and checklist synchronization, `cartographer_validation complete-item`/`validation-complete-item` for validation item completion, and `cartographer_plan finalize`/`plan-finalize` for topic validation, planning graph validation, context-pack checks, and auditor PASS gating. Do not manually sync plan status, check off validation items, append plan receipts, or mark a plan ready for implementation as a prose-only step unless a wrapper is unavailable and an explicit fallback receipt documents the substitute checks.
+
 1. **Derive the topic and inspect existing artifacts**
    - Summarize the user's plan topic in 3 words or less.
    - Create `.plan/{topic}/` if needed.
@@ -282,8 +286,8 @@ Do not create `.cartographer/` execution state during planning. Plans may includ
 
 11. **Final validation with `cartographer-auditor`**
 
-- After `cartographer_jsonl validate-topic` and `validate_planning_graph.py` receipts pass, launch `cartographer-auditor` as the default final semantic gate for plan artifacts, references, graph consistency, checklist/validation coverage, and handoff readiness.
-- Provide the auditor the plan path, plan graph paths, proposal/map/fact references, deterministic validation receipt IDs or compact output summaries, and require an explicit `PASS`/`FAIL` decision. A plan should not be marked ready for implementation without a `cartographer-auditor` `PASS` or an approved fallback receipt.
+- After `cartographer_jsonl validate-topic` and `validate_planning_graph.py` receipts pass, route the final semantic gate through `cartographer_handoff auditor` when available so artifact summaries, acceptance criteria, validation receipt IDs, report path, and PASS/FAIL schema are captured deterministically. If the wrapper is unavailable, launch `cartographer-auditor` directly and record an explicit fallback receipt.
+- Provide the auditor the plan path, plan graph paths, proposal/map/fact references, deterministic validation receipt IDs or compact output summaries, and require an explicit `PASS`/`FAIL` decision captured by `cartographer_handoff auditor` or an approved fallback. A plan should not be marked ready for implementation without a captured auditor `PASS` or an approved fallback receipt.
 - Use `cartographer-compass` for scope, dependency, and decision-consistency concerns, especially when phase ordering or assumptions are questionable; compass does not replace the final audit gate.
 - Built-in `reviewer`/`oracle` or a serial current-agent validation pass are fallback substitutes only when `cartographer-auditor` is unavailable, times out, or the user approves substitution. Each fallback must write an explicit fallback receipt in `.plan/{topic}/receipts.jsonl` with the attempted auditor, reason, substitute/manual reviewer used, deterministic validation receipt IDs, files reviewed, outcome, and residual risks.
 - Do not use `planner` for final validation unless no auditor/reviewer/oracle substitute is available and the user approves; record that as a fallback receipt.

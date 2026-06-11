@@ -1,0 +1,4 @@
+DECISION: PASS
+SUMMARY: P4 correction satisfies the prior blocker: `startImplementation` now selects the executable phase, writes that phase to `.cartographer/<topic>/state.json` as `current_phase_id`, validates state, and `implementStep` reports the same phase; regression coverage verifies P0 complete/P1 selected alignment. Reviewed deterministic validation receipts `receipt:P4:validation:2026-06-11T13:30:56+00:00` and `receipt:P4:validation:2026-06-11T13:31:09+00:00`, updated P4 context pack, phase summary, implementation code at `skills/plan/scripts/cartographer_workflow.ts:1139`, and regression test at `tests/cartographer_workflow.test.ts:403`.
+REQUIRED_CORRECTIONS:
+- None

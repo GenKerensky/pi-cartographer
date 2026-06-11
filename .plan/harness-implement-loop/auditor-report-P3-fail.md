@@ -1,0 +1,5 @@
+DECISION: FAIL
+SUMMARY: Deterministic receipts and context pack were reviewed and passed, but P3 should not be accepted before P4 because `plan-generate-graph` does not preserve/parse plan references/citations required by P3.T1/P3.V1. A temp-root dry run showed it would rewrite `plan.edges.jsonl` from 174 edges to 96 and remove all `references` metadata/edges.
+REQUIRED_CORRECTIONS:
+- Implement reference/citation parsing in `parsePlanMarkdown` / `generatePlanGraph` so `- **Primary references:** ... [F...]` entries are emitted into `plan.nodes.jsonl` and `plan.edges.jsonl`; current code only handles phases, dependencies, tasks, and validations (`skills/plan/scripts/cartographer_workflow.ts:926-969`), while P3 requires references (`.plan/harness-implement-loop/plan.md:201`, `.plan/harness-implement-loop/plan.md:215`, `.plan/harness-implement-loop/plan.md:223`).
+- Add/adjust graph-generation tests to assert references are preserved, matching existing canonical graph shape such as P3 `references` metadata and edges (`.plan/harness-implement-loop/plan.nodes.jsonl:33`, `.plan/harness-implement-loop/plan.edges.jsonl:80-83`).
