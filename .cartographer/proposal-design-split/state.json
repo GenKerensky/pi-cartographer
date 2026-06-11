@@ -5,11 +5,11 @@
   "source_refs": {
     "plan_md": {
       "path": ".plan/proposal-design-split/plan.md",
-      "sha256": "sha256:6a9aa57d02568267cdf92dc469681abc7ee384f84521773231e0457e6aa29652"
+      "sha256": "sha256:d469ccf68ca34e0471743b37710d7faff84d8af74ade99f24d7536ee672805b1"
     },
     "plan_nodes": {
       "path": ".plan/proposal-design-split/plan.nodes.jsonl",
-      "sha256": "sha256:c9a3295b4c9dc4f3e87d84a010f44b9f194485d16803a491ce33231dc4ff72c0"
+      "sha256": "sha256:ef61e1f9b2aa8d78673120d16e33f5d0b6998dacceab1e32fee10506d430a5f5"
     },
     "plan_edges": {
       "path": ".plan/proposal-design-split/plan.edges.jsonl",
@@ -17,23 +17,23 @@
     },
     "receipts": {
       "path": ".plan/proposal-design-split/receipts.jsonl",
-      "sha256": "sha256:b82daa2fd7f4c3c141cefa909c51c767ea26f4418318ff150a74555f007b96c2"
+      "sha256": "sha256:71c4d4529408a040185d6c67a5c52f7683a716f2e9d2a1619e351e2be2ed238b"
     },
     "context_packs": {
       "path": ".plan/proposal-design-split/context-packs.jsonl",
-      "sha256": "sha256:3492d06e49927439e0f476dc36a78435b122a8e993bed7ace2934ba875766a44"
+      "sha256": "sha256:a1842c530d9a313ded58e54732ea489af8e3d23769fc1f9e17ac0f6efbb46844"
     }
   },
   "current_phase_id": "P0",
   "active_task_ids": [],
   "active_validation_ids": [],
   "next_action": {
-    "id": "next:P0.T1",
+    "id": "next:P1.T1",
     "kind": "task",
-    "summary": "Update README and workflow docs for proposal->requirements delta->design lifecycle and scope gate.",
-    "phase_id": "P0",
+    "summary": "Extend topic artifact discovery and validation for requirements.md, requirements.nodes.jsonl, and requirements.edges.jsonl.",
+    "phase_id": "P1",
     "task_ids": [
-      "P0.T1"
+      "P1.T1"
     ]
   },
   "working_set": {
@@ -49,10 +49,13 @@
   "known_failures": [],
   "last_validation_receipt_ids": [
     "receipt:P0:validation:2026-06-11T06:15:35+00:00",
-    "receipt:proposal-design-split:P0-auditor-pass:2026-06-11T06:16:00Z"
+    "receipt:proposal-design-split:P0-auditor-pass:2026-06-11T06:16:00Z",
+    "receipt:P1:validation:2026-06-11T13:18:16+00:00",
+    "receipt:P1:validation:2026-06-11T13:18:21+00:00"
   ],
   "journal_refs": [
-    "journal:20260611T061742Z:compact"
+    "journal:20260611T061742Z:compact",
+    "journal:20260611T132105Z:compact"
   ],
   "resume": {
     "template_id": "cartographer.single_writer.resume.v1",
@@ -72,9 +75,10 @@
       "stale generated snippets"
     ]
   },
-  "updated_at": "2026-06-11T06:17:42Z",
+  "updated_at": "2026-06-11T13:21:05Z",
   "compaction": {
-    "trigger": "phase-end:P0",
-    "compacted_at": "2026-06-11T06:17:42Z"
-  }
+    "trigger": "phase-end P1",
+    "compacted_at": "2026-06-11T13:21:05Z"
+  },
+  "stale_reason": "P1 plan/status/receipts/context packs changed after phase-end validation; regenerating compact state from authoritative artifacts."
 }

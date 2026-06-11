@@ -206,6 +206,111 @@ describe("manage_jsonl CLI", () => {
 		expect(report.counts.fact_nodes).toBe(2);
 	});
 
+	it("validates requirements graph artifacts and citations", () => {
+		const root = tempDir();
+		const topicDir = path.join(root, ".plan", "demo");
+		fs.mkdirSync(topicDir, { recursive: true });
+		fs.writeFileSync(path.join(root, "README.md"), "hello\n", "utf8");
+		fs.writeFileSync(path.join(topicDir, "proposal.md"), "# Demo\n\nUses [F001].\n", "utf8");
+		fs.writeFileSync(
+			path.join(topicDir, "requirements.md"),
+			"# Requirements\n\n## ADDED Requirements\n\nImplements [REQ-DEMO-001] with [SCN-DEMO-001].\n",
+			"utf8",
+		);
+		fs.writeFileSync(path.join(topicDir, "design.md"), "# Design\n\nSatisfies [REQ-DEMO-001].\n", "utf8");
+		fs.writeFileSync(
+			path.join(topicDir, "map.nodes.jsonl"),
+			`${JSON.stringify({ id: "topic:demo", type: "topic", title: "Demo" })}\n`,
+			"utf8",
+		);
+		fs.writeFileSync(path.join(topicDir, "map.edges.jsonl"), "", "utf8");
+		fs.writeFileSync(
+			path.join(topicDir, "facts.nodes.jsonl"),
+			`${JSON.stringify({ id: "S001", type: "source", title: "Readme", reference: "README.md:1" })}\n${JSON.stringify({ id: "F001", type: "fact", title: "Fact" })}\n`,
+			"utf8",
+		);
+		fs.writeFileSync(
+			path.join(topicDir, "facts.edges.jsonl"),
+			`${JSON.stringify({ from: "F001", to: "S001", type: "supported_by" })}\n`,
+			"utf8",
+		);
+		fs.writeFileSync(
+			path.join(topicDir, "requirements.nodes.jsonl"),
+			[
+				{
+					id: "REQ-DEMO-001",
+					type: "requirement",
+					title: "Demo requirement",
+					statement: "The system MUST demonstrate requirement validation.",
+					change_type: "ADDED",
+					domain: "demo",
+					priority: "must",
+					status: "accepted",
+					scenario_refs: ["SCN-DEMO-001"],
+					fact_refs: ["F001"],
+					source_refs: ["S001"],
+					durable_refs: ["docs/requirements.md#demo"],
+				},
+				{ id: "SCN-DEMO-001", type: "scenario", title: "Happy path", requirement_id: "REQ-DEMO-001" },
+			]
+				.map((record) => JSON.stringify(record))
+				.join("\n") + "\n",
+			"utf8",
+		);
+		fs.writeFileSync(
+			path.join(topicDir, "requirements.edges.jsonl"),
+			`${JSON.stringify({ from: "REQ-DEMO-001", to: "F001", type: "supported_by" })}\n${JSON.stringify({ from: "REQ-DEMO-001", to: "SCN-DEMO-001", type: "has_scenario" })}\n${JSON.stringify({ from: "REQ-DEMO-001", to: "docs/requirements.md#demo", type: "folds_into" })}\n`,
+			"utf8",
+		);
+
+		const report = runJson(["validate-topic", "--root", root, "--topic", "demo"]);
+		expect(report.ok).toBe(true);
+		expect(report.counts.requirement_nodes).toBe(2);
+		expect(report.counts.requirement_edges).toBe(3);
+
+		fs.writeFileSync(path.join(topicDir, "design.md"), "# Design\n\nMissing [REQ-DEMO-999].\n", "utf8");
+		let invalid = runJsonUnchecked(["validate-topic", "--root", root, "--topic", "demo"]);
+		expect(invalid.status).not.toBe(0);
+		expect(invalid.payload.errors.join("\n")).toContain("missing requirement/scenario [REQ-DEMO-999]");
+
+		fs.writeFileSync(path.join(topicDir, "design.md"), "# Design\n\nSatisfies [REQ-DEMO-001].\n", "utf8");
+		const invalidRequirement = {
+			id: "req-demo-001",
+			type: "requirement",
+			title: "Bad requirement",
+			statement: "Invalid refs",
+			change_type: "CHANGED",
+			domain: "demo",
+			priority: "must",
+			status: "accepted",
+			scenario_refs: ["SCN-MISSING"],
+			fact_refs: ["F999"],
+			source_refs: ["S999"],
+			durable_refs: ["docs/requirements/bad path.md"],
+			evidence: ".plan/_private/demo/raw.log",
+		};
+		fs.writeFileSync(
+			path.join(topicDir, "requirements.nodes.jsonl"),
+			`${JSON.stringify(invalidRequirement)}\n${JSON.stringify({ id: "SCN-DEMO-001", type: "scenario", title: "Happy path", requirement_id: "REQ-MISSING" })}\n`,
+			"utf8",
+		);
+		fs.writeFileSync(
+			path.join(topicDir, "requirements.edges.jsonl"),
+			`${JSON.stringify({ from: "REQ-DEMO-001", to: "docs/requirements/bad path.md", type: "folds_into" })}\n`,
+			"utf8",
+		);
+		invalid = runJsonUnchecked(["validate-topic", "--root", root, "--topic", "demo"]);
+		const errors = invalid.payload.errors.join("\n");
+		expect(errors).toContain("Invalid requirement id");
+		expect(errors).toContain("Invalid change_type");
+		expect(errors).toContain("references missing scenario");
+		expect(errors).toContain("references missing fact");
+		expect(errors).toContain("references missing source");
+		expect(errors).toContain("invalid durable ref");
+		expect(errors).toContain("Direct private artifact reference");
+		expect(errors).toContain("Unresolved to endpoint");
+	});
+
 	it("validates sanitized evidence sources", () => {
 		const root = tempDir();
 		const topicDir = path.join(root, ".plan", "demo");

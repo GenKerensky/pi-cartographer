@@ -111,7 +111,7 @@ Do not implement helper schemas in this phase. Keep this phase to docs/skill con
 
 ### Phase P1 — Requirements Graph and Validators
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P0
 - **Unlocks:** P2
 - **Primary references:** `artifact:requirements.md`, `artifact:requirements.nodes.jsonl`, `artifact:requirements.edges.jsonl`, `file:skills/plan/scripts/manage_jsonl.ts`, `file:skills/plan/scripts/validate_planning_graph.py`, [F002], [F006], [F007], [F013], [F014], [F018]
@@ -129,17 +129,17 @@ Add Cartographer-native topic-local requirements delta artifacts and determinist
 
 #### Checklist
 
-- [ ] **P1.T1** Extend topic artifact discovery/validation to recognize `.plan/<topic>/requirements.md`, `requirements.nodes.jsonl`, and `requirements.edges.jsonl`.
-- [ ] **P1.T2** Implement requirement node validation for stable IDs, `type`, `change_type`, `domain`, `priority`, `status`, statement/summary, scenario refs, source/fact refs, and optional durable requirement refs.
-- [ ] **P1.T3** Implement requirement edge validation for `satisfies_goal`, `derived_from`, `supported_by`, `constrains`, `supersedes`, `modifies`, `removes`, `renames`, `validated_by`, and `folds_into`-style relationships as applicable.
-- [ ] **P1.T4** Add citation validation so `requirements.md`, `design.md`, and `plan.md` can cite requirement IDs and scenario IDs without false fact-citation failures.
-- [ ] **P1.T5** Add temp-root tests for valid/invalid requirements artifacts, unsupported facts, unresolved durable requirement refs, private path rejection, and OpenSpec-shaped delta sections.
+- [x] **P1.T1** Extend topic artifact discovery/validation to recognize `.plan/<topic>/requirements.md`, `requirements.nodes.jsonl`, and `requirements.edges.jsonl`.
+- [x] **P1.T2** Implement requirement node validation for stable IDs, `type`, `change_type`, `domain`, `priority`, `status`, statement/summary, scenario refs, source/fact refs, and optional durable requirement refs.
+- [x] **P1.T3** Implement requirement edge validation for `satisfies_goal`, `derived_from`, `supported_by`, `constrains`, `supersedes`, `modifies`, `removes`, `renames`, `validated_by`, and `folds_into`-style relationships as applicable.
+- [x] **P1.T4** Add citation validation so `requirements.md`, `design.md`, and `plan.md` can cite requirement IDs and scenario IDs without false fact-citation failures.
+- [x] **P1.T5** Add temp-root tests for valid/invalid requirements artifacts, unsupported facts, unresolved durable requirement refs, private path rejection, and OpenSpec-shaped delta sections.
 
 #### Validation
 
-- [ ] **P1.V1** Run `npm run test:ts -- tests/manage_jsonl.test.ts tests/cartographer_tools.test.ts` and confirm requirements summary/validation behavior passes.
-- [ ] **P1.V2** Run `python -m unittest tests.test_validate_planning_graph` and confirm planning graph validation accepts valid requirements artifacts and rejects invalid references.
-- [ ] **P1.V3** Run `npm run check:scripts` and confirm TypeScript/Python helper syntax passes.
+- [x] **P1.V1** Run `npm run test:ts -- tests/manage_jsonl.test.ts tests/cartographer_tools.test.ts` and confirm requirements summary/validation behavior passes.
+- [x] **P1.V2** Run `python -m unittest discover tests -p 'test_validate_planning_graph.py'` and confirm planning graph validation accepts valid requirements artifacts and rejects invalid references.
+- [x] **P1.V3** Run `npm run check:scripts` and confirm TypeScript/Python helper syntax passes.
 
 #### Exit Criteria
 

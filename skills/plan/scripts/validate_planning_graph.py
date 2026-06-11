@@ -19,6 +19,7 @@ DEPENDS_RE = re.compile(r"^-\s+\*\*Depends on:\*\*\s*(.+?)\s*$", re.MULTILINE)
 TASK_RE = re.compile(r"\*\*(P\d+\.T\d+)\*\*")
 VALIDATION_RE = re.compile(r"\*\*(P\d+\.V\d+)\*\*")
 FACT_CITATION_RE = re.compile(r"\[(F\d+)\]")
+REQUIREMENT_CITATION_RE = re.compile(r"\[((?:REQ|SCN|AC)-[A-Z0-9][A-Z0-9_.-]*)\]")
 REFERENCE_RE = re.compile(r"(?<![\w/.-])([A-Za-z0-9_./@+-]+\.[A-Za-z0-9_./@+-]+):(\d+)")
 LIFECYCLE_STATES = {"draft", "accepted", "planned", "in-progress", "implemented", "superseded", "stale"}
 MISS_FAILURE_TYPES = {
@@ -235,6 +236,107 @@ def validate_context_pack_records(records: list[dict[str, Any]], label: str, err
             errors.append(f"context-pack budget_tokens must be numeric in {label} record {index}")
         if record.get("references") is not None and not isinstance(record.get("references"), list):
             errors.append(f"context-pack references must be an array in {label} record {index}")
+
+
+REQUIREMENT_CHANGE_TYPES = {"ADDED", "MODIFIED", "REMOVED", "RENAMED"}
+REQUIREMENT_PRIORITIES = {"must", "should", "may", "must-not", "should-not"}
+REQUIREMENT_STATUSES = {"draft", "accepted", "planned", "implemented", "superseded", "removed"}
+REQUIREMENT_ID_RE = re.compile(r"^REQ-[A-Z0-9][A-Z0-9_.-]*$")
+SCENARIO_ID_RE = re.compile(r"^SCN-[A-Z0-9][A-Z0-9_.-]*$")
+ACCEPTANCE_CHECK_ID_RE = re.compile(r"^AC-[A-Z0-9][A-Z0-9_.-]*$")
+DURABLE_REQUIREMENT_REF_RE = re.compile(r"^docs/requirements(?:\.md|/[A-Za-z0-9_.-]+\.md)(?:#[A-Za-z0-9_.-]+)?$")
+REQUIREMENT_EDGE_TYPES = {
+    "satisfies_goal",
+    "derived_from",
+    "supported_by",
+    "constrains",
+    "supersedes",
+    "modifies",
+    "removes",
+    "renames",
+    "validated_by",
+    "folds_into",
+    "has_scenario",
+    "accepts",
+    "related_to",
+}
+
+
+def validate_requirement_records(
+    records: list[dict[str, Any]], label: str, fact_ids: set[str], source_ids: set[str], errors: list[str]
+) -> None:
+    by_id = {str(record.get("id")): record for record in records if record.get("id")}
+    for index, record in enumerate(records, start=1):
+        record_type = record.get("type")
+        record_id = str(record.get("id") or "")
+        if not record_id:
+            errors.append(f"Missing id in {label} record {index}")
+        if record_type == "requirement" and not REQUIREMENT_ID_RE.match(record_id):
+            errors.append(f"Invalid requirement id {record_id!r} in {label} record {index}")
+        if record_type == "scenario" and not SCENARIO_ID_RE.match(record_id):
+            errors.append(f"Invalid scenario id {record_id!r} in {label} record {index}")
+        if record_type == "acceptance-check" and not ACCEPTANCE_CHECK_ID_RE.match(record_id):
+            errors.append(f"Invalid acceptance-check id {record_id!r} in {label} record {index}")
+        if record_type not in {"requirement", "scenario", "acceptance-check"}:
+            errors.append(f"Invalid requirement record type {record_type!r} in {label} record {index}")
+        if record_type == "requirement":
+            for field in ["title", "statement", "change_type", "domain", "priority", "status"]:
+                if not record.get(field):
+                    errors.append(f"Missing {field} in {label} record {index}")
+            if record.get("change_type") and record.get("change_type") not in REQUIREMENT_CHANGE_TYPES:
+                errors.append(f"Invalid change_type {record.get('change_type')!r} in {label} record {index}")
+            if record.get("priority") and record.get("priority") not in REQUIREMENT_PRIORITIES:
+                errors.append(f"Invalid priority {record.get('priority')!r} in {label} record {index}")
+        if record_type == "scenario":
+            for field in ["title", "requirement_id"]:
+                if not record.get(field):
+                    errors.append(f"Missing {field} in {label} record {index}")
+            if record.get("requirement_id") and by_id.get(str(record.get("requirement_id")), {}).get("type") != "requirement":
+                errors.append(f"Scenario {record_id} references missing requirement_id {record.get('requirement_id')!r}")
+        if record.get("status") and record.get("status") not in REQUIREMENT_STATUSES:
+            errors.append(f"Invalid requirement status {record.get('status')!r} in {label} record {index}")
+        for field in ["scenario_refs", "fact_refs", "source_refs", "durable_refs"]:
+            if field in record and not isinstance(record.get(field), list):
+                errors.append(f"{field} must be an array in {label} record {index}")
+        for ref in record.get("scenario_refs", []) if isinstance(record.get("scenario_refs"), list) else []:
+            if by_id.get(str(ref), {}).get("type") != "scenario":
+                errors.append(f"Requirement {record_id} references missing scenario {ref!r}")
+        for ref in record.get("fact_refs", []) if isinstance(record.get("fact_refs"), list) else []:
+            if str(ref) not in fact_ids:
+                errors.append(f"Requirement {record_id} references missing fact {ref!r}")
+        for ref in record.get("source_refs", []) if isinstance(record.get("source_refs"), list) else []:
+            if str(ref) not in source_ids:
+                errors.append(f"Requirement {record_id} references missing source {ref!r}")
+        for ref in record.get("durable_refs", []) if isinstance(record.get("durable_refs"), list) else []:
+            if not DURABLE_REQUIREMENT_REF_RE.match(str(ref)):
+                errors.append(f"Requirement {record_id} has invalid durable ref {ref!r}")
+
+
+def validate_requirement_edges(
+    records: list[dict[str, Any]], label: str, allowed_ids: set[str], errors: list[str]
+) -> None:
+    for index, record in enumerate(records, start=1):
+        if not record.get("from") or not record.get("to") or not record.get("type"):
+            errors.append(f"Requirement edge in {label} record {index} must include from, to, and type")
+            continue
+        if record.get("type") not in REQUIREMENT_EDGE_TYPES:
+            errors.append(f"Invalid requirement edge type {record.get('type')!r} in {label} record {index}")
+        for endpoint_name in ["from", "to"]:
+            endpoint = str(record.get(endpoint_name))
+            if endpoint in allowed_ids or DURABLE_REQUIREMENT_REF_RE.match(endpoint):
+                continue
+            errors.append(f"Unresolved {endpoint_name} endpoint {endpoint!r} in {label} record {index}")
+
+
+def validate_requirement_citations(topic_dir: Path, requirement_ids: set[str], errors: list[str]) -> None:
+    for name in ["requirements.md", "design.md", "plan.md"]:
+        path = topic_dir / name
+        if not path.exists():
+            continue
+        text = path.read_text(encoding="utf-8")
+        for requirement_id in REQUIREMENT_CITATION_RE.findall(text):
+            if requirement_id not in requirement_ids:
+                errors.append(f"{name} cites missing requirement/scenario [{requirement_id}]")
 
 
 def warn_missing_workflow_state(
@@ -476,6 +578,8 @@ def main() -> int:
     fact_edges = read_jsonl(topic_dir / "facts.edges.jsonl", errors)
     plan_nodes = read_jsonl(topic_dir / "plan.nodes.jsonl", errors, required=True)
     plan_edges = read_jsonl(topic_dir / "plan.edges.jsonl", errors, required=True)
+    requirement_nodes = read_jsonl(topic_dir / "requirements.nodes.jsonl", errors)
+    requirement_edges = read_jsonl(topic_dir / "requirements.edges.jsonl", errors)
     receipts = read_jsonl(topic_dir / "receipts.jsonl", errors)
     context_packs = read_jsonl(topic_dir / "context-packs.jsonl", errors)
     retrieval_misses = read_jsonl(root / ".plan/_retrieval/misses.jsonl", errors)
@@ -483,15 +587,34 @@ def main() -> int:
 
     map_ids = validate_unique_ids(map_nodes, topic_dir / "map.nodes.jsonl", errors)
     fact_ids_all = validate_unique_ids(fact_nodes, topic_dir / "facts.nodes.jsonl", errors)
+    source_ids_for_requirements = {str(node.get("id")) for node in fact_nodes if node.get("type") == "source" and node.get("id")}
+    fact_ids_for_requirements = {str(node.get("id")) for node in fact_nodes if node.get("type") == "fact" and node.get("id")}
     plan_ids = validate_unique_ids(plan_nodes, topic_dir / "plan.nodes.jsonl", errors)
+    requirement_ids = validate_unique_ids(requirement_nodes, topic_dir / "requirements.nodes.jsonl", errors)
     graph_ids = {str(node.get("id")) for node in graph.get("nodes", []) if isinstance(node, dict) and node.get("id")}
-    allowed_ids = map_ids | fact_ids_all | plan_ids | graph_ids
+    allowed_ids = map_ids | fact_ids_all | plan_ids | requirement_ids | graph_ids
 
     validate_edges(map_edges, topic_dir / "map.edges.jsonl", allowed_ids, db_path, errors)
     validate_edges(fact_edges, topic_dir / "facts.edges.jsonl", allowed_ids, db_path, errors)
     validate_edges(plan_edges, topic_dir / "plan.edges.jsonl", allowed_ids, db_path, errors)
+    validate_requirement_records(
+        requirement_nodes, "requirements.nodes.jsonl", fact_ids_for_requirements, source_ids_for_requirements, errors
+    )
+    validate_requirement_edges(requirement_edges, "requirements.edges.jsonl", allowed_ids, errors)
     validate_file_references(
-        root, [*map_nodes, *map_edges, *fact_nodes, *fact_edges, *plan_nodes, *plan_edges], topic_dir, errors
+        root,
+        [
+            *map_nodes,
+            *map_edges,
+            *fact_nodes,
+            *fact_edges,
+            *plan_nodes,
+            *plan_edges,
+            *requirement_nodes,
+            *requirement_edges,
+        ],
+        topic_dir,
+        errors,
     )
     validate_lifecycle_and_retrieval_metadata(map_nodes, "map.nodes.jsonl", errors, warnings)
     validate_lifecycle_and_retrieval_metadata(map_edges, "map.edges.jsonl", errors, warnings)
@@ -499,12 +622,16 @@ def main() -> int:
     validate_lifecycle_and_retrieval_metadata(fact_edges, "facts.edges.jsonl", errors, warnings)
     validate_lifecycle_and_retrieval_metadata(plan_nodes, "plan.nodes.jsonl", errors, warnings)
     validate_lifecycle_and_retrieval_metadata(plan_edges, "plan.edges.jsonl", errors, warnings)
+    validate_lifecycle_and_retrieval_metadata(requirement_nodes, "requirements.nodes.jsonl", errors, warnings)
+    validate_lifecycle_and_retrieval_metadata(requirement_edges, "requirements.edges.jsonl", errors, warnings)
     validate_no_private_artifact_refs(map_nodes, "map.nodes.jsonl", errors)
     validate_no_private_artifact_refs(map_edges, "map.edges.jsonl", errors)
     validate_no_private_artifact_refs(fact_nodes, "facts.nodes.jsonl", errors)
     validate_no_private_artifact_refs(fact_edges, "facts.edges.jsonl", errors)
     validate_no_private_artifact_refs(plan_nodes, "plan.nodes.jsonl", errors)
     validate_no_private_artifact_refs(plan_edges, "plan.edges.jsonl", errors)
+    validate_no_private_artifact_refs(requirement_nodes, "requirements.nodes.jsonl", errors)
+    validate_no_private_artifact_refs(requirement_edges, "requirements.edges.jsonl", errors)
     validate_no_private_artifact_refs(receipts, "receipts.jsonl", errors)
     validate_no_private_artifact_refs(context_packs, "context-packs.jsonl", errors)
     validate_receipt_records(receipts, "receipts.jsonl", errors)
@@ -532,6 +659,7 @@ def main() -> int:
             if fact_id not in fact_ids:
                 errors.append(f"Proposal cites missing fact [{fact_id}]")
 
+    validate_requirement_citations(topic_dir, requirement_ids, errors)
     validate_plan(topic_dir / "plan.md", fact_ids, allowed_ids, plan_ids, db_path, errors)
 
     report = {
@@ -546,6 +674,8 @@ def main() -> int:
             "fact_edges": len(fact_edges),
             "plan_nodes": len(plan_nodes),
             "plan_edges": len(plan_edges),
+            "requirement_nodes": len(requirement_nodes),
+            "requirement_edges": len(requirement_edges),
             "receipts": len(receipts),
             "context_packs": len(context_packs),
             "evidence_files": evidence_file_count,

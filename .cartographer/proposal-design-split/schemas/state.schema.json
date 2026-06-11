@@ -2,7 +2,15 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Cartographer execution state",
   "type": "object",
-  "required": ["schema_version", "topic", "source_refs", "next_action", "working_set", "resume", "updated_at"],
+  "required": [
+    "schema_version",
+    "topic",
+    "source_refs",
+    "next_action",
+    "working_set",
+    "resume",
+    "updated_at"
+  ],
   "additionalProperties": false,
   "description": "Compact execution/resume snapshot that references authoritative .plan artifacts instead of duplicating the plan graph."
 }

@@ -5,6 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const FACT_CITATION_RE = /\[(F\d+)\]/g;
+const REQUIREMENT_CITATION_RE = /\[((?:REQ|SCN|AC)-[A-Z0-9][A-Z0-9_.-]*)\]/g;
 const REFERENCE_RE = /(^|\s|[`([])([A-Za-z0-9_./@+-]+\.[A-Za-z0-9_./@+-]+):(\d+)/g;
 const LIFECYCLE_STATES = new Set(["draft", "accepted", "planned", "in-progress", "implemented", "superseded", "stale"]);
 const MISS_FAILURE_TYPES = new Set([
@@ -443,6 +444,107 @@ function validateContextPackRecords(records: JsonRecord[], label: string, errors
 	}
 }
 
+const REQUIREMENT_CHANGE_TYPES = new Set(["ADDED", "MODIFIED", "REMOVED", "RENAMED"]);
+const REQUIREMENT_PRIORITIES = new Set(["must", "should", "may", "must-not", "should-not"]);
+const REQUIREMENT_STATUSES = new Set(["draft", "accepted", "planned", "implemented", "superseded", "removed"]);
+const REQUIREMENT_ID_RE = /^REQ-[A-Z0-9][A-Z0-9_.-]*$/;
+const SCENARIO_ID_RE = /^SCN-[A-Z0-9][A-Z0-9_.-]*$/;
+const ACCEPTANCE_CHECK_ID_RE = /^AC-[A-Z0-9][A-Z0-9_.-]*$/;
+const DURABLE_REQUIREMENT_REF_RE = /^docs\/requirements(?:\.md|\/[A-Za-z0-9_.-]+\.md)(?:#[A-Za-z0-9_.-]+)?$/;
+const REQUIREMENT_EDGE_TYPES = new Set([
+	"satisfies_goal",
+	"derived_from",
+	"supported_by",
+	"constrains",
+	"supersedes",
+	"modifies",
+	"removes",
+	"renames",
+	"validated_by",
+	"folds_into",
+	"has_scenario",
+	"accepts",
+	"related_to",
+]);
+
+function validateRequirementRecords(
+	records: JsonRecord[],
+	label: string,
+	factIds: Set<string>,
+	sourceIds: Set<string>,
+	errors: string[],
+): void {
+	const byId = new Map(records.filter((record) => record.id).map((record) => [String(record.id), record]));
+	for (const [index, record] of records.entries()) {
+		const id = String(record.id || "");
+		const type = String(record.type || "");
+		if (!id) errors.push(`Missing id in ${label} record ${index + 1}`);
+		if (type === "requirement" && !REQUIREMENT_ID_RE.test(id))
+			errors.push(`Invalid requirement id ${JSON.stringify(id)} in ${label} record ${index + 1}`);
+		if (type === "scenario" && !SCENARIO_ID_RE.test(id))
+			errors.push(`Invalid scenario id ${JSON.stringify(id)} in ${label} record ${index + 1}`);
+		if (type === "acceptance-check" && !ACCEPTANCE_CHECK_ID_RE.test(id))
+			errors.push(`Invalid acceptance-check id ${JSON.stringify(id)} in ${label} record ${index + 1}`);
+		if (!["requirement", "scenario", "acceptance-check"].includes(type))
+			errors.push(`Invalid requirement record type ${JSON.stringify(record.type)} in ${label} record ${index + 1}`);
+		if (type === "requirement") {
+			for (const field of ["title", "statement", "change_type", "domain", "priority", "status"])
+				if (!record[field]) errors.push(`Missing ${field} in ${label} record ${index + 1}`);
+			if (record.change_type && !REQUIREMENT_CHANGE_TYPES.has(String(record.change_type)))
+				errors.push(`Invalid change_type ${JSON.stringify(record.change_type)} in ${label} record ${index + 1}`);
+			if (record.priority && !REQUIREMENT_PRIORITIES.has(String(record.priority)))
+				errors.push(`Invalid priority ${JSON.stringify(record.priority)} in ${label} record ${index + 1}`);
+		}
+		if (type === "scenario") {
+			for (const field of ["title", "requirement_id"])
+				if (!record[field]) errors.push(`Missing ${field} in ${label} record ${index + 1}`);
+			if (record.requirement_id && String(byId.get(String(record.requirement_id))?.type) !== "requirement")
+				errors.push(`Scenario ${id} references missing requirement_id ${JSON.stringify(record.requirement_id)}`);
+		}
+		if (record.status && !REQUIREMENT_STATUSES.has(String(record.status)))
+			errors.push(`Invalid requirement status ${JSON.stringify(record.status)} in ${label} record ${index + 1}`);
+		for (const field of ["scenario_refs", "fact_refs", "source_refs", "durable_refs"]) {
+			if (record[field] !== undefined && !Array.isArray(record[field]))
+				errors.push(`${field} must be an array in ${label} record ${index + 1}`);
+		}
+		for (const ref of Array.isArray(record.scenario_refs) ? record.scenario_refs : [])
+			if (String(byId.get(String(ref))?.type) !== "scenario") errors.push(`Requirement ${id} references missing scenario ${JSON.stringify(ref)}`);
+		for (const ref of Array.isArray(record.fact_refs) ? record.fact_refs : [])
+			if (!factIds.has(String(ref))) errors.push(`Requirement ${id} references missing fact ${JSON.stringify(ref)}`);
+		for (const ref of Array.isArray(record.source_refs) ? record.source_refs : [])
+			if (!sourceIds.has(String(ref))) errors.push(`Requirement ${id} references missing source ${JSON.stringify(ref)}`);
+		for (const ref of Array.isArray(record.durable_refs) ? record.durable_refs : [])
+			if (!DURABLE_REQUIREMENT_REF_RE.test(String(ref))) errors.push(`Requirement ${id} has invalid durable ref ${JSON.stringify(ref)}`);
+	}
+}
+
+function validateRequirementEdges(records: JsonRecord[], label: string, allowed: Set<string>, errors: string[]): void {
+	for (const [index, record] of records.entries()) {
+		if (!record.from || !record.to || !record.type) {
+			errors.push(`Requirement edge in ${label} record ${index + 1} must include from, to, and type`);
+			continue;
+		}
+		if (!REQUIREMENT_EDGE_TYPES.has(String(record.type)))
+			errors.push(`Invalid requirement edge type ${JSON.stringify(record.type)} in ${label} record ${index + 1}`);
+		for (const [endpointName, endpoint] of [["from", record.from], ["to", record.to]] as const) {
+			const value = String(endpoint);
+			if (allowed.has(value)) continue;
+			if (DURABLE_REQUIREMENT_REF_RE.test(value)) continue;
+			errors.push(`Unresolved ${endpointName} endpoint ${JSON.stringify(value)} in ${label} record ${index + 1}`);
+		}
+	}
+}
+
+function validateRequirementCitations(dir: string, requirementIds: Set<string>, errors: string[]): void {
+	for (const name of ["requirements.md", "design.md", "plan.md"]) {
+		const filePath = path.join(dir, name);
+		if (!fs.existsSync(filePath)) continue;
+		const text = fs.readFileSync(filePath, "utf8");
+		for (const match of text.matchAll(REQUIREMENT_CITATION_RE))
+			if (!requirementIds.has(match[1])) errors.push(`${name} cites missing requirement/scenario [${match[1]}]`);
+	}
+}
+
 function warnMissingWorkflowState(
 	planNodes: JsonRecord[],
 	receipts: JsonRecord[],
@@ -476,6 +578,8 @@ function validateTopic(options: Record<string, string | boolean | string[]>): Va
 	const factEdges = read("facts.edges.jsonl");
 	const planNodes = read("plan.nodes.jsonl");
 	const planEdges = read("plan.edges.jsonl");
+	const requirementNodes = read("requirements.nodes.jsonl");
+	const requirementEdges = read("requirements.edges.jsonl");
 	const receiptResult = readJsonl(path.join(dir, "receipts.jsonl"));
 	errors.push(...receiptResult.errors);
 	const contextPackResult = readJsonl(path.join(dir, "context-packs.jsonl"));
@@ -485,24 +589,33 @@ function validateTopic(options: Record<string, string | boolean | string[]>): Va
 
 	const mapIds = validateUnique(mapNodes, "map.nodes.jsonl", errors);
 	const factIdsAll = validateUnique(factNodes, "facts.nodes.jsonl", errors);
+	const sourceIdsForRequirements = new Set(factNodes.filter((item) => item.type === "source" && item.id).map((item) => String(item.id)));
+	const factIdsForRequirements = new Set(factNodes.filter((item) => item.type === "fact" && item.id).map((item) => String(item.id)));
 	const planIds = validateUnique(planNodes, "plan.nodes.jsonl", errors);
-	const allowed = new Set([...mapIds, ...factIdsAll, ...planIds]);
+	const requirementIds = validateUnique(requirementNodes, "requirements.nodes.jsonl", errors);
+	const allowed = new Set([...mapIds, ...factIdsAll, ...planIds, ...requirementIds]);
 	validateEdges(mapEdges, "map.edges.jsonl", allowed, errors);
 	validateEdges(factEdges, "facts.edges.jsonl", allowed, errors);
 	validateEdges(planEdges, "plan.edges.jsonl", allowed, errors);
-	validateFileRefs(root, [...mapNodes, ...mapEdges, ...factNodes, ...factEdges, ...planNodes, ...planEdges], errors);
+	validateRequirementRecords(requirementNodes, "requirements.nodes.jsonl", factIdsForRequirements, sourceIdsForRequirements, errors);
+	validateRequirementEdges(requirementEdges, "requirements.edges.jsonl", allowed, errors);
+	validateFileRefs(root, [...mapNodes, ...mapEdges, ...factNodes, ...factEdges, ...planNodes, ...planEdges, ...requirementNodes, ...requirementEdges], errors);
 	validateLifecycleAndRetrievalMetadata(mapNodes, "map.nodes.jsonl", errors, warnings);
 	validateLifecycleAndRetrievalMetadata(mapEdges, "map.edges.jsonl", errors, warnings);
 	validateLifecycleAndRetrievalMetadata(factNodes, "facts.nodes.jsonl", errors, warnings);
 	validateLifecycleAndRetrievalMetadata(factEdges, "facts.edges.jsonl", errors, warnings);
 	validateLifecycleAndRetrievalMetadata(planNodes, "plan.nodes.jsonl", errors, warnings);
 	validateLifecycleAndRetrievalMetadata(planEdges, "plan.edges.jsonl", errors, warnings);
+	validateLifecycleAndRetrievalMetadata(requirementNodes, "requirements.nodes.jsonl", errors, warnings);
+	validateLifecycleAndRetrievalMetadata(requirementEdges, "requirements.edges.jsonl", errors, warnings);
 	validateNoPrivateArtifactRefs(mapNodes, "map.nodes.jsonl", errors);
 	validateNoPrivateArtifactRefs(mapEdges, "map.edges.jsonl", errors);
 	validateNoPrivateArtifactRefs(factNodes, "facts.nodes.jsonl", errors);
 	validateNoPrivateArtifactRefs(factEdges, "facts.edges.jsonl", errors);
 	validateNoPrivateArtifactRefs(planNodes, "plan.nodes.jsonl", errors);
 	validateNoPrivateArtifactRefs(planEdges, "plan.edges.jsonl", errors);
+	validateNoPrivateArtifactRefs(requirementNodes, "requirements.nodes.jsonl", errors);
+	validateNoPrivateArtifactRefs(requirementEdges, "requirements.edges.jsonl", errors);
 	validateNoPrivateArtifactRefs(receiptResult.records, "receipts.jsonl", errors);
 	validateNoPrivateArtifactRefs(contextPackResult.records, "context-packs.jsonl", errors);
 	validateReceiptRecords(receiptResult.records, "receipts.jsonl", errors);
@@ -527,6 +640,7 @@ function validateTopic(options: Record<string, string | boolean | string[]>): Va
 		for (const match of text.matchAll(FACT_CITATION_RE))
 			if (!factIds.has(match[1])) errors.push(`Proposal cites missing fact [${match[1]}]`);
 	}
+	validateRequirementCitations(dir, requirementIds, errors);
 	return {
 		ok: errors.length === 0,
 		topic,
@@ -539,6 +653,8 @@ function validateTopic(options: Record<string, string | boolean | string[]>): Va
 			fact_edges: factEdges.length,
 			plan_nodes: planNodes.length,
 			plan_edges: planEdges.length,
+			requirement_nodes: requirementNodes.length,
+			requirement_edges: requirementEdges.length,
 			receipts: receiptResult.records.length,
 			context_packs: contextPackResult.records.length,
 			evidence_files: evidenceFileCount,
@@ -598,6 +714,8 @@ const READ_ONLY_ARTIFACT_FILES: Record<string, string> = {
 	"facts.edges": "facts.edges.jsonl",
 	"plan.nodes": "plan.nodes.jsonl",
 	"plan.edges": "plan.edges.jsonl",
+	"requirements.nodes": "requirements.nodes.jsonl",
+	"requirements.edges": "requirements.edges.jsonl",
 	receipts: "receipts.jsonl",
 	"context-packs": "context-packs.jsonl",
 	"evidence-manifest": path.join("evidence", "manifest.jsonl"),
