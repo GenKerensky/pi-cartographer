@@ -8,6 +8,10 @@ adr_required_source: manual
 legacy_import: false
 source_commits:
   - 3ff29fad4dfe073c091f2423957409383e0333ec
+  - d1d9c0132a3191a0083e537a847a1946c544386b
+  - 2daa2c4bfb0790da1634ab0b5b782f9ff556ecf5
+  - a3459174ab321e98d79078d00fc1443f8e11a140
+  - 47f9225a47c6559009aafda2cec3790adddc6c35
 validation_receipts:
   - receipt:P5:validation:2026-06-11T03:14:53+00:00
   - receipt:P5:semantic-audit:2026-06-11T03:16:55+00:00
@@ -16,6 +20,11 @@ validation_receipts:
   - receipt:P6:validation:2026-06-11T05:06:03+00:00
   - receipt:P6:validation:2026-06-11T05:06:07+00:00
   - receipt:P6:validation:2026-06-11T05:06:14+00:00
+  - receipt:P6:validation:2026-06-11T06:08:12+00:00
+  - receipt:P6:validation:2026-06-11T06:08:21+00:00
+  - receipt:P6:semantic-audit:2026-06-11T06:09:00+00:00
+  - receipt:P6:validation:2026-06-11T06:12:18+00:00
+  - receipt:P6:validation:2026-06-11T06:12:26+00:00
 domains:
   - dashboard
   - tooling
@@ -75,4 +84,4 @@ Dashboard changes should target TanStack Start routes/server helpers and TanStac
 
 ## Validation
 
-Implementation receipts include P5 route migration validation and P6 dashboard:check/package-smoke/full-check/topic/graph validation receipts for tanstack-dashboard.
+Implementation receipts include P5 route migration validation, P6 dashboard:check/package-smoke/full-check/topic/graph validation receipts, and the final full-dashboard migration auditor PASS for tanstack-dashboard.
