@@ -152,15 +152,8 @@
       ".plan/tanstack-dashboard/plan.md",
       ".plan/tanstack-dashboard/receipts.jsonl"
     ],
-    "expected_first_response": [
-      "current_phase",
-      "next_action",
-      "files_to_inspect"
-    ],
-    "must_ignore": [
-      "prior chat speculation",
-      "stale generated snippets"
-    ]
+    "expected_first_response": ["current_phase", "next_action", "files_to_inspect"],
+    "must_ignore": ["prior chat speculation", "stale generated snippets"]
   },
   "updated_at": "2026-06-11T05:42:56Z",
   "stale_reason": "Receipts and planning context updated for Hono dashboard removal follow-up; state source_refs need refresh before future resume."

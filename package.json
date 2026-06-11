@@ -101,8 +101,10 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "check:scripts": "python -m py_compile skills/index-project/scripts/index_project.py skills/plan/scripts/validate_planning_graph.py skills/plan/scripts/private_artifacts.py skills/plan/scripts/analyze_session.py skills/plan/scripts/validation_runner.py skills/plan/scripts/workflow_benchmark.py skills/plan/scripts/adr_records.py && node --check bin/cartographer-dashboard.js && node --experimental-strip-types --check dashboard/server/cli.ts && node --experimental-strip-types --check dashboard/server/live-reload.ts && node --experimental-strip-types --check dashboard/server/runtime.ts && node --experimental-strip-types --check skills/plan/scripts/manage_jsonl.ts && node --experimental-strip-types --check skills/plan/scripts/cartographer_state.ts && node --experimental-strip-types --check extensions/cartographer-tools.ts",
-    "dashboard:build": "vite build --config dashboard/start/vite.config.ts",
-    "dashboard:start:build": "npm run dashboard:build",
+    "dashboard:dev": "cd dashboard/start && vite dev",
+    "dashboard:build": "cd dashboard/start && vite build",
+    "dashboard:start": "cd dashboard/start && node .output/server/index.mjs",
+    "dashboard:preview": "cd dashboard/start && vite preview",
     "dashboard:check": "npm run dashboard:build && npm run test:browser -- tests/dashboard/client-shell.test.tsx",
     "lint:ts": "eslint \"dashboard/**/*.{ts,tsx}\" \"extensions/**/*.ts\" \"skills/**/*.ts\" \"tests/**/*.ts\" eslint.config.js",
     "lint:ts:fix": "npm run lint:ts -- --fix",
@@ -115,8 +117,7 @@
     "check": "npm run check:scripts && npm run typecheck && npm run lint:ts && npm run lint:py && npm run format:prettier:check && npm run format:check && npm run dashboard:check && npm run test",
     "test:browser": "vitest run --config dashboard/client/vitest.browser.config.ts --browser.enabled --browser.headless",
     "test:ts": "vitest run --exclude tests/dashboard/client-shell.test.tsx",
-    "test:py": "python -m unittest discover tests",
-    "dashboard:dev": "vite dev --config dashboard/start/vite.config.ts"
+    "test:py": "python -m unittest discover tests"
   },
   "bin": {
     "cartographer-dashboard": "bin/cartographer-dashboard.js"

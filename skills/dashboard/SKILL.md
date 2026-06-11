@@ -75,7 +75,7 @@ When reporting results to the user:
 - Show the URL from the JSON output when start/status succeeds.
 - Show the selected topic deep link when `--topic` was used.
 - Mention that live reload watches safe `.plan/**` files and excludes `.plan/_private/**`.
-- If startup fails because the built TanStack Start output is missing in a source checkout, suggest running `npm run dashboard:build` from the package root.
+- If startup fails because the built TanStack Start output is missing in a source checkout, suggest running `npm run dashboard:build` from the package root; this delegates to TanStack Start's default `vite build` from `dashboard/start`.
 
 ## Safety Rules
 

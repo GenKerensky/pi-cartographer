@@ -225,6 +225,7 @@ Dashboard behavior and safety boundaries:
 - Live reload watches safe `.plan/**` files, excludes `.plan/_private/**`, and summarizes `.plan/_index/**` changes as stale-index events.
 - The UI uses TanStack Start routes, TanStack DB/TanStack Query read-only reactive projections, React, Tailwind CSS, shadcn/ui components, Shiki document/code highlighting, and React Flow graph visualization.
 - The dashboard server/API now lives in the TanStack Start app; `cartographer-dashboard` starts the built `dashboard/start/.output/server/index.mjs` full-stack app.
+- Source-checkout dashboard scripts mirror TanStack Start defaults from `dashboard/start`: `npm run dashboard:dev` runs `vite dev`, `npm run dashboard:build` runs `vite build`, and `npm run dashboard:start` runs `node .output/server/index.mjs`.
 - Private raw evidence should be imported through Cartographer private-artifact workflows and reviewed via sanitized evidence documents, not read directly in the dashboard or skill.
 
 ## What gets written
