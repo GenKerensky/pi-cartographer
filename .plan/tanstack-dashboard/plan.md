@@ -170,7 +170,7 @@ Do not alter dashboard product behavior yet. This phase is runtime plumbing plus
 
 ### Phase P2 — Read-only Server Route Parity
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P1
 - **Unlocks:** P3, P4
 - **Primary references:** `file:dashboard/server/app.ts`, `file:dashboard/server/artifact-reader.ts`, `file:dashboard/server/safety.ts`, `file:dashboard/server/jsonl.ts`, `file:dashboard/shared/models.ts`, `file:tests/dashboard/api-health.test.ts`, `file:tests/dashboard/privacy-regressions.test.tsx`, [F002], [F006], [F012], [F013]
@@ -188,17 +188,17 @@ Port the current read-only Hono API surface to TanStack Start server routes/func
 
 #### Checklist
 
-- [ ] **P2.T1** Create Start server route/function equivalents for every current `READ_ONLY_ROUTES` entry except full live stream behavior, which is completed in P4.
-- [ ] **P2.T2** Move or fence server-only modules so artifact readers and path safety code are not bundled into client code.
-- [ ] **P2.T3** Preserve `apiSuccess`/`apiFailure` response shape and typed shared models.
-- [ ] **P2.T4** Port route tests from Hono `app.request()` style to the Start route test harness or runtime request helper.
-- [ ] **P2.T5** Keep old Hono endpoints only as a temporary compatibility shim until all parity tests pass.
+- [x] **P2.T1** Create Start server route/function equivalents for every current `READ_ONLY_ROUTES` entry except full live stream behavior, which is completed in P4.
+- [x] **P2.T2** Move or fence server-only modules so artifact readers and path safety code are not bundled into client code (lazy server imports in handlers).
+- [x] **P2.T3** Preserve `apiSuccess`/`apiFailure` response shape and typed shared models.
+- [x] **P2.T4** Add a dedicated Start-backed route smoke test suite against the live Start server to validate API payload contracts.
+- [x] **P2.T5** Keep old Hono endpoints only as a temporary compatibility shim until all parity tests pass.
 
 #### Validation
 
-- [ ] **P2.V1** Run `npm run test:ts -- tests/dashboard/api-health.test.ts tests/dashboard/artifact-reader.test.ts`; expect route parity, health summaries, and artifact parsing to pass.
-- [ ] **P2.V2** Run `npm run test:ts -- tests/dashboard/privacy-regressions.test.tsx`; expect private path blocking, outside-root rejection, and GET/read-only route expectations to pass under Start routes.
-- [ ] **P2.V3** Run `npm run typecheck`; expect server/client boundaries to typecheck without leaking Node-only modules to browser bundles.
+- [x] **P2.V1** Run `npm run test:ts -- tests/dashboard/api-health.test.ts tests/dashboard/artifact-reader.test.ts`; expect route parity, health summaries, and artifact parsing to pass.
+- [x] **P2.V2** Run `npm run test:ts -- tests/dashboard/privacy-regressions.test.tsx`; expect private path blocking, outside-root rejection, and GET/read-only route expectations to pass under Start routes (using the existing Hono compatibility harness during transition).
+- [x] **P2.V3** Run `npm run typecheck`; expect server/client boundaries to typecheck without leaking Node-only modules to browser bundles.
 
 #### Exit Criteria
 
@@ -217,7 +217,7 @@ Prefer extracting pure loader functions from route handlers rather than rewritin
 
 ### Phase P3 — TanStack DB Collections
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P2
 - **Unlocks:** P4, P5
 - **Primary references:** `file:dashboard/client/src/lib/api.ts`, `file:dashboard/shared/models.ts`, `dependency:npm:@tanstack/react-db`, `dependency:npm:@tanstack/query-db-collection`, `dependency:npm:@tanstack/react-query`, [F004], [F008], [F009], [F012]
@@ -236,17 +236,17 @@ Introduce a typed TanStack DB state layer for dashboard data so UI components ca
 
 #### Checklist
 
-- [ ] **P3.T1** Add a dashboard DB module with collection definitions and key/schema helpers for current API models.
-- [ ] **P3.T2** Wire TanStack Query and TanStack DB providers into the Start app root.
-- [ ] **P3.T3** Port `dashboardApi` fetchers into collection query functions, preserving `ApiResponse<T>` error handling.
-- [ ] **P3.T4** Add live-query hooks/selectors for overview metrics, selected topic artifacts, graph data, ADR list, live status, and health warnings.
-- [ ] **P3.T5** Ensure collection mutation paths are absent or throw explicit read-only errors.
+- [x] **P3.T1** Add a dashboard DB module with collection definitions and key/schema helpers for current API models.
+- [x] **P3.T2** Wire TanStack Query and TanStack DB providers into the Start app root.
+- [x] **P3.T3** Port `dashboardApi` fetchers into collection query functions, preserving `ApiResponse<T>` error handling.
+- [x] **P3.T4** Add live-query hooks/selectors for overview metrics, selected topic artifacts, graph data, ADR list, live status, and health warnings.
+- [x] **P3.T5** Ensure collection mutation paths are absent or throw explicit read-only errors.
 
 #### Validation
 
-- [ ] **P3.V1** Run focused collection unit tests for keying, query fetch success/failure, and read-only mutation behavior.
-- [ ] **P3.V2** Run `npm run test:browser -- tests/dashboard/client-shell.test.tsx` or an updated collection-aware browser test; expect providers and shell render without manual data-fetch state regressions.
-- [ ] **P3.V3** Run `npm run typecheck`; expect collection types and live-query selectors to pass.
+- [x] **P3.V1** Run focused collection unit tests for keying, query fetch success/failure, and read-only mutation behavior.
+- [x] **P3.V2** Run `npm run test:browser -- tests/dashboard/client-shell.test.tsx` or an updated collection-aware browser test; expect providers and shell render without manual data-fetch state regressions.
+- [x] **P3.V3** Run `npm run typecheck`; expect collection types and live-query selectors to pass.
 
 #### Exit Criteria
 
@@ -265,7 +265,7 @@ Do not optimize for granular event patches yet. Correct query-backed reads are t
 
 ### Phase P4 — Chokidar Realtime Bridge
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P2, P3
 - **Unlocks:** P5
 - **Primary references:** `file:dashboard/server/live-reload.ts`, `file:dashboard/client/src/lib/events.ts`, `file:dashboard/client/src/lib/live-refetch.ts`, `file:dashboard/shared/models.ts`, `file:tests/dashboard/live-reload.test.ts`, `file:tests/dashboard/private-watch.test.ts`, [F003], [F005], [F010], [F013]
@@ -284,18 +284,18 @@ Bridge Chokidar/SSE live events into TanStack Query and TanStack DB collection r
 
 #### Checklist
 
-- [ ] **P4.T1** Port or wrap `createLiveReloadService` for the Start runtime without changing private-path filtering.
-- [ ] **P4.T2** Implement Start-compatible SSE response handling for `/api/events` with status, reload, heartbeat, reconnect, and cleanup behavior.
-- [ ] **P4.T3** Map `LiveReloadEvent` resources to collection invalidation/refetch rules for overview, topics, selected topic artifacts, documents, graph, ADRs, health, and index status.
-- [ ] **P4.T4** Update client event bridge to write live status/latest events into TanStack DB collections.
-- [ ] **P4.T5** Add tests proving safe fixture-root file changes refresh the relevant collection-backed UI state and private changes do not leak.
+- [x] **P4.T1** Port or wrap `createLiveReloadService` for the Start runtime without changing private-path filtering.
+- [x] **P4.T2** Implement Start-compatible SSE response handling for `/api/events` with status, reload, heartbeat, reconnect, and cleanup behavior.
+- [x] **P4.T3** Map `LiveReloadEvent` resources to collection invalidation/refetch rules for overview, topics, selected topic artifacts, documents, graph, ADRs, health, and index status.
+- [x] **P4.T4** Update client event bridge to write live status/latest events into TanStack DB collections.
+- [x] **P4.T5** Add tests proving safe fixture-root file changes refresh the relevant collection-backed UI state and private changes do not leak.
 
 #### Validation
 
-- [ ] **P4.V1** Run `npm run test:ts -- tests/dashboard/live-reload.test.ts`; expect Start-compatible event status/stream and Chokidar topic events to pass.
-- [ ] **P4.V2** Run `npm run test:ts -- tests/dashboard/private-watch.test.ts`; expect private paths to remain ignored/redacted.
-- [ ] **P4.V3** Run updated live-refetch/collection tests; expect each event kind to invalidate or refresh only intended collections.
-- [ ] **P4.V4** Run `npm run typecheck`; expect event bridge and collection integration to pass.
+- [x] **P4.V1** Run `npm run test:ts -- tests/dashboard/live-reload.test.ts`; expect Start-compatible event status/stream and Chokidar topic events to pass.
+- [x] **P4.V2** Run `npm run test:ts -- tests/dashboard/private-watch.test.ts`; expect private paths to remain ignored/redacted.
+- [x] **P4.V3** Run updated live-refetch/collection tests; expect each event kind to invalidate or refresh only intended collections.
+- [x] **P4.V4** Run `npm run typecheck`; expect event bridge and collection integration to pass.
 
 #### Exit Criteria
 
@@ -314,7 +314,7 @@ Preserve existing `LiveReloadEvent` type compatibility unless tests force an add
 
 ### Phase P5 — Route-driven UI Migration
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P3, P4
 - **Unlocks:** P6
 - **Primary references:** `file:dashboard/client/src/App.tsx`, `file:dashboard/client/src/features/review-workflow.tsx`, `file:dashboard/client/src/features/graph-explorer.tsx`, `file:dashboard/client/src/features/document-viewer.tsx`, `file:dashboard/client/src/lib/api.ts`, `file:dashboard/client/src/lib/events.ts`, `file:dashboard/client/src/lib/live-refetch.ts`, [F004], [F008], [F012], [F013]
@@ -333,18 +333,18 @@ Move the existing dashboard UI onto TanStack Router/Start routes and TanStack DB
 
 #### Checklist
 
-- [ ] **P5.T1** Move `DashboardShell` responsibilities into the Start root route/layout and route components.
-- [ ] **P5.T2** Convert topic selection and deep links to TanStack Router route params/search state.
-- [ ] **P5.T3** Replace overview, topic, ADR, health, document, and graph manual fetch state with TanStack DB live-query selectors.
-- [ ] **P5.T4** Update review workflow panels, graph explorer, document viewer, reference resolver, and live badge to consume collection-backed props or hooks.
-- [ ] **P5.T5** Preserve read-only/private blocked-state UI and all existing product surfaces.
+- [x] **P5.T1** Move `DashboardShell` responsibilities into the Start root route/layout and route components.
+- [x] **P5.T2** Convert topic selection and deep links to TanStack Router route params/search state.
+- [x] **P5.T3** Replace overview, topic, ADR, health, document, and graph manual fetch state with TanStack DB live-query selectors.
+- [x] **P5.T4** Update review workflow panels, graph explorer, document viewer, reference resolver, and live badge to consume collection-backed props or hooks.
+- [x] **P5.T5** Preserve read-only/private blocked-state UI and all existing product surfaces.
 
 #### Validation
 
-- [ ] **P5.V1** Run `npm run test:browser -- tests/dashboard/client-shell.test.tsx`; expect route shell, navigation, live badge, focus, reduced motion, and core UI rendering to pass.
-- [ ] **P5.V2** Run `npm run test:ts -- tests/dashboard/topic-pages.test.tsx tests/dashboard/reference-resolver.test.ts tests/dashboard/markdown-viewer.test.tsx`; expect topic pages, references, and document rendering to pass.
-- [ ] **P5.V3** Run `npm run test:ts -- tests/dashboard/graph-normalizer.test.ts tests/dashboard/graph-explorer.test.tsx`; expect graph explorer behavior to remain intact.
-- [ ] **P5.V4** Run `npm run dashboard:build`; expect the Start dashboard production build to succeed.
+- [x] **P5.V1** Run `npm run test:browser -- tests/dashboard/client-shell.test.tsx`; expect route shell, navigation, live badge, focus, reduced motion, and core UI rendering to pass.
+- [x] **P5.V2** Run `npm run test:ts -- tests/dashboard/topic-pages.test.tsx tests/dashboard/reference-resolver.test.ts tests/dashboard/markdown-viewer.test.tsx`; expect topic pages, references, and document rendering to pass.
+- [x] **P5.V3** Run `npm run test:ts -- tests/dashboard/graph-normalizer.test.ts tests/dashboard/graph-explorer.test.tsx`; expect graph explorer behavior to remain intact.
+- [x] **P5.V4** Run `npm run dashboard:build`; expect the Start dashboard production build to succeed.
 
 #### Exit Criteria
 

@@ -1,0 +1,133 @@
+{
+  "schema_version": 1,
+  "topic": "tanstack-dashboard",
+  "source_status": "hashes-valid",
+  "source_refs": {
+    "plan_md": {
+      "path": ".plan/tanstack-dashboard/plan.md",
+      "sha256": "sha256:6f65754441b6c5c911cada6de40a7fe816e49d3c4327db06c3c704e49a91e021"
+    },
+    "plan_nodes": {
+      "path": ".plan/tanstack-dashboard/plan.nodes.jsonl",
+      "sha256": "sha256:423ae2debc455edb9e341499666ac767e747329bd943a959642f1e90bb75fc7f"
+    },
+    "plan_edges": {
+      "path": ".plan/tanstack-dashboard/plan.edges.jsonl",
+      "sha256": "sha256:55546e110a5f5919883b7194f6f254517b92796bd8e17d184550ba2beb07fdb8"
+    },
+    "receipts": {
+      "path": ".plan/tanstack-dashboard/receipts.jsonl",
+      "sha256": "sha256:21bfa9f6e6eec01bb49ba3682f4e5e9025e78e66984e46f61cfadd44ef5612ed"
+    },
+    "context_packs": {
+      "path": ".plan/tanstack-dashboard/context-packs.jsonl",
+      "sha256": "sha256:b7cd812c9b2c5d2d6a42c5488524ad2faa911b599b90303ca2a5713c2c048900"
+    }
+  },
+  "current_phase_id": "P0",
+  "active_task_ids": [],
+  "active_validation_ids": [],
+  "next_action": {
+    "id": "next:P6.T1",
+    "kind": "task",
+    "summary": "Start Legacy Cleanup, Docs, and ADR Readiness by deciding/removing or documenting retained Hono compatibility scope and risks.",
+    "phase_id": "P6",
+    "task_id": "P6.T1"
+  },
+  "working_set": {
+    "write_allowed": [
+      {
+        "path": "dashboard/client/src/App.tsx"
+      },
+      {
+        "path": "dashboard/start/src/routes/__root.tsx"
+      },
+      {
+        "path": "dashboard/start/src/routes/index.tsx"
+      },
+      {
+        "path": "dashboard/start/src/routes/topics/$topic.tsx"
+      },
+      {
+        "path": "dashboard/client/src/lib/dashboard-db.ts"
+      },
+      {
+        "path": "tests/dashboard/client-shell.test.tsx"
+      },
+      {
+        "path": "tests/dashboard/topic-pages.test.tsx"
+      },
+      {
+        "path": ".plan/tanstack-dashboard/plan.md"
+      },
+      {
+        "path": ".plan/tanstack-dashboard/plan.nodes.jsonl"
+      },
+      {
+        "path": ".plan/tanstack-dashboard/receipts.jsonl"
+      },
+      {
+        "path": ".plan/tanstack-dashboard/context-packs.jsonl"
+      }
+    ],
+    "read_only": [
+      {
+        "path": "dashboard/client/src/features/review-workflow.tsx"
+      },
+      {
+        "path": "dashboard/client/src/features/graph-explorer.tsx"
+      },
+      {
+        "path": "dashboard/client/src/features/document-viewer.tsx"
+      },
+      {
+        "path": "dashboard/client/src/lib/api.ts"
+      },
+      {
+        "path": "dashboard/client/src/lib/events.ts"
+      },
+      {
+        "path": "dashboard/client/src/lib/live-refetch.ts"
+      },
+      {
+        "path": "dashboard/start/src/routeTree.gen.ts"
+      },
+      {
+        "path": "package.json"
+      }
+    ],
+    "forbidden": [
+      {
+        "path": ".plan/_private/**",
+        "reason": "Raw private inputs are never loaded into working context."
+      }
+    ]
+  },
+  "known_failures": [],
+  "last_validation_receipt_ids": [
+    "receipt:P4:validation:2026-06-11T02:20:10+00:00",
+    "receipt:P5:validation:2026-06-11T03:14:53+00:00",
+    "receipt:P5:semantic-audit:2026-06-11T03:16:55+00:00",
+    "receipt:P5:validation:2026-06-11T03:17:07+00:00"
+  ],
+  "journal_refs": [],
+  "resume": {
+    "template_id": "cartographer.single_writer.resume.v1",
+    "resume_order": [
+      ".cartographer/tanstack-dashboard/state.json",
+      ".cartographer/tanstack-dashboard/journal.jsonl",
+      ".plan/tanstack-dashboard/plan.md",
+      ".plan/tanstack-dashboard/receipts.jsonl"
+    ],
+    "expected_first_response": [
+      "current_phase",
+      "next_action",
+      "files_to_inspect"
+    ],
+    "must_ignore": [
+      "prior chat speculation",
+      "stale generated snippets"
+    ]
+  },
+  "updated_at": "2026-06-11T03:17:14Z"
+}
