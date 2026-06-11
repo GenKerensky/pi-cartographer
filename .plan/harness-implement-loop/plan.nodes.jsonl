@@ -64,17 +64,17 @@
 {"id":"validation:P5.V2","type":"validation","validation_id":"P5.V2","phase_id":"P5","title":"Run compass wrapper tests","status":"complete","source":"plan.md"}
 {"id":"validation:P5.V3","type":"validation","validation_id":"P5.V3","phase_id":"P5","title":"Run dependency evaluation tests","status":"complete","source":"plan.md"}
 {"id":"validation:P5.V4","type":"validation","validation_id":"P5.V4","phase_id":"P5","title":"Run npm run check:scripts","status":"complete","source":"plan.md","command":"npm run check:scripts"}
-{"id":"phase:P6","type":"phase","phase_id":"P6","title":"Workflow Integration and Documentation","status":"pending","depends_on":["P2","P3","P4","P5"],"source":"plan.md","references":["F018","F028","F029"]}
-{"id":"task:P6.T1","type":"task","task_id":"P6.T1","phase_id":"P6","title":"Update proposal skill","status":"pending","source":"plan.md"}
-{"id":"task:P6.T2","type":"task","task_id":"P6.T2","phase_id":"P6","title":"Update plan skill","status":"pending","source":"plan.md"}
-{"id":"task:P6.T3","type":"task","task_id":"P6.T3","phase_id":"P6","title":"Update implement skill","status":"pending","source":"plan.md"}
-{"id":"task:P6.T4","type":"task","task_id":"P6.T4","phase_id":"P6","title":"Update README and AGENTS","status":"pending","source":"plan.md"}
-{"id":"task:P6.T5","type":"task","task_id":"P6.T5","phase_id":"P6","title":"Update workflow docs tests","status":"pending","source":"plan.md"}
-{"id":"task:P6.T6","type":"task","task_id":"P6.T6","phase_id":"P6","title":"Update package/tool references","status":"pending","source":"plan.md"}
-{"id":"validation:P6.V1","type":"validation","validation_id":"P6.V1","phase_id":"P6","title":"Run workflow docs tests","status":"pending","source":"plan.md","command":"python -m unittest discover tests -p 'test_workflow_docs.py'"}
-{"id":"validation:P6.V2","type":"validation","validation_id":"P6.V2","phase_id":"P6","title":"Run prettier check","status":"pending","source":"plan.md","command":"npm run format:prettier:check"}
-{"id":"validation:P6.V3","type":"validation","validation_id":"P6.V3","phase_id":"P6","title":"Search for prose-only mutation instructions","status":"pending","source":"plan.md"}
-{"id":"validation:P6.V4","type":"validation","validation_id":"P6.V4","phase_id":"P6","title":"Run npm run check:scripts","status":"pending","source":"plan.md","command":"npm run check:scripts"}
+{"id":"phase:P6","type":"phase","phase_id":"P6","title":"Workflow Integration and Documentation","status":"complete","depends_on":["P2","P3","P4","P5"],"source":"plan.md","references":["F018","F028","F029"]}
+{"id":"task:P6.T1","type":"task","task_id":"P6.T1","phase_id":"P6","title":"Update proposal skill","status":"complete","source":"plan.md"}
+{"id":"task:P6.T2","type":"task","task_id":"P6.T2","phase_id":"P6","title":"Update plan skill","status":"complete","source":"plan.md"}
+{"id":"task:P6.T3","type":"task","task_id":"P6.T3","phase_id":"P6","title":"Update implement skill","status":"complete","source":"plan.md"}
+{"id":"task:P6.T4","type":"task","task_id":"P6.T4","phase_id":"P6","title":"Update README and AGENTS","status":"complete","source":"plan.md"}
+{"id":"task:P6.T5","type":"task","task_id":"P6.T5","phase_id":"P6","title":"Update workflow docs tests","status":"complete","source":"plan.md"}
+{"id":"task:P6.T6","type":"task","task_id":"P6.T6","phase_id":"P6","title":"Update package/tool references","status":"complete","source":"plan.md"}
+{"id":"validation:P6.V1","type":"validation","validation_id":"P6.V1","phase_id":"P6","title":"Run workflow docs tests","status":"complete","source":"plan.md","command":"python -m unittest discover tests -p 'test_workflow_docs.py'"}
+{"id":"validation:P6.V2","type":"validation","validation_id":"P6.V2","phase_id":"P6","title":"Run prettier check","status":"complete","source":"plan.md","command":"npm run format:prettier:check"}
+{"id":"validation:P6.V3","type":"validation","validation_id":"P6.V3","phase_id":"P6","title":"Search for prose-only mutation instructions","status":"complete","source":"plan.md"}
+{"id":"validation:P6.V4","type":"validation","validation_id":"P6.V4","phase_id":"P6","title":"Run npm run check:scripts","status":"complete","source":"plan.md","command":"npm run check:scripts"}
 {"id":"phase:P7","type":"phase","phase_id":"P7","title":"Final Validation and ADR","status":"pending","depends_on":["P6"],"source":"plan.md","references":["F005","F014","F017","F028"]}
 {"id":"task:P7.T1","type":"task","task_id":"P7.T1","phase_id":"P7","title":"Run full project validation","status":"pending","source":"plan.md"}
 {"id":"task:P7.T2","type":"task","task_id":"P7.T2","phase_id":"P7","title":"Run topic and graph validation","status":"pending","source":"plan.md"}

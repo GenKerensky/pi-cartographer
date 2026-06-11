@@ -39,6 +39,10 @@ Do not create `.cartographer/` execution state during proposal writing. If a pro
 
 ## Procedure
 
+### Wrapper-first mutation contract
+
+Use deterministic wrappers for proposal mutations whenever available. Prefer `cartographer_proposal init`/`proposal-init` for proposal skeleton creation, `cartographer_fact`/`fact-*` for source-backed fact/source/support edges, `cartographer_proposal adr-sync` after `cartographer_adr evaluate`, and `cartographer_proposal finalize` for final deterministic validation, fact citation checks, sanitized evidence checks, auditor PASS receipt checks, and lifecycle transition. Do not manually append proposal receipts, hand-edit fact JSONL, or cross proposal lifecycle gates as a prose-only step unless a wrapper is unavailable and an explicit fallback receipt documents the substitute checks.
+
 1. **Derive the topic and initialize files**
    - Summarize the user's proposal topic in 3 words or less.
    - If the topic is ambiguous enough that scope cannot be inferred, ask one clarifying question before proceeding.

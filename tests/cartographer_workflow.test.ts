@@ -246,7 +246,8 @@ describe("proposal and fact wrappers", () => {
 		expect(() => finalizeProposal({ root, topic: "demo" })).toThrow("supported_by");
 		const source = addFactSource({ root, topic: "demo", title: "Source" });
 		supportFact({ root, topic: "demo", factId: "F001", sourceId: String(source.id) });
-		fs.appendFileSync(path.join(root, ".plan", "demo", "context-packs.jsonl"), 
+		fs.appendFileSync(
+			path.join(root, ".plan", "demo", "context-packs.jsonl"),
 			`${JSON.stringify({ id: "context:bad", references: [".plan/_private/demo/raw.log"] })}\n`,
 			"utf8",
 		);
@@ -256,28 +257,10 @@ describe("proposal and fact wrappers", () => {
 	it("supports proposal and fact CLI aliases", () => {
 		const root = tempRoot();
 		expect(runWorkflowCli(["proposal-init", "--root", root, "--topic", "demo"]).ok).toBe(true);
-		const source = runWorkflowCli([
-			"fact-add-source",
-			"--root",
-			root,
-			"--topic",
-			"demo",
-			"--title",
-			"Source",
-		]);
+		const source = runWorkflowCli(["fact-add-source", "--root", root, "--topic", "demo", "--title", "Source"]);
 		expect(source.id).toBe("S001");
 		expect(
-			runWorkflowCli([
-				"fact-add-fact",
-				"--root",
-				root,
-				"--topic",
-				"demo",
-				"--title",
-				"Fact",
-				"--source-id",
-				"S001",
-			]).id,
+			runWorkflowCli(["fact-add-fact", "--root", root, "--topic", "demo", "--title", "Fact", "--source-id", "S001"]).id,
 		).toBe("F001");
 	});
 });
@@ -289,7 +272,9 @@ describe("plan graph, status, and validation wrappers", () => {
 		const planPath = path.join(root, ".plan", "demo", "plan.md");
 		fs.writeFileSync(
 			planPath,
-			fs.readFileSync(planPath, "utf8").replace("- **Depends on:** P0", "- **Depends on:** P0\n- **Primary references:** [F021] [F024]"),
+			fs
+				.readFileSync(planPath, "utf8")
+				.replace("- **Depends on:** P0", "- **Depends on:** P0\n- **Primary references:** [F021] [F024]"),
 			"utf8",
 		);
 		const result = generatePlanGraph({ root, topic: "demo" });
@@ -370,17 +355,8 @@ describe("plan graph, status, and validation wrappers", () => {
 		createWorkflowFixture(root, { topic: "demo", phaseIds: ["P0"] });
 		expect(runWorkflowCli(["plan-generate-graph", "--root", root, "--topic", "demo"]).ok).toBe(true);
 		expect(
-			runWorkflowCli([
-				"plan-status-set",
-				"--root",
-				root,
-				"--topic",
-				"demo",
-				"--id",
-				"P0.T1",
-				"--status",
-				"complete",
-			]).status,
+			runWorkflowCli(["plan-status-set", "--root", root, "--topic", "demo", "--id", "P0.T1", "--status", "complete"])
+				.status,
 		).toBe("complete");
 	});
 });
@@ -391,7 +367,14 @@ describe("implement runner and guard wrappers", () => {
 		appendWorkflowReceipt({ root, topic, kind: "validation", phaseId: "plan", summary: "plan validation" });
 		appendWorkflowReceipt({ root, topic, kind: "audit", phaseId: "plan", summary: "plan auditor PASS" });
 		recordWorkflowTransition({ root, topic, action: "request-approval", gate: "plan", summary: "Plan ready" });
-		recordWorkflowTransition({ root, topic, action: "approve", gate: "plan", summary: "Plan approved", approvedBy: "Tester" });
+		recordWorkflowTransition({
+			root,
+			topic,
+			action: "approve",
+			gate: "plan",
+			summary: "Plan approved",
+			approvedBy: "Tester",
+		});
 	}
 
 	it("starts implementation only after plan approval and initializes state/current pointer", () => {
@@ -424,7 +407,9 @@ describe("implement runner and guard wrappers", () => {
 		expect(() => implementStep({ root, topic: "demo" })).toThrow("Missing active implementation state");
 		approvePlanForImplementation(root);
 		startImplementation({ root, topic: "demo" });
-		expect(implementStep({ root, topic: "demo", path: "skills/plan/scripts/cartographer_workflow.ts" }).guard).toMatchObject({
+		expect(
+			implementStep({ root, topic: "demo", path: "skills/plan/scripts/cartographer_workflow.ts" }).guard,
+		).toMatchObject({
 			mode: "write-allowed",
 		});
 		expect(() => implementStep({ root, topic: "demo", path: ".plan/_private/demo/raw.log" })).toThrow("forbidden");
@@ -435,9 +420,18 @@ describe("implement runner and guard wrappers", () => {
 		createWorkflowFixture(root, { topic: "demo", phaseIds: ["P0"] });
 		approvePlanForImplementation(root);
 		startImplementation({ root, topic: "demo" });
-		appendWorkflowReceipt({ root, topic: "demo", kind: "validation", phaseId: "P0", id: "receipt:P0", summary: "P0 validation" });
+		appendWorkflowReceipt({
+			root,
+			topic: "demo",
+			kind: "validation",
+			phaseId: "P0",
+			id: "receipt:P0",
+			summary: "P0 validation",
+		});
 		expect(implementRecord({ root, topic: "demo", receiptIds: ["receipt:P0"] }).ok).toBe(true);
-		expect(implementCompact({ root, topic: "demo", trigger: "test", summary: "Compact" }).resume).toMatchObject({ ok: true });
+		expect(implementCompact({ root, topic: "demo", trigger: "test", summary: "Compact" }).resume).toMatchObject({
+			ok: true,
+		});
 		expect(() => finalizeImplementation({ root, topic: "demo" })).toThrow("pending phases");
 	});
 
@@ -447,12 +441,33 @@ describe("implement runner and guard wrappers", () => {
 		setPlanStatus({ root, topic: "demo", id: "P0", status: "complete" });
 		expect(() => finalizeImplementation({ root, topic: "demo" })).toThrow("full validation");
 		appendJsonlAtomic(path.join(root, ".plan", "demo", "receipts.jsonl"), [
-			{ id: "receipt:implementation-full-validation", type: "validation-receipt", status: "passed", phase_id: "implementation", validation_ids: ["implementation-full-validation"], commands: [{ command: "npm run check", result: "passed" }] },
+			{
+				id: "receipt:implementation-full-validation",
+				type: "validation-receipt",
+				status: "passed",
+				phase_id: "implementation",
+				validation_ids: ["implementation-full-validation"],
+				commands: [{ command: "npm run check", result: "passed" }],
+			},
 		]);
 		expect(() => finalizeImplementation({ root, topic: "demo" })).toThrow("ADR handling");
-		appendWorkflowReceipt({ root, topic: "demo", kind: "decision", phaseId: "implementation", id: "receipt:adr-handled", summary: "ADR handling complete" });
+		appendWorkflowReceipt({
+			root,
+			topic: "demo",
+			kind: "decision",
+			phaseId: "implementation",
+			id: "receipt:adr-handled",
+			summary: "ADR handling complete",
+		});
 		fs.writeFileSync(path.join(root, ".plan", "demo", "auditor-report-implementation.md"), "PASS\n", "utf8");
-		appendWorkflowReceipt({ root, topic: "demo", kind: "audit", phaseId: "implementation", summary: "implementation auditor PASS", data: { report_path: ".plan/demo/auditor-report-implementation.md" } });
+		appendWorkflowReceipt({
+			root,
+			topic: "demo",
+			kind: "audit",
+			phaseId: "implementation",
+			summary: "implementation auditor PASS",
+			data: { report_path: ".plan/demo/auditor-report-implementation.md" },
+		});
 		const result = finalizeImplementation({ root, topic: "demo", summary: "Implementation ready" });
 		expect(String(result.transition_receipt)).toContain("receipt:demo:transition:");
 		expect(getWorkflowStatus({ root, topic: "demo" }).pending_human_approvals).toEqual([
@@ -473,44 +488,212 @@ describe("subagent handoff wrappers", () => {
 	it("captures auditor PASS/FAIL reports with context pack and validation receipt evidence", () => {
 		const root = tempRoot();
 		createWorkflowFixture(root, { topic: "demo", phaseIds: ["P0"] });
-		const receipt = appendWorkflowReceipt({ root, topic: "demo", kind: "validation", phaseId: "P0", summary: "P0 validation" });
-		upsertContextPack({ root, topic: "demo", phaseId: "P0", summary: "P0 context", validationReceipts: [String(receipt.id)] });
-		const result = captureAuditorHandoff({ root, topic: "demo", phaseId: "P0", decision: "PASS", reportPath: ".plan/demo/auditor-P0.md", summary: "Auditor passed", validationReceipts: [String(receipt.id)], artifactSummaries: ["plan summary"], acceptanceCriteria: ["P0 complete"] });
+		const receipt = appendWorkflowReceipt({
+			root,
+			topic: "demo",
+			kind: "validation",
+			phaseId: "P0",
+			summary: "P0 validation",
+		});
+		upsertContextPack({
+			root,
+			topic: "demo",
+			phaseId: "P0",
+			summary: "P0 context",
+			validationReceipts: [String(receipt.id)],
+		});
+		const result = captureAuditorHandoff({
+			root,
+			topic: "demo",
+			phaseId: "P0",
+			decision: "PASS",
+			reportPath: ".plan/demo/auditor-P0.md",
+			summary: "Auditor passed",
+			validationReceipts: [String(receipt.id)],
+			artifactSummaries: ["plan summary"],
+			acceptanceCriteria: ["P0 complete"],
+		});
 		expect(result.status).toBe("PASS");
-		const semanticFail = captureAuditorHandoff({ root, topic: "demo", phaseId: "P0", decision: "FAIL", reportPath: ".plan/demo/auditor-P0-fail.md", summary: "Required correction", validationReceipts: [String(receipt.id)], artifactSummaries: ["plan summary"], acceptanceCriteria: ["P0 complete"] });
+		const semanticFail = captureAuditorHandoff({
+			root,
+			topic: "demo",
+			phaseId: "P0",
+			decision: "FAIL",
+			reportPath: ".plan/demo/auditor-P0-fail.md",
+			summary: "Required correction",
+			validationReceipts: [String(receipt.id)],
+			artifactSummaries: ["plan summary"],
+			acceptanceCriteria: ["P0 complete"],
+		});
 		expect(semanticFail.decision).toBe("FAIL");
 		expect(semanticFail.status).toBe("recorded");
 		const report = fs.readFileSync(path.join(root, ".plan", "demo", "auditor-P0.md"), "utf8");
 		expect(report).toContain("DECISION: PASS");
 		expect(report).toContain("REQUIRED_CORRECTIONS:");
-		expect(() => captureAuditorHandoff({ root, topic: "demo", phaseId: "P0", decision: "PASS", reportPath: ".plan/demo/no-receipts.md", summary: "bad" })).toThrow("validation receipt IDs");
-		expect(() => captureAuditorHandoff({ root, topic: "demo", phaseId: "P0", decision: "PASS", reportPath: ".plan/demo/no-artifacts.md", summary: "bad", validationReceipts: [String(receipt.id)] })).toThrow("artifact summaries");
-		expect(() => captureAuditorHandoff({ root, topic: "demo", phaseId: "P0", decision: "PASS", reportPath: ".plan/demo/../_private/raw.md", summary: "bad", validationReceipts: [String(receipt.id)], artifactSummaries: ["plan"], acceptanceCriteria: ["done"] })).toThrow("private raw inputs");
-		expect(() => captureAuditorHandoff({ root, topic: "demo", phaseId: "P0", decision: "PASS", reportPath: ".plan/_private", summary: "bad", validationReceipts: [String(receipt.id)], artifactSummaries: ["plan"], acceptanceCriteria: ["done"] })).toThrow("private raw inputs");
+		expect(() =>
+			captureAuditorHandoff({
+				root,
+				topic: "demo",
+				phaseId: "P0",
+				decision: "PASS",
+				reportPath: ".plan/demo/no-receipts.md",
+				summary: "bad",
+			}),
+		).toThrow("validation receipt IDs");
+		expect(() =>
+			captureAuditorHandoff({
+				root,
+				topic: "demo",
+				phaseId: "P0",
+				decision: "PASS",
+				reportPath: ".plan/demo/no-artifacts.md",
+				summary: "bad",
+				validationReceipts: [String(receipt.id)],
+			}),
+		).toThrow("artifact summaries");
+		expect(() =>
+			captureAuditorHandoff({
+				root,
+				topic: "demo",
+				phaseId: "P0",
+				decision: "PASS",
+				reportPath: ".plan/demo/../_private/raw.md",
+				summary: "bad",
+				validationReceipts: [String(receipt.id)],
+				artifactSummaries: ["plan"],
+				acceptanceCriteria: ["done"],
+			}),
+		).toThrow("private raw inputs");
+		expect(() =>
+			captureAuditorHandoff({
+				root,
+				topic: "demo",
+				phaseId: "P0",
+				decision: "PASS",
+				reportPath: ".plan/_private",
+				summary: "bad",
+				validationReceipts: [String(receipt.id)],
+				artifactSummaries: ["plan"],
+				acceptanceCriteria: ["done"],
+			}),
+		).toThrow("private raw inputs");
 	});
 
 	it("captures compass structured decisions and fallback reliability metrics", () => {
 		const root = tempRoot();
 		createWorkflowFixture(root, { topic: "demo", phaseIds: ["P0"] });
-		expect(captureCompassHandoff({ root, topic: "demo", phaseId: "P0", decision: "within_scope", summary: "Continue" }).decision).toBe("within_scope");
-		expect(() => captureCompassHandoff({ root, topic: "demo", phaseId: "P0", decision: "maybe", summary: "bad" })).toThrow("Unsupported");
-		const fallback = recordHandoffFallback({ root, topic: "demo", phaseId: "P0", failureMode: "timeout", summary: "Auditor timed out", fallback: "reviewer" });
+		expect(
+			captureCompassHandoff({ root, topic: "demo", phaseId: "P0", decision: "within_scope", summary: "Continue" })
+				.decision,
+		).toBe("within_scope");
+		expect(() =>
+			captureCompassHandoff({ root, topic: "demo", phaseId: "P0", decision: "maybe", summary: "bad" }),
+		).toThrow("Unsupported");
+		const fallback = recordHandoffFallback({
+			root,
+			topic: "demo",
+			phaseId: "P0",
+			failureMode: "timeout",
+			summary: "Auditor timed out",
+			fallback: "reviewer",
+		});
 		expect(fallback.failure_mode).toBe("timeout");
 		expect(fallback.reliability_metric).toMatchObject({ failures: 1, recommendation: "fallback-used" });
-		expect(() => captureHandoffOutput({ root, topic: "demo", phaseId: "P0", role: "auditor", output: "", reportPath: ".plan/demo/out.md" })).toThrow("empty output");
-		expect(() => captureHandoffOutput({ root, topic: "demo", phaseId: "P0", role: "auditor", output: "hello", reportPath: ".plan/demo/out.md" })).toThrow("schema mismatch");
-		expect(() => captureHandoffOutput({ root, topic: "demo", phaseId: "P0", role: "auditor", output: "DECISION: PASS", reportPath: ".plan/demo/out.md" })).toThrow("schema mismatch");
-		expect(captureHandoffOutput({ root, topic: "demo", phaseId: "P0", role: "auditor", output: "DECISION: PASS\nSUMMARY: ok\nREQUIRED_CORRECTIONS:\n- None", reportPath: ".plan/demo/out.md" }).schema_valid).toBe(true);
-		expect(captureRoleHandoff({ root, topic: "demo", phaseId: "P0", role: "archivist", summary: "Research compressed" }).role).toBe("archivist");
-		expect(recordHandoffDependencyEvaluation({ root, topic: "demo", phaseId: "P0", recommendation: "keep", summary: "Subagent dependency acceptable" }).recommendation).toBe("keep");
+		expect(() =>
+			captureHandoffOutput({
+				root,
+				topic: "demo",
+				phaseId: "P0",
+				role: "auditor",
+				output: "",
+				reportPath: ".plan/demo/out.md",
+			}),
+		).toThrow("empty output");
+		expect(() =>
+			captureHandoffOutput({
+				root,
+				topic: "demo",
+				phaseId: "P0",
+				role: "auditor",
+				output: "hello",
+				reportPath: ".plan/demo/out.md",
+			}),
+		).toThrow("schema mismatch");
+		expect(() =>
+			captureHandoffOutput({
+				root,
+				topic: "demo",
+				phaseId: "P0",
+				role: "auditor",
+				output: "DECISION: PASS",
+				reportPath: ".plan/demo/out.md",
+			}),
+		).toThrow("schema mismatch");
+		expect(
+			captureHandoffOutput({
+				root,
+				topic: "demo",
+				phaseId: "P0",
+				role: "auditor",
+				output: "DECISION: PASS\nSUMMARY: ok\nREQUIRED_CORRECTIONS:\n- None",
+				reportPath: ".plan/demo/out.md",
+			}).schema_valid,
+		).toBe(true);
+		expect(
+			captureRoleHandoff({ root, topic: "demo", phaseId: "P0", role: "archivist", summary: "Research compressed" })
+				.role,
+		).toBe("archivist");
+		expect(
+			recordHandoffDependencyEvaluation({
+				root,
+				topic: "demo",
+				phaseId: "P0",
+				recommendation: "keep",
+				summary: "Subagent dependency acceptable",
+			}).recommendation,
+		).toBe("keep");
 	});
 
 	it("supports handoff CLI aliases", () => {
 		const root = tempRoot();
 		createWorkflowFixture(root, { topic: "demo", phaseIds: ["P0"] });
-		const receipt = appendWorkflowReceipt({ root, topic: "demo", kind: "validation", phaseId: "P0", summary: "P0 validation" });
-		upsertContextPack({ root, topic: "demo", phaseId: "P0", summary: "P0 context", validationReceipts: [String(receipt.id)] });
-		expect(runWorkflowCli(["handoff-auditor", "--root", root, "--topic", "demo", "--phase-id", "P0", "--decision", "PASS", "--report-path", ".plan/demo/auditor-cli.md", "--summary", "ok", "--validation-receipt", String(receipt.id), "--artifact", "plan summary", "--acceptance-criterion", "P0 complete"]).status).toBe("PASS");
+		const receipt = appendWorkflowReceipt({
+			root,
+			topic: "demo",
+			kind: "validation",
+			phaseId: "P0",
+			summary: "P0 validation",
+		});
+		upsertContextPack({
+			root,
+			topic: "demo",
+			phaseId: "P0",
+			summary: "P0 context",
+			validationReceipts: [String(receipt.id)],
+		});
+		expect(
+			runWorkflowCli([
+				"handoff-auditor",
+				"--root",
+				root,
+				"--topic",
+				"demo",
+				"--phase-id",
+				"P0",
+				"--decision",
+				"PASS",
+				"--report-path",
+				".plan/demo/auditor-cli.md",
+				"--summary",
+				"ok",
+				"--validation-receipt",
+				String(receipt.id),
+				"--artifact",
+				"plan summary",
+				"--acceptance-criterion",
+				"P0 complete",
+			]).status,
+		).toBe("PASS");
 	});
 });
 

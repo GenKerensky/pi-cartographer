@@ -554,7 +554,6 @@ export function upsertContextPack(params: {
 	return nextRecord;
 }
 
-
 const PROPOSAL_SKELETON = `## Description
 
 ## Problem Statement
@@ -654,7 +653,13 @@ function upsertJsonlRecord(filePath: string, record: Record<string, unknown>, ke
 	return index >= 0 ? records[index] : record;
 }
 
-export function addFactSource(params: { root: string; topic: string; title: string; url?: string; id?: string }): Record<string, unknown> {
+export function addFactSource(params: {
+	root: string;
+	topic: string;
+	title: string;
+	url?: string;
+	id?: string;
+}): Record<string, unknown> {
 	ensureProposalArtifacts(params.root, params.topic);
 	const filePath = factsNodesPath(params.root, params.topic);
 	const records = readJsonlRecords(filePath);
@@ -689,7 +694,12 @@ export function addFact(params: {
 	return fact;
 }
 
-export function supportFact(params: { root: string; topic: string; factId: string; sourceId: string }): Record<string, unknown> {
+export function supportFact(params: {
+	root: string;
+	topic: string;
+	factId: string;
+	sourceId: string;
+}): Record<string, unknown> {
 	ensureProposalArtifacts(params.root, params.topic);
 	const nodes = readJsonlRecords(factsNodesPath(params.root, params.topic));
 	const fact = nodes.find((node) => node.id === params.factId && node.type === "fact");
@@ -746,13 +756,16 @@ export function syncProposalAdr(params: {
 
 function runTopicValidation(root: string, topic: string): string {
 	const script = path.join(path.dirname(fileURLToPath(import.meta.url)), "manage_jsonl.ts");
-	return execFileSync("node", ["--experimental-strip-types", script, "validate-topic", "--root", root, "--topic", topic, "--json"], {
-		cwd: root,
-		encoding: "utf8",
-		stdio: ["ignore", "pipe", "pipe"],
-	});
+	return execFileSync(
+		"node",
+		["--experimental-strip-types", script, "validate-topic", "--root", root, "--topic", topic, "--json"],
+		{
+			cwd: root,
+			encoding: "utf8",
+			stdio: ["ignore", "pipe", "pipe"],
+		},
+	);
 }
-
 
 function assertFactCitationSummary(root: string, topic: string): Record<string, unknown> {
 	const proposal = fs.readFileSync(proposalPath(root, topic), "utf8");
@@ -767,7 +780,11 @@ function assertFactCitationSummary(root: string, topic: string): Record<string, 
 		(id) => !edges.some((edge) => edge.from === id && edge.type === "supported_by" && sources.has(edge.to)),
 	);
 	if (unsupported.length) throw new Error(`Facts lack supported_by source edges: ${unsupported.join(", ")}`);
-	return { cited_facts: citations.length, total_facts: facts.length, supported_facts: facts.length - unsupported.length };
+	return {
+		cited_facts: citations.length,
+		total_facts: facts.length,
+		supported_facts: facts.length - unsupported.length,
+	};
 }
 
 function assertSanitizedEvidence(root: string, topic: string): Record<string, unknown> {
@@ -836,7 +853,11 @@ export function finalizeProposal(params: { root: string; topic: string; summary?
 		phaseId: "proposal",
 		summary: params.summary || "Proposal ready for human review.",
 	});
-	return { validation_receipt: validationReceipt.id, audit_receipt: auditReceipt.id, transition_receipt: transition.id };
+	return {
+		validation_receipt: validationReceipt.id,
+		audit_receipt: auditReceipt.id,
+		transition_receipt: transition.id,
+	};
 }
 
 export function getWorkflowStatus(params: { root: string; topic: string }): Record<string, unknown> {
@@ -908,7 +929,6 @@ function optionalString(value: unknown): string {
 	return typeof value === "string" ? value : "";
 }
 
-
 function planMdPath(root: string, topic: string): string {
 	return path.join(topicDir(root, topic), "plan.md");
 }
@@ -948,12 +968,22 @@ export function parsePlanMarkdown(topic: string, markdown: string): ParsedPlan {
 		const block = markdown.slice(start, end);
 		const status = block.match(/^- \*\*Status:\*\*\s+(.+)$/m)?.[1]?.trim() || "pending";
 		const dependsText = block.match(/^- \*\*Depends on:\*\*\s+(.+)$/m)?.[1]?.trim() || "none";
-		const dependsOn = dependsText.toLowerCase() === "none" ? [] : [...dependsText.matchAll(/P\d+/g)].map((item) => item[0]);
+		const dependsOn =
+			dependsText.toLowerCase() === "none" ? [] : [...dependsText.matchAll(/P\d+/g)].map((item) => item[0]);
 		const unlocksText = block.match(/^- \*\*Unlocks:\*\*\s+(.+)$/m)?.[1]?.trim() || "none";
-		const unlocks = unlocksText.toLowerCase() === "none" ? [] : [...unlocksText.matchAll(/P\d+/g)].map((item) => item[0]);
+		const unlocks =
+			unlocksText.toLowerCase() === "none" ? [] : [...unlocksText.matchAll(/P\d+/g)].map((item) => item[0]);
 		const referenceText = block.match(/^- \*\*Primary references:\*\*\s+(.+)$/m)?.[1] || "";
 		const references = [...new Set([...referenceText.matchAll(/\[(F\d+)\]/g)].map((item) => item[1]))];
-		const phaseNode: Record<string, unknown> = { id: `phase:${phaseId}`, type: "phase", phase_id: phaseId, title, status, depends_on: dependsOn, source: "plan.md" };
+		const phaseNode: Record<string, unknown> = {
+			id: `phase:${phaseId}`,
+			type: "phase",
+			phase_id: phaseId,
+			title,
+			status,
+			depends_on: dependsOn,
+			source: "plan.md",
+		};
 		if (references.length) phaseNode.references = references;
 		nodes.push(phaseNode);
 		edges.push({ from: `plan:${topic}`, to: `phase:${phaseId}`, type: "contains" });
@@ -962,13 +992,29 @@ export function parsePlanMarkdown(topic: string, markdown: string): ParsedPlan {
 		for (const reference of references) edges.push({ from: `phase:${phaseId}`, to: reference, type: "references" });
 		for (const task of block.matchAll(/^- \[([ xX])\] \*\*((P\d+\.T\d+))\*\*\s*(.+)$/gm)) {
 			const taskId = task[2];
-			nodes.push({ id: `task:${taskId}`, type: "task", task_id: taskId, phase_id: phaseId, title: task[3].trim(), status: checkboxStatus(task[1]), source: "plan.md" });
+			nodes.push({
+				id: `task:${taskId}`,
+				type: "task",
+				task_id: taskId,
+				phase_id: phaseId,
+				title: task[3].trim(),
+				status: checkboxStatus(task[1]),
+				source: "plan.md",
+			});
 			edges.push({ from: `phase:${phaseId}`, to: `task:${taskId}`, type: "contains" });
 		}
 		for (const validation of block.matchAll(/^- \[([ xX])\] \*\*((P\d+\.V\d+))\*\*\s*(.+)$/gm)) {
 			const validationId = validation[2];
 			const validationTitle = validation[3].trim();
-			const node: Record<string, unknown> = { id: `validation:${validationId}`, type: "validation", validation_id: validationId, phase_id: phaseId, title: validationTitle, status: checkboxStatus(validation[1]), source: "plan.md" };
+			const node: Record<string, unknown> = {
+				id: `validation:${validationId}`,
+				type: "validation",
+				validation_id: validationId,
+				phase_id: phaseId,
+				title: validationTitle,
+				status: checkboxStatus(validation[1]),
+				source: "plan.md",
+			};
 			const command = commandFromValidationTitle(validationTitle);
 			if (command) node.command = command;
 			nodes.push(node);
@@ -986,7 +1032,12 @@ export function generatePlanGraph(params: { root: string; topic: string }): Reco
 	const parsed = parsePlanMarkdown(params.topic, markdown);
 	writeJsonlRecordsAtomic(planNodesPath(params.root, params.topic), parsed.nodes);
 	writeJsonlRecordsAtomic(planEdgesPath(params.root, params.topic), parsed.edges);
-	return { nodes: parsed.nodes.length, edges: parsed.edges.length, plan_nodes: path.relative(params.root, planNodesPath(params.root, params.topic)), plan_edges: path.relative(params.root, planEdgesPath(params.root, params.topic)) };
+	return {
+		nodes: parsed.nodes.length,
+		edges: parsed.edges.length,
+		plan_nodes: path.relative(params.root, planNodesPath(params.root, params.topic)),
+		plan_edges: path.relative(params.root, planEdgesPath(params.root, params.topic)),
+	};
 }
 
 function replacePlanItemStatus(markdown: string, id: string, status: string): string {
@@ -1001,7 +1052,12 @@ function replacePlanItemStatus(markdown: string, id: string, status: string): st
 	return markdown.replace(itemPattern, `- [${checked}] $2`);
 }
 
-export function setPlanStatus(params: { root: string; topic: string; id: string; status: string }): Record<string, unknown> {
+export function setPlanStatus(params: {
+	root: string;
+	topic: string;
+	id: string;
+	status: string;
+}): Record<string, unknown> {
 	ensureTopicArtifacts(params.root, params.topic);
 	const allowed = new Set(["pending", "in-progress", "complete", "blocked"]);
 	if (!allowed.has(params.status)) throw new Error(`Unsupported plan status: ${params.status}`);
@@ -1013,7 +1069,11 @@ export function setPlanStatus(params: { root: string; topic: string; id: string;
 		const nextMd = replacePlanItemStatus(oldMd, params.id, params.status);
 		fs.writeFileSync(mdPath, nextMd, "utf8");
 		const records = readJsonlRecords(nodesPath);
-		const nodeId = params.id.includes(".T") ? `task:${params.id}` : params.id.includes(".V") ? `validation:${params.id}` : `phase:${params.id}`;
+		const nodeId = params.id.includes(".T")
+			? `task:${params.id}`
+			: params.id.includes(".V")
+				? `validation:${params.id}`
+				: `phase:${params.id}`;
 		const index = records.findIndex((record) => record.id === nodeId);
 		if (index < 0) throw new Error(`Missing plan node: ${nodeId}`);
 		records[index] = { ...records[index], status: params.status };
@@ -1032,13 +1092,20 @@ function findPassedValidationReceipt(root: string, topic: string, validationId: 
 	const receipt = receipts.find((candidate) => {
 		const status = optionalString(candidate.status).toLowerCase();
 		const ids = Array.isArray(candidate.validation_ids) ? candidate.validation_ids.map(String) : [];
-		return (status === "passed" || candidate.verified === true) && (ids.includes(validationId) || optionalString(candidate.id).includes(validationId));
+		return (
+			(status === "passed" || candidate.verified === true) &&
+			(ids.includes(validationId) || optionalString(candidate.id).includes(validationId))
+		);
 	});
 	if (!receipt) throw new Error(`Missing passed validation receipt for ${validationId}`);
 	return receipt;
 }
 
-export function completeValidationItem(params: { root: string; topic: string; validationId: string }): Record<string, unknown> {
+export function completeValidationItem(params: {
+	root: string;
+	topic: string;
+	validationId: string;
+}): Record<string, unknown> {
 	const receipt = findPassedValidationReceipt(params.root, params.topic, params.validationId);
 	const status = setPlanStatus({ root: params.root, topic: params.topic, id: params.validationId, status: "complete" });
 	return { ...status, validation_receipt: receipt.id };
@@ -1069,7 +1136,11 @@ export function finalizePlan(params: { root: string; topic: string; summary?: st
 		topic: params.topic,
 		phaseId: "plan",
 		summary: params.summary || "Plan finalization context.",
-		artifacts: [`.plan/${params.topic}/plan.md`, `.plan/${params.topic}/plan.nodes.jsonl`, `.plan/${params.topic}/plan.edges.jsonl`],
+		artifacts: [
+			`.plan/${params.topic}/plan.md`,
+			`.plan/${params.topic}/plan.nodes.jsonl`,
+			`.plan/${params.topic}/plan.edges.jsonl`,
+		],
 		validationReceipts: [String(validationReceipt.id)],
 		mode: "update",
 	});
@@ -1082,20 +1153,27 @@ export function finalizePlan(params: { root: string; topic: string; summary?: st
 		phaseId: "plan",
 		summary: params.summary || "Plan ready for human review.",
 	});
-	return { validation_receipt: validationReceipt.id, audit_receipt: auditReceipt.id, transition_receipt: transition.id };
+	return {
+		validation_receipt: validationReceipt.id,
+		audit_receipt: auditReceipt.id,
+		transition_receipt: transition.id,
+	};
 }
-
 
 function stateScriptPath(): string {
 	return path.join(path.dirname(fileURLToPath(import.meta.url)), "cartographer_state.ts");
 }
 
 function runStateCommand(root: string, topic: string, command: string, extra: string[] = []): Record<string, unknown> {
-	const output = execFileSync("node", ["--experimental-strip-types", stateScriptPath(), command, "--root", root, "--topic", topic, "--json", ...extra], {
-		cwd: root,
-		encoding: "utf8",
-		stdio: ["ignore", "pipe", "pipe"],
-	});
+	const output = execFileSync(
+		"node",
+		["--experimental-strip-types", stateScriptPath(), command, "--root", root, "--topic", topic, "--json", ...extra],
+		{
+			cwd: root,
+			encoding: "utf8",
+			stdio: ["ignore", "pipe", "pipe"],
+		},
+	);
 	return JSON.parse(output) as Record<string, unknown>;
 }
 
@@ -1112,7 +1190,9 @@ function firstExecutablePhase(root: string, topic: string): Record<string, unkno
 	for (const phase of phases) {
 		if (phase.status === "complete") continue;
 		const deps = Array.isArray(phase.depends_on) ? phase.depends_on.map(String) : [];
-		const ready = deps.every((dep) => phases.some((candidate) => candidate.phase_id === dep && candidate.status === "complete"));
+		const ready = deps.every((dep) =>
+			phases.some((candidate) => candidate.phase_id === dep && candidate.status === "complete"),
+		);
 		if (ready) return phase;
 	}
 	throw new Error("No executable incomplete phase found");
@@ -1148,16 +1228,46 @@ export function startImplementation(params: { root: string; topic: string }): Re
 	const phase = firstExecutablePhase(params.root, params.topic);
 	const phaseId = String(phase.phase_id);
 	setPlanStatus({ root: params.root, topic: params.topic, id: phaseId, status: "in-progress" });
-	appendWorkflowReceipt({ root: params.root, topic: params.topic, kind: "phase", phaseId, summary: `Started implementation phase ${phaseId}.`, data: { action: "start", gate: "phase", to_state: "phase-in-progress" } });
+	appendWorkflowReceipt({
+		root: params.root,
+		topic: params.topic,
+		kind: "phase",
+		phaseId,
+		summary: `Started implementation phase ${phaseId}.`,
+		data: { action: "start", gate: "phase", to_state: "phase-in-progress" },
+	});
 	runStateCommand(params.root, params.topic, "state-init");
-	updateJsonAtomic<Record<string, unknown>>(path.join(params.root, ".cartographer", params.topic, "state.json"), (state) => ({ ...state, current_phase_id: phaseId }));
+	updateJsonAtomic<Record<string, unknown>>(
+		path.join(params.root, ".cartographer", params.topic, "state.json"),
+		(state) => ({ ...state, current_phase_id: phaseId }),
+	);
 	runStateCommand(params.root, params.topic, "state-validate");
-	const nextAction = { id: `${phaseId}.T1`, kind: "implementation-task", summary: `Start ${phaseId} implementation.`, phase_id: phaseId, task_id: `${phaseId}.T1`, files_to_inspect: [`.plan/${params.topic}/plan.md`, "skills/plan/scripts/cartographer_workflow.ts", "extensions/cartographer-tools.ts", "tests/cartographer_workflow.test.ts"] };
+	const nextAction = {
+		id: `${phaseId}.T1`,
+		kind: "implementation-task",
+		summary: `Start ${phaseId} implementation.`,
+		phase_id: phaseId,
+		task_id: `${phaseId}.T1`,
+		files_to_inspect: [
+			`.plan/${params.topic}/plan.md`,
+			"skills/plan/scripts/cartographer_workflow.ts",
+			"extensions/cartographer-tools.ts",
+			"tests/cartographer_workflow.test.ts",
+		],
+	};
 	const workingSet = defaultImplementWorkingSet(params.topic, phaseId);
 	runStateCommand(params.root, params.topic, "current-set");
 	runStateCommand(params.root, params.topic, "state-set-next", ["--next-action-json", JSON.stringify(nextAction)]);
-	runStateCommand(params.root, params.topic, "state-set-working-set", ["--working-set-json", JSON.stringify(workingSet)]);
-	return { phase_id: phaseId, next_action: nextAction, working_set: workingSet, current_pointer: path.relative(params.root, currentPointerPath(params.root)) };
+	runStateCommand(params.root, params.topic, "state-set-working-set", [
+		"--working-set-json",
+		JSON.stringify(workingSet),
+	]);
+	return {
+		phase_id: phaseId,
+		next_action: nextAction,
+		working_set: workingSet,
+		current_pointer: path.relative(params.root, currentPointerPath(params.root)),
+	};
 }
 
 function readState(root: string, topic: string): Record<string, unknown> {
@@ -1175,15 +1285,28 @@ function pathMatches(pattern: string, candidate: string): boolean {
 	return candidate === pattern || candidate.startsWith(`${pattern}/`);
 }
 
-export function assertImplementPathAllowed(params: { root: string; topic: string; path: string }): Record<string, unknown> {
+export function assertImplementPathAllowed(params: {
+	root: string;
+	topic: string;
+	path: string;
+}): Record<string, unknown> {
 	const state = readState(params.root, params.topic);
 	const workingSet = state.working_set as Record<string, unknown> | undefined;
 	if (!workingSet) throw new Error("Missing active working_set");
 	const candidate = params.path.split(path.sep).join("/");
-	const forbidden = Array.isArray(workingSet.forbidden) ? workingSet.forbidden as Record<string, unknown>[] : [];
-	if (forbidden.some((entry) => pathMatches(String(entry.path), candidate))) throw new Error(`Path is forbidden by working_set: ${candidate}`);
-	const allowed = Array.isArray(workingSet.write_allowed) ? workingSet.write_allowed as Record<string, unknown>[] : [];
-	return { path: candidate, allowed: allowed.some((entry) => pathMatches(String(entry.path), candidate)), mode: allowed.some((entry) => pathMatches(String(entry.path), candidate)) ? "write-allowed" : "warn-outside-working-set" };
+	const forbidden = Array.isArray(workingSet.forbidden) ? (workingSet.forbidden as Record<string, unknown>[]) : [];
+	if (forbidden.some((entry) => pathMatches(String(entry.path), candidate)))
+		throw new Error(`Path is forbidden by working_set: ${candidate}`);
+	const allowed = Array.isArray(workingSet.write_allowed)
+		? (workingSet.write_allowed as Record<string, unknown>[])
+		: [];
+	return {
+		path: candidate,
+		allowed: allowed.some((entry) => pathMatches(String(entry.path), candidate)),
+		mode: allowed.some((entry) => pathMatches(String(entry.path), candidate))
+			? "write-allowed"
+			: "warn-outside-working-set",
+	};
 }
 
 export function implementStep(params: { root: string; topic: string; path?: string }): Record<string, unknown> {
@@ -1191,64 +1314,137 @@ export function implementStep(params: { root: string; topic: string; path?: stri
 	const validation = runStateCommand(params.root, params.topic, "state-validate");
 	if (!state.next_action || Array.isArray(state.next_action)) throw new Error("Missing singular next_action");
 	if (!state.working_set) throw new Error("Missing active working_set");
-	const guard = params.path ? assertImplementPathAllowed({ root: params.root, topic: params.topic, path: params.path }) : undefined;
-	return { validation, current_phase_id: state.current_phase_id, next_action: state.next_action, working_set: state.working_set, guard };
+	const guard = params.path
+		? assertImplementPathAllowed({ root: params.root, topic: params.topic, path: params.path })
+		: undefined;
+	return {
+		validation,
+		current_phase_id: state.current_phase_id,
+		next_action: state.next_action,
+		working_set: state.working_set,
+		guard,
+	};
 }
 
-export function implementRecord(params: { root: string; topic: string; receiptIds: string[] }): Record<string, unknown> {
+export function implementRecord(params: {
+	root: string;
+	topic: string;
+	receiptIds: string[];
+}): Record<string, unknown> {
 	for (const receiptId of params.receiptIds) {
 		if (!readJsonlRecords(receiptsPath(params.root, params.topic)).some((receipt) => receipt.id === receiptId)) {
 			throw new Error(`Receipt does not exist: ${receiptId}`);
 		}
 	}
-	return runStateCommand(params.root, params.topic, "state-record-validation-ref", params.receiptIds.flatMap((id) => ["--receipt-id", id]));
+	return runStateCommand(
+		params.root,
+		params.topic,
+		"state-record-validation-ref",
+		params.receiptIds.flatMap((id) => ["--receipt-id", id]),
+	);
 }
 
-export function implementCompact(params: { root: string; topic: string; trigger: string; summary?: string }): Record<string, unknown> {
-	runStateCommand(params.root, params.topic, "state-mark-stale", ["--reason", "Implementation compact requested after artifact updates."]);
-	const compact = runStateCommand(params.root, params.topic, "compact-generate", ["--trigger", params.trigger, ...(params.summary ? ["--summary", params.summary, "--impact", "Implementation context compacted for resume.", "--importance", "3"] : [])]);
+export function implementCompact(params: {
+	root: string;
+	topic: string;
+	trigger: string;
+	summary?: string;
+}): Record<string, unknown> {
+	runStateCommand(params.root, params.topic, "state-mark-stale", [
+		"--reason",
+		"Implementation compact requested after artifact updates.",
+	]);
+	const compact = runStateCommand(params.root, params.topic, "compact-generate", [
+		"--trigger",
+		params.trigger,
+		...(params.summary
+			? ["--summary", params.summary, "--impact", "Implementation context compacted for resume.", "--importance", "3"]
+			: []),
+	]);
 	const resume = runStateCommand(params.root, params.topic, "state-resume");
 	return { compact, resume };
 }
 
-
 function requireImplementationFullValidation(root: string, topic: string): Record<string, unknown> {
 	const receipt = readJsonlRecords(receiptsPath(root, topic)).find((candidate) => {
 		const ids = Array.isArray(candidate.validation_ids) ? candidate.validation_ids.map(String) : [];
-		return candidate.status === "passed" && (candidate.phase_id === "implementation" || ids.includes("implementation-full-validation") || optionalString(candidate.id).includes("implementation-full-validation"));
+		return (
+			candidate.status === "passed" &&
+			(candidate.phase_id === "implementation" ||
+				ids.includes("implementation-full-validation") ||
+				optionalString(candidate.id).includes("implementation-full-validation"))
+		);
 	});
 	if (!receipt) throw new Error("Missing implementation full validation receipt");
 	return receipt;
 }
 
 function requireAdrHandling(root: string, topic: string): Record<string, unknown> {
-	const receipt = readJsonlRecords(receiptsPath(root, topic)).find((candidate) =>
-		optionalString(candidate.kind).includes("adr") || optionalString(candidate.id).includes("adr") || optionalString(candidate.summary).toLowerCase().includes("adr"),
+	const receipt = readJsonlRecords(receiptsPath(root, topic)).find(
+		(candidate) =>
+			optionalString(candidate.kind).includes("adr") ||
+			optionalString(candidate.id).includes("adr") ||
+			optionalString(candidate.summary).toLowerCase().includes("adr"),
 	);
 	if (!receipt) throw new Error("Missing ADR handling receipt");
 	return receipt;
 }
 
-export function finalizeImplementation(params: { root: string; topic: string; summary?: string }): Record<string, unknown> {
+export function finalizeImplementation(params: {
+	root: string;
+	topic: string;
+	summary?: string;
+}): Record<string, unknown> {
 	const pending = planPhaseRecords(params.root, params.topic).filter((phase) => phase.status !== "complete");
-	if (pending.length) throw new Error(`Cannot finalize with pending phases: ${pending.map((phase) => phase.phase_id).join(", ")}`);
+	if (pending.length)
+		throw new Error(`Cannot finalize with pending phases: ${pending.map((phase) => phase.phase_id).join(", ")}`);
 	const fullValidationReceipt = requireImplementationFullValidation(params.root, params.topic);
 	const adrReceipt = requireAdrHandling(params.root, params.topic);
 	const topicValidation = runTopicValidation(params.root, params.topic);
 	const graphValidation = runPlanningGraphValidation(params.root, params.topic);
-	const validationReceipt = appendWorkflowReceipt({ root: params.root, topic: params.topic, kind: "validation", phaseId: "implementation", summary: `implementation finalize validations passed with ${String(fullValidationReceipt.id)} and ${String(adrReceipt.id)}: ${topicValidation.slice(0, 160)}; ${graphValidation.slice(0, 160)}` });
-	upsertContextPack({ root: params.root, topic: params.topic, phaseId: "implementation", summary: params.summary || "Implementation finalization context.", artifacts: [`.plan/${params.topic}/plan.md`], validationReceipts: [String(validationReceipt.id)], mode: "update" });
+	const validationReceipt = appendWorkflowReceipt({
+		root: params.root,
+		topic: params.topic,
+		kind: "validation",
+		phaseId: "implementation",
+		summary: `implementation finalize validations passed with ${String(fullValidationReceipt.id)} and ${String(adrReceipt.id)}: ${topicValidation.slice(0, 160)}; ${graphValidation.slice(0, 160)}`,
+	});
+	upsertContextPack({
+		root: params.root,
+		topic: params.topic,
+		phaseId: "implementation",
+		summary: params.summary || "Implementation finalization context.",
+		artifacts: [`.plan/${params.topic}/plan.md`],
+		validationReceipts: [String(validationReceipt.id)],
+		mode: "update",
+	});
 	const auditReceipt = findAuditorPassReceipt(params.root, params.topic, "implementation");
-	const transition = recordWorkflowTransition({ root: params.root, topic: params.topic, action: "request-approval", gate: "implementation", phaseId: "implementation", summary: params.summary || "Implementation ready for human review." });
-	return { validation_receipt: validationReceipt.id, audit_receipt: auditReceipt.id, transition_receipt: transition.id };
+	const transition = recordWorkflowTransition({
+		root: params.root,
+		topic: params.topic,
+		action: "request-approval",
+		gate: "implementation",
+		phaseId: "implementation",
+		summary: params.summary || "Implementation ready for human review.",
+	});
+	return {
+		validation_receipt: validationReceipt.id,
+		audit_receipt: auditReceipt.id,
+		transition_receipt: transition.id,
+	};
 }
-
 
 function assertSafeReportPath(root: string, reportPath: string): string {
 	const fullPath = path.resolve(path.isAbsolute(reportPath) ? reportPath : path.join(root, reportPath));
 	const normalized = path.relative(root, fullPath).split(path.sep).join("/");
-	if (normalized.startsWith("../") || path.isAbsolute(normalized)) throw new Error("Handoff report path must stay under project root");
-	if (normalized === ".plan/_private" || normalized.startsWith(".plan/_private/") || normalized.includes("/.plan/_private/")) throw new Error("Handoff report path must not reference private raw inputs");
+	if (normalized.startsWith("../") || path.isAbsolute(normalized))
+		throw new Error("Handoff report path must stay under project root");
+	if (
+		normalized === ".plan/_private" ||
+		normalized.startsWith(".plan/_private/") ||
+		normalized.includes("/.plan/_private/")
+	)
+		throw new Error("Handoff report path must not reference private raw inputs");
 	fs.mkdirSync(path.dirname(fullPath), { recursive: true });
 	return fullPath;
 }
@@ -1262,10 +1458,22 @@ function assertContextPackForPhase(root: string, topic: string, phaseId: string)
 
 function assertValidationReceiptsExist(root: string, topic: string, receiptIds: string[]): void {
 	const receipts = readJsonlRecords(receiptsPath(root, topic));
-	for (const receiptId of receiptIds) if (!receipts.some((receipt) => receipt.id === receiptId)) throw new Error(`Missing validation receipt: ${receiptId}`);
+	for (const receiptId of receiptIds)
+		if (!receipts.some((receipt) => receipt.id === receiptId))
+			throw new Error(`Missing validation receipt: ${receiptId}`);
 }
 
-export function captureAuditorHandoff(params: { root: string; topic: string; phaseId: string; decision: string; reportPath: string; summary: string; validationReceipts?: string[]; artifactSummaries?: string[]; acceptanceCriteria?: string[] }): Record<string, unknown> {
+export function captureAuditorHandoff(params: {
+	root: string;
+	topic: string;
+	phaseId: string;
+	decision: string;
+	reportPath: string;
+	summary: string;
+	validationReceipts?: string[];
+	artifactSummaries?: string[];
+	acceptanceCriteria?: string[];
+}): Record<string, unknown> {
 	ensureTopicArtifacts(params.root, params.topic);
 	assertContextPackForPhase(params.root, params.topic, params.phaseId);
 	if (!params.validationReceipts?.length) throw new Error("auditor handoff requires validation receipt IDs");
@@ -1276,43 +1484,147 @@ export function captureAuditorHandoff(params: { root: string; topic: string; pha
 	if (!["PASS", "FAIL"].includes(decision)) throw new Error("auditor decision must be PASS or FAIL");
 	const summary = assertNonEmptyString(params.summary, "summary");
 	const reportFile = assertSafeReportPath(params.root, params.reportPath);
-	fs.writeFileSync(reportFile, `DECISION: ${decision}\nSUMMARY: ${summary}\nREQUIRED_CORRECTIONS:\n- ${decision === "PASS" ? "None" : "See summary."}\n`, "utf8");
-	return appendWorkflowReceipt({ root: params.root, topic: params.topic, kind: "audit", phaseId: params.phaseId, summary: `auditor ${decision}: ${summary}`, data: { role: "auditor", decision, report_path: path.relative(params.root, reportFile).split(path.sep).join("/"), validation_receipts: params.validationReceipts || [], artifact_summaries: params.artifactSummaries || [], acceptance_criteria: params.acceptanceCriteria || [] } });
+	fs.writeFileSync(
+		reportFile,
+		`DECISION: ${decision}\nSUMMARY: ${summary}\nREQUIRED_CORRECTIONS:\n- ${decision === "PASS" ? "None" : "See summary."}\n`,
+		"utf8",
+	);
+	return appendWorkflowReceipt({
+		root: params.root,
+		topic: params.topic,
+		kind: "audit",
+		phaseId: params.phaseId,
+		summary: `auditor ${decision}: ${summary}`,
+		data: {
+			role: "auditor",
+			decision,
+			report_path: path.relative(params.root, reportFile).split(path.sep).join("/"),
+			validation_receipts: params.validationReceipts || [],
+			artifact_summaries: params.artifactSummaries || [],
+			acceptance_criteria: params.acceptanceCriteria || [],
+		},
+	});
 }
 
-export function captureCompassHandoff(params: { root: string; topic: string; phaseId: string; decision: string; summary: string }): Record<string, unknown> {
+export function captureCompassHandoff(params: {
+	root: string;
+	topic: string;
+	phaseId: string;
+	decision: string;
+	summary: string;
+}): Record<string, unknown> {
 	const allowed = new Set(["within_scope", "requires_plan_change", "requires_user_decision"]);
 	if (!allowed.has(params.decision)) throw new Error("Unsupported compass decision");
-	return appendWorkflowReceipt({ root: params.root, topic: params.topic, kind: "compass", phaseId: params.phaseId, summary: params.summary, data: { role: "compass", decision: params.decision, recommended_next_action: params.summary } });
+	return appendWorkflowReceipt({
+		root: params.root,
+		topic: params.topic,
+		kind: "compass",
+		phaseId: params.phaseId,
+		summary: params.summary,
+		data: { role: "compass", decision: params.decision, recommended_next_action: params.summary },
+	});
 }
 
-
-export function captureHandoffOutput(params: { root: string; topic: string; phaseId: string; role: string; output: string; reportPath: string }): Record<string, unknown> {
+export function captureHandoffOutput(params: {
+	root: string;
+	topic: string;
+	phaseId: string;
+	role: string;
+	output: string;
+	reportPath: string;
+}): Record<string, unknown> {
 	const output = params.output.trim();
 	if (!output) throw new Error("Handoff harness failure: empty output");
-	if (!/^DECISION:\s*(PASS|FAIL|within_scope|requires_plan_change|requires_user_decision)/m.test(output) || !/^SUMMARY:\s+.+/m.test(output) || !/^REQUIRED_CORRECTIONS:\s*$/m.test(output)) {
+	if (
+		!/^DECISION:\s*(PASS|FAIL|within_scope|requires_plan_change|requires_user_decision)/m.test(output) ||
+		!/^SUMMARY:\s+.+/m.test(output) ||
+		!/^REQUIRED_CORRECTIONS:\s*$/m.test(output)
+	) {
 		throw new Error("Handoff harness failure: output schema mismatch");
 	}
 	const reportFile = assertSafeReportPath(params.root, params.reportPath);
 	fs.writeFileSync(reportFile, output.endsWith("\n") ? output : `${output}\n`, "utf8");
-	return appendWorkflowReceipt({ root: params.root, topic: params.topic, kind: "output-capture", phaseId: params.phaseId, summary: `${params.role} output captured`, data: { role: params.role, report_path: path.relative(params.root, reportFile).split(path.sep).join("/"), schema_valid: true } });
+	return appendWorkflowReceipt({
+		root: params.root,
+		topic: params.topic,
+		kind: "output-capture",
+		phaseId: params.phaseId,
+		summary: `${params.role} output captured`,
+		data: {
+			role: params.role,
+			report_path: path.relative(params.root, reportFile).split(path.sep).join("/"),
+			schema_valid: true,
+		},
+	});
 }
 
-
-export function captureRoleHandoff(params: { root: string; topic: string; phaseId: string; role: "archivist" | "redactor"; summary: string }): Record<string, unknown> {
-	return appendWorkflowReceipt({ root: params.root, topic: params.topic, kind: "output-capture", phaseId: params.phaseId, summary: params.summary, data: { role: params.role, decision: "captured" } });
+export function captureRoleHandoff(params: {
+	root: string;
+	topic: string;
+	phaseId: string;
+	role: "archivist" | "redactor";
+	summary: string;
+}): Record<string, unknown> {
+	return appendWorkflowReceipt({
+		root: params.root,
+		topic: params.topic,
+		kind: "output-capture",
+		phaseId: params.phaseId,
+		summary: params.summary,
+		data: { role: params.role, decision: "captured" },
+	});
 }
 
-export function recordHandoffDependencyEvaluation(params: { root: string; topic: string; phaseId: string; recommendation: string; summary: string }): Record<string, unknown> {
+export function recordHandoffDependencyEvaluation(params: {
+	root: string;
+	topic: string;
+	phaseId: string;
+	recommendation: string;
+	summary: string;
+}): Record<string, unknown> {
 	const allowed = new Set(["keep", "patch", "replace"]);
 	if (!allowed.has(params.recommendation)) throw new Error("Unsupported dependency recommendation");
-	return appendWorkflowReceipt({ root: params.root, topic: params.topic, kind: "decision", phaseId: params.phaseId, summary: params.summary, data: { role: "handoff-dependency-evaluation", recommendation: params.recommendation, criteria: ["timeouts", "schema-mismatch", "missing-report"] } });
+	return appendWorkflowReceipt({
+		root: params.root,
+		topic: params.topic,
+		kind: "decision",
+		phaseId: params.phaseId,
+		summary: params.summary,
+		data: {
+			role: "handoff-dependency-evaluation",
+			recommendation: params.recommendation,
+			criteria: ["timeouts", "schema-mismatch", "missing-report"],
+		},
+	});
 }
 
-export function recordHandoffFallback(params: { root: string; topic: string; phaseId: string; failureMode: string; summary: string; fallback?: string }): Record<string, unknown> {
+export function recordHandoffFallback(params: {
+	root: string;
+	topic: string;
+	phaseId: string;
+	failureMode: string;
+	summary: string;
+	fallback?: string;
+}): Record<string, unknown> {
 	const failureModes = new Set(["timeout", "empty-output", "schema-mismatch", "report-missing", "usage-limit"]);
 	if (!failureModes.has(params.failureMode)) throw new Error("Unsupported handoff failure mode");
-	return appendWorkflowReceipt({ root: params.root, topic: params.topic, kind: "fallback", phaseId: params.phaseId, summary: params.summary, data: { role: "handoff", failure_mode: params.failureMode, fallback: params.fallback, reliability_metric: { attempts: 1, failures: 1, recommendation: params.fallback ? "fallback-used" : "retry-or-escalate" } } });
+	return appendWorkflowReceipt({
+		root: params.root,
+		topic: params.topic,
+		kind: "fallback",
+		phaseId: params.phaseId,
+		summary: params.summary,
+		data: {
+			role: "handoff",
+			failure_mode: params.failureMode,
+			fallback: params.fallback,
+			reliability_metric: {
+				attempts: 1,
+				failures: 1,
+				recommendation: params.fallback ? "fallback-used" : "retry-or-escalate",
+			},
+		},
+	});
 }
 
 function assertTransitionPrerequisites(params: {
@@ -1463,11 +1775,14 @@ export function runWorkflowCli(argv = process.argv.slice(2)): WorkflowCliResult 
 			adrReason: opt(options, "adr-reason"),
 			adrOptionsStatus: typeof options["adr-options-status"] === "string" ? options["adr-options-status"] : undefined,
 			adrToolMode: typeof options["adr-tool-mode"] === "string" ? options["adr-tool-mode"] : undefined,
-			overrideRationale:
-				typeof options["override-rationale"] === "string" ? options["override-rationale"] : undefined,
+			overrideRationale: typeof options["override-rationale"] === "string" ? options["override-rationale"] : undefined,
 		});
 	} else if (command === "proposal-finalize" || command === "proposal_finalize") {
-		result = finalizeProposal({ root, topic, summary: typeof options.summary === "string" ? options.summary : undefined });
+		result = finalizeProposal({
+			root,
+			topic,
+			summary: typeof options.summary === "string" ? options.summary : undefined,
+		});
 	} else if (command === "fact-add-source" || command === "fact_add_source") {
 		result = addFactSource({
 			root,
@@ -1501,23 +1816,80 @@ export function runWorkflowCli(argv = process.argv.slice(2)): WorkflowCliResult 
 	} else if (command === "implement-record" || command === "implement_record") {
 		result = implementRecord({ root, topic, receiptIds: optArray(options, "receipt-id") });
 	} else if (command === "implement-compact" || command === "implement_compact") {
-		result = implementCompact({ root, topic, trigger: opt(options, "trigger"), summary: typeof options.summary === "string" ? options.summary : undefined });
+		result = implementCompact({
+			root,
+			topic,
+			trigger: opt(options, "trigger"),
+			summary: typeof options.summary === "string" ? options.summary : undefined,
+		});
 	} else if (command === "implement-finalize" || command === "implement_finalize") {
-		result = finalizeImplementation({ root, topic, summary: typeof options.summary === "string" ? options.summary : undefined });
+		result = finalizeImplementation({
+			root,
+			topic,
+			summary: typeof options.summary === "string" ? options.summary : undefined,
+		});
 	} else if (command === "handoff-auditor" || command === "handoff_auditor") {
-		result = captureAuditorHandoff({ root, topic, phaseId: opt(options, "phase-id"), decision: opt(options, "decision"), reportPath: opt(options, "report-path"), summary: opt(options, "summary"), validationReceipts: optArray(options, "validation-receipt"), artifactSummaries: optArray(options, "artifact"), acceptanceCriteria: optArray(options, "acceptance-criterion") });
+		result = captureAuditorHandoff({
+			root,
+			topic,
+			phaseId: opt(options, "phase-id"),
+			decision: opt(options, "decision"),
+			reportPath: opt(options, "report-path"),
+			summary: opt(options, "summary"),
+			validationReceipts: optArray(options, "validation-receipt"),
+			artifactSummaries: optArray(options, "artifact"),
+			acceptanceCriteria: optArray(options, "acceptance-criterion"),
+		});
 	} else if (command === "handoff-archivist" || command === "handoff_archivist") {
-		result = captureRoleHandoff({ root, topic, phaseId: opt(options, "phase-id"), role: "archivist", summary: opt(options, "summary") });
+		result = captureRoleHandoff({
+			root,
+			topic,
+			phaseId: opt(options, "phase-id"),
+			role: "archivist",
+			summary: opt(options, "summary"),
+		});
 	} else if (command === "handoff-redactor" || command === "handoff_redactor") {
-		result = captureRoleHandoff({ root, topic, phaseId: opt(options, "phase-id"), role: "redactor", summary: opt(options, "summary") });
+		result = captureRoleHandoff({
+			root,
+			topic,
+			phaseId: opt(options, "phase-id"),
+			role: "redactor",
+			summary: opt(options, "summary"),
+		});
 	} else if (command === "handoff-dependency-evaluation" || command === "handoff_dependency_evaluation") {
-		result = recordHandoffDependencyEvaluation({ root, topic, phaseId: opt(options, "phase-id"), recommendation: opt(options, "recommendation"), summary: opt(options, "summary") });
+		result = recordHandoffDependencyEvaluation({
+			root,
+			topic,
+			phaseId: opt(options, "phase-id"),
+			recommendation: opt(options, "recommendation"),
+			summary: opt(options, "summary"),
+		});
 	} else if (command === "handoff-compass" || command === "handoff_compass") {
-		result = captureCompassHandoff({ root, topic, phaseId: opt(options, "phase-id"), decision: opt(options, "decision"), summary: opt(options, "summary") });
+		result = captureCompassHandoff({
+			root,
+			topic,
+			phaseId: opt(options, "phase-id"),
+			decision: opt(options, "decision"),
+			summary: opt(options, "summary"),
+		});
 	} else if (command === "handoff-fallback" || command === "handoff_fallback") {
-		result = recordHandoffFallback({ root, topic, phaseId: opt(options, "phase-id"), failureMode: opt(options, "failure-mode"), summary: opt(options, "summary"), fallback: typeof options.fallback === "string" ? options.fallback : undefined });
+		result = recordHandoffFallback({
+			root,
+			topic,
+			phaseId: opt(options, "phase-id"),
+			failureMode: opt(options, "failure-mode"),
+			summary: opt(options, "summary"),
+			fallback: typeof options.fallback === "string" ? options.fallback : undefined,
+		});
 	} else if (command === "handoff-output-capture" || command === "handoff_output_capture") {
-		result = captureHandoffOutput({ root, topic, phaseId: opt(options, "phase-id"), role: opt(options, "role"), output: opt(options, "output"), reportPath: opt(options, "report-path") });
+		result = captureHandoffOutput({
+			root,
+			topic,
+			phaseId: opt(options, "phase-id"),
+			role: opt(options, "role"),
+			output: opt(options, "output"),
+			reportPath: opt(options, "report-path"),
+		});
 	} else if (command === "transition-status" || command === "transition_status") {
 		result = getWorkflowStatus({ root, topic });
 	} else if (command === "transition-request-approval" || command === "transition_request_approval") {

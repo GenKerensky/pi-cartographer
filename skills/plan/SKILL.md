@@ -46,6 +46,10 @@ Do not create `.cartographer/` execution state during planning. Plans may includ
 
 ## Procedure
 
+### Wrapper-first mutation contract
+
+Use deterministic wrappers for plan mutations whenever available. Prefer `cartographer_plan generate-graph`/`plan-generate-graph` to derive `plan.nodes.jsonl` and `plan.edges.jsonl`, `cartographer_plan_status set`/`plan-status-set` for phase/task/validation status and checklist synchronization, `cartographer_validation complete-item`/`validation-complete-item` for validation item completion, and `cartographer_plan finalize`/`plan-finalize` for topic validation, planning graph validation, context-pack checks, and auditor PASS gating. Do not manually sync plan status, check off validation items, append plan receipts, or mark a plan ready for implementation as a prose-only step unless a wrapper is unavailable and an explicit fallback receipt documents the substitute checks.
+
 1. **Derive the topic and inspect existing artifacts**
    - Summarize the user's plan topic in 3 words or less.
    - Create `.plan/{topic}/` if needed.

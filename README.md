@@ -55,22 +55,28 @@ pi -e /path/to/pi-cartographer   # one-off local use
 
 ## What this package includes
 
-| Resource                  | Type               | What it does                                                                                                                                                                                       |
-| ------------------------- | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `index-project`           | Skill + Python CLI | Builds and queries a shared SQLite + FTS5 project graph under `.plan/_index/`.                                                                                                                     |
-| `proposal`                | Skill              | Creates `.plan/<topic>/proposal.md` plus project map and research fact JSONL artifacts.                                                                                                            |
-| `plan`                    | Skill              | Converts proposal/map/fact context into ordered phases, validations, and plan graph JSONL artifacts.                                                                                               |
-| `implement`               | Skill              | Executes an existing plan phase-by-phase with a parent single-writer loop, `.cartographer` state, deterministic receipts, `cartographer-auditor` approval, plan updates, and conventional commits. |
-| `dashboard`               | Skill              | Starts, opens, checks, or stops the local read-only planning dashboard through the packaged `cartographer-dashboard` CLI.                                                                          |
-| `cartographer_index`      | Extension tool     | Wraps index actions such as `ensure`, `query`, `context`, `read`, `slice-jsonl`, `status`, and `log-miss`.                                                                                         |
-| `cartographer_jsonl`      | Extension tool     | Wraps JSONL actions such as `validate-topic`, `validate-file`, `validate-misses`, `list-misses`, `list`, `upsert`, and `seed-pi-facts`.                                                            |
-| `cartographer_evidence`   | Extension tool     | Imports/list private proposal artifacts under `.plan/_private/<topic>/` without exposing raw contents and writes commit-safe evidence manifests.                                                   |
-| `cartographer_session`    | Extension tool     | Analyzes authorized Pi session JSONL into compact Markdown/JSON reports without exposing raw transcript contents.                                                                                  |
-| `cartographer_artifacts`  | Extension tool     | Provides read-only compact summaries for topic validation, fact citations, receipts, context packs, evidence manifests, and phase acceptance handoffs.                                             |
-| `cartographer_validation` | Extension tool     | Parent-owned wrapper for validation commands and compact receipt output; it does not replace semantic auditor review.                                                                              |
-| `cartographer_state`      | Extension tool     | Manages minimal `.cartographer/<topic>/state.json`, curated `journal.jsonl`, ignored `current.json`, compaction, and bounded resume context.                                                       |
-| `cartographer_adr`        | Extension tool     | Evaluates, drafts, creates, imports, validates, searches, and relates Architecture Decision Records.                                                                                               |
-| `cartographer-dashboard`  | CLI                | Runs the local loopback-only dashboard server and serves the React/Tailwind/shadcn planning UI for proposal, plan, graph, receipt, evidence, health, and document review.                          |
+| Resource                   | Type               | What it does                                                                                                                                                                                       |
+| -------------------------- | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `index-project`            | Skill + Python CLI | Builds and queries a shared SQLite + FTS5 project graph under `.plan/_index/`.                                                                                                                     |
+| `proposal`                 | Skill              | Creates `.plan/<topic>/proposal.md` plus project map and research fact JSONL artifacts.                                                                                                            |
+| `plan`                     | Skill              | Converts proposal/map/fact context into ordered phases, validations, and plan graph JSONL artifacts.                                                                                               |
+| `implement`                | Skill              | Executes an existing plan phase-by-phase with a parent single-writer loop, `.cartographer` state, deterministic receipts, `cartographer-auditor` approval, plan updates, and conventional commits. |
+| `dashboard`                | Skill              | Starts, opens, checks, or stops the local read-only planning dashboard through the packaged `cartographer-dashboard` CLI.                                                                          |
+| `cartographer_index`       | Extension tool     | Wraps index actions such as `ensure`, `query`, `context`, `read`, `slice-jsonl`, `status`, and `log-miss`.                                                                                         |
+| `cartographer_jsonl`       | Extension tool     | Wraps JSONL actions such as `validate-topic`, `validate-file`, `validate-misses`, `list-misses`, `list`, `upsert`, and `seed-pi-facts`.                                                            |
+| `cartographer_evidence`    | Extension tool     | Imports/list private proposal artifacts under `.plan/_private/<topic>/` without exposing raw contents and writes commit-safe evidence manifests.                                                   |
+| `cartographer_session`     | Extension tool     | Analyzes authorized Pi session JSONL into compact Markdown/JSON reports without exposing raw transcript contents.                                                                                  |
+| `cartographer_artifacts`   | Extension tool     | Provides read-only compact summaries for topic validation, fact citations, receipts, context packs, evidence manifests, and phase acceptance handoffs.                                             |
+| `cartographer_validation`  | Extension tool     | Parent-owned wrapper for validation commands and compact receipt output; it does not replace semantic auditor review.                                                                              |
+| `cartographer_proposal`    | Extension tool     | Initializes, ADR-syncs, and finalizes proposal artifacts through deterministic lifecycle gates.                                                                                                    |
+| `cartographer_fact`        | Extension tool     | Adds source-backed proposal facts and support edges without manual JSONL edits.                                                                                                                    |
+| `cartographer_plan`        | Extension tool     | Generates/finalizes plan graph artifacts through deterministic validation and handoff gates.                                                                                                       |
+| `cartographer_plan_status` | Extension tool     | Synchronizes plan phase/task/validation status and checkoff state.                                                                                                                                 |
+| `cartographer_implement`   | Extension tool     | Starts, steps, records, compacts, and finalizes the implementation loop with automatic phase advancement by default.                                                                               |
+| `cartographer_handoff`     | Extension tool     | Captures auditor/compass/role outputs, PASS/FAIL schema, fallback receipts, and dependency recommendations.                                                                                        |
+| `cartographer_state`       | Extension tool     | Manages minimal `.cartographer/<topic>/state.json`, curated `journal.jsonl`, ignored `current.json`, compaction, and bounded resume context.                                                       |
+| `cartographer_adr`         | Extension tool     | Evaluates, drafts, creates, imports, validates, searches, and relates Architecture Decision Records.                                                                                               |
+| `cartographer-dashboard`   | CLI                | Runs the local loopback-only dashboard server and serves the React/Tailwind/shadcn planning UI for proposal, plan, graph, receipt, evidence, health, and document review.                          |
 
 Skill commands are available as `/skill:<name>` when pi skill commands are enabled.
 
@@ -185,7 +191,7 @@ flowchart TD
   H --> I[Conventional commit]
 ```
 
-Implementation uses a parent single-writer loop by default. The agent reads `.cartographer/<topic>/state.json` and curated journal entries directly, mutates them through `cartographer_state`, and asks `cartographer-auditor` to review only after deterministic validation receipts pass. If a phase hits an unclear product, design, dependency, repeated timeout/fallback, or tooling decision, Cartographer records the receipt, uses `cartographer-compass` when escalation is needed, and stops to ask for direction.
+Implementation uses a parent single-writer loop by default. The agent reads `.cartographer/<topic>/state.json` and curated journal entries directly, mutates them through `cartographer_implement` and `cartographer_state`, captures semantic gates with `cartographer_handoff auditor`, and asks `cartographer-auditor` to review only after deterministic validation receipts pass. Automatic phase advancement is the default after validation, captured auditor PASS, status/checkoff updates, and commit complete the current phase. human approval commands use `cartographer_transition` for proposal, plan, explicitly human-gated phase, and final implementation gates; do not cross those gates as prose-only steps. If a phase hits an unclear product, design, dependency, repeated timeout/fallback, or tooling decision, Cartographer records the receipt, uses `cartographer-compass` when escalation is needed, and stops to ask for direction.
 
 ## Planning dashboard
 
@@ -318,6 +324,18 @@ cartographer-dashboard start --root "$PWD" --host 127.0.0.1 --port 0 --json
 cartographer-dashboard start --root "$PWD" --topic "search-ui" --host 127.0.0.1 --port 0 --json
 cartographer-dashboard status --root "$PWD" --json
 cartographer-dashboard stop --root "$PWD" --json
+
+# Wrapper-first proposal, plan, handoff, and implementation lifecycle helpers
+node --experimental-strip-types skills/plan/scripts/cartographer_workflow.ts proposal-init --root "$PWD" --topic "search-ui" --title "Search UI" --json
+node --experimental-strip-types skills/plan/scripts/cartographer_workflow.ts proposal-adr-sync --root "$PWD" --topic "search-ui" --adr-required false --adr-reason "Routine UI change" --json
+node --experimental-strip-types skills/plan/scripts/cartographer_workflow.ts fact-add-source --root "$PWD" --topic "search-ui" --title "Search docs" --url "https://example.com" --json
+node --experimental-strip-types skills/plan/scripts/cartographer_workflow.ts plan-generate-graph --root "$PWD" --topic "search-ui" --json
+node --experimental-strip-types skills/plan/scripts/cartographer_workflow.ts plan-status-set --root "$PWD" --topic "search-ui" --id "P1.T1" --status complete --json
+node --experimental-strip-types skills/plan/scripts/cartographer_workflow.ts validation-complete-item --root "$PWD" --topic "search-ui" --validation-id "P1.V1" --json
+node --experimental-strip-types skills/plan/scripts/cartographer_workflow.ts handoff-auditor --root "$PWD" --topic "search-ui" --phase-id "P1" --decision PASS --report-path ".plan/search-ui/auditor-P1.md" --summary "passed" --validation-receipt "receipt:P1:validation:..." --artifact "context-pack summary" --acceptance-criterion "P1 complete" --json
+node --experimental-strip-types skills/plan/scripts/cartographer_workflow.ts implement-start --root "$PWD" --topic "search-ui" --json
+node --experimental-strip-types skills/plan/scripts/cartographer_workflow.ts implement-step --root "$PWD" --topic "search-ui" --json
+node --experimental-strip-types skills/plan/scripts/cartographer_workflow.ts implement-finalize --root "$PWD" --topic "search-ui" --json
 
 # Manage minimal long-horizon execution state
 node --experimental-strip-types skills/plan/scripts/cartographer_state.ts state-init --root "$PWD" --topic "search-ui" --json

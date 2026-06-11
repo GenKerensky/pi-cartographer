@@ -1499,7 +1499,15 @@ export default function cartographerTools(pi: PiApi): void {
 			"Record fallback receipts for timeout, usage limit, schema mismatch, or approved substitute reviewers.",
 		],
 		parameters: Type.Object({
-			action: Type.Union([Type.Literal("auditor"), Type.Literal("compass"), Type.Literal("archivist"), Type.Literal("redactor"), Type.Literal("fallback"), Type.Literal("output-capture"), Type.Literal("dependency-evaluation")]),
+			action: Type.Union([
+				Type.Literal("auditor"),
+				Type.Literal("compass"),
+				Type.Literal("archivist"),
+				Type.Literal("redactor"),
+				Type.Literal("fallback"),
+				Type.Literal("output-capture"),
+				Type.Literal("dependency-evaluation"),
+			]),
 			root: Type.Optional(Type.String({ description: "Project root. Defaults to current working directory." })),
 			topic: Type.String({ description: "Cartographer topic under .plan/." }),
 			phaseId: Type.String({ description: "Phase id for the handoff." }),
@@ -1509,8 +1517,12 @@ export default function cartographerTools(pi: PiApi): void {
 			role: Type.Optional(Type.String({ description: "Role for output-capture." })),
 			output: Type.Optional(Type.String({ description: "Raw structured specialist output for output-capture." })),
 			artifact: Type.Optional(Type.Array(Type.String(), { description: "Artifact summaries for auditor context." })),
-			acceptanceCriterion: Type.Optional(Type.Array(Type.String(), { description: "Acceptance criteria for auditor review." })),
-			recommendation: Type.Optional(Type.String({ description: "Dependency recommendation: keep, patch, or replace." })),
+			acceptanceCriterion: Type.Optional(
+				Type.Array(Type.String(), { description: "Acceptance criteria for auditor review." }),
+			),
+			recommendation: Type.Optional(
+				Type.String({ description: "Dependency recommendation: keep, patch, or replace." }),
+			),
 			validationReceipt: Type.Optional(Type.Array(Type.String(), { description: "Validation receipt ids." })),
 			failureMode: Type.Optional(Type.String({ description: "Fallback failure mode." })),
 			fallback: Type.Optional(Type.String({ description: "Approved fallback reviewer/role." })),
@@ -1520,7 +1532,14 @@ export default function cartographerTools(pi: PiApi): void {
 		}),
 		async execute(_toolCallId, rawParams, signal) {
 			const params = rawParams as CartographerHandoffParams;
-			const command = params.action === "fallback" ? "handoff-fallback" : params.action === "output-capture" ? "handoff-output-capture" : params.action === "dependency-evaluation" ? "handoff-dependency-evaluation" : `handoff-${params.action}`;
+			const command =
+				params.action === "fallback"
+					? "handoff-fallback"
+					: params.action === "output-capture"
+						? "handoff-output-capture"
+						: params.action === "dependency-evaluation"
+							? "handoff-dependency-evaluation"
+							: `handoff-${params.action}`;
 			const args = [
 				command,
 				"--root",

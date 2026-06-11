@@ -331,7 +331,7 @@ Do not silently substitute reviewer/oracle for auditor. Record attempted tool, f
 
 ### Phase P6 — Workflow Integration and Documentation
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P2, P3, P4, P5
 - **Unlocks:** P7
 - **Primary references:** `file:README.md`, `file:AGENTS.md`, `file:skills/proposal/SKILL.md`, `file:skills/plan/SKILL.md`, `file:skills/implement/SKILL.md`, `file:tests/test_workflow_docs.py`, [F018], [F028], [F029]
@@ -349,19 +349,19 @@ Update user-facing skills and docs so skills route through deterministic wrapper
 
 #### Checklist
 
-- [ ] **P6.T1** Update `skills/proposal/SKILL.md` so proposal init/fact append/finalize/ADR sync use wrapper commands, not manual JSONL writes by default.
-- [ ] **P6.T2** Update `skills/plan/SKILL.md` so plan graph generation/finalize/status/validation completion use wrapper commands.
-- [ ] **P6.T3** Update `skills/implement/SKILL.md` so implementation starts, advances, compacts, gates, and finalizes through `cartographer_implement` and `cartographer_transition`.
-- [ ] **P6.T4** Update README and AGENTS with the full lifecycle, automatic implementation phase advancement, human approval commands for major gates, config file behavior, and deterministic tool responsibilities.
-- [ ] **P6.T5** Update docs tests to assert wrapper-first routing, no prose-only status/checkoff/finalization claims, automatic phase advancement by default, and human approval gate documentation for major gates.
-- [ ] **P6.T6** Update package/tool references and examples for all new wrappers.
+- [x] **P6.T1** Update `skills/proposal/SKILL.md` so proposal init/fact append/finalize/ADR sync use wrapper commands, not manual JSONL writes by default.
+- [x] **P6.T2** Update `skills/plan/SKILL.md` so plan graph generation/finalize/status/validation completion use wrapper commands.
+- [x] **P6.T3** Update `skills/implement/SKILL.md` so implementation starts, advances, compacts, gates, and finalizes through `cartographer_implement` and `cartographer_transition`.
+- [x] **P6.T4** Update README and AGENTS with the full lifecycle, automatic implementation phase advancement, human approval commands for major gates, config file behavior, and deterministic tool responsibilities.
+- [x] **P6.T5** Update docs tests to assert wrapper-first routing, no prose-only status/checkoff/finalization claims, automatic phase advancement by default, and human approval gate documentation for major gates.
+- [x] **P6.T6** Update package/tool references and examples for all new wrappers.
 
 #### Validation
 
-- [ ] **P6.V1** Run `python -m unittest discover tests -p 'test_workflow_docs.py'`.
-- [ ] **P6.V2** Run `npm run format:prettier:check`.
-- [ ] **P6.V3** Search skills/docs for remaining instructions that tell agents to manually append receipts, manually sync plan status, or manually cross lifecycle gates without wrapper commands.
-- [ ] **P6.V4** Run `npm run check:scripts`.
+- [x] **P6.V1** Run `python -m unittest discover tests -p 'test_workflow_docs.py'`.
+- [x] **P6.V2** Run `npm run format:prettier:check`.
+- [x] **P6.V3** Search skills/docs for remaining instructions that tell agents to manually append receipts, manually sync plan status, or manually cross lifecycle gates without wrapper commands.
+- [x] **P6.V4** Run `npm run check:scripts`.
 
 #### Exit Criteria
 
