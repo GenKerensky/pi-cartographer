@@ -5,11 +5,11 @@
   "source_refs": {
     "plan_md": {
       "path": ".plan/harness-implement-loop/plan.md",
-      "sha256": "sha256:9d95fad61e4c7cfa947cdda1d1eb70eb87e0f568053727af021712a084778dd1"
+      "sha256": "sha256:9e32706d6414b6573001aa0274cc634d2b829680b8ac9d773a7c1011d0a5f75b"
     },
     "plan_nodes": {
       "path": ".plan/harness-implement-loop/plan.nodes.jsonl",
-      "sha256": "sha256:5b6dc4cc48373a16bc1dcc85545a910fc4d4543648c1e3da7f0a4e4134661217"
+      "sha256": "sha256:23f4990307423621f85ee0c85eb88802d707a25382e6b11686644ef0df6ae48c"
     },
     "plan_edges": {
       "path": ".plan/harness-implement-loop/plan.edges.jsonl",
@@ -17,92 +17,84 @@
     },
     "receipts": {
       "path": ".plan/harness-implement-loop/receipts.jsonl",
-      "sha256": "sha256:cc1913c3a1fb66b0b4186a64c0392ad8cea371ed1c318caec21f9482222f9837"
+      "sha256": "sha256:7bfe74a3fbd3c1ba419a76fd1ff803249d47643df19bc74a1e6cb23d6f760a4b"
     },
     "context_packs": {
       "path": ".plan/harness-implement-loop/context-packs.jsonl",
-      "sha256": "sha256:6a976c0262f7601d1c2cd261c41a31c368c0fad812ef163474445a81bf3dd6aa"
+      "sha256": "sha256:b8032719cfdaba6476b4d6eefef1659e88abf1d8a41641202f72757768ed6556"
     }
   },
-  "current_phase_id": "P0",
+  "current_phase_id": "P2",
   "active_task_ids": [],
   "active_validation_ids": [],
   "next_action": {
-    "id": "next:P1.T1",
-    "kind": "implement",
-    "summary": "Begin P1 by implementing schema-checked generic receipt append and foundational transition/context-pack wrappers.",
-    "phase_id": "P1",
-    "task_id": "P1.T1"
+    "id": "P2.T1",
+    "kind": "implementation-task",
+    "summary": "Start P2 proposal and fact wrappers.",
+    "phase_id": "P2",
+    "task_id": "P2.T1",
+    "files_to_inspect": [
+      ".plan/harness-implement-loop/plan.md",
+      "skills/proposal/SKILL.md",
+      "skills/plan/scripts/manage_jsonl.ts",
+      "skills/plan/scripts/private_artifacts.py",
+      "extensions/cartographer-tools.ts",
+      "skills/plan/scripts/cartographer_workflow.ts"
+    ]
   },
   "working_set": {
     "write_allowed": [
       {
-        "path": "skills/plan/scripts/cartographer_workflow.ts*",
-        "reason": "P0 shared workflow contracts/runtime helpers"
+        "path": "skills/plan/scripts/cartographer_workflow.ts",
+        "reason": "P2 wrapper implementation may extend shared workflow runtime"
       },
       {
-        "path": "tests/cartographer_workflow.test.ts*",
-        "reason": "P0 temp-root tests"
+        "path": "tests/cartographer_workflow.test.ts",
+        "reason": "P2 temp-root tests for proposal/fact wrappers"
       },
       {
-        "path": ".gitignore",
-        "reason": "P0 gitignore .cartographer/config.toml"
+        "path": "extensions/cartographer-tools.ts",
+        "reason": "P2 extension tool registrations"
       },
       {
         "path": ".plan/harness-implement-loop/plan.md",
-        "reason": "P0 status/checkoff updates"
+        "reason": "P2 phase status/checklist updates"
       },
       {
         "path": ".plan/harness-implement-loop/plan.nodes.jsonl",
-        "reason": "P0 status updates"
+        "reason": "P2 phase/task/validation status updates"
       },
       {
         "path": ".plan/harness-implement-loop/receipts.jsonl",
-        "reason": "P0 validation/status receipts"
+        "reason": "P2 validation/audit receipts"
       },
       {
         "path": ".plan/harness-implement-loop/context-packs.jsonl",
-        "reason": "P0 phase context pack"
-      },
-      {
-        "path": ".cartographer/harness-implement-loop/state.json",
-        "reason": "state helper managed execution state"
-      },
-      {
-        "path": ".cartographer/harness-implement-loop/journal.jsonl",
-        "reason": "state helper managed journal"
-      },
-      {
-        "path": ".cartographer/current.json",
-        "reason": "local current pointer"
+        "reason": "P2 context pack"
       }
     ],
     "read_only": [
       {
-        "path": "skills/plan/scripts/cartographer_state.ts",
-        "reason": "reference existing state helper patterns"
+        "path": "skills/proposal/SKILL.md",
+        "reason": "P2 wrapper behavior reference"
       },
       {
-        "path": "tests/cartographer_state.test.ts",
-        "reason": "reference temp-root test patterns"
+        "path": "skills/plan/scripts/manage_jsonl.ts",
+        "reason": "P2 fact JSONL behavior reference"
       },
       {
-        "path": "extensions/cartographer-tools.ts",
-        "reason": "reference tool registration patterns"
-      },
-      {
-        "path": ".plan/harness-implement-loop/proposal.md",
-        "reason": "approved scope"
+        "path": "skills/plan/scripts/private_artifacts.py",
+        "reason": "P2 evidence/private artifact safety reference"
       }
     ],
     "forbidden": [
       {
         "path": ".plan/_private/**",
-        "reason": "raw private inputs forbidden"
+        "reason": "raw private inputs are off-limits"
       },
       {
         "path": ".plan/_index/**",
-        "reason": "generated index cache not committed"
+        "reason": "generated index/cache artifacts"
       }
     ]
   },
@@ -111,10 +103,12 @@
     "receipt:P0:validation:2026-06-11T05:02:46+00:00",
     "receipt:P0:validation:2026-06-11T05:02:50+00:00",
     "receipt:P0:validation:2026-06-11T05:03:01+00:00",
-    "receipt:P0:validation:2026-06-11T05:03:24+00:00"
+    "receipt:P0:validation:2026-06-11T05:03:24+00:00",
+    "receipt:P1:validation:2026-06-11T05:42:01+00:00"
   ],
   "journal_refs": [
-    "journal:20260611T050334Z:compact"
+    "journal:20260611T050334Z:compact",
+    "journal:20260611T054231Z:compact"
   ],
   "resume": {
     "template_id": "cartographer.single_writer.resume.v1",
@@ -134,10 +128,10 @@
       "stale generated snippets"
     ]
   },
-  "updated_at": "2026-06-11T05:32:30Z",
+  "updated_at": "2026-06-11T06:00:13Z",
   "compaction": {
-    "trigger": "phase-complete",
-    "compacted_at": "2026-06-11T05:03:34Z"
+    "trigger": "phase-end",
+    "compacted_at": "2026-06-11T05:42:31Z"
   },
-  "stale_reason": "Plan/proposal clarification changed plan.md, receipts, and context packs after P0 commit."
+  "stale_reason": "P1 audit-status validation receipt appended."
 }

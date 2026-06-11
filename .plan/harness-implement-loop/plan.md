@@ -104,7 +104,7 @@ Keep this phase boring. Avoid implementing all wrappers here; focus on common ty
 
 ### Phase P1 — Receipts, Context Packs, and Transitions
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P0
 - **Unlocks:** P2, P3, P4, P5
 - **Primary references:** `file:extensions/cartographer-tools.ts`, `file:skills/plan/scripts/validation_runner.py`, `file:skills/plan/scripts/manage_jsonl.ts`, [F022], [F025], [F028], [F029], [F030]
@@ -122,20 +122,20 @@ Implement the foundational deterministic gate artifacts: generic receipts, conte
 
 #### Checklist
 
-- [ ] **P1.T1** Implement schema-checked `cartographer_receipt append` for fallback, timeout, audit, compass, phase, output-capture, approval, rejection, transition, no-op, legacy-bypass, and residual-risk receipts [F025].
-- [ ] **P1.T2** Implement `cartographer_context_pack create/update` using bounded summaries, verified artifact paths, receipt IDs, phase/gate metadata, and Clean Context output shaping [F022].
-- [ ] **P1.T3** Implement `cartographer_transition status` to report lifecycle state, blocking prerequisites, missing receipts/context packs, pending human approvals for major gates or explicitly human-gated phases, and next allowed commands [F028].
-- [ ] **P1.T4** Implement `cartographer_transition request-approval` to verify deterministic prerequisites, write/update context pack, append ready-for-human-review receipt, and stop [F029].
-- [ ] **P1.T5** Implement `cartographer_transition approve/reject` with deterministic approver resolution, auditable approval/rejection receipts, lifecycle advancement/blocking, and residual-risk capture [F029][F030].
-- [ ] **P1.T6** Implement `cartographer_transition advance` for automatic transitions whose deterministic prerequisites are satisfied and no human approval is required, including normal implementation phase-to-phase advancement.
-- [ ] **P1.T7** Register `cartographer_receipt`, `cartographer_context_pack`, and `cartographer_transition` extension tools with compact output and next-action guidance.
+- [x] **P1.T1** Implement schema-checked `cartographer_receipt append` for fallback, timeout, audit, compass, phase, output-capture, approval, rejection, transition, no-op, legacy-bypass, and residual-risk receipts [F025].
+- [x] **P1.T2** Implement `cartographer_context_pack create/update` using bounded summaries, verified artifact paths, receipt IDs, phase/gate metadata, and Clean Context output shaping [F022].
+- [x] **P1.T3** Implement `cartographer_transition status` to report lifecycle state, blocking prerequisites, missing receipts/context packs, pending human approvals for major gates or explicitly human-gated phases, and next allowed commands [F028].
+- [x] **P1.T4** Implement `cartographer_transition request-approval` to verify deterministic prerequisites, write/update context pack, append ready-for-human-review receipt, and stop [F029].
+- [x] **P1.T5** Implement `cartographer_transition approve/reject` with deterministic approver resolution, auditable approval/rejection receipts, lifecycle advancement/blocking, and residual-risk capture [F029][F030].
+- [x] **P1.T6** Implement `cartographer_transition advance` for automatic transitions whose deterministic prerequisites are satisfied and no human approval is required, including normal implementation phase-to-phase advancement.
+- [x] **P1.T7** Register `cartographer_receipt`, `cartographer_context_pack`, and `cartographer_transition` extension tools with compact output and next-action guidance.
 
 #### Validation
 
-- [ ] **P1.V1** Run wrapper tests proving transition gates block without required receipts/context packs and advance after `approve`.
-- [ ] **P1.V2** Run receipt schema tests for each new receipt kind.
-- [ ] **P1.V3** Run context-pack tests for bounded output, valid artifact refs, missing-artifact failures, and no raw private paths.
-- [ ] **P1.V4** Run `npm run check:scripts`.
+- [x] **P1.V1** Run wrapper tests proving transition gates block without required receipts/context packs and advance after `approve`.
+- [x] **P1.V2** Run receipt schema tests for each new receipt kind.
+- [x] **P1.V3** Run context-pack tests for bounded output, valid artifact refs, missing-artifact failures, and no raw private paths.
+- [x] **P1.V4** Run `npm run check:scripts`.
 
 #### Exit Criteria
 

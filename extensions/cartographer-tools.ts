@@ -135,6 +135,39 @@ type CartographerValidationParams = OutputShapeParams & {
 	timeoutSec?: number;
 };
 
+type CartographerReceiptParams = OutputShapeParams & {
+	action: "append";
+	root?: string;
+	topic?: string;
+	kind?: string;
+	summary?: string;
+	phaseId?: string;
+	receiptId?: string;
+};
+
+type CartographerContextPackParams = OutputShapeParams & {
+	action: "create" | "update";
+	root?: string;
+	topic?: string;
+	phaseId?: string;
+	summary?: string;
+	artifact?: string[];
+	validationReceipt?: string[];
+};
+
+type CartographerTransitionParams = OutputShapeParams & {
+	action: "status" | "request-approval" | "approve" | "reject" | "advance";
+	root?: string;
+	topic?: string;
+	gate?: string;
+	phaseId?: string;
+	summary?: string;
+	approvedBy?: string;
+	reason?: string;
+	to?: string;
+	ci?: boolean;
+};
+
 type CartographerEvidenceParams = OutputShapeParams & {
 	action: "import" | "list";
 	root?: string;
@@ -218,6 +251,7 @@ const packageRoot = path.dirname(extensionDir);
 const indexScript = path.join(packageRoot, "skills", "index-project", "scripts", "index_project.py");
 const jsonlScript = path.join(packageRoot, "skills", "plan", "scripts", "manage_jsonl.ts");
 const stateScript = path.join(packageRoot, "skills", "plan", "scripts", "cartographer_state.ts");
+const workflowScript = path.join(packageRoot, "skills", "plan", "scripts", "cartographer_workflow.ts");
 const evidenceScript = path.join(packageRoot, "skills", "plan", "scripts", "private_artifacts.py");
 const sessionScript = path.join(packageRoot, "skills", "plan", "scripts", "analyze_session.py");
 const validationRunnerScript = path.join(packageRoot, "skills", "plan", "scripts", "validation_runner.py");
@@ -1081,6 +1115,156 @@ export default function cartographerTools(pi: PiApi): void {
 				outputPath: params.outputPath,
 				raw: params.raw,
 				label: "cartographer-validation-run",
+			});
+		},
+	});
+
+	pi.registerTool({
+		name: "cartographer_receipt",
+		label: "Cartographer Receipt",
+		description: "Append schema-checked workflow receipts for Cartographer topics.",
+		promptSnippet: "Append compact workflow receipts for transitions, approvals, decisions, and outputs",
+		promptGuidelines: [
+			"Use this for non-command workflow receipts; use cartographer_validation for command validation receipts.",
+			"Keep summaries compact and avoid raw private paths or logs.",
+		],
+		parameters: Type.Object({
+			action: Type.Literal("append"),
+			root: Type.Optional(Type.String({ description: "Project root. Defaults to current working directory." })),
+			topic: Type.String({ description: "Cartographer topic under .plan/." }),
+			kind: Type.String({ description: "Receipt kind supported by cartographer_workflow.ts." }),
+			summary: Type.String({ description: "Compact receipt summary." }),
+			phaseId: Type.Optional(Type.String({ description: "Optional phase id." })),
+			receiptId: Type.Optional(Type.String({ description: "Optional explicit receipt id." })),
+			maxOutputChars: Type.Optional(Type.Number({ description: "Inline output budget." })),
+			outputPath: Type.Optional(Type.String({ description: "Optional full-output path for oversized output." })),
+			raw: Type.Optional(Type.Boolean({ description: "Return raw command output instead of a compact receipt." })),
+		}),
+		async execute(_toolCallId, rawParams, signal) {
+			const params = rawParams as CartographerReceiptParams;
+			const args = [
+				"receipt-append",
+				"--root",
+				params.root || process.cwd(),
+				"--topic",
+				requireString(params.topic, "cartographer_receipt append requires topic"),
+				"--kind",
+				requireString(params.kind, "cartographer_receipt append requires kind"),
+				"--summary",
+				requireString(params.summary, "cartographer_receipt append requires summary"),
+				"--json",
+			];
+			if (params.phaseId) args.push("--phase-id", params.phaseId);
+			if (params.receiptId) args.push("--receipt-id", params.receiptId);
+			return runCommand("node", ["--experimental-strip-types", workflowScript, ...args], signal, {
+				maxOutputChars: params.maxOutputChars,
+				outputPath: params.outputPath,
+				raw: params.raw,
+				label: "cartographer-receipt-append",
+			});
+		},
+	});
+
+	pi.registerTool({
+		name: "cartographer_context_pack",
+		label: "Cartographer Context Pack",
+		description: "Create or update compact Cartographer context packs.",
+		promptSnippet: "Create or update phase/topic context packs for clean handoffs",
+		promptGuidelines: [
+			"Context packs should cite artifact paths and receipt ids, not raw transcript/log content.",
+			"Use update when refreshing an existing phase context pack.",
+		],
+		parameters: Type.Object({
+			action: Type.Union([Type.Literal("create"), Type.Literal("update")]),
+			root: Type.Optional(Type.String({ description: "Project root. Defaults to current working directory." })),
+			topic: Type.String({ description: "Cartographer topic under .plan/." }),
+			phaseId: Type.String({ description: "Phase id for the context pack." }),
+			summary: Type.String({ description: "Compact context summary." }),
+			artifact: Type.Optional(Type.Array(Type.String(), { description: "Artifact paths to cite." })),
+			validationReceipt: Type.Optional(Type.Array(Type.String(), { description: "Validation receipt ids to cite." })),
+			maxOutputChars: Type.Optional(Type.Number({ description: "Inline output budget." })),
+			outputPath: Type.Optional(Type.String({ description: "Optional full-output path for oversized output." })),
+			raw: Type.Optional(Type.Boolean({ description: "Return raw command output instead of a compact receipt." })),
+		}),
+		async execute(_toolCallId, rawParams, signal) {
+			const params = rawParams as CartographerContextPackParams;
+			const args = [
+				params.action === "create" ? "context-pack-create" : "context-pack-update",
+				"--root",
+				params.root || process.cwd(),
+				"--topic",
+				requireString(params.topic, "cartographer_context_pack requires topic"),
+				"--phase-id",
+				requireString(params.phaseId, "cartographer_context_pack requires phaseId"),
+				"--summary",
+				requireString(params.summary, "cartographer_context_pack requires summary"),
+				"--json",
+			];
+			for (const artifact of params.artifact || []) args.push("--artifact", artifact);
+			for (const receipt of params.validationReceipt || []) args.push("--validation-receipt", receipt);
+			return runCommand("node", ["--experimental-strip-types", workflowScript, ...args], signal, {
+				maxOutputChars: params.maxOutputChars,
+				outputPath: params.outputPath,
+				raw: params.raw,
+				label: `cartographer-context-pack-${params.action}`,
+			});
+		},
+	});
+
+	pi.registerTool({
+		name: "cartographer_transition",
+		label: "Cartographer Transition",
+		description: "Inspect and record deterministic Cartographer lifecycle transitions and approval gates.",
+		promptSnippet: "Status, request, approve, reject, or advance Cartographer lifecycle gates",
+		promptGuidelines: [
+			"Use approve for major human approval gates and explicitly human-gated phases only.",
+			"Use advance for automatic implementation phase progression after deterministic prerequisites pass.",
+			"Require approvedBy for CI/non-interactive approvals.",
+		],
+		parameters: Type.Object({
+			action: Type.Union([
+				Type.Literal("status"),
+				Type.Literal("request-approval"),
+				Type.Literal("approve"),
+				Type.Literal("reject"),
+				Type.Literal("advance"),
+			]),
+			root: Type.Optional(Type.String({ description: "Project root. Defaults to current working directory." })),
+			topic: Type.String({ description: "Cartographer topic under .plan/." }),
+			gate: Type.Optional(Type.String({ description: "Approval/transition gate." })),
+			phaseId: Type.Optional(Type.String({ description: "Optional phase id." })),
+			summary: Type.Optional(Type.String({ description: "Transition summary." })),
+			approvedBy: Type.Optional(Type.String({ description: "Explicit human approver label." })),
+			reason: Type.Optional(Type.String({ description: "Rejection reason." })),
+			to: Type.Optional(Type.String({ description: "Lifecycle state for advance." })),
+			ci: Type.Optional(Type.Boolean({ description: "Require explicit approvedBy for approval." })),
+			maxOutputChars: Type.Optional(Type.Number({ description: "Inline output budget." })),
+			outputPath: Type.Optional(Type.String({ description: "Optional full-output path for oversized output." })),
+			raw: Type.Optional(Type.Boolean({ description: "Return raw command output instead of a compact receipt." })),
+		}),
+		async execute(_toolCallId, rawParams, signal) {
+			const params = rawParams as CartographerTransitionParams;
+			const command = params.action === "status" ? "transition-status" : `transition-${params.action}`;
+			const args = [
+				command,
+				"--root",
+				params.root || process.cwd(),
+				"--topic",
+				requireString(params.topic, "cartographer_transition requires topic"),
+				"--json",
+			];
+			if (params.gate) args.push("--gate", params.gate);
+			if (params.phaseId) args.push("--phase-id", params.phaseId);
+			if (params.summary) args.push("--summary", params.summary);
+			if (params.approvedBy) args.push("--approved-by", params.approvedBy);
+			if (params.reason) args.push("--reason", params.reason);
+			if (params.to) args.push("--to", params.to);
+			if (params.ci) args.push("--ci");
+			return runCommand("node", ["--experimental-strip-types", workflowScript, ...args], signal, {
+				maxOutputChars: params.maxOutputChars,
+				outputPath: params.outputPath,
+				raw: params.raw,
+				label: `cartographer-transition-${params.action}`,
 			});
 		},
 	});

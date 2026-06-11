@@ -2,6 +2,7 @@ import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 export const LIFECYCLE_STATES = [
 	"proposal-draft",
@@ -22,7 +23,12 @@ export const LIFECYCLE_STATES = [
 export type LifecycleState = (typeof LIFECYCLE_STATES)[number];
 export type TransitionGate = "proposal" | "plan" | "phase" | "implementation";
 
-export const HUMAN_APPROVAL_GATES = ["proposal", "plan", "phase", "implementation"] as const satisfies readonly TransitionGate[];
+export const HUMAN_APPROVAL_GATES = [
+	"proposal",
+	"plan",
+	"phase",
+	"implementation",
+] as const satisfies readonly TransitionGate[];
 
 export const RECEIPT_KINDS = [
 	"approval",
@@ -78,7 +84,11 @@ export const GATE_PREREQUISITES: Record<TransitionGate, GatePrerequisite[]> = {
 	],
 	implementation: [
 		{ id: "implementation-full-validation", description: "Full project validation passed", required: true },
-		{ id: "implementation-topic-validation", description: "Topic and planning graph validation passed", required: true },
+		{
+			id: "implementation-topic-validation",
+			description: "Topic and planning graph validation passed",
+			required: true,
+		},
 		{ id: "implementation-final-audit", description: "Final auditor PASS or approved fallback exists", required: true },
 		{ id: "implementation-adr", description: "Required ADR handling is complete", required: true },
 	],
@@ -127,7 +137,7 @@ export function parseMinimalToml(text: string): Record<string, unknown> {
 				const existing = section[name];
 				if (existing && (typeof existing !== "object" || Array.isArray(existing)))
 					throw new Error(`Invalid TOML section collision: ${sectionMatch[1]}`);
-				section[name] = (existing as Record<string, unknown> | undefined) ?? {};
+				section[name] = existing ?? {};
 				section = section[name] as Record<string, unknown>;
 			}
 			continue;
@@ -150,7 +160,8 @@ function parseTomlValue(raw: string): unknown {
 }
 
 export function resolveApprover(options: ResolveApproverOptions): ResolvedApprover {
-	if (options.explicitApprovedBy) return { approvedBy: assertHumanLabel(options.explicitApprovedBy), source: "explicit" };
+	if (options.explicitApprovedBy)
+		return { approvedBy: assertHumanLabel(options.explicitApprovedBy), source: "explicit" };
 
 	const config = readCartographerConfig(options.root);
 	const configApprover = approverFromConfig(config);
@@ -177,7 +188,11 @@ function approverFromConfig(config: Record<string, unknown>): string | undefined
 
 function gitConfigUserName(root: string): string | undefined {
 	try {
-		return execFileSync("git", ["config", "user.name"], { cwd: root, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
+		return execFileSync("git", ["config", "user.name"], {
+			cwd: root,
+			encoding: "utf8",
+			stdio: ["ignore", "pipe", "ignore"],
+		}).trim();
 	} catch {
 		return undefined;
 	}
@@ -215,20 +230,61 @@ export type FixtureOptions = {
 	phaseIds?: string[];
 };
 
-export function createWorkflowFixture(root: string, options: FixtureOptions = {}): { root: string; topic: string; topicDir: string } {
+export function createWorkflowFixture(
+	root: string,
+	options: FixtureOptions = {},
+): { root: string; topic: string; topicDir: string } {
 	const topic = options.topic ?? "demo";
 	const phaseIds = options.phaseIds ?? ["P0"];
 	const topicDir = path.join(root, ".plan", topic);
 	fs.mkdirSync(topicDir, { recursive: true });
 	fs.mkdirSync(path.join(root, ".cartographer"), { recursive: true });
 	const planMd = [`# ${topic} Plan`, "", "## Phases", ""];
-	const nodes: Record<string, unknown>[] = [{ id: `plan:${topic}`, type: "plan", title: `${topic} Plan`, source: "plan.md" }];
+	const nodes: Record<string, unknown>[] = [
+		{ id: `plan:${topic}`, type: "plan", title: `${topic} Plan`, source: "plan.md" },
+	];
 	const edges: Record<string, unknown>[] = [];
 	for (const [index, phaseId] of phaseIds.entries()) {
-		planMd.push(`### Phase ${phaseId} — Fixture Phase ${index}`, "", "- **Status:** pending", "", "#### Checklist", `- [ ] **${phaseId}.T1** Fixture task.`, "", "#### Validation", `- [ ] **${phaseId}.V1** Fixture validation.`, "");
-		nodes.push({ id: `phase:${phaseId}`, type: "phase", phase_id: phaseId, title: `Fixture Phase ${index}`, status: "pending", depends_on: index ? [phaseIds[index - 1]] : [], source: "plan.md" });
-		nodes.push({ id: `task:${phaseId}.T1`, type: "task", task_id: `${phaseId}.T1`, phase_id: phaseId, title: "Fixture task", status: "pending", source: "plan.md" });
-		nodes.push({ id: `validation:${phaseId}.V1`, type: "validation", validation_id: `${phaseId}.V1`, phase_id: phaseId, title: "Fixture validation", status: "pending", command: "node -e \"process.exit(0)\"", source: "plan.md" });
+		planMd.push(
+			`### Phase ${phaseId} — Fixture Phase ${index}`,
+			"",
+			"- **Status:** pending",
+			"",
+			"#### Checklist",
+			`- [ ] **${phaseId}.T1** Fixture task.`,
+			"",
+			"#### Validation",
+			`- [ ] **${phaseId}.V1** Fixture validation.`,
+			"",
+		);
+		nodes.push({
+			id: `phase:${phaseId}`,
+			type: "phase",
+			phase_id: phaseId,
+			title: `Fixture Phase ${index}`,
+			status: "pending",
+			depends_on: index ? [phaseIds[index - 1]] : [],
+			source: "plan.md",
+		});
+		nodes.push({
+			id: `task:${phaseId}.T1`,
+			type: "task",
+			task_id: `${phaseId}.T1`,
+			phase_id: phaseId,
+			title: "Fixture task",
+			status: "pending",
+			source: "plan.md",
+		});
+		nodes.push({
+			id: `validation:${phaseId}.V1`,
+			type: "validation",
+			validation_id: `${phaseId}.V1`,
+			phase_id: phaseId,
+			title: "Fixture validation",
+			status: "pending",
+			command: 'node -e "process.exit(0)"',
+			source: "plan.md",
+		});
 		edges.push({ from: `plan:${topic}`, to: `phase:${phaseId}`, type: "contains" });
 		edges.push({ from: `phase:${phaseId}`, to: `task:${phaseId}.T1`, type: "contains" });
 		edges.push({ from: `phase:${phaseId}`, to: `validation:${phaseId}.V1`, type: "contains" });
@@ -236,9 +292,506 @@ export function createWorkflowFixture(root: string, options: FixtureOptions = {}
 	}
 	fs.writeFileSync(path.join(topicDir, "proposal.md"), `# ${topic} Proposal\n`, "utf8");
 	fs.writeFileSync(path.join(topicDir, "plan.md"), `${planMd.join("\n")}\n`, "utf8");
-	fs.writeFileSync(path.join(topicDir, "plan.nodes.jsonl"), nodes.map((record) => JSON.stringify(record)).join("\n") + "\n", "utf8");
-	fs.writeFileSync(path.join(topicDir, "plan.edges.jsonl"), edges.map((record) => JSON.stringify(record)).join("\n") + "\n", "utf8");
-	for (const file of ["map.nodes.jsonl", "map.edges.jsonl", "facts.nodes.jsonl", "facts.edges.jsonl", "receipts.jsonl", "context-packs.jsonl"])
+	fs.writeFileSync(
+		path.join(topicDir, "plan.nodes.jsonl"),
+		nodes.map((record) => JSON.stringify(record)).join("\n") + "\n",
+		"utf8",
+	);
+	fs.writeFileSync(
+		path.join(topicDir, "plan.edges.jsonl"),
+		edges.map((record) => JSON.stringify(record)).join("\n") + "\n",
+		"utf8",
+	);
+	for (const file of [
+		"map.nodes.jsonl",
+		"map.edges.jsonl",
+		"facts.nodes.jsonl",
+		"facts.edges.jsonl",
+		"receipts.jsonl",
+		"context-packs.jsonl",
+	])
 		fs.writeFileSync(path.join(topicDir, file), "", "utf8");
 	return { root, topic, topicDir };
+}
+
+export type WorkflowCliResult = Record<string, unknown> & { ok: boolean; action: string; topic?: string };
+
+type CliArgs = { command: string; options: Record<string, string | boolean | string[]> };
+
+function parseCliArgs(argv: string[]): CliArgs {
+	const [command, ...rest] = argv;
+	if (!command || command === "--help" || command === "-h") usage(0);
+	const options: Record<string, string | boolean | string[]> = {};
+	for (let index = 0; index < rest.length; index += 1) {
+		const token = rest[index];
+		if (!token.startsWith("--")) throw new Error(`Unexpected positional argument: ${token}`);
+		const name = token.slice(2);
+		if (["json", "ci"].includes(name)) {
+			options[name] = true;
+			continue;
+		}
+		const value = rest[index + 1];
+		if (value === undefined || value.startsWith("--")) throw new Error(`Missing value for --${name}`);
+		index += 1;
+		if (["artifact", "validation-receipt"].includes(name)) {
+			const current = options[name];
+			options[name] = Array.isArray(current) ? [...current, value] : [value];
+		} else {
+			options[name] = value;
+		}
+	}
+	return { command, options };
+}
+
+function usage(exitCode: number): never {
+	const script = path.basename(fileURLToPath(import.meta.url));
+	console.log(`Usage:
+  ${script} receipt-append --root <root> --topic <topic> --kind <kind> --summary <text> [--phase-id <id>] [--receipt-id <id>] [--json]
+  ${script} context-pack-create --root <root> --topic <topic> --phase-id <id> --summary <text> [--artifact <path>] [--validation-receipt <id>] [--json]
+  ${script} transition-status --root <root> --topic <topic> [--json]
+  ${script} transition-request-approval --root <root> --topic <topic> --gate <gate> [--phase-id <id>] [--summary <text>] [--json]
+  ${script} transition-approve --root <root> --topic <topic> --gate <gate> --summary <text> [--phase-id <id>] [--approved-by <name>] [--ci] [--json]
+  ${script} transition-reject --root <root> --topic <topic> --gate <gate> --reason <text> [--phase-id <id>] [--json]
+  ${script} transition-advance --root <root> --topic <topic> --to <state> [--phase-id <id>] [--summary <text>] [--json]`);
+	process.exit(exitCode);
+}
+
+function opt(options: Record<string, unknown>, name: string, fallback?: string): string {
+	const value = options[name];
+	if (typeof value === "string" && value.length > 0) return value;
+	if (fallback !== undefined) return fallback;
+	throw new Error(`Missing required --${name}`);
+}
+
+function optArray(options: Record<string, unknown>, name: string): string[] {
+	const value = options[name];
+	if (Array.isArray(value)) return value.filter((item): item is string => typeof item === "string");
+	return typeof value === "string" ? [value] : [];
+}
+
+function workflowRoot(options: Record<string, unknown>): string {
+	return path.resolve(opt(options, "root", "."));
+}
+
+function workflowTopic(options: Record<string, unknown>): string {
+	const topic = opt(options, "topic");
+	if (!/^[a-z0-9][a-z0-9-]*$/.test(topic)) throw new Error(`Invalid topic slug: ${topic}`);
+	return topic;
+}
+
+function topicDir(root: string, topic: string): string {
+	return path.join(root, ".plan", topic);
+}
+
+function receiptsPath(root: string, topic: string): string {
+	return path.join(topicDir(root, topic), "receipts.jsonl");
+}
+
+function contextPacksPath(root: string, topic: string): string {
+	return path.join(topicDir(root, topic), "context-packs.jsonl");
+}
+
+function readJsonlRecords(filePath: string): Record<string, unknown>[] {
+	if (!fs.existsSync(filePath)) return [];
+	return fs
+		.readFileSync(filePath, "utf8")
+		.split(/\r?\n/)
+		.filter((line) => line.trim().length > 0)
+		.map((line) => JSON.parse(line) as Record<string, unknown>);
+}
+
+function writeJsonlRecordsAtomic(filePath: string, records: readonly Record<string, unknown>[]): void {
+	fs.mkdirSync(path.dirname(filePath), { recursive: true });
+	const tmp = path.join(path.dirname(filePath), `.tmp-${process.pid}-${Date.now()}-${path.basename(filePath)}`);
+	fs.writeFileSync(tmp, records.map((record) => JSON.stringify(record)).join("\n") + "\n", "utf8");
+	fs.renameSync(tmp, filePath);
+}
+
+function workflowNow(): string {
+	return new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
+}
+
+function assertNonEmptyString(value: string, name: string): string {
+	const trimmed = value.trim();
+	if (!trimmed) throw new Error(`${name} must not be empty`);
+	return trimmed;
+}
+
+function safeIdPart(value: string): string {
+	return value.replace(/[^A-Za-z0-9_.:-]+/g, "-").replace(/^-+|-+$/g, "") || "record";
+}
+
+function ensureTopicArtifacts(root: string, topic: string): void {
+	const dir = topicDir(root, topic);
+	if (!fs.existsSync(path.join(dir, "plan.md"))) throw new Error(`Missing plan.md for topic ${topic}`);
+	for (const file of ["receipts.jsonl", "context-packs.jsonl"]) {
+		const fullPath = path.join(dir, file);
+		if (!fs.existsSync(fullPath)) fs.writeFileSync(fullPath, "", "utf8");
+	}
+}
+
+export function appendWorkflowReceipt(params: {
+	root: string;
+	topic: string;
+	kind: string;
+	summary: string;
+	phaseId?: string;
+	id?: string;
+	data?: Record<string, unknown>;
+}): Record<string, unknown> {
+	ensureTopicArtifacts(params.root, params.topic);
+	if (!RECEIPT_KINDS.includes(params.kind as ReceiptKind)) throw new Error(`Unsupported receipt kind: ${params.kind}`);
+	const now = workflowNow();
+	let id = params.id || `receipt:${safeIdPart(params.topic)}:${safeIdPart(params.kind)}:${now}`;
+	const filePath = receiptsPath(params.root, params.topic);
+	const existing = readJsonlRecords(filePath);
+	if (params.id && existing.some((record) => record.id === id)) throw new Error(`Receipt already exists: ${id}`);
+	let counter = 2;
+	while (existing.some((record) => record.id === id)) {
+		id = `receipt:${safeIdPart(params.topic)}:${safeIdPart(params.kind)}:${now}:${counter}`;
+		counter += 1;
+	}
+	const summary = assertNonEmptyString(params.summary, "summary");
+	const record: Record<string, unknown> = {
+		id,
+		type: "workflow-receipt",
+		kind: params.kind,
+		topic: params.topic,
+		phase_id: params.phaseId,
+		status: params.kind === "audit" && /\bPASS\b/i.test(summary) ? "PASS" : "recorded",
+		summary,
+		created_at: now,
+		verified: true,
+		...(params.data || {}),
+	};
+	appendJsonlAtomic(filePath, [record]);
+	return record;
+}
+
+function validateContextArtifacts(root: string, artifacts: string[]): void {
+	const resolvedRoot = fs.realpathSync(root);
+	for (const artifact of artifacts) {
+		if (artifact.includes(".plan/_private/") || artifact.includes(".plan\\_private\\")) {
+			throw new Error(`Context pack artifact must not reference private raw inputs: ${artifact}`);
+		}
+		const fullPath = path.isAbsolute(artifact) ? artifact : path.join(root, artifact);
+		if (!fs.existsSync(fullPath)) throw new Error(`Context pack artifact does not exist: ${artifact}`);
+		const resolvedArtifact = fs.realpathSync(fullPath);
+		if (!resolvedArtifact.startsWith(`${resolvedRoot}${path.sep}`) && resolvedArtifact !== resolvedRoot) {
+			throw new Error(`Context pack artifact must stay under project root: ${artifact}`);
+		}
+	}
+}
+
+function validateContextReceipts(root: string, topic: string, receiptIds: string[]): void {
+	const receipts = readJsonlRecords(receiptsPath(root, topic));
+	for (const receiptId of receiptIds) {
+		if (!receipts.some((receipt) => receipt.id === receiptId)) {
+			throw new Error(`Context pack validation receipt does not exist: ${receiptId}`);
+		}
+	}
+}
+
+export function upsertContextPack(params: {
+	root: string;
+	topic: string;
+	phaseId: string;
+	summary: string;
+	artifacts?: string[];
+	validationReceipts?: string[];
+	mode?: "create" | "update";
+}): Record<string, unknown> {
+	ensureTopicArtifacts(params.root, params.topic);
+	if (params.summary.length > 2000) throw new Error("Context pack summary must be 2000 characters or fewer");
+	validateContextArtifacts(params.root, params.artifacts || []);
+	validateContextReceipts(params.root, params.topic, params.validationReceipts || []);
+	const filePath = contextPacksPath(params.root, params.topic);
+	const records = readJsonlRecords(filePath);
+	const id = `context-pack:${safeIdPart(params.topic)}:${safeIdPart(params.phaseId)}`;
+	const existingIndex = records.findIndex((record) => record.id === id);
+	if (params.mode === "create" && existingIndex >= 0) throw new Error(`Context pack already exists: ${id}`);
+	const now = workflowNow();
+	const nextRecord: Record<string, unknown> = {
+		...(existingIndex >= 0 ? records[existingIndex] : {}),
+		id,
+		type: "context-pack",
+		topic: params.topic,
+		phase_id: params.phaseId,
+		summary: assertNonEmptyString(params.summary, "summary"),
+		artifacts: params.artifacts || [],
+		validation_receipts: params.validationReceipts || [],
+		updated_at: now,
+		created_at: existingIndex >= 0 ? records[existingIndex].created_at || now : now,
+	};
+	if (existingIndex >= 0) records[existingIndex] = nextRecord;
+	else records.push(nextRecord);
+	writeJsonlRecordsAtomic(filePath, records);
+	return nextRecord;
+}
+
+export function getWorkflowStatus(params: { root: string; topic: string }): Record<string, unknown> {
+	ensureTopicArtifacts(params.root, params.topic);
+	const planPath = path.join(topicDir(params.root, params.topic), "plan.md");
+	const plan = fs.readFileSync(planPath, "utf8");
+	const phaseMatches = [...plan.matchAll(/^### Phase (P\d+)\s+—\s+(.+)$/gm)];
+	const phases = phaseMatches.map((match) => {
+		const start = match.index || 0;
+		const next = phaseMatches.find((candidate) => (candidate.index || 0) > start);
+		const block = plan.slice(start, next?.index || plan.length);
+		const status = block.match(/^- \*\*Status:\*\*\s+(.+)$/m)?.[1]?.trim() || "unknown";
+		return { phase_id: match[1], title: match[2], status };
+	});
+	const receipts = readJsonlRecords(receiptsPath(params.root, params.topic));
+	const contextPacks = readJsonlRecords(contextPacksPath(params.root, params.topic));
+	const missing_context_packs = phases
+		.filter((phase) => !contextPacks.some((pack) => pack.phase_id === phase.phase_id))
+		.map((phase) => phase.phase_id);
+	const rejected_gates = receipts
+		.filter((receipt) => receipt.action === "reject")
+		.map((receipt) => ({ gate: receipt.gate, phase_id: receipt.phase_id }));
+	const pending_human_approvals = receipts
+		.filter((receipt) => {
+			if (receipt.kind !== "transition" || receipt.action !== "request-approval") return false;
+			const resolved = receipts.some(
+				(other) =>
+					["approve", "reject"].includes(optionalString(other.action)) &&
+					other.gate === receipt.gate &&
+					optionalString(other.created_at) >= optionalString(receipt.created_at),
+			);
+			return !resolved;
+		})
+		.map((receipt) => ({ gate: receipt.gate, phase_id: receipt.phase_id }));
+	const lifecycle_receipts = receipts.filter((receipt) => typeof receipt.to_state === "string");
+	const current_lifecycle_state =
+		(lifecycle_receipts.at(-1)?.to_state as string | undefined) ||
+		(phases.some((phase) => phase.status === "complete") ? "implementation-in-progress" : "plan-approved");
+	return {
+		ok: true,
+		topic: params.topic,
+		current_lifecycle_state,
+		lifecycle_states: LIFECYCLE_STATES,
+		human_approval_gates: HUMAN_APPROVAL_GATES,
+		phases,
+		receipts: receipts.length,
+		context_packs: contextPacks.length,
+		missing_context_packs,
+		pending_human_approvals,
+		rejected_gates,
+		next_allowed_commands: [
+			"cartographer_context_pack update",
+			"cartographer_receipt append",
+			"cartographer_transition request-approval",
+			"cartographer_transition approve",
+			"cartographer_transition advance",
+		],
+	};
+}
+
+function hasReceipt(
+	receipts: Record<string, unknown>[],
+	predicate: (receipt: Record<string, unknown>) => boolean,
+): boolean {
+	return receipts.some((receipt) => predicate(receipt));
+}
+
+function optionalString(value: unknown): string {
+	return typeof value === "string" ? value : "";
+}
+
+function assertTransitionPrerequisites(params: {
+	root: string;
+	topic: string;
+	action: "request-approval" | "approve" | "reject" | "advance";
+	gate?: string;
+	phaseId?: string;
+}): void {
+	const receipts = readJsonlRecords(receiptsPath(params.root, params.topic));
+	const contextPacks = readJsonlRecords(contextPacksPath(params.root, params.topic));
+	const contextKey = params.phaseId || params.gate;
+	if (["request-approval", "approve", "advance"].includes(params.action) && contextKey) {
+		const hasContextPack = contextPacks.some(
+			(pack) =>
+				pack.phase_id === contextKey ||
+				pack.gate === contextKey ||
+				(typeof pack.id === "string" && pack.id.endsWith(`:${contextKey}`)),
+		);
+		if (!hasContextPack) throw new Error(`Missing required context pack for ${contextKey}`);
+	}
+	if (["request-approval", "advance"].includes(params.action)) {
+		const evidenceKey = params.phaseId || params.gate;
+		const hasValidation = hasReceipt(
+			receipts,
+			(receipt) =>
+				(receipt.kind === "validation" || receipt.type === "validation-receipt") &&
+				(!evidenceKey ||
+					receipt.phase_id === evidenceKey ||
+					optionalString(receipt.id).includes(evidenceKey) ||
+					(Array.isArray(receipt.validation_ids) &&
+						receipt.validation_ids.some((id) => optionalString(id).includes(evidenceKey)))),
+		);
+		if (!hasValidation) throw new Error(`Missing required validation receipt for ${evidenceKey || "transition"}`);
+		const hasAudit = hasReceipt(receipts, (receipt) => {
+			const result = optionalString(receipt.status || receipt.result || receipt.decision).toLowerCase();
+			return (
+				(receipt.kind === "audit" || receipt.type === "auditor-receipt") &&
+				(result === "pass" || result.includes("pass")) &&
+				(!evidenceKey || receipt.phase_id === evidenceKey || optionalString(receipt.id).includes(evidenceKey))
+			);
+		});
+		if (!hasAudit) throw new Error(`Missing required auditor PASS receipt for ${evidenceKey || "transition"}`);
+	}
+	if (params.action === "approve") {
+		const hasRequest = receipts.some(
+			(receipt) => receipt.action === "request-approval" && (!params.gate || receipt.gate === params.gate),
+		);
+		if (!hasRequest) throw new Error(`Missing approval request receipt for ${params.gate || "gate"}`);
+	}
+	if (params.action === "advance") {
+		const rejected = receipts.some(
+			(receipt) => receipt.action === "reject" && (!params.gate || receipt.gate === params.gate),
+		);
+		if (rejected) throw new Error(`Rejected gate blocks advance for ${params.gate || "gate"}`);
+		const needsApproval = receipts.some(
+			(receipt) => receipt.action === "request-approval" && (!params.gate || receipt.gate === params.gate),
+		);
+		if (needsApproval) {
+			const approved = receipts.some(
+				(receipt) => receipt.action === "approve" && (!params.gate || receipt.gate === params.gate),
+			);
+			if (!approved) throw new Error(`Pending human approval blocks advance for ${params.gate || "gate"}`);
+		}
+	}
+}
+
+export function recordWorkflowTransition(params: {
+	root: string;
+	topic: string;
+	action: "request-approval" | "approve" | "reject" | "advance";
+	gate?: string;
+	phaseId?: string;
+	toState?: string;
+	summary: string;
+	approvedBy?: string;
+	ci?: boolean;
+}): Record<string, unknown> {
+	if (params.action === "approve" && !params.approvedBy && params.ci) {
+		throw new Error("--approved-by is required for transition approval in CI/non-interactive mode");
+	}
+	if (params.toState && !LIFECYCLE_STATES.includes(params.toState as LifecycleState)) {
+		throw new Error(`Unsupported lifecycle state: ${params.toState}`);
+	}
+	if (params.action === "request-approval" && (params.phaseId || params.gate)) {
+		upsertContextPack({
+			root: params.root,
+			topic: params.topic,
+			phaseId: params.phaseId || String(params.gate),
+			summary: params.summary,
+			mode: "update",
+		});
+	}
+	assertTransitionPrerequisites(params);
+	const approver =
+		params.action === "approve"
+			? resolveApprover({ root: params.root, explicitApprovedBy: params.approvedBy })
+			: undefined;
+	const kind = params.action === "approve" ? "approval" : params.action === "reject" ? "rejection" : "transition";
+	return appendWorkflowReceipt({
+		root: params.root,
+		topic: params.topic,
+		kind,
+		phaseId: params.phaseId,
+		summary: params.summary,
+		data: {
+			action: params.action,
+			gate: params.gate,
+			to_state: params.toState,
+			approved_by: approver,
+		},
+	});
+}
+
+export function runWorkflowCli(argv = process.argv.slice(2)): WorkflowCliResult {
+	const { command, options } = parseCliArgs(argv);
+	const root = workflowRoot(options);
+	const topic = workflowTopic(options);
+	let result: Record<string, unknown>;
+	if (command === "receipt-append" || command === "receipt_append") {
+		result = appendWorkflowReceipt({
+			root,
+			topic,
+			kind: opt(options, "kind"),
+			summary: opt(options, "summary"),
+			phaseId: typeof options["phase-id"] === "string" ? options["phase-id"] : undefined,
+			id: typeof options["receipt-id"] === "string" ? options["receipt-id"] : undefined,
+		});
+	} else if (
+		["context-pack-create", "context_pack_create", "context-pack-update", "context_pack_update"].includes(command)
+	) {
+		result = upsertContextPack({
+			root,
+			topic,
+			phaseId: opt(options, "phase-id"),
+			summary: opt(options, "summary"),
+			artifacts: optArray(options, "artifact"),
+			validationReceipts: optArray(options, "validation-receipt"),
+			mode: command.includes("create") ? "create" : "update",
+		});
+	} else if (command === "transition-status" || command === "transition_status") {
+		result = getWorkflowStatus({ root, topic });
+	} else if (command === "transition-request-approval" || command === "transition_request_approval") {
+		result = recordWorkflowTransition({
+			root,
+			topic,
+			action: "request-approval",
+			gate: opt(options, "gate"),
+			phaseId: typeof options["phase-id"] === "string" ? options["phase-id"] : undefined,
+			summary: opt(options, "summary", `Approval requested for ${opt(options, "gate")}`),
+		});
+	} else if (command === "transition-approve" || command === "transition_approve") {
+		result = recordWorkflowTransition({
+			root,
+			topic,
+			action: "approve",
+			gate: opt(options, "gate"),
+			phaseId: typeof options["phase-id"] === "string" ? options["phase-id"] : undefined,
+			summary: opt(options, "summary"),
+			approvedBy: typeof options["approved-by"] === "string" ? options["approved-by"] : undefined,
+			ci: Boolean(options.ci),
+		});
+	} else if (command === "transition-reject" || command === "transition_reject") {
+		result = recordWorkflowTransition({
+			root,
+			topic,
+			action: "reject",
+			gate: opt(options, "gate"),
+			phaseId: typeof options["phase-id"] === "string" ? options["phase-id"] : undefined,
+			summary: opt(options, "reason"),
+		});
+	} else if (command === "transition-advance" || command === "transition_advance") {
+		result = recordWorkflowTransition({
+			root,
+			topic,
+			action: "advance",
+			gate: typeof options.gate === "string" ? options.gate : undefined,
+			phaseId: typeof options["phase-id"] === "string" ? options["phase-id"] : undefined,
+			toState: opt(options, "to"),
+			summary: opt(options, "summary", `Advanced to ${opt(options, "to")}`),
+		});
+	} else {
+		throw new Error(`Unknown workflow command: ${command}`);
+	}
+	return { ok: true, action: command, topic, ...result };
+}
+
+const isDirectWorkflowCli = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+if (isDirectWorkflowCli) {
+	try {
+		const result = runWorkflowCli();
+		console.log(JSON.stringify(result, null, 2));
+	} catch (error) {
+		console.error(
+			JSON.stringify({ ok: false, error: error instanceof Error ? error.message : String(error) }, null, 2),
+		);
+		process.exitCode = 1;
+	}
 }

@@ -8,11 +8,16 @@ import {
 	LIFECYCLE_STATES,
 	RECEIPT_KINDS,
 	appendJsonlAtomic,
+	appendWorkflowReceipt,
 	assertHumanLabel,
 	createWorkflowFixture,
+	getWorkflowStatus,
 	parseMinimalToml,
+	recordWorkflowTransition,
 	resolveApprover,
+	runWorkflowCli,
 	updateJsonAtomic,
+	upsertContextPack,
 	writeJsonAtomic,
 } from "../skills/plan/scripts/cartographer_workflow.ts";
 
@@ -58,7 +63,11 @@ describe("approver resolution", () => {
 	it("uses .cartographer/config.toml before git and system fallbacks", () => {
 		const root = tempRoot();
 		fs.mkdirSync(path.join(root, ".cartographer"), { recursive: true });
-		fs.writeFileSync(path.join(root, ".cartographer", "config.toml"), '[transition]\napproved_by = "Config User"\n', "utf8");
+		fs.writeFileSync(
+			path.join(root, ".cartographer", "config.toml"),
+			'[transition]\napproved_by = "Config User"\n',
+			"utf8",
+		);
 
 		const resolved = resolveApprover({
 			root,
@@ -71,9 +80,10 @@ describe("approver resolution", () => {
 
 	it("falls back to git user.name and then system username", () => {
 		const root = tempRoot();
-		expect(
-			resolveApprover({ root, gitUserName: () => "Git User", systemUserName: () => "System User" }),
-		).toEqual({ approvedBy: "Git User", source: "git" });
+		expect(resolveApprover({ root, gitUserName: () => "Git User", systemUserName: () => "System User" })).toEqual({
+			approvedBy: "Git User",
+			source: "git",
+		});
 		expect(resolveApprover({ root, gitUserName: () => undefined, systemUserName: () => "System User" })).toEqual({
 			approvedBy: "System User",
 			source: "system",
@@ -98,10 +108,13 @@ describe("atomic helpers and fixtures", () => {
 
 		const jsonlPath = path.join(root, "records.jsonl");
 		appendJsonlAtomic(jsonlPath, [{ id: "a" }, { id: "b" }]);
-		expect(fs.readFileSync(jsonlPath, "utf8").trim().split("\n").map((line) => JSON.parse(line))).toEqual([
-			{ id: "a" },
-			{ id: "b" },
-		]);
+		expect(
+			fs
+				.readFileSync(jsonlPath, "utf8")
+				.trim()
+				.split("\n")
+				.map((line) => JSON.parse(line)),
+		).toEqual([{ id: "a" }, { id: "b" }]);
 	});
 
 	it("creates temp-root workflow fixtures without touching the repository", () => {
@@ -118,5 +131,200 @@ describe("atomic helpers and fixtures", () => {
 			.map((line) => JSON.parse(line));
 		expect(nodes.some((node) => node.id === "phase:P1" && node.depends_on?.[0] === "P0")).toBe(true);
 		expect(fs.existsSync(path.join(process.cwd(), ".cartographer", "demo", "state.json"))).toBe(false);
+	});
+});
+
+describe("receipt, context pack, and transition wrappers", () => {
+	it("appends schema-checked workflow receipts and context packs", () => {
+		const root = tempRoot();
+		createWorkflowFixture(root, { topic: "demo", phaseIds: ["P1"] });
+
+		const receipt = appendWorkflowReceipt({
+			root,
+			topic: "demo",
+			kind: "validation",
+			phaseId: "P1",
+			summary: "P1 validation passed",
+		});
+		expect(receipt.id).toMatch(/^receipt:demo:validation:/);
+		for (const kind of RECEIPT_KINDS.filter((item) => item !== "validation")) {
+			expect(appendWorkflowReceipt({ root, topic: "demo", kind, phaseId: "P1", summary: `${kind} receipt` }).kind).toBe(
+				kind,
+			);
+		}
+		expect(
+			appendWorkflowReceipt({ root, topic: "demo", kind: "audit", phaseId: "P1", summary: "auditor PASS" }).status,
+		).toBe("PASS");
+		expect(
+			runWorkflowCli([
+				"receipt-append",
+				"--root",
+				root,
+				"--topic",
+				"demo",
+				"--kind",
+				"no-op",
+				"--summary",
+				"explicit id",
+				"--receipt-id",
+				"receipt:demo:explicit",
+			]).id,
+		).toBe("receipt:demo:explicit");
+		expect(() => appendWorkflowReceipt({ root, topic: "demo", kind: "not-a-kind", summary: "bad" })).toThrow(
+			"Unsupported receipt kind",
+		);
+
+		const pack = upsertContextPack({
+			root,
+			topic: "demo",
+			phaseId: "P1",
+			summary: "P1 handoff context",
+			validationReceipts: [String(receipt.id)],
+		});
+		expect(pack.id).toBe("context-pack:demo:P1");
+		expect(getWorkflowStatus({ root, topic: "demo" }).context_packs).toBe(1);
+		expect(() => upsertContextPack({ root, topic: "demo", phaseId: "P1", summary: "x".repeat(2001) })).toThrow(
+			"2000 characters",
+		);
+		expect(() =>
+			upsertContextPack({
+				root,
+				topic: "demo",
+				phaseId: "P1",
+				summary: "bad",
+				validationReceipts: ["missing-receipt"],
+			}),
+		).toThrow("does not exist");
+		expect(() =>
+			upsertContextPack({ root, topic: "demo", phaseId: "P1", summary: "bad", artifacts: ["missing.md"] }),
+		).toThrow("does not exist");
+		expect(() =>
+			upsertContextPack({
+				root,
+				topic: "demo",
+				phaseId: "P1",
+				summary: "bad",
+				artifacts: [".plan/_private/demo/raw.log"],
+			}),
+		).toThrow("private raw inputs");
+	});
+
+	it("records approvals with deterministic approver fallback and requires explicit CI approvers", () => {
+		const root = tempRoot();
+		createWorkflowFixture(root, { topic: "demo", phaseIds: ["P1"] });
+		fs.mkdirSync(path.join(root, ".cartographer"), { recursive: true });
+		fs.writeFileSync(path.join(root, ".cartographer", "config.toml"), 'approver = "John Doe"\n', "utf8");
+
+		expect(() =>
+			recordWorkflowTransition({
+				root,
+				topic: "demo",
+				action: "advance",
+				gate: "plan",
+				toState: "implementation-in-progress",
+				summary: "Unsafe advance",
+			}),
+		).toThrow("Missing required context pack");
+		appendWorkflowReceipt({ root, topic: "demo", kind: "validation", phaseId: "plan", summary: "plan validation" });
+		appendWorkflowReceipt({
+			root,
+			topic: "demo",
+			kind: "audit",
+			phaseId: "plan",
+			summary: "plan auditor PASS",
+			data: { status: "PASS" },
+		});
+		recordWorkflowTransition({
+			root,
+			topic: "demo",
+			action: "request-approval",
+			gate: "plan",
+			summary: "Plan ready for approval",
+		});
+		const approval = recordWorkflowTransition({
+			root,
+			topic: "demo",
+			action: "approve",
+			gate: "plan",
+			summary: "Plan approved",
+		});
+		expect(approval.kind).toBe("approval");
+		expect(approval.approved_by).toEqual({ approvedBy: "John Doe", source: "config" });
+		expect(() =>
+			recordWorkflowTransition({
+				root,
+				topic: "demo",
+				action: "approve",
+				gate: "plan",
+				summary: "Plan approved",
+				ci: true,
+			}),
+		).toThrow("--approved-by is required");
+		const advance = recordWorkflowTransition({
+			root,
+			topic: "demo",
+			action: "advance",
+			gate: "plan",
+			toState: "implementation-in-progress",
+			summary: "Advance after approval",
+		});
+		expect(advance.kind).toBe("transition");
+	});
+
+	it("supports shell-friendly hyphenated CLI aliases", () => {
+		const root = tempRoot();
+		createWorkflowFixture(root, { topic: "demo", phaseIds: ["P1"] });
+
+		const result = runWorkflowCli([
+			"context-pack-create",
+			"--root",
+			root,
+			"--topic",
+			"demo",
+			"--phase-id",
+			"P1",
+			"--summary",
+			"CLI context",
+		]);
+		expect(result.ok).toBe(true);
+		expect(result.id).toBe("context-pack:demo:P1");
+	});
+
+	it("CLI transition advance honors gate prerequisites and real receipt shapes", () => {
+		const root = tempRoot();
+		createWorkflowFixture(root, { topic: "demo", phaseIds: ["P1"] });
+		const receiptsFile = path.join(root, ".plan", "demo", "receipts.jsonl");
+		appendJsonlAtomic(receiptsFile, [
+			{
+				id: "receipt:plan:validation:demo",
+				type: "validation-receipt",
+				phase_id: "plan",
+				status: "passed",
+				validation_ids: ["plan-validate-graph"],
+			},
+			{
+				id: "receipt:plan:audit:demo",
+				type: "auditor-receipt",
+				phase_id: "plan",
+				decision: "PASS",
+			},
+		]);
+		upsertContextPack({ root, topic: "demo", phaseId: "plan", summary: "Plan context" });
+
+		const result = runWorkflowCli([
+			"transition-advance",
+			"--root",
+			root,
+			"--topic",
+			"demo",
+			"--gate",
+			"plan",
+			"--to",
+			"implementation-in-progress",
+			"--summary",
+			"Advance from CLI",
+		]);
+		expect(result.ok).toBe(true);
+		expect(result.gate).toBe("plan");
 	});
 });
