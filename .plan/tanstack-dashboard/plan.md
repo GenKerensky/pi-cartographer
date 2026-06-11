@@ -8,16 +8,16 @@
 - `.plan/tanstack-dashboard/context-packs.jsonl` — `context:tanstack-dashboard:proposal` compact implementation context.
 - `.plan/tanstack-dashboard/receipts.jsonl` — proposal validation and serial audit fallback receipts.
 - `.plan/_index/project-graph.sqlite` and `.plan/_index/project-graph-manifest.json` — refreshed shared project index.
-- Verified project references: `file:package.json`, `file:bin/cartographer-dashboard.js`, `file:dashboard/server/cli.ts`, `file:dashboard/server/runtime.ts`, `file:dashboard/start/src/server/dashboard-api.ts`, `file:dashboard/server/artifact-reader.ts`, `file:dashboard/server/live-reload.ts`, `file:dashboard/shared/models.ts`, `file:dashboard/client/src/App.tsx`, `file:dashboard/client/src/lib/events.ts`, `file:dashboard/client/src/lib/live-refetch.ts`, `file:docs/adr/0003-use-local-dashboard-stack-for-cartographer-planning-ui.md`, and dashboard tests.
+- Verified project references: `file:package.json`, `file:bin/cartographer-dashboard.js`, `file:dashboard/src/server/cli.ts`, `file:dashboard/src/server/runtime.ts`, `file:dashboard/src/server/dashboard-api.ts`, `file:dashboard/src/server/artifact-reader.ts`, `file:dashboard/src/server/live-reload.ts`, `file:dashboard/src/shared/models.ts`, `file:dashboard/src/App.tsx`, `file:dashboard/src/lib/events.ts`, `file:dashboard/src/lib/live-refetch.ts`, `file:docs/adr/0003-use-local-dashboard-stack-for-cartographer-planning-ui.md`, and dashboard tests.
 
 ## Planning Assumptions
 
 ### Confirmed facts
 
 - The current dashboard is split between a Hono Node runtime and a separately built Vite React client, coordinated by package scripts and the `cartographer-dashboard` bin [F001].
-- Current read-only API routes are centralized in `dashboard/start/src/server/dashboard-api.ts` and expose only GET routes for dashboard artifact reads and live events [F002].
+- Current read-only API routes are centralized in `dashboard/src/server/dashboard-api.ts` and expose only GET routes for dashboard artifact reads and live events [F002].
 - Chokidar already watches safe `.plan/**` paths, ignores `.plan/_private/**`, debounces changes, and publishes shared `LiveReloadEvent` records over SSE [F003] [F005].
-- Client state currently lives in React hooks and manual refetch effects in `dashboard/client/src/App.tsx` [F004].
+- Client state currently lives in React hooks and manual refetch effects in `dashboard/src/App.tsx` [F004].
 - TanStack Start supports full-stack route files with server handlers/functions and Vite plugin configuration [F006] [F007].
 - TanStack DB supports collections, query-backed collection loading, and React live queries [F008] [F009].
 - Chokidar provides the watch, ignore, all-event, await-write-finish, and async cleanup primitives needed for the filesystem boundary [F010].
@@ -37,10 +37,10 @@
 ### Retrieval probes used
 
 1. Package and script probes: `package.json`, `dashboard:build`, `dashboard:check`, `check:scripts`, `test:browser`, `cartographer-dashboard` bin.
-2. Runtime probes: `bin/cartographer-dashboard.js`, `dashboard/server/cli.ts`, `dashboard/server/runtime.ts`, `dashboard/start/vite.config.ts`.
-3. API/safety probes: `dashboard/start/src/server/dashboard-api.ts`, `dashboard/server/artifact-reader.ts`, `dashboard/server/safety.ts`, `dashboard/server/jsonl.ts`.
-4. Live reload probes: `dashboard/server/live-reload.ts`, `dashboard/shared/models.ts`, `dashboard/client/src/lib/events.ts`, `dashboard/client/src/lib/live-refetch.ts`.
-5. UI probes: `dashboard/client/src/App.tsx`, `dashboard/client/src/features/review-workflow.tsx`, `dashboard/client/src/features/graph-explorer.tsx`, `dashboard/client/src/features/document-viewer.tsx`.
+2. Runtime probes: `bin/cartographer-dashboard.js`, `dashboard/src/server/cli.ts`, `dashboard/src/server/runtime.ts`, `dashboard/vite.config.ts`.
+3. API/safety probes: `dashboard/src/server/dashboard-api.ts`, `dashboard/src/server/artifact-reader.ts`, `dashboard/src/server/safety.ts`, `dashboard/src/server/jsonl.ts`.
+4. Live reload probes: `dashboard/src/server/live-reload.ts`, `dashboard/src/shared/models.ts`, `dashboard/src/lib/events.ts`, `dashboard/src/lib/live-refetch.ts`.
+5. UI probes: `dashboard/src/App.tsx`, `dashboard/src/features/review-workflow.tsx`, `dashboard/src/features/graph-explorer.tsx`, `dashboard/src/features/document-viewer.tsx`.
 6. Test probes: `tests/dashboard/live-reload.test.ts`, `tests/dashboard/privacy-regressions.test.tsx`, `tests/dashboard/client-shell.test.tsx`, `tests/dashboard/smoke.test.ts`, `tests/dashboard/package-assets.test.ts`.
 7. Rationale probes: `.plan/planning-dashboard/plan.md`, ADR-0003, and proposal facts for current stack constraints.
 
@@ -77,7 +77,7 @@ flowchart TD
 - **Status:** complete
 - **Depends on:** none
 - **Unlocks:** P1
-- **Primary references:** `file:package.json`, `file:bin/cartographer-dashboard.js`, `file:dashboard/client/vite.config.ts`, `dependency:npm:@tanstack/react-start`, `dependency:npm:@tanstack/react-router`, `dependency:npm:@tanstack/react-db`, `dependency:npm:@tanstack/query-db-collection`, `dependency:npm:@tanstack/react-query`, [F006], [F007], [F008], [F009], [F015]
+- **Primary references:** `file:package.json`, `file:bin/cartographer-dashboard.js`, `file:dashboard/vite.config.ts`, `dependency:npm:@tanstack/react-start`, `dependency:npm:@tanstack/react-router`, `dependency:npm:@tanstack/react-db`, `dependency:npm:@tanstack/query-db-collection`, `dependency:npm:@tanstack/react-query`, [F006], [F007], [F008], [F009], [F015]
 
 #### Objective
 
@@ -126,7 +126,7 @@ Use Context7 docs during implementation for exact current package names and comm
 - **Status:** complete
 - **Depends on:** P0
 - **Unlocks:** P2
-- **Primary references:** `file:bin/cartographer-dashboard.js`, `file:dashboard/server/cli.ts`, `file:dashboard/server/runtime.ts`, `file:dashboard/start/vite.config.ts`, `file:README.md`, [F001], [F006], [F012]
+- **Primary references:** `file:bin/cartographer-dashboard.js`, `file:dashboard/src/server/cli.ts`, `file:dashboard/src/server/runtime.ts`, `file:dashboard/vite.config.ts`, `file:README.md`, [F001], [F006], [F012]
 
 #### Objective
 
@@ -173,7 +173,7 @@ Do not alter dashboard product behavior yet. This phase is runtime plumbing plus
 - **Status:** complete
 - **Depends on:** P1
 - **Unlocks:** P3, P4
-- **Primary references:** `file:dashboard/start/src/server/dashboard-api.ts`, `file:dashboard/server/artifact-reader.ts`, `file:dashboard/server/safety.ts`, `file:dashboard/server/jsonl.ts`, `file:dashboard/shared/models.ts`, `file:tests/dashboard/api-health.test.ts`, `file:tests/dashboard/privacy-regressions.test.tsx`, [F002], [F006], [F012], [F013]
+- **Primary references:** `file:dashboard/src/server/dashboard-api.ts`, `file:dashboard/src/server/artifact-reader.ts`, `file:dashboard/src/server/safety.ts`, `file:dashboard/src/server/jsonl.ts`, `file:dashboard/src/shared/models.ts`, `file:tests/dashboard/api-health.test.ts`, `file:tests/dashboard/privacy-regressions.test.tsx`, [F002], [F006], [F012], [F013]
 
 #### Objective
 
@@ -220,7 +220,7 @@ Prefer extracting pure loader functions from route handlers rather than rewritin
 - **Status:** complete
 - **Depends on:** P2
 - **Unlocks:** P4, P5
-- **Primary references:** `file:dashboard/client/src/lib/api.ts`, `file:dashboard/shared/models.ts`, `dependency:npm:@tanstack/react-db`, `dependency:npm:@tanstack/query-db-collection`, `dependency:npm:@tanstack/react-query`, [F004], [F008], [F009], [F012]
+- **Primary references:** `file:dashboard/src/lib/api.ts`, `file:dashboard/src/shared/models.ts`, `dependency:npm:@tanstack/react-db`, `dependency:npm:@tanstack/query-db-collection`, `dependency:npm:@tanstack/react-query`, [F004], [F008], [F009], [F012]
 
 #### Objective
 
@@ -268,7 +268,7 @@ Do not optimize for granular event patches yet. Correct query-backed reads are t
 - **Status:** complete
 - **Depends on:** P2, P3
 - **Unlocks:** P5
-- **Primary references:** `file:dashboard/server/live-reload.ts`, `file:dashboard/client/src/lib/events.ts`, `file:dashboard/client/src/lib/live-refetch.ts`, `file:dashboard/shared/models.ts`, `file:tests/dashboard/live-reload.test.ts`, `file:tests/dashboard/private-watch.test.ts`, [F003], [F005], [F010], [F013]
+- **Primary references:** `file:dashboard/src/server/live-reload.ts`, `file:dashboard/src/lib/events.ts`, `file:dashboard/src/lib/live-refetch.ts`, `file:dashboard/src/shared/models.ts`, `file:tests/dashboard/live-reload.test.ts`, `file:tests/dashboard/private-watch.test.ts`, [F003], [F005], [F010], [F013]
 
 #### Objective
 
@@ -317,7 +317,7 @@ Preserve existing `LiveReloadEvent` type compatibility unless tests force an add
 - **Status:** complete
 - **Depends on:** P3, P4
 - **Unlocks:** P6
-- **Primary references:** `file:dashboard/client/src/App.tsx`, `file:dashboard/client/src/features/review-workflow.tsx`, `file:dashboard/client/src/features/graph-explorer.tsx`, `file:dashboard/client/src/features/document-viewer.tsx`, `file:dashboard/client/src/lib/api.ts`, `file:dashboard/client/src/lib/events.ts`, `file:dashboard/client/src/lib/live-refetch.ts`, [F004], [F008], [F012], [F013]
+- **Primary references:** `file:dashboard/src/App.tsx`, `file:dashboard/src/features/review-workflow.tsx`, `file:dashboard/src/features/graph-explorer.tsx`, `file:dashboard/src/features/document-viewer.tsx`, `file:dashboard/src/lib/api.ts`, `file:dashboard/src/lib/events.ts`, `file:dashboard/src/lib/live-refetch.ts`, [F004], [F008], [F012], [F013]
 
 #### Objective
 

@@ -8,7 +8,7 @@ Use TanStack DB as the dashboard's realtime client-state layer. Planning artifac
 
 ## Problem Statement
 
-The dashboard already works, but the architecture now has two surfaces to reason about: a Hono server/runtime in `dashboard/server/**` and a Vite React client in `dashboard/client/**` [F001]. The UI then manually keeps overview, selected topic, ADR, error, and active-section state in React hooks and refetches API data when an SSE event arrives [F004]. That creates avoidable coordination code for exactly the sort of server/client state flow TanStack Start and TanStack DB are meant to simplify.
+The dashboard already works, but the architecture now has two surfaces to reason about: a Hono server/runtime in `dashboard/server/**` and a Vite React client in `dashboard/**` [F001]. The UI then manually keeps overview, selected topic, ADR, error, and active-section state in React hooks and refetches API data when an SSE event arrives [F004]. That creates avoidable coordination code for exactly the sort of server/client state flow TanStack Start and TanStack DB are meant to simplify.
 
 The user wants the ergonomics of a single full-stack app with TanStack features, while preserving the dashboard's local, read-only, private-safe operating model [F012]. The core problem is therefore not just swapping dependencies; it is reshaping the dashboard so route ownership, server artifact reads, live filesystem events, and client rendering share one coherent full-stack data model.
 
@@ -38,7 +38,7 @@ The user wants the ergonomics of a single full-stack app with TanStack features,
 
 The current dashboard stack was intentionally local and read-only. It is launched by a package bin, runs a Hono Node runtime, serves a separately built React/Tailwind/shadcn Vite client, and watches `.plan` through Chokidar [F001] [F003]. The current Hono app centralizes read-only GET routes for health, overview, topics, documents, graph data, evidence, files, ADRs, the index manifest, and live events [F002].
 
-Live reload is already well factored. `dashboard/server/live-reload.ts` watches the repository's `.plan` directory, rejects private paths, classifies topic/global/index changes, debounces events, and publishes shared `LiveReloadEvent` records over SSE [F003] [F005]. The client currently consumes those events through an `EventSource` hook and decides which visible resources to refetch [F004].
+Live reload is already well factored. `dashboard/src/server/live-reload.ts` watches the repository's `.plan` directory, rejects private paths, classifies topic/global/index changes, debounces events, and publishes shared `LiveReloadEvent` records over SSE [F003] [F005]. The client currently consumes those events through an `EventSource` hook and decides which visible resources to refetch [F004].
 
 TanStack Start is a plausible replacement for the split server/client boundary because its route files can colocate React components with server HTTP handlers, and its docs cover full-stack server routes and Vite plugin setup [F006] [F007]. TanStack DB is a plausible replacement for ad hoc React state/refetch coordination because it provides collections and live queries, and it can load collection data through query-backed `queryFn`/`getKey` definitions [F008] [F009].
 
@@ -79,7 +79,7 @@ Start with a small runtime spike before moving the dashboard surface. Add the mi
 - a topic deep link such as `/topics/<topic>` works without a separate Vite dev server;
 - the package still supports source-checkout execution and installed package execution.
 
-Relevant files: `file:package.json`, `file:bin/cartographer-dashboard.js`, `file:dashboard/server/cli.ts`, `file:dashboard/server/runtime.ts`, and `file:dashboard/client/vite.config.ts`.
+Relevant files: `file:package.json`, `file:bin/cartographer-dashboard.js`, `file:dashboard/src/server/cli.ts`, `file:dashboard/src/server/runtime.ts`, and `file:dashboard/vite.config.ts`.
 
 ### 2. Reshape the dashboard source layout around Start routes
 
@@ -94,11 +94,11 @@ Create a TanStack Start route tree for the existing dashboard areas:
 | `/api/*` server routes | Hono API routes | Preserve response envelopes while migrating server handlers. |
 | `/api/events` server route | SSE live reload | Keep EventSource-compatible stream for Chokidar events. |
 
-Server-only modules such as `dashboard/server/artifact-reader.ts`, `dashboard/server/safety.ts`, and JSONL readers should be imported by server routes/functions, not bundled into the browser. Client UI modules should move or re-export into a Start-friendly structure without changing behavior first.
+Server-only modules such as `dashboard/src/server/artifact-reader.ts`, `dashboard/src/server/safety.ts`, and JSONL readers should be imported by server routes/functions, not bundled into the browser. Client UI modules should move or re-export into a Start-friendly structure without changing behavior first.
 
 ### 3. Migrate read-only API handlers to Start server routes/functions
 
-Port the current `READ_ONLY_ROUTES` surface from `dashboard/start/src/server/dashboard-api.ts` into TanStack Start server routes or server functions [F002] [F006]. Preserve the `ApiResponse<T>` envelope and shared models so the client and tests can migrate incrementally.
+Port the current `READ_ONLY_ROUTES` surface from `dashboard/src/server/dashboard-api.ts` into TanStack Start server routes or server functions [F002] [F006]. Preserve the `ApiResponse<T>` envelope and shared models so the client and tests can migrate incrementally.
 
 Initial route parity should include:
 

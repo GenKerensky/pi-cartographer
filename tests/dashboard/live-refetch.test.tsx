@@ -1,12 +1,12 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { Badge } from "../../dashboard/client/src/components/ui/badge.js";
+import { Badge } from "../../dashboard/src/components/ui/badge.js";
 import {
 	collectionKeysForLiveReloadEvent,
 	createLiveRefetchPlan,
 	shouldRefetchForLiveEvent,
-} from "../../dashboard/client/src/lib/live-refetch.js";
-import type { LiveReloadEvent } from "../../dashboard/shared/models.ts";
+} from "../../dashboard/src/lib/live-refetch.js";
+import type { LiveReloadEvent } from "../../dashboard/src/shared/models.ts";
 
 const topicEvent: LiveReloadEvent = {
 	id: "reload:1",

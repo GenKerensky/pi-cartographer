@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { readTopicArtifacts } from "../../dashboard/server/artifact-reader.ts";
-import type { AdrCollection, TopicArtifacts } from "../../dashboard/shared/models.ts";
+import { readTopicArtifacts } from "../../dashboard/src/server/artifact-reader.ts";
+import type { AdrCollection, TopicArtifacts } from "../../dashboard/src/shared/models.ts";
 import {
 	buildHighlightChain,
 	filterNormalizedGraph,
 	normalizeTopicGraph,
 	toReactFlowElements,
-} from "../../dashboard/client/src/lib/graph-normalizer.js";
+} from "../../dashboard/src/lib/graph-normalizer.js";
 import { createDashboardFixture } from "./fixtures.ts";
 
 function adrFixture(): AdrCollection {

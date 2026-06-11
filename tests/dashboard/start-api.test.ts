@@ -14,7 +14,7 @@ import type {
 	LiveReloadStatus,
 	TopicArtifacts,
 	TopicGraph,
-} from "../../dashboard/shared/models.ts";
+} from "../../dashboard/src/shared/models.ts";
 import { createDashboardFixture } from "./fixtures.ts";
 
 type StartPayload = {

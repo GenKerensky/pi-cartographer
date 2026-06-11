@@ -1,4 +1,4 @@
-import type { AdrCollection, AdrSummary, GraphNode, TopicArtifacts } from "../../../shared/models.js";
+import type { AdrCollection, AdrSummary, GraphNode, TopicArtifacts } from "../shared/models.js";
 
 export type ReferenceKind = "fact" | "source" | "phase" | "task" | "validation" | "adr" | "file";
 export type ReferenceStatus = "resolved" | "missing" | "ambiguous" | "blocked";

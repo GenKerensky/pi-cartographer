@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { dashboardLoaders, READ_ONLY_ROUTES, routeJson } from "../../dashboard/start/src/server/dashboard-api.ts";
-import type { ApiResponse, DashboardDocument, HealthReport, TopicGraph } from "../../dashboard/shared/models.ts";
+import {
+	dashboardLoaders,
+	dashboardRoot,
+	READ_ONLY_ROUTES,
+	routeJson,
+} from "../../dashboard/src/server/dashboard-api.ts";
+import type { ApiResponse, DashboardDocument, HealthReport, TopicGraph } from "../../dashboard/src/shared/models.ts";
 import { createDashboardFixture } from "./fixtures.ts";
 
 async function responseJson<T>(response: Response): Promise<ApiResponse<T>> {
@@ -19,6 +24,25 @@ async function withDashboardRoot<T>(root: string, run: () => Promise<T>): Promis
 }
 
 describe("dashboard Start API helpers", () => {
+	it("defaults to the parent project root when dev server runs from dashboard app root", async () => {
+		const fixture = createDashboardFixture();
+		const previousRoot = process.env.CARTOGRAPHER_DASHBOARD_ROOT;
+		const previousCwd = process.cwd();
+		delete process.env.CARTOGRAPHER_DASHBOARD_ROOT;
+		const dashboardDir = `${fixture.root}/dashboard`;
+		await import("node:fs/promises").then((fs) => fs.mkdir(dashboardDir));
+		try {
+			process.chdir(dashboardDir);
+			expect(dashboardRoot()).toBe(fixture.root);
+			const overview = await responseJson<{ topics: { id: string }[] }>(await routeJson(dashboardLoaders.overview));
+			expect(overview.data?.topics.map((topic) => topic.id)).toEqual([fixture.topic]);
+		} finally {
+			process.chdir(previousCwd);
+			if (previousRoot === undefined) delete process.env.CARTOGRAPHER_DASHBOARD_ROOT;
+			else process.env.CARTOGRAPHER_DASHBOARD_ROOT = previousRoot;
+		}
+	});
+
 	it("serves health, overview, docs, and graph data from temp fixtures", async () => {
 		const fixture = createDashboardFixture();
 		await withDashboardRoot(fixture.root, async () => {

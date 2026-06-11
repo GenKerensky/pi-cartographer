@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { DashboardShell } from "../../../client/src/App.js";
+import { DashboardShell } from "../App.js";
 
 export const Route = createFileRoute("/")({
 	component: DashboardStartRoute,

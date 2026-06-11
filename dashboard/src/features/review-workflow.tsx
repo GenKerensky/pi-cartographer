@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { AlertTriangle, CheckCircle2, GitBranch, HeartPulse, ReceiptText } from "lucide-react";
-import type { AdrCollection, DashboardOverview, TopicArtifacts, TopicSummary } from "../../../shared/models.js";
+import type { AdrCollection, DashboardOverview, TopicArtifacts, TopicSummary } from "../shared/models.js";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";

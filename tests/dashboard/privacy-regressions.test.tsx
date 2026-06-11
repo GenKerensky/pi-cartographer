@@ -1,13 +1,13 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { dashboardLoaders, READ_ONLY_ROUTES, routeJson } from "../../dashboard/start/src/server/dashboard-api.ts";
-import { readTopicArtifacts } from "../../dashboard/server/artifact-reader.ts";
-import type { ApiResponse, TopicGraph } from "../../dashboard/shared/models.ts";
-import { GraphExplorer } from "../../dashboard/client/src/features/graph-explorer.js";
-import { DocumentViewer } from "../../dashboard/client/src/features/document-viewer.js";
-import { privateOrOutsideBlockedMessage, renderMarkdownToHtml } from "../../dashboard/client/src/lib/markdown.js";
-import { createReferenceIndex, resolveReference } from "../../dashboard/client/src/lib/reference-resolver.js";
-import { createLiveReloadService } from "../../dashboard/server/live-reload.ts";
+import { dashboardLoaders, READ_ONLY_ROUTES, routeJson } from "../../dashboard/src/server/dashboard-api.ts";
+import { readTopicArtifacts } from "../../dashboard/src/server/artifact-reader.ts";
+import type { ApiResponse, TopicGraph } from "../../dashboard/src/shared/models.ts";
+import { GraphExplorer } from "../../dashboard/src/features/graph-explorer.js";
+import { DocumentViewer } from "../../dashboard/src/features/document-viewer.js";
+import { privateOrOutsideBlockedMessage, renderMarkdownToHtml } from "../../dashboard/src/lib/markdown.js";
+import { createReferenceIndex, resolveReference } from "../../dashboard/src/lib/reference-resolver.js";
+import { createLiveReloadService } from "../../dashboard/src/server/live-reload.ts";
 import { createDashboardFixture } from "./fixtures.ts";
 
 async function json<T>(response: Response): Promise<ApiResponse<T>> {

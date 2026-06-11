@@ -11,7 +11,7 @@
     "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
-      "@/*": ["dashboard/client/src/*.ts", "dashboard/client/src/*.tsx"]
+      "@/*": ["dashboard/src/*.ts", "dashboard/src/*.tsx"]
     },
     "types": ["node", "vitest", "vite/client"]
   },

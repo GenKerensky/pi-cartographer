@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Background, Controls, Handle, MiniMap, Position, ReactFlow, type NodeProps, type Node } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { AlertTriangle, GitBranch, Search } from "lucide-react";
-import type { AdrCollection, TopicArtifacts } from "../../../shared/models.js";
+import type { AdrCollection, TopicArtifacts } from "../shared/models.js";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";

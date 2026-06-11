@@ -1,11 +1,11 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { flushSync } from "react-dom";
 import { createRoot, type Root } from "react-dom/client";
-import { DashboardShell } from "../../dashboard/client/src/App.js";
-import type { DashboardOverview, TopicArtifacts } from "../../dashboard/shared/models.js";
-import { Button } from "../../dashboard/client/src/components/ui/button.js";
-import { Card, CardContent, CardHeader, CardTitle } from "../../dashboard/client/src/components/ui/card.js";
-import "../../dashboard/client/src/styles/globals.css";
+import { DashboardShell } from "../../dashboard/src/App.js";
+import type { DashboardOverview, TopicArtifacts } from "../../dashboard/src/shared/models.js";
+import { Button } from "../../dashboard/src/components/ui/button.js";
+import { Card, CardContent, CardHeader, CardTitle } from "../../dashboard/src/components/ui/card.js";
+import "../../dashboard/src/styles/globals.css";
 
 const roots: Root[] = [];
 const containers: HTMLElement[] = [];

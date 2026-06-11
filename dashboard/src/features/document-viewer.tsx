@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Copy, FileWarning } from "lucide-react";
-import type { DashboardDocument } from "../../../shared/models.js";
+import type { DashboardDocument } from "../shared/models.js";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";

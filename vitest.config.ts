@@ -1,7 +1,7 @@
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitest/config";
 
-const clientSrc = fileURLToPath(new URL("./dashboard/client/src", import.meta.url));
+const clientSrc = fileURLToPath(new URL("./dashboard/src", import.meta.url));
 
 export default defineConfig({
 	resolve: {

@@ -11,7 +11,7 @@ import {
 	dashboardTopicGraphQueryKey,
 	dashboardTopicsQueryKey,
 } from "./dashboard-db.js";
-import type { LiveReloadEvent } from "../../../shared/models.js";
+import type { LiveReloadEvent } from "../shared/models.js";
 
 export type VisibleDashboardResource = {
 	kind: "overview" | "topic" | "document" | "health";

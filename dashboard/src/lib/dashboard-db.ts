@@ -15,7 +15,7 @@ import type {
 	TopicArtifacts,
 	TopicGraph,
 	TopicSummary,
-} from "../../../shared/models.js";
+} from "../shared/models.js";
 import { dashboardApi } from "./api.js";
 
 type RawCollection = Collection;

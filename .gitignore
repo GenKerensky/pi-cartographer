@@ -29,9 +29,8 @@ pnpm-debug.log*
 .plan/_runs/
 
 # Dashboard build output (regenerated during packaging checks)
-dashboard/client/dist/
-dashboard/start/.output/
-dashboard/start/node_modules/
+dashboard/.output/
+dashboard/node_modules/
 tests/dashboard/__screenshots__/
 .vitest-attachments/
 

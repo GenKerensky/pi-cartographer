@@ -8,7 +8,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { createDashboardFixture } from "./fixtures.ts";
 
 const cliPath = path.resolve("bin", "cartographer-dashboard.js");
-const hasBuiltAssets = fs.existsSync("dashboard/start/.output/server/index.mjs");
+const hasBuiltAssets = fs.existsSync("dashboard/.output/server/index.mjs");
 const children: ChildProcessWithoutNullStreams[] = [];
 
 type StartedDashboard = {

@@ -1,5 +1,7 @@
-import { apiFailure, apiSuccess } from "../../../shared/api.js";
-import type { DocumentKind, LiveReloadStatus } from "../../../shared/models.js";
+import fs from "node:fs";
+import path from "node:path";
+import { apiFailure, apiSuccess } from "../shared/api.js";
+import type { DocumentKind, LiveReloadStatus } from "../shared/models.js";
 import {
 	discoverTopics,
 	readAdrCollection,
@@ -12,13 +14,9 @@ import {
 	readTopicDocument,
 	readTopicDocuments,
 	readTopicGraph,
-} from "../../../server/artifact-reader.js";
-import {
-	createLiveReloadService,
-	createLiveReloadStream,
-	type LiveReloadService,
-} from "../../../server/live-reload.js";
-import { PathSafetyError } from "../../../server/safety.js";
+} from "./artifact-reader.js";
+import { createLiveReloadService, createLiveReloadStream, type LiveReloadService } from "./live-reload.js";
+import { PathSafetyError } from "./safety.js";
 
 export type ReadOnlyRouteDefinition = {
 	method: "GET";
@@ -44,7 +42,11 @@ export const READ_ONLY_ROUTES: ReadOnlyRouteDefinition[] = [
 ];
 
 export function dashboardRoot(): string {
-	return process.env.CARTOGRAPHER_DASHBOARD_ROOT ?? process.cwd();
+	if (process.env.CARTOGRAPHER_DASHBOARD_ROOT) return process.env.CARTOGRAPHER_DASHBOARD_ROOT;
+	const cwd = process.cwd();
+	const parent = path.dirname(cwd);
+	if (path.basename(cwd) === "dashboard" && fs.existsSync(path.join(parent, ".plan"))) return parent;
+	return cwd;
 }
 
 function nodeErrorCode(error: unknown): string | undefined {

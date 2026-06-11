@@ -22,6 +22,6 @@
 {"from":"F014","to":"S014","type":"supported_by","evidence":"Project AGENTS.md requires tests to use temporary/mock project roots instead of the real .plan directory."}
 {"from":"F015","to":"S005","type":"supported_by","evidence":"package.json lacks the proposed TanStack packages; focused rg returned no matches elsewhere."}
 {"from":"F001","to":"file:package.json","type":"applies_to","evidence":"Manifest will need dependency/script/bin updates."}
-{"from":"F003","to":"file:dashboard/server/live-reload.ts","type":"applies_to","evidence":"Existing watcher should become the server-side realtime event source."}
-{"from":"F004","to":"file:dashboard/client/src/App.tsx","type":"applies_to","evidence":"Manual state and refetch effects should be replaced by collection/live-query state."}
+{"from":"F003","to":"file:dashboard/src/server/live-reload.ts","type":"applies_to","evidence":"Existing watcher should become the server-side realtime event source."}
+{"from":"F004","to":"file:dashboard/src/App.tsx","type":"applies_to","evidence":"Manual state and refetch effects should be replaced by collection/live-query state."}
 {"from":"F011","to":"file:docs/adr/0003-use-local-dashboard-stack-for-cartographer-planning-ui.md","type":"applies_to","evidence":"Architecture change should be recorded against the accepted dashboard stack ADR."}

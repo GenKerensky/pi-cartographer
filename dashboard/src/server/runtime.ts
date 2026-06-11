@@ -97,7 +97,7 @@ export type DashboardStopResult = {
 };
 
 const activeHandles = new Map<string, DashboardServerHandle>();
-const START_SERVER_ENTRY_PATH = fileURLToPath(new URL("../start/.output/server/index.mjs", import.meta.url));
+const START_SERVER_ENTRY_PATH = fileURLToPath(new URL("../../.output/server/index.mjs", import.meta.url));
 
 function nodeErrorCode(error: unknown): string | undefined {
 	return typeof error === "object" && error !== null && "code" in error
@@ -535,8 +535,8 @@ async function assertSafeToSignal(metadata: DashboardServerMetadata): Promise<vo
 	if (
 		command &&
 		!command.includes("cartographer-dashboard") &&
-		!command.includes("dashboard/server/cli") &&
-		!command.includes("dashboard/start/.output/server/index.mjs")
+		!command.includes("dashboard/src/server/cli") &&
+		!command.includes("dashboard/.output/server/index.mjs")
 	) {
 		throw new DashboardRuntimeError(
 			"unsafe-pid",

@@ -1,10 +1,10 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { readTopicArtifacts } from "../../dashboard/server/artifact-reader.ts";
-import { DocumentViewer } from "../../dashboard/client/src/features/document-viewer.js";
-import { privateOrOutsideBlockedMessage, renderMarkdownToHtml } from "../../dashboard/client/src/lib/markdown.js";
-import { createReferenceIndex } from "../../dashboard/client/src/lib/reference-resolver.js";
-import type { DashboardDocument } from "../../dashboard/shared/models.ts";
+import { readTopicArtifacts } from "../../dashboard/src/server/artifact-reader.ts";
+import { DocumentViewer } from "../../dashboard/src/features/document-viewer.js";
+import { privateOrOutsideBlockedMessage, renderMarkdownToHtml } from "../../dashboard/src/lib/markdown.js";
+import { createReferenceIndex } from "../../dashboard/src/lib/reference-resolver.js";
+import type { DashboardDocument } from "../../dashboard/src/shared/models.ts";
 import { createDashboardFixture } from "./fixtures.ts";
 
 describe("dashboard Markdown and document viewer", () => {

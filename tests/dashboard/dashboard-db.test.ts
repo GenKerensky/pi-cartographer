@@ -14,7 +14,7 @@ import {
 	writeLatestLiveReloadEvent,
 	writeLiveStatus,
 	useOverviewMetrics,
-} from "../../dashboard/client/src/lib/dashboard-db.js";
+} from "../../dashboard/src/lib/dashboard-db.js";
 import type {
 	DashboardOverview,
 	HealthIssue,
@@ -22,7 +22,7 @@ import type {
 	LiveReloadStatus,
 	TopicArtifacts,
 	TopicSummary,
-} from "../../dashboard/shared/models.ts";
+} from "../../dashboard/src/shared/models.ts";
 
 describe("dashboard TanStack DB collections", () => {
 	it("uses stable query keys for overview and topic collections", () => {

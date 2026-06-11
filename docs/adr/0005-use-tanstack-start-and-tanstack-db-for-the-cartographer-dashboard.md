@@ -63,8 +63,9 @@ Validated implementation evidence shows the Start runtime can serve the full das
 
 ## Consequences
 
-- Normal dashboard startup depends on built dashboard/start/.output/server/index.mjs and package checks assert that output is packed.
-- Package-level dashboard scripts delegate to TanStack Start defaults from `dashboard/start`: `vite dev`, `vite build`, `node .output/server/index.mjs`, and `vite preview`.
+- Normal dashboard startup depends on built dashboard/.output/server/index.mjs and package checks assert that output is packed.
+- Package-level dashboard scripts delegate to TanStack Start defaults from `dashboard`: `vite dev`, `vite build`, `node .output/server/index.mjs`, and `vite preview`.
+- Dashboard UI, routes, server helpers, shared models, and CLI runtime helpers are consolidated under `dashboard/src/**`; the old `dashboard/client`, `dashboard/server`, `dashboard/shared`, and `dashboard/start` source trees are removed.
 - TanStack DB is a read-only reactive cache/projection over planning artifacts, not a write-capable dashboard database.
 - Hono dependencies and modules are removed; route-contract tests target TanStack Start server helpers and route behavior instead.
 

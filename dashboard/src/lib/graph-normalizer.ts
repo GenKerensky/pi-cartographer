@@ -6,7 +6,7 @@ import type {
 	JsonValue,
 	ReceiptSummary,
 	TopicArtifacts,
-} from "../../../shared/models.js";
+} from "../shared/models.js";
 
 export type GraphLayer = "map" | "facts" | "plan" | "receipts" | "context" | "evidence" | "adr";
 

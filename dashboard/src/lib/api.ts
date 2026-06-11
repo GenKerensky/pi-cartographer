@@ -9,7 +9,7 @@ import type {
 	TopicArtifacts,
 	TopicGraph,
 	TopicSummary,
-} from "../../../shared/models.js";
+} from "../shared/models.js";
 
 async function getJson<T>(path: string): Promise<T> {
 	const response = await fetch(path, { headers: { accept: "application/json" } });

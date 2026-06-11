@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { writeLatestLiveReloadEvent, writeLiveStatus } from "./dashboard-db.js";
-import type { LiveReloadEvent, LiveReloadStatus } from "../../../shared/models.js";
+import type { LiveReloadEvent, LiveReloadStatus } from "../shared/models.js";
 
 export type LiveConnectionState = "connected" | "reconnecting" | "disconnected" | "manual-refresh";
 

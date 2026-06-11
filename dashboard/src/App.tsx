@@ -21,7 +21,7 @@ import {
 } from "@/lib/dashboard-db";
 import { useLiveConnection, type LiveConnectionState } from "@/lib/events";
 import { invalidateCollectionsForLiveReloadEvent } from "@/lib/live-refetch";
-import type { AdrCollection, DashboardOverview, TopicArtifacts } from "../../shared/models.js";
+import type { AdrCollection, DashboardOverview, TopicArtifacts } from "./shared/models.js";
 
 const navigation: { id: DashboardSectionId; label: string; icon: typeof Activity; status: "ready" }[] = [
 	{ id: "overview", label: "Overview", icon: Activity, status: "ready" },

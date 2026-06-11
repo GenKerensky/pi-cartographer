@@ -54,22 +54,22 @@
         "path": "tests/dashboard/package-assets.test.ts"
       },
       {
-        "path": "dashboard/server/runtime.ts"
+        "path": "dashboard/src/server/runtime.ts"
       },
       {
-        "path": "dashboard/server/live-reload.ts"
+        "path": "dashboard/src/server/live-reload.ts"
       },
       {
-        "path": "dashboard/server/index.ts"
+        "path": "dashboard/src/server/index.ts"
       },
       {
-        "path": "dashboard/start/src/server/dashboard-api.ts"
+        "path": "dashboard/src/server/dashboard-api.ts"
       },
       {
-        "path": "dashboard/start/src/routes/api/**"
+        "path": "dashboard/src/routes/api/**"
       },
       {
-        "path": "dashboard/start/vite.config.ts"
+        "path": "dashboard/vite.config.ts"
       },
       {
         "path": "docs/adr/**"
@@ -104,13 +104,13 @@
     ],
     "read_only": [
       {
-        "path": "dashboard/server/cli.ts"
+        "path": "dashboard/src/server/cli.ts"
       },
       {
-        "path": "dashboard/server/artifact-reader.ts"
+        "path": "dashboard/src/server/artifact-reader.ts"
       },
       {
-        "path": "dashboard/server/safety.ts"
+        "path": "dashboard/src/server/safety.ts"
       },
       {
         "path": "dashboard/client/**"
@@ -155,6 +155,6 @@
     "expected_first_response": ["current_phase", "next_action", "files_to_inspect"],
     "must_ignore": ["prior chat speculation", "stale generated snippets"]
   },
-  "updated_at": "2026-06-11T05:55:40Z",
-  "stale_reason": "Receipts updated for dashboard Tailwind source fix after script cleanup."
+  "updated_at": "2026-06-11T06:10:37Z",
+  "stale_reason": "Full dashboard source layout migration and validation receipts updated; source refs should be refreshed before future resume."
 }
