@@ -168,6 +168,30 @@ type CartographerTransitionParams = OutputShapeParams & {
 	ci?: boolean;
 };
 
+type CartographerProposalParams = OutputShapeParams & {
+	action: "init" | "finalize" | "adr-sync";
+	root?: string;
+	topic?: string;
+	title?: string;
+	summary?: string;
+	adrRequired?: boolean;
+	adrReason?: string;
+	adrOptionsStatus?: string;
+	adrToolMode?: string;
+	overrideRationale?: string;
+};
+
+type CartographerFactParams = OutputShapeParams & {
+	action: "add-source" | "add-fact" | "support-fact";
+	root?: string;
+	topic?: string;
+	title?: string;
+	url?: string;
+	factId?: string;
+	sourceId?: string;
+	id?: string;
+};
+
 type CartographerEvidenceParams = OutputShapeParams & {
 	action: "import" | "list";
 	root?: string;
@@ -1265,6 +1289,104 @@ export default function cartographerTools(pi: PiApi): void {
 				outputPath: params.outputPath,
 				raw: params.raw,
 				label: `cartographer-transition-${params.action}`,
+			});
+		},
+	});
+
+	pi.registerTool({
+		name: "cartographer_proposal",
+		label: "Cartographer Proposal",
+		description: "Initialize, finalize, and synchronize ADR metadata for proposal artifacts.",
+		promptSnippet: "Create/reconcile proposal artifacts and route proposal finalization through deterministic gates",
+		promptGuidelines: [
+			"Use init before proposal drafting instead of manually creating topic files.",
+			"Use adr-sync after cartographer_adr evaluate or with an explicit override rationale.",
+			"Use finalize only after deterministic validation and a proposal auditor PASS or approved fallback exists.",
+		],
+		parameters: Type.Object({
+			action: Type.Union([Type.Literal("init"), Type.Literal("finalize"), Type.Literal("adr-sync")]),
+			root: Type.Optional(Type.String({ description: "Project root. Defaults to current working directory." })),
+			topic: Type.String({ description: "Cartographer topic under .plan/." }),
+			title: Type.Optional(Type.String({ description: "Proposal title for init." })),
+			summary: Type.Optional(Type.String({ description: "Finalize/context summary." })),
+			adrRequired: Type.Optional(Type.Boolean({ description: "Whether ADR is required." })),
+			adrReason: Type.Optional(Type.String({ description: "ADR evaluation reason." })),
+			adrOptionsStatus: Type.Optional(Type.String({ description: "ADR options status." })),
+			adrToolMode: Type.Optional(Type.String({ description: "ADR tool mode." })),
+			overrideRationale: Type.Optional(Type.String({ description: "Explicit override rationale." })),
+			maxOutputChars: Type.Optional(Type.Number({ description: "Inline output budget." })),
+			outputPath: Type.Optional(Type.String({ description: "Optional full-output path for oversized output." })),
+			raw: Type.Optional(Type.Boolean({ description: "Return raw command output instead of a compact receipt." })),
+		}),
+		async execute(_toolCallId, rawParams, signal) {
+			const params = rawParams as CartographerProposalParams;
+			const command = params.action === "adr-sync" ? "proposal-adr-sync" : `proposal-${params.action}`;
+			const args = [
+				command,
+				"--root",
+				params.root || process.cwd(),
+				"--topic",
+				requireString(params.topic, "cartographer_proposal requires topic"),
+				"--json",
+			];
+			if (params.title) args.push("--title", params.title);
+			if (params.summary) args.push("--summary", params.summary);
+			if (params.adrRequired !== undefined) args.push("--adr-required", params.adrRequired ? "true" : "false");
+			if (params.adrReason) args.push("--adr-reason", params.adrReason);
+			if (params.adrOptionsStatus) args.push("--adr-options-status", params.adrOptionsStatus);
+			if (params.adrToolMode) args.push("--adr-tool-mode", params.adrToolMode);
+			if (params.overrideRationale) args.push("--override-rationale", params.overrideRationale);
+			return runCommand("node", ["--experimental-strip-types", workflowScript, ...args], signal, {
+				maxOutputChars: params.maxOutputChars,
+				outputPath: params.outputPath,
+				raw: params.raw,
+				label: `cartographer-proposal-${params.action}`,
+			});
+		},
+	});
+
+	pi.registerTool({
+		name: "cartographer_fact",
+		label: "Cartographer Fact",
+		description: "Add source-backed facts and supported_by edges to proposal fact graphs.",
+		promptSnippet: "Append source-backed facts through deterministic JSONL upserts",
+		promptGuidelines: [
+			"Use add-source, add-fact, and support-fact instead of manually editing fact JSONL.",
+			"Every durable fact should have a supported_by edge to a source before proposal finalization.",
+		],
+		parameters: Type.Object({
+			action: Type.Union([Type.Literal("add-source"), Type.Literal("add-fact"), Type.Literal("support-fact")]),
+			root: Type.Optional(Type.String({ description: "Project root. Defaults to current working directory." })),
+			topic: Type.String({ description: "Cartographer topic under .plan/." }),
+			title: Type.Optional(Type.String({ description: "Source or fact title." })),
+			url: Type.Optional(Type.String({ description: "Optional source URL." })),
+			factId: Type.Optional(Type.String({ description: "Fact node id for support-fact." })),
+			sourceId: Type.Optional(Type.String({ description: "Source node id." })),
+			id: Type.Optional(Type.String({ description: "Optional explicit node id." })),
+			maxOutputChars: Type.Optional(Type.Number({ description: "Inline output budget." })),
+			outputPath: Type.Optional(Type.String({ description: "Optional full-output path for oversized output." })),
+			raw: Type.Optional(Type.Boolean({ description: "Return raw command output instead of a compact receipt." })),
+		}),
+		async execute(_toolCallId, rawParams, signal) {
+			const params = rawParams as CartographerFactParams;
+			const args = [
+				`fact-${params.action}`,
+				"--root",
+				params.root || process.cwd(),
+				"--topic",
+				requireString(params.topic, "cartographer_fact requires topic"),
+				"--json",
+			];
+			if (params.title) args.push("--title", params.title);
+			if (params.url) args.push("--url", params.url);
+			if (params.factId) args.push("--fact-id", params.factId);
+			if (params.sourceId) args.push("--source-id", params.sourceId);
+			if (params.id) args.push("--id", params.id);
+			return runCommand("node", ["--experimental-strip-types", workflowScript, ...args], signal, {
+				maxOutputChars: params.maxOutputChars,
+				outputPath: params.outputPath,
+				raw: params.raw,
+				label: `cartographer-fact-${params.action}`,
 			});
 		},
 	});

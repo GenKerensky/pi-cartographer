@@ -20,16 +20,16 @@
 {"id":"validation:P1.V2","type":"validation","validation_id":"P1.V2","phase_id":"P1","title":"Run receipt schema tests","status":"complete","source":"plan.md"}
 {"id":"validation:P1.V3","type":"validation","validation_id":"P1.V3","phase_id":"P1","title":"Run context-pack tests","status":"complete","source":"plan.md"}
 {"id":"validation:P1.V4","type":"validation","validation_id":"P1.V4","phase_id":"P1","title":"Run npm run check:scripts","status":"complete","source":"plan.md","command":"npm run check:scripts"}
-{"id":"phase:P2","type":"phase","phase_id":"P2","title":"Proposal and Fact Wrappers","status":"pending","depends_on":["P1"],"source":"plan.md","references":["F019","F020","F023","F027"]}
-{"id":"task:P2.T1","type":"task","task_id":"P2.T1","phase_id":"P2","title":"Implement proposal init","status":"pending","source":"plan.md"}
-{"id":"task:P2.T2","type":"task","task_id":"P2.T2","phase_id":"P2","title":"Implement fact source/fact/support wrappers","status":"pending","source":"plan.md"}
-{"id":"task:P2.T3","type":"task","task_id":"P2.T3","phase_id":"P2","title":"Implement proposal ADR sync","status":"pending","source":"plan.md"}
-{"id":"task:P2.T4","type":"task","task_id":"P2.T4","phase_id":"P2","title":"Implement proposal finalize","status":"pending","source":"plan.md"}
-{"id":"task:P2.T5","type":"task","task_id":"P2.T5","phase_id":"P2","title":"Register proposal/fact wrappers","status":"pending","source":"plan.md"}
-{"id":"validation:P2.V1","type":"validation","validation_id":"P2.V1","phase_id":"P2","title":"Run proposal init tests","status":"pending","source":"plan.md"}
-{"id":"validation:P2.V2","type":"validation","validation_id":"P2.V2","phase_id":"P2","title":"Run fact wrapper tests","status":"pending","source":"plan.md"}
-{"id":"validation:P2.V3","type":"validation","validation_id":"P2.V3","phase_id":"P2","title":"Run proposal finalize tests","status":"pending","source":"plan.md"}
-{"id":"validation:P2.V4","type":"validation","validation_id":"P2.V4","phase_id":"P2","title":"Run npm run check:scripts","status":"pending","source":"plan.md","command":"npm run check:scripts"}
+{"id":"phase:P2","type":"phase","phase_id":"P2","title":"Proposal and Fact Wrappers","status":"complete","depends_on":["P1"],"source":"plan.md","references":["F019","F020","F023","F027"]}
+{"id":"task:P2.T1","type":"task","task_id":"P2.T1","phase_id":"P2","title":"Implement proposal init","status":"complete","source":"plan.md"}
+{"id":"task:P2.T2","type":"task","task_id":"P2.T2","phase_id":"P2","title":"Implement fact source/fact/support wrappers","status":"complete","source":"plan.md"}
+{"id":"task:P2.T3","type":"task","task_id":"P2.T3","phase_id":"P2","title":"Implement proposal ADR sync","status":"complete","source":"plan.md"}
+{"id":"task:P2.T4","type":"task","task_id":"P2.T4","phase_id":"P2","title":"Implement proposal finalize","status":"complete","source":"plan.md"}
+{"id":"task:P2.T5","type":"task","task_id":"P2.T5","phase_id":"P2","title":"Register proposal/fact wrappers","status":"complete","source":"plan.md"}
+{"id":"validation:P2.V1","type":"validation","validation_id":"P2.V1","phase_id":"P2","title":"Run proposal init tests","status":"complete","source":"plan.md"}
+{"id":"validation:P2.V2","type":"validation","validation_id":"P2.V2","phase_id":"P2","title":"Run fact wrapper tests","status":"complete","source":"plan.md"}
+{"id":"validation:P2.V3","type":"validation","validation_id":"P2.V3","phase_id":"P2","title":"Run proposal finalize tests","status":"complete","source":"plan.md"}
+{"id":"validation:P2.V4","type":"validation","validation_id":"P2.V4","phase_id":"P2","title":"Run npm run check:scripts","status":"complete","source":"plan.md","command":"npm run check:scripts"}
 {"id":"phase:P3","type":"phase","phase_id":"P3","title":"Plan Graph, Status, and Validation Wrappers","status":"pending","depends_on":["P1"],"source":"plan.md","references":["F021","F023","F024","F026"]}
 {"id":"task:P3.T1","type":"task","task_id":"P3.T1","phase_id":"P3","title":"Implement plan graph generation","status":"pending","source":"plan.md"}
 {"id":"task:P3.T2","type":"task","task_id":"P3.T2","phase_id":"P3","title":"Implement plan finalize","status":"pending","source":"plan.md"}

@@ -348,6 +348,12 @@ function usage(exitCode: number): never {
 	console.log(`Usage:
   ${script} receipt-append --root <root> --topic <topic> --kind <kind> --summary <text> [--phase-id <id>] [--receipt-id <id>] [--json]
   ${script} context-pack-create --root <root> --topic <topic> --phase-id <id> --summary <text> [--artifact <path>] [--validation-receipt <id>] [--json]
+  ${script} proposal-init --root <root> --topic <topic> [--title <title>] [--json]
+  ${script} proposal-adr-sync --root <root> --topic <topic> --adr-required <true|false> --adr-reason <text> [--adr-options-status <text>] [--adr-tool-mode <text>] [--override-rationale <text>] [--json]
+  ${script} proposal-finalize --root <root> --topic <topic> [--summary <text>] [--json]
+  ${script} fact-add-source --root <root> --topic <topic> --title <text> [--url <url>] [--json]
+  ${script} fact-add-fact --root <root> --topic <topic> --title <text> [--source-id <id>] [--json]
+  ${script} fact-support-fact --root <root> --topic <topic> --fact-id <id> --source-id <id> [--json]
   ${script} transition-status --root <root> --topic <topic> [--json]
   ${script} transition-request-approval --root <root> --topic <topic> --gate <gate> [--phase-id <id>] [--summary <text>] [--json]
   ${script} transition-approve --root <root> --topic <topic> --gate <gate> --summary <text> [--phase-id <id>] [--approved-by <name>] [--ci] [--json]
@@ -423,7 +429,10 @@ function safeIdPart(value: string): string {
 
 function ensureTopicArtifacts(root: string, topic: string): void {
 	const dir = topicDir(root, topic);
-	if (!fs.existsSync(path.join(dir, "plan.md"))) throw new Error(`Missing plan.md for topic ${topic}`);
+	if (!fs.existsSync(dir)) throw new Error(`Missing topic directory for ${topic}`);
+	if (!fs.existsSync(path.join(dir, "plan.md")) && !fs.existsSync(path.join(dir, "proposal.md"))) {
+		throw new Error(`Missing plan.md or proposal.md for topic ${topic}`);
+	}
 	for (const file of ["receipts.jsonl", "context-packs.jsonl"]) {
 		const fullPath = path.join(dir, file);
 		if (!fs.existsSync(fullPath)) fs.writeFileSync(fullPath, "", "utf8");
@@ -529,10 +538,295 @@ export function upsertContextPack(params: {
 	return nextRecord;
 }
 
+
+const PROPOSAL_SKELETON = `## Description
+
+## Problem Statement
+
+## Goals
+
+## Non-Goals
+
+## Background
+
+## Viability
+
+## ADR Metadata
+
+- \`adr_required\`: false
+- \`adr_reason\`: Routine implementation change unless evaluation proves durable architectural significance.
+- \`adr_options_status\`: not-applicable
+- \`adr_tool_mode\`: evaluate-only
+
+## Design
+`;
+
+function proposalPath(root: string, topic: string): string {
+	return path.join(topicDir(root, topic), "proposal.md");
+}
+
+function factsNodesPath(root: string, topic: string): string {
+	return path.join(topicDir(root, topic), "facts.nodes.jsonl");
+}
+
+function factsEdgesPath(root: string, topic: string): string {
+	return path.join(topicDir(root, topic), "facts.edges.jsonl");
+}
+
+function ensureProposalArtifacts(root: string, topic: string, title?: string): void {
+	const dir = topicDir(root, topic);
+	fs.mkdirSync(path.join(dir, "evidence"), { recursive: true });
+	const proposalFile = proposalPath(root, topic);
+	if (!fs.existsSync(proposalFile)) {
+		fs.writeFileSync(proposalFile, `# ${title || topic} Proposal\n\n${PROPOSAL_SKELETON}\n`, "utf8");
+	} else {
+		let text = fs.readFileSync(proposalFile, "utf8");
+		for (const heading of [
+			"## Description",
+			"## Problem Statement",
+			"## Goals",
+			"## Non-Goals",
+			"## Background",
+			"## Viability",
+			"## ADR Metadata",
+			"## Design",
+		]) {
+			if (!text.includes(heading)) text += `\n${heading}\n`;
+		}
+		fs.writeFileSync(proposalFile, text.endsWith("\n") ? text : `${text}\n`, "utf8");
+	}
+	for (const file of [
+		"map.nodes.jsonl",
+		"map.edges.jsonl",
+		"facts.nodes.jsonl",
+		"facts.edges.jsonl",
+		"receipts.jsonl",
+		"context-packs.jsonl",
+	]) {
+		const fullPath = path.join(dir, file);
+		if (!fs.existsSync(fullPath)) fs.writeFileSync(fullPath, "", "utf8");
+	}
+}
+
+export function initProposal(params: { root: string; topic: string; title?: string }): Record<string, unknown> {
+	ensureProposalArtifacts(params.root, params.topic, params.title);
+	return {
+		id: `proposal:${params.topic}`,
+		topic: params.topic,
+		proposal: path.relative(params.root, proposalPath(params.root, params.topic)),
+		facts_nodes: path.relative(params.root, factsNodesPath(params.root, params.topic)),
+		facts_edges: path.relative(params.root, factsEdgesPath(params.root, params.topic)),
+		evidence_dir: path.relative(params.root, path.join(topicDir(params.root, params.topic), "evidence")),
+	};
+}
+
+function nextSequentialId(records: Record<string, unknown>[], prefix: "S" | "F"): string {
+	const max = records.reduce((value, record) => {
+		const id = optionalString(record.id);
+		const match = id.match(new RegExp(`^${prefix}(\\d+)$`));
+		return match ? Math.max(value, Number(match[1])) : value;
+	}, 0);
+	return `${prefix}${String(max + 1).padStart(3, "0")}`;
+}
+
+function upsertJsonlRecord(filePath: string, record: Record<string, unknown>, keys = ["id"]): Record<string, unknown> {
+	const records = readJsonlRecords(filePath);
+	const index = records.findIndex((existing) => keys.every((key) => existing[key] === record[key]));
+	if (index >= 0) records[index] = { ...records[index], ...record };
+	else records.push(record);
+	writeJsonlRecordsAtomic(filePath, records);
+	return index >= 0 ? records[index] : record;
+}
+
+export function addFactSource(params: { root: string; topic: string; title: string; url?: string; id?: string }): Record<string, unknown> {
+	ensureProposalArtifacts(params.root, params.topic);
+	const filePath = factsNodesPath(params.root, params.topic);
+	const records = readJsonlRecords(filePath);
+	const id = params.id || nextSequentialId(records, "S");
+	return upsertJsonlRecord(filePath, {
+		id,
+		type: "source",
+		title: assertNonEmptyString(params.title, "title"),
+		url: params.url,
+		created_at: workflowNow(),
+	});
+}
+
+export function addFact(params: {
+	root: string;
+	topic: string;
+	title: string;
+	sourceId?: string;
+	id?: string;
+}): Record<string, unknown> {
+	ensureProposalArtifacts(params.root, params.topic);
+	const nodeFile = factsNodesPath(params.root, params.topic);
+	const records = readJsonlRecords(nodeFile);
+	const id = params.id || nextSequentialId(records, "F");
+	const fact = upsertJsonlRecord(nodeFile, {
+		id,
+		type: "fact",
+		title: assertNonEmptyString(params.title, "title"),
+		created_at: workflowNow(),
+	});
+	if (params.sourceId) supportFact({ root: params.root, topic: params.topic, factId: id, sourceId: params.sourceId });
+	return fact;
+}
+
+export function supportFact(params: { root: string; topic: string; factId: string; sourceId: string }): Record<string, unknown> {
+	ensureProposalArtifacts(params.root, params.topic);
+	const nodes = readJsonlRecords(factsNodesPath(params.root, params.topic));
+	const fact = nodes.find((node) => node.id === params.factId && node.type === "fact");
+	if (!fact) throw new Error(`Fact node does not exist: ${params.factId}`);
+	const source = nodes.find((node) => node.id === params.sourceId && node.type === "source");
+	if (!source) throw new Error(`Source node does not exist: ${params.sourceId}`);
+	return upsertJsonlRecord(
+		factsEdgesPath(params.root, params.topic),
+		{ from: params.factId, to: params.sourceId, type: "supported_by" },
+		["from", "to", "type"],
+	);
+}
+
+function replaceAdrMetadata(text: string, metadata: Record<string, string>): string {
+	const block = [
+		"## ADR Metadata",
+		"",
+		`- \`adr_required\`: ${metadata.adr_required}`,
+		`- \`adr_reason\`: ${metadata.adr_reason}`,
+		`- \`adr_options_status\`: ${metadata.adr_options_status}`,
+		`- \`adr_tool_mode\`: ${metadata.adr_tool_mode}`,
+		metadata.override_rationale ? `- \`adr_override_rationale\`: ${metadata.override_rationale}` : undefined,
+	]
+		.filter(Boolean)
+		.join("\n");
+	const pattern = /## ADR Metadata\n[\s\S]*?(?=\n## |$)/;
+	if (pattern.test(text)) return text.replace(pattern, block);
+	return `${text.trimEnd()}\n\n${block}\n`;
+}
+
+export function syncProposalAdr(params: {
+	root: string;
+	topic: string;
+	adrRequired: string;
+	adrReason: string;
+	adrOptionsStatus?: string;
+	adrToolMode?: string;
+	overrideRationale?: string;
+}): Record<string, unknown> {
+	ensureProposalArtifacts(params.root, params.topic);
+	if (!["true", "false"].includes(params.adrRequired)) throw new Error("adr-required must be true or false");
+	if (params.overrideRationale !== undefined) assertNonEmptyString(params.overrideRationale, "override-rationale");
+	const filePath = proposalPath(params.root, params.topic);
+	const next = replaceAdrMetadata(fs.readFileSync(filePath, "utf8"), {
+		adr_required: params.adrRequired,
+		adr_reason: assertNonEmptyString(params.adrReason, "adr-reason"),
+		adr_options_status: params.adrOptionsStatus || "not-applicable",
+		adr_tool_mode: params.adrToolMode || "evaluate-only",
+		override_rationale: params.overrideRationale || "",
+	});
+	fs.writeFileSync(filePath, next.endsWith("\n") ? next : `${next}\n`, "utf8");
+	return { proposal: path.relative(params.root, filePath), adr_required: params.adrRequired === "true" };
+}
+
+function runTopicValidation(root: string, topic: string): string {
+	const script = path.join(path.dirname(fileURLToPath(import.meta.url)), "manage_jsonl.ts");
+	return execFileSync("node", ["--experimental-strip-types", script, "validate-topic", "--root", root, "--topic", topic, "--json"], {
+		cwd: root,
+		encoding: "utf8",
+		stdio: ["ignore", "pipe", "pipe"],
+	});
+}
+
+
+function assertFactCitationSummary(root: string, topic: string): Record<string, unknown> {
+	const proposal = fs.readFileSync(proposalPath(root, topic), "utf8");
+	const citations = [...new Set([...proposal.matchAll(/\[(F\d{3})\]/g)].map((match) => match[1]))];
+	const nodes = readJsonlRecords(factsNodesPath(root, topic));
+	const edges = readJsonlRecords(factsEdgesPath(root, topic));
+	const facts = nodes.filter((node) => node.type === "fact").map((node) => String(node.id));
+	const sources = new Set(nodes.filter((node) => node.type === "source").map((node) => node.id));
+	const missing = citations.filter((id) => !facts.includes(id));
+	if (missing.length) throw new Error(`Proposal cites missing fact ids: ${missing.join(", ")}`);
+	const unsupported = facts.filter(
+		(id) => !edges.some((edge) => edge.from === id && edge.type === "supported_by" && sources.has(edge.to)),
+	);
+	if (unsupported.length) throw new Error(`Facts lack supported_by source edges: ${unsupported.join(", ")}`);
+	return { cited_facts: citations.length, total_facts: facts.length, supported_facts: facts.length - unsupported.length };
+}
+
+function assertSanitizedEvidence(root: string, topic: string): Record<string, unknown> {
+	const dir = topicDir(root, topic);
+	const checked: string[] = [];
+	for (const relative of ["proposal.md", "context-packs.jsonl", "facts.nodes.jsonl", "facts.edges.jsonl"]) {
+		const filePath = path.join(dir, relative);
+		if (!fs.existsSync(filePath)) continue;
+		checked.push(`.plan/${topic}/${relative}`);
+		const text = fs.readFileSync(filePath, "utf8");
+		if (text.includes(".plan/_private/") || text.includes(".plan\\_private\\")) {
+			throw new Error(`Commit-safe artifact references private raw inputs: .plan/${topic}/${relative}`);
+		}
+	}
+	return { checked_artifacts: checked };
+}
+
+function findAuditorPassReceipt(root: string, topic: string, phaseId: string): Record<string, unknown> {
+	const receipts = readJsonlRecords(receiptsPath(root, topic));
+	const receipt = receipts.find((candidate) => {
+		const result = optionalString(candidate.status || candidate.result || candidate.decision).toLowerCase();
+		return (
+			(candidate.kind === "audit" || candidate.type === "auditor-receipt") &&
+			candidate.phase_id === phaseId &&
+			(result === "pass" || result.includes("pass"))
+		);
+	});
+	if (!receipt) throw new Error(`Missing required ${phaseId} auditor PASS receipt`);
+	const reportPath = optionalString(receipt.report_path);
+	if (!reportPath) throw new Error(`Missing required ${phaseId} auditor report_path`);
+	if (reportPath.includes(".plan/_private/") || reportPath.includes(".plan\\_private\\")) {
+		throw new Error(`Auditor report path must not reference private raw inputs: ${reportPath}`);
+	}
+	const fullPath = path.isAbsolute(reportPath) ? reportPath : path.join(root, reportPath);
+	if (!fs.existsSync(fullPath)) throw new Error(`Auditor report path does not exist: ${reportPath}`);
+	return receipt;
+}
+
+export function finalizeProposal(params: { root: string; topic: string; summary?: string }): Record<string, unknown> {
+	ensureProposalArtifacts(params.root, params.topic);
+	const factCitationSummary = assertFactCitationSummary(params.root, params.topic);
+	const evidenceSummary = assertSanitizedEvidence(params.root, params.topic);
+	const validationOutput = runTopicValidation(params.root, params.topic);
+	const validationReceipt = appendWorkflowReceipt({
+		root: params.root,
+		topic: params.topic,
+		kind: "validation",
+		phaseId: "proposal",
+		summary: `proposal finalize checks passed: ${JSON.stringify({ factCitationSummary, evidenceSummary })}; validate-topic: ${validationOutput.slice(0, 200)}`,
+	});
+	upsertContextPack({
+		root: params.root,
+		topic: params.topic,
+		phaseId: "proposal",
+		summary: params.summary || "Proposal finalization context.",
+		artifacts: [`.plan/${params.topic}/proposal.md`],
+		validationReceipts: [String(validationReceipt.id)],
+		mode: "update",
+	});
+	const auditReceipt = findAuditorPassReceipt(params.root, params.topic, "proposal");
+	const transition = recordWorkflowTransition({
+		root: params.root,
+		topic: params.topic,
+		action: "request-approval",
+		gate: "proposal",
+		phaseId: "proposal",
+		summary: params.summary || "Proposal ready for human review.",
+	});
+	return { validation_receipt: validationReceipt.id, audit_receipt: auditReceipt.id, transition_receipt: transition.id };
+}
+
 export function getWorkflowStatus(params: { root: string; topic: string }): Record<string, unknown> {
 	ensureTopicArtifacts(params.root, params.topic);
 	const planPath = path.join(topicDir(params.root, params.topic), "plan.md");
-	const plan = fs.readFileSync(planPath, "utf8");
+	const plan = fs.existsSync(planPath) ? fs.readFileSync(planPath, "utf8") : "";
 	const phaseMatches = [...plan.matchAll(/^### Phase (P\d+)\s+—\s+(.+)$/gm)];
 	const phases = phaseMatches.map((match) => {
 		const start = match.index || 0;
@@ -736,6 +1030,39 @@ export function runWorkflowCli(argv = process.argv.slice(2)): WorkflowCliResult 
 			validationReceipts: optArray(options, "validation-receipt"),
 			mode: command.includes("create") ? "create" : "update",
 		});
+	} else if (command === "proposal-init" || command === "proposal_init") {
+		result = initProposal({ root, topic, title: typeof options.title === "string" ? options.title : undefined });
+	} else if (command === "proposal-adr-sync" || command === "proposal_adr_sync") {
+		result = syncProposalAdr({
+			root,
+			topic,
+			adrRequired: opt(options, "adr-required"),
+			adrReason: opt(options, "adr-reason"),
+			adrOptionsStatus: typeof options["adr-options-status"] === "string" ? options["adr-options-status"] : undefined,
+			adrToolMode: typeof options["adr-tool-mode"] === "string" ? options["adr-tool-mode"] : undefined,
+			overrideRationale:
+				typeof options["override-rationale"] === "string" ? options["override-rationale"] : undefined,
+		});
+	} else if (command === "proposal-finalize" || command === "proposal_finalize") {
+		result = finalizeProposal({ root, topic, summary: typeof options.summary === "string" ? options.summary : undefined });
+	} else if (command === "fact-add-source" || command === "fact_add_source") {
+		result = addFactSource({
+			root,
+			topic,
+			title: opt(options, "title"),
+			url: typeof options.url === "string" ? options.url : undefined,
+			id: typeof options.id === "string" ? options.id : undefined,
+		});
+	} else if (command === "fact-add-fact" || command === "fact_add_fact") {
+		result = addFact({
+			root,
+			topic,
+			title: opt(options, "title"),
+			sourceId: typeof options["source-id"] === "string" ? options["source-id"] : undefined,
+			id: typeof options.id === "string" ? options.id : undefined,
+		});
+	} else if (command === "fact-support-fact" || command === "fact_support_fact") {
+		result = supportFact({ root, topic, factId: opt(options, "fact-id"), sourceId: opt(options, "source-id") });
 	} else if (command === "transition-status" || command === "transition_status") {
 		result = getWorkflowStatus({ root, topic });
 	} else if (command === "transition-request-approval" || command === "transition_request_approval") {

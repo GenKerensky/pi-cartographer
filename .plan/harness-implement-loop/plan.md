@@ -151,7 +151,7 @@ Use `transition` receipts to make human decisions durable. Do not store secrets 
 
 ### Phase P2 — Proposal and Fact Wrappers
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P1
 - **Unlocks:** P6
 - **Primary references:** `file:skills/proposal/SKILL.md`, `file:skills/plan/scripts/manage_jsonl.ts`, `file:skills/plan/scripts/private_artifacts.py`, [F019], [F020], [F023], [F027]
@@ -168,18 +168,18 @@ Move proposal initialization, fact/source/support graph writes, ADR metadata syn
 
 #### Checklist
 
-- [ ] **P2.T1** Implement `cartographer_proposal init` to create/reconcile proposal skeleton, map/fact JSONL files, evidence dir, and safe metadata without truncating useful existing artifacts [F019].
-- [ ] **P2.T2** Implement `cartographer_fact add-source`, `add-fact`, and `support-fact` with stable IDs, valid JSONL, supported_by enforcement, and duplicate-safe upserts [F020].
-- [ ] **P2.T3** Implement `cartographer_proposal adr-sync` so proposal ADR metadata matches `cartographer_adr evaluate` output or includes an explicit override rationale [F027].
-- [ ] **P2.T4** Implement `cartographer_proposal finalize` to run validate-topic, fact citation summary, sanitized evidence checks, context-pack creation, deterministic auditor handoff, and proposal transition request [F023].
-- [ ] **P2.T5** Register proposal/fact wrappers in the extension.
+- [x] **P2.T1** Implement `cartographer_proposal init` to create/reconcile proposal skeleton, map/fact JSONL files, evidence dir, and safe metadata without truncating useful existing artifacts [F019].
+- [x] **P2.T2** Implement `cartographer_fact add-source`, `add-fact`, and `support-fact` with stable IDs, valid JSONL, supported_by enforcement, and duplicate-safe upserts [F020].
+- [x] **P2.T3** Implement `cartographer_proposal adr-sync` so proposal ADR metadata matches `cartographer_adr evaluate` output or includes an explicit override rationale [F027].
+- [x] **P2.T4** Implement `cartographer_proposal finalize` to run validate-topic, fact citation summary, sanitized evidence checks, context-pack creation, deterministic auditor handoff, and proposal transition request [F023].
+- [x] **P2.T5** Register proposal/fact wrappers in the extension.
 
 #### Validation
 
-- [ ] **P2.V1** Run proposal init tests for new topic, existing topic, and no-truncation behavior.
-- [ ] **P2.V2** Run fact wrapper tests for source-backed facts, missing supported_by failure, duplicate IDs, and invalid references.
-- [ ] **P2.V3** Run proposal finalize tests proving acceptance blocks until validation, context pack, auditor PASS, and human approval are present.
-- [ ] **P2.V4** Run `npm run check:scripts`.
+- [x] **P2.V1** Run proposal init tests for new topic, existing topic, and no-truncation behavior.
+- [x] **P2.V2** Run fact wrapper tests for source-backed facts, missing supported_by failure, duplicate IDs, and invalid references.
+- [x] **P2.V3** Run proposal finalize tests proving acceptance blocks until validation, context pack, auditor PASS, and human approval are present.
+- [x] **P2.V4** Run `npm run check:scripts`.
 
 #### Exit Criteria
 

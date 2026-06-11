@@ -100,6 +100,23 @@ describe("cartographer tool registration", () => {
 		expect(JSON.stringify(validationTool?.parameters)).toContain("timeoutSec");
 	});
 
+	it("registers proposal and fact wrappers", () => {
+		const tools = registeredTools();
+		const proposalTool = tools.find((tool) => tool.name === "cartographer_proposal") as RegisteredTool & {
+			parameters?: unknown;
+		};
+		const factTool = tools.find((tool) => tool.name === "cartographer_fact") as RegisteredTool & {
+			parameters?: unknown;
+		};
+
+		expect(proposalTool).toBeTruthy();
+		expect(proposalTool?.promptGuidelines?.join("\n")).toContain("init");
+		expect(JSON.stringify(proposalTool?.parameters)).toContain("adr-sync");
+		expect(factTool).toBeTruthy();
+		expect(factTool?.promptGuidelines?.join("\n")).toContain("supported_by");
+		expect(JSON.stringify(factTool?.parameters)).toContain("support-fact");
+	});
+
 	it("runs artifact summaries through the registered read-only tool", async () => {
 		const project = tempProjectWithTopic();
 		const artifactTool = registeredTools().find((tool) => tool.name === "cartographer_artifacts");

@@ -8,14 +8,20 @@ import {
 	LIFECYCLE_STATES,
 	RECEIPT_KINDS,
 	appendJsonlAtomic,
+	addFact,
+	addFactSource,
 	appendWorkflowReceipt,
 	assertHumanLabel,
 	createWorkflowFixture,
+	finalizeProposal,
 	getWorkflowStatus,
+	initProposal,
 	parseMinimalToml,
 	recordWorkflowTransition,
 	resolveApprover,
 	runWorkflowCli,
+	supportFact,
+	syncProposalAdr,
 	updateJsonAtomic,
 	upsertContextPack,
 	writeJsonAtomic,
@@ -131,6 +137,133 @@ describe("atomic helpers and fixtures", () => {
 			.map((line) => JSON.parse(line));
 		expect(nodes.some((node) => node.id === "phase:P1" && node.depends_on?.[0] === "P0")).toBe(true);
 		expect(fs.existsSync(path.join(process.cwd(), ".cartographer", "demo", "state.json"))).toBe(false);
+	});
+});
+
+describe("proposal and fact wrappers", () => {
+	it("initializes proposal artifacts without truncating existing prose", () => {
+		const root = tempRoot();
+		const topicDir = path.join(root, ".plan", "demo");
+		fs.mkdirSync(topicDir, { recursive: true });
+		fs.writeFileSync(path.join(topicDir, "proposal.md"), "# demo Proposal\n\nExisting design.\n", "utf8");
+
+		const result = initProposal({ root, topic: "demo" });
+		const proposal = fs.readFileSync(path.join(topicDir, "proposal.md"), "utf8");
+
+		expect(result.proposal).toBe(".plan/demo/proposal.md");
+		expect(proposal).toContain("Existing design.");
+		expect(proposal).toContain("## ADR Metadata");
+		expect(fs.existsSync(path.join(topicDir, "evidence"))).toBe(true);
+		for (const file of ["map.nodes.jsonl", "map.edges.jsonl", "facts.nodes.jsonl", "facts.edges.jsonl"]) {
+			expect(fs.existsSync(path.join(topicDir, file))).toBe(true);
+		}
+	});
+
+	it("adds source-backed facts and rejects invalid support references", () => {
+		const root = tempRoot();
+		initProposal({ root, topic: "demo" });
+
+		const source = addFactSource({ root, topic: "demo", title: "Design doc", url: "https://example.test/design" });
+		const fact = addFact({ root, topic: "demo", title: "Wrappers own artifact writes", sourceId: String(source.id) });
+		expect(source.id).toBe("S001");
+		expect(fact.id).toBe("F001");
+		expect(() => supportFact({ root, topic: "demo", factId: "F999", sourceId: String(source.id) })).toThrow(
+			"Fact node does not exist",
+		);
+
+		const edges = fs
+			.readFileSync(path.join(root, ".plan", "demo", "facts.edges.jsonl"), "utf8")
+			.trim()
+			.split("\n")
+			.map((line) => JSON.parse(line));
+		expect(edges).toEqual([{ from: "F001", to: "S001", type: "supported_by" }]);
+	});
+
+	it("syncs ADR metadata with explicit override rationale", () => {
+		const root = tempRoot();
+		initProposal({ root, topic: "demo" });
+		syncProposalAdr({
+			root,
+			topic: "demo",
+			adrRequired: "true",
+			adrReason: "Cross-cutting workflow policy change.",
+			adrOptionsStatus: "evaluated",
+			adrToolMode: "write-after-validation",
+			overrideRationale: "User accepted durable workflow enforcement scope.",
+		});
+
+		const proposal = fs.readFileSync(path.join(root, ".plan", "demo", "proposal.md"), "utf8");
+		expect(proposal).toContain("`adr_required`: true");
+		expect(proposal).toContain("`adr_override_rationale`: User accepted durable workflow enforcement scope.");
+	});
+
+	it("finalize blocks until validation, context, audit, and approval request prerequisites exist", () => {
+		const root = tempRoot();
+		initProposal({ root, topic: "demo" });
+		const source = addFactSource({ root, topic: "demo", title: "Source" });
+		addFact({ root, topic: "demo", title: "Proposal is supported", sourceId: String(source.id) });
+		expect(() => finalizeProposal({ root, topic: "demo" })).toThrow("auditor PASS");
+		fs.writeFileSync(path.join(root, ".plan", "demo", "auditor-report-proposal.md"), "PASS\n", "utf8");
+		appendWorkflowReceipt({
+			root,
+			topic: "demo",
+			kind: "audit",
+			phaseId: "proposal",
+			summary: "proposal auditor PASS",
+			data: { report_path: ".plan/demo/auditor-report-proposal.md" },
+		});
+
+		const result = finalizeProposal({ root, topic: "demo", summary: "Proposal ready" });
+		expect(String(result.validation_receipt)).toContain("receipt:demo:validation:");
+		expect(String(result.audit_receipt)).toContain("receipt:demo:audit:");
+		expect(String(result.transition_receipt)).toContain("receipt:demo:transition:");
+		expect(getWorkflowStatus({ root, topic: "demo" }).pending_human_approvals).toEqual([
+			{ gate: "proposal", phase_id: "proposal" },
+		]);
+	});
+
+	it("finalize enforces fact citations, supported_by edges, sanitized evidence, and auditor report path", () => {
+		const root = tempRoot();
+		initProposal({ root, topic: "demo" });
+		fs.appendFileSync(path.join(root, ".plan", "demo", "proposal.md"), "\nUses [F001].\n", "utf8");
+		expect(() => finalizeProposal({ root, topic: "demo" })).toThrow("missing fact ids");
+		addFact({ root, topic: "demo", title: "Unbacked fact" });
+		expect(() => finalizeProposal({ root, topic: "demo" })).toThrow("supported_by");
+		const source = addFactSource({ root, topic: "demo", title: "Source" });
+		supportFact({ root, topic: "demo", factId: "F001", sourceId: String(source.id) });
+		fs.appendFileSync(path.join(root, ".plan", "demo", "context-packs.jsonl"), 
+			`${JSON.stringify({ id: "context:bad", references: [".plan/_private/demo/raw.log"] })}\n`,
+			"utf8",
+		);
+		expect(() => finalizeProposal({ root, topic: "demo" })).toThrow("private raw inputs");
+	});
+
+	it("supports proposal and fact CLI aliases", () => {
+		const root = tempRoot();
+		expect(runWorkflowCli(["proposal-init", "--root", root, "--topic", "demo"]).ok).toBe(true);
+		const source = runWorkflowCli([
+			"fact-add-source",
+			"--root",
+			root,
+			"--topic",
+			"demo",
+			"--title",
+			"Source",
+		]);
+		expect(source.id).toBe("S001");
+		expect(
+			runWorkflowCli([
+				"fact-add-fact",
+				"--root",
+				root,
+				"--topic",
+				"demo",
+				"--title",
+				"Fact",
+				"--source-id",
+				"S001",
+			]).id,
+		).toBe("F001");
 	});
 });
 
