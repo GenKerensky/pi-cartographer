@@ -240,7 +240,7 @@ Plan graph generation should be deterministic and conservative. If parsing is am
 
 ### Phase P4 — Implement Runner and Harness Guards
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P1
 - **Unlocks:** P6
 - **Primary references:** `file:skills/implement/SKILL.md`, `file:skills/plan/scripts/cartographer_state.ts`, `file:extensions/cartographer-tools.ts`, [F001], [F002], [F003], [F004], [F007], [F013]
@@ -257,20 +257,20 @@ Implement the wrapper that makes the single-writer implementation loop enforceab
 
 #### Checklist
 
-- [ ] **P4.T1** Implement `cartographer_implement start` to require plan approval, initialize/validate state, set current pointer, select first executable phase, set next_action/working_set, and move lifecycle to implementation/phase in-progress [F001][F002][F007].
-- [ ] **P4.T2** Implement `cartographer_implement step` to reload artifacts, report one next action, and refuse work without singular next_action and working_set.
-- [ ] **P4.T3** Implement `cartographer_implement record` to record validation refs and update state after command receipts.
-- [ ] **P4.T4** Implement `cartographer_implement compact` to call `compact-generate`, validate state, render `state-resume`, and bridge Pi compaction metadata without treating transcript compaction as validation evidence [F003].
-- [ ] **P4.T5** Implement `cartographer_implement finalize` to block if phases remain pending, run full validation/topic/graph checks, require final audit/ADR handling, and request final human approval for the whole feature [F004][F013].
-- [ ] **P4.T6** Add extension guardrails that route implement prompts to wrapper-first guidance and warn/block unsafe edits when active wrapper state is missing or working_set excludes paths.
+- [x] **P4.T1** Implement `cartographer_implement start` to require plan approval, initialize/validate state, set current pointer, select first executable phase, set next_action/working_set, and move lifecycle to implementation/phase in-progress [F001][F002][F007].
+- [x] **P4.T2** Implement `cartographer_implement step` to reload artifacts, report one next action, and refuse work without singular next_action and working_set.
+- [x] **P4.T3** Implement `cartographer_implement record` to record validation refs and update state after command receipts.
+- [x] **P4.T4** Implement `cartographer_implement compact` to call `compact-generate`, validate state, render `state-resume`, and bridge Pi compaction metadata without treating transcript compaction as validation evidence [F003].
+- [x] **P4.T5** Implement `cartographer_implement finalize` to block if phases remain pending, run full validation/topic/graph checks, require final audit/ADR handling, and request final human approval for the whole feature [F004][F013].
+- [x] **P4.T6** Add extension guardrails that route implement prompts to wrapper-first guidance and warn/block unsafe edits when active wrapper state is missing or working_set excludes paths.
 
 #### Validation
 
-- [ ] **P4.V1** Run temp-root implement start tests proving `.cartographer/<topic>/state.json` is created and validated.
-- [ ] **P4.V2** Run compact/resume tests proving Cartographer compaction is separate from Pi transcript compaction.
-- [ ] **P4.V3** Run finalize tests proving pending phases block success and completed phases with receipts/context/audit can request final approval.
-- [ ] **P4.V4** Run guardrail tests for missing state and working-set path exclusions.
-- [ ] **P4.V5** Run `npm run check:scripts`.
+- [x] **P4.V1** Run temp-root implement start tests proving `.cartographer/<topic>/state.json` is created and validated.
+- [x] **P4.V2** Run compact/resume tests proving Cartographer compaction is separate from Pi transcript compaction.
+- [x] **P4.V3** Run finalize tests proving pending phases block success and completed phases with receipts/context/audit can request final approval.
+- [x] **P4.V4** Run guardrail tests for missing state and working-set path exclusions.
+- [x] **P4.V5** Run `npm run check:scripts`.
 
 #### Exit Criteria
 

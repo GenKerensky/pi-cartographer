@@ -41,18 +41,18 @@
 {"id":"validation:P3.V3","type":"validation","validation_id":"P3.V3","phase_id":"P3","title":"Run validation completion tests","status":"complete","source":"plan.md"}
 {"id":"validation:P3.V4","type":"validation","validation_id":"P3.V4","phase_id":"P3","title":"Run plan finalize approval tests","status":"complete","source":"plan.md"}
 {"id":"validation:P3.V5","type":"validation","validation_id":"P3.V5","phase_id":"P3","title":"Run npm run check:scripts","status":"complete","source":"plan.md","command":"npm run check:scripts"}
-{"id":"phase:P4","type":"phase","phase_id":"P4","title":"Implement Runner and Harness Guards","status":"pending","depends_on":["P1"],"source":"plan.md","references":["F001","F002","F003","F004","F007","F013"]}
-{"id":"task:P4.T1","type":"task","task_id":"P4.T1","phase_id":"P4","title":"Implement implement start","status":"pending","source":"plan.md"}
-{"id":"task:P4.T2","type":"task","task_id":"P4.T2","phase_id":"P4","title":"Implement implement step","status":"pending","source":"plan.md"}
-{"id":"task:P4.T3","type":"task","task_id":"P4.T3","phase_id":"P4","title":"Implement implement record","status":"pending","source":"plan.md"}
-{"id":"task:P4.T4","type":"task","task_id":"P4.T4","phase_id":"P4","title":"Implement implement compact","status":"pending","source":"plan.md"}
-{"id":"task:P4.T5","type":"task","task_id":"P4.T5","phase_id":"P4","title":"Implement implement finalize","status":"pending","source":"plan.md"}
-{"id":"task:P4.T6","type":"task","task_id":"P4.T6","phase_id":"P4","title":"Add extension guardrails","status":"pending","source":"plan.md"}
-{"id":"validation:P4.V1","type":"validation","validation_id":"P4.V1","phase_id":"P4","title":"Run implement start tests","status":"pending","source":"plan.md"}
-{"id":"validation:P4.V2","type":"validation","validation_id":"P4.V2","phase_id":"P4","title":"Run compact/resume tests","status":"pending","source":"plan.md"}
-{"id":"validation:P4.V3","type":"validation","validation_id":"P4.V3","phase_id":"P4","title":"Run finalize pending-phase tests","status":"pending","source":"plan.md"}
-{"id":"validation:P4.V4","type":"validation","validation_id":"P4.V4","phase_id":"P4","title":"Run guardrail tests","status":"pending","source":"plan.md"}
-{"id":"validation:P4.V5","type":"validation","validation_id":"P4.V5","phase_id":"P4","title":"Run npm run check:scripts","status":"pending","source":"plan.md","command":"npm run check:scripts"}
+{"id":"phase:P4","type":"phase","phase_id":"P4","title":"Implement Runner and Harness Guards","status":"complete","depends_on":["P1"],"source":"plan.md","references":["F001","F002","F003","F004","F007","F013"]}
+{"id":"task:P4.T1","type":"task","task_id":"P4.T1","phase_id":"P4","title":"Implement implement start","status":"complete","source":"plan.md"}
+{"id":"task:P4.T2","type":"task","task_id":"P4.T2","phase_id":"P4","title":"Implement implement step","status":"complete","source":"plan.md"}
+{"id":"task:P4.T3","type":"task","task_id":"P4.T3","phase_id":"P4","title":"Implement implement record","status":"complete","source":"plan.md"}
+{"id":"task:P4.T4","type":"task","task_id":"P4.T4","phase_id":"P4","title":"Implement implement compact","status":"complete","source":"plan.md"}
+{"id":"task:P4.T5","type":"task","task_id":"P4.T5","phase_id":"P4","title":"Implement implement finalize","status":"complete","source":"plan.md"}
+{"id":"task:P4.T6","type":"task","task_id":"P4.T6","phase_id":"P4","title":"Add extension guardrails","status":"complete","source":"plan.md"}
+{"id":"validation:P4.V1","type":"validation","validation_id":"P4.V1","phase_id":"P4","title":"Run implement start tests","status":"complete","source":"plan.md"}
+{"id":"validation:P4.V2","type":"validation","validation_id":"P4.V2","phase_id":"P4","title":"Run compact/resume tests","status":"complete","source":"plan.md"}
+{"id":"validation:P4.V3","type":"validation","validation_id":"P4.V3","phase_id":"P4","title":"Run finalize pending-phase tests","status":"complete","source":"plan.md"}
+{"id":"validation:P4.V4","type":"validation","validation_id":"P4.V4","phase_id":"P4","title":"Run guardrail tests","status":"complete","source":"plan.md"}
+{"id":"validation:P4.V5","type":"validation","validation_id":"P4.V5","phase_id":"P4","title":"Run npm run check:scripts","status":"complete","source":"plan.md","command":"npm run check:scripts"}
 {"id":"phase:P5","type":"phase","phase_id":"P5","title":"Subagent Handoff Wrapper","status":"pending","depends_on":["P1"],"source":"plan.md","references":["F014","F016","F017"]}
 {"id":"task:P5.T1","type":"task","task_id":"P5.T1","phase_id":"P5","title":"Implement auditor handoff","status":"pending","source":"plan.md"}
 {"id":"task:P5.T2","type":"task","task_id":"P5.T2","phase_id":"P5","title":"Implement compass handoff","status":"pending","source":"plan.md"}

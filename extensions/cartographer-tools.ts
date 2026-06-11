@@ -208,6 +208,16 @@ type CartographerPlanStatusParams = OutputShapeParams & {
 	status?: string;
 };
 
+type CartographerImplementParams = OutputShapeParams & {
+	action: "start" | "step" | "record" | "compact" | "finalize";
+	root?: string;
+	topic?: string;
+	path?: string;
+	receiptId?: string[];
+	trigger?: string;
+	summary?: string;
+};
+
 type CartographerEvidenceParams = OutputShapeParams & {
 	action: "import" | "list";
 	root?: string;
@@ -1405,6 +1415,57 @@ export default function cartographerTools(pi: PiApi): void {
 				outputPath: params.outputPath,
 				raw: params.raw,
 				label: "cartographer-plan-status-set",
+			});
+		},
+	});
+
+	pi.registerTool({
+		name: "cartographer_implement",
+		label: "Cartographer Implement",
+		description: "Start, step, record, compact, and finalize deterministic implementation state gates.",
+		promptSnippet: "Control implementation start/step/record/compact/finalize gates",
+		promptGuidelines: [
+			"Use start before implementation edits to initialize state and select the first executable phase.",
+			"Use step to reload state and check working-set guardrails before edits.",
+			"Use finalize only after all phases are complete and final audit/ADR handling exists.",
+		],
+		parameters: Type.Object({
+			action: Type.Union([
+				Type.Literal("start"),
+				Type.Literal("step"),
+				Type.Literal("record"),
+				Type.Literal("compact"),
+				Type.Literal("finalize"),
+			]),
+			root: Type.Optional(Type.String({ description: "Project root. Defaults to current working directory." })),
+			topic: Type.String({ description: "Cartographer topic under .plan/." }),
+			path: Type.Optional(Type.String({ description: "Optional path to check against active working_set for step." })),
+			receiptId: Type.Optional(Type.Array(Type.String(), { description: "Validation receipt ids for record." })),
+			trigger: Type.Optional(Type.String({ description: "Compaction trigger for compact." })),
+			summary: Type.Optional(Type.String({ description: "Compact/finalize summary." })),
+			maxOutputChars: Type.Optional(Type.Number({ description: "Inline output budget." })),
+			outputPath: Type.Optional(Type.String({ description: "Optional full-output path for oversized output." })),
+			raw: Type.Optional(Type.Boolean({ description: "Return raw command output instead of a compact receipt." })),
+		}),
+		async execute(_toolCallId, rawParams, signal) {
+			const params = rawParams as CartographerImplementParams;
+			const args = [
+				`implement-${params.action}`,
+				"--root",
+				params.root || process.cwd(),
+				"--topic",
+				requireString(params.topic, "cartographer_implement requires topic"),
+				"--json",
+			];
+			if (params.path) args.push("--path", params.path);
+			for (const id of params.receiptId || []) args.push("--receipt-id", id);
+			if (params.trigger) args.push("--trigger", params.trigger);
+			if (params.summary) args.push("--summary", params.summary);
+			return runCommand("node", ["--experimental-strip-types", workflowScript, ...args], signal, {
+				maxOutputChars: params.maxOutputChars,
+				outputPath: params.outputPath,
+				raw: params.raw,
+				label: `cartographer-implement-${params.action}`,
 			});
 		},
 	});

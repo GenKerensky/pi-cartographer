@@ -334,7 +334,7 @@ function parseCliArgs(argv: string[]): CliArgs {
 		const value = rest[index + 1];
 		if (value === undefined || value.startsWith("--")) throw new Error(`Missing value for --${name}`);
 		index += 1;
-		if (["artifact", "validation-receipt"].includes(name)) {
+		if (["artifact", "validation-receipt", "receipt-id"].includes(name)) {
 			const current = options[name];
 			options[name] = Array.isArray(current) ? [...current, value] : [value];
 		} else {
@@ -359,6 +359,11 @@ function usage(exitCode: number): never {
   ${script} plan-finalize --root <root> --topic <topic> [--summary <text>] [--json]
   ${script} plan-status-set --root <root> --topic <topic> --id <phase|task|validation id> --status <status> [--json]
   ${script} validation-complete-item --root <root> --topic <topic> --validation-id <id> [--json]
+  ${script} implement-start --root <root> --topic <topic> [--json]
+  ${script} implement-step --root <root> --topic <topic> [--path <path>] [--json]
+  ${script} implement-record --root <root> --topic <topic> --receipt-id <id> [--json]
+  ${script} implement-compact --root <root> --topic <topic> --trigger <name> [--summary <text>] [--json]
+  ${script} implement-finalize --root <root> --topic <topic> [--summary <text>] [--json]
   ${script} transition-status --root <root> --topic <topic> [--json]
   ${script} transition-request-approval --root <root> --topic <topic> --gate <gate> [--phase-id <id>] [--summary <text>] [--json]
   ${script} transition-approve --root <root> --topic <topic> --gate <gate> --summary <text> [--phase-id <id>] [--approved-by <name>] [--ci] [--json]
@@ -1074,6 +1079,164 @@ export function finalizePlan(params: { root: string; topic: string; summary?: st
 	return { validation_receipt: validationReceipt.id, audit_receipt: auditReceipt.id, transition_receipt: transition.id };
 }
 
+
+function stateScriptPath(): string {
+	return path.join(path.dirname(fileURLToPath(import.meta.url)), "cartographer_state.ts");
+}
+
+function runStateCommand(root: string, topic: string, command: string, extra: string[] = []): Record<string, unknown> {
+	const output = execFileSync("node", ["--experimental-strip-types", stateScriptPath(), command, "--root", root, "--topic", topic, "--json", ...extra], {
+		cwd: root,
+		encoding: "utf8",
+		stdio: ["ignore", "pipe", "pipe"],
+	});
+	return JSON.parse(output) as Record<string, unknown>;
+}
+
+function currentPointerPath(root: string): string {
+	return path.join(root, ".cartographer", "current.json");
+}
+
+function planPhaseRecords(root: string, topic: string): Record<string, unknown>[] {
+	return readJsonlRecords(planNodesPath(root, topic)).filter((record) => record.type === "phase");
+}
+
+function firstExecutablePhase(root: string, topic: string): Record<string, unknown> {
+	const phases = planPhaseRecords(root, topic);
+	for (const phase of phases) {
+		if (phase.status === "complete") continue;
+		const deps = Array.isArray(phase.depends_on) ? phase.depends_on.map(String) : [];
+		const ready = deps.every((dep) => phases.some((candidate) => candidate.phase_id === dep && candidate.status === "complete"));
+		if (ready) return phase;
+	}
+	throw new Error("No executable incomplete phase found");
+}
+
+function hasPlanApproval(root: string, topic: string): boolean {
+	const receipts = readJsonlRecords(receiptsPath(root, topic));
+	return receipts.some((receipt) => receipt.action === "approve" && receipt.gate === "plan");
+}
+
+function defaultImplementWorkingSet(topic: string, phaseId: string): Record<string, unknown> {
+	return {
+		write_allowed: [
+			{ path: "skills/plan/scripts/*.ts", reason: `${phaseId} implementation wrapper work` },
+			{ path: "tests/*.test.ts", reason: `${phaseId} wrapper tests` },
+			{ path: "extensions/*.ts", reason: `${phaseId} extension tool registration` },
+			{ path: `.plan/${topic}/plan.md`, reason: `${phaseId} plan status updates` },
+			{ path: `.plan/${topic}/plan.nodes.jsonl`, reason: `${phaseId} plan node status updates` },
+			{ path: `.plan/${topic}/receipts.jsonl`, reason: `${phaseId} receipts` },
+			{ path: `.plan/${topic}/context-packs.jsonl`, reason: `${phaseId} context pack` },
+		],
+		read_only: [{ path: `.plan/${topic}/plan.edges.jsonl`, reason: "dependency graph reference" }],
+		forbidden: [
+			{ path: ".plan/_private/**", reason: "raw private inputs are off-limits" },
+			{ path: ".plan/_index/**", reason: "generated index/cache artifacts" },
+		],
+	};
+}
+
+export function startImplementation(params: { root: string; topic: string }): Record<string, unknown> {
+	ensureTopicArtifacts(params.root, params.topic);
+	if (!hasPlanApproval(params.root, params.topic)) throw new Error("Missing plan approval receipt");
+	const phase = firstExecutablePhase(params.root, params.topic);
+	const phaseId = String(phase.phase_id);
+	setPlanStatus({ root: params.root, topic: params.topic, id: phaseId, status: "in-progress" });
+	appendWorkflowReceipt({ root: params.root, topic: params.topic, kind: "phase", phaseId, summary: `Started implementation phase ${phaseId}.`, data: { action: "start", gate: "phase", to_state: "phase-in-progress" } });
+	runStateCommand(params.root, params.topic, "state-init");
+	updateJsonAtomic<Record<string, unknown>>(path.join(params.root, ".cartographer", params.topic, "state.json"), (state) => ({ ...state, current_phase_id: phaseId }));
+	runStateCommand(params.root, params.topic, "state-validate");
+	const nextAction = { id: `${phaseId}.T1`, kind: "implementation-task", summary: `Start ${phaseId} implementation.`, phase_id: phaseId, task_id: `${phaseId}.T1`, files_to_inspect: [`.plan/${params.topic}/plan.md`, "skills/plan/scripts/cartographer_workflow.ts", "extensions/cartographer-tools.ts", "tests/cartographer_workflow.test.ts"] };
+	const workingSet = defaultImplementWorkingSet(params.topic, phaseId);
+	runStateCommand(params.root, params.topic, "current-set");
+	runStateCommand(params.root, params.topic, "state-set-next", ["--next-action-json", JSON.stringify(nextAction)]);
+	runStateCommand(params.root, params.topic, "state-set-working-set", ["--working-set-json", JSON.stringify(workingSet)]);
+	return { phase_id: phaseId, next_action: nextAction, working_set: workingSet, current_pointer: path.relative(params.root, currentPointerPath(params.root)) };
+}
+
+function readState(root: string, topic: string): Record<string, unknown> {
+	const filePath = path.join(root, ".cartographer", topic, "state.json");
+	if (!fs.existsSync(filePath)) throw new Error("Missing active implementation state");
+	return JSON.parse(fs.readFileSync(filePath, "utf8")) as Record<string, unknown>;
+}
+
+function pathMatches(pattern: string, candidate: string): boolean {
+	if (pattern.endsWith("/**")) return candidate.startsWith(pattern.slice(0, -3));
+	if (pattern.includes("*")) {
+		const regex = new RegExp(`^${pattern.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, "[^/]*")}$`);
+		return regex.test(candidate);
+	}
+	return candidate === pattern || candidate.startsWith(`${pattern}/`);
+}
+
+export function assertImplementPathAllowed(params: { root: string; topic: string; path: string }): Record<string, unknown> {
+	const state = readState(params.root, params.topic);
+	const workingSet = state.working_set as Record<string, unknown> | undefined;
+	if (!workingSet) throw new Error("Missing active working_set");
+	const candidate = params.path.split(path.sep).join("/");
+	const forbidden = Array.isArray(workingSet.forbidden) ? workingSet.forbidden as Record<string, unknown>[] : [];
+	if (forbidden.some((entry) => pathMatches(String(entry.path), candidate))) throw new Error(`Path is forbidden by working_set: ${candidate}`);
+	const allowed = Array.isArray(workingSet.write_allowed) ? workingSet.write_allowed as Record<string, unknown>[] : [];
+	return { path: candidate, allowed: allowed.some((entry) => pathMatches(String(entry.path), candidate)), mode: allowed.some((entry) => pathMatches(String(entry.path), candidate)) ? "write-allowed" : "warn-outside-working-set" };
+}
+
+export function implementStep(params: { root: string; topic: string; path?: string }): Record<string, unknown> {
+	const state = readState(params.root, params.topic);
+	const validation = runStateCommand(params.root, params.topic, "state-validate");
+	if (!state.next_action || Array.isArray(state.next_action)) throw new Error("Missing singular next_action");
+	if (!state.working_set) throw new Error("Missing active working_set");
+	const guard = params.path ? assertImplementPathAllowed({ root: params.root, topic: params.topic, path: params.path }) : undefined;
+	return { validation, current_phase_id: state.current_phase_id, next_action: state.next_action, working_set: state.working_set, guard };
+}
+
+export function implementRecord(params: { root: string; topic: string; receiptIds: string[] }): Record<string, unknown> {
+	for (const receiptId of params.receiptIds) {
+		if (!readJsonlRecords(receiptsPath(params.root, params.topic)).some((receipt) => receipt.id === receiptId)) {
+			throw new Error(`Receipt does not exist: ${receiptId}`);
+		}
+	}
+	return runStateCommand(params.root, params.topic, "state-record-validation-ref", params.receiptIds.flatMap((id) => ["--receipt-id", id]));
+}
+
+export function implementCompact(params: { root: string; topic: string; trigger: string; summary?: string }): Record<string, unknown> {
+	runStateCommand(params.root, params.topic, "state-mark-stale", ["--reason", "Implementation compact requested after artifact updates."]);
+	const compact = runStateCommand(params.root, params.topic, "compact-generate", ["--trigger", params.trigger, ...(params.summary ? ["--summary", params.summary, "--impact", "Implementation context compacted for resume.", "--importance", "3"] : [])]);
+	const resume = runStateCommand(params.root, params.topic, "state-resume");
+	return { compact, resume };
+}
+
+
+function requireImplementationFullValidation(root: string, topic: string): Record<string, unknown> {
+	const receipt = readJsonlRecords(receiptsPath(root, topic)).find((candidate) => {
+		const ids = Array.isArray(candidate.validation_ids) ? candidate.validation_ids.map(String) : [];
+		return candidate.status === "passed" && (candidate.phase_id === "implementation" || ids.includes("implementation-full-validation") || optionalString(candidate.id).includes("implementation-full-validation"));
+	});
+	if (!receipt) throw new Error("Missing implementation full validation receipt");
+	return receipt;
+}
+
+function requireAdrHandling(root: string, topic: string): Record<string, unknown> {
+	const receipt = readJsonlRecords(receiptsPath(root, topic)).find((candidate) =>
+		optionalString(candidate.kind).includes("adr") || optionalString(candidate.id).includes("adr") || optionalString(candidate.summary).toLowerCase().includes("adr"),
+	);
+	if (!receipt) throw new Error("Missing ADR handling receipt");
+	return receipt;
+}
+
+export function finalizeImplementation(params: { root: string; topic: string; summary?: string }): Record<string, unknown> {
+	const pending = planPhaseRecords(params.root, params.topic).filter((phase) => phase.status !== "complete");
+	if (pending.length) throw new Error(`Cannot finalize with pending phases: ${pending.map((phase) => phase.phase_id).join(", ")}`);
+	const fullValidationReceipt = requireImplementationFullValidation(params.root, params.topic);
+	const adrReceipt = requireAdrHandling(params.root, params.topic);
+	const topicValidation = runTopicValidation(params.root, params.topic);
+	const graphValidation = runPlanningGraphValidation(params.root, params.topic);
+	const validationReceipt = appendWorkflowReceipt({ root: params.root, topic: params.topic, kind: "validation", phaseId: "implementation", summary: `implementation finalize validations passed with ${String(fullValidationReceipt.id)} and ${String(adrReceipt.id)}: ${topicValidation.slice(0, 160)}; ${graphValidation.slice(0, 160)}` });
+	upsertContextPack({ root: params.root, topic: params.topic, phaseId: "implementation", summary: params.summary || "Implementation finalization context.", artifacts: [`.plan/${params.topic}/plan.md`], validationReceipts: [String(validationReceipt.id)], mode: "update" });
+	const auditReceipt = findAuditorPassReceipt(params.root, params.topic, "implementation");
+	const transition = recordWorkflowTransition({ root: params.root, topic: params.topic, action: "request-approval", gate: "implementation", phaseId: "implementation", summary: params.summary || "Implementation ready for human review." });
+	return { validation_receipt: validationReceipt.id, audit_receipt: auditReceipt.id, transition_receipt: transition.id };
+}
+
 function assertTransitionPrerequisites(params: {
 	root: string;
 	topic: string;
@@ -1198,7 +1361,7 @@ export function runWorkflowCli(argv = process.argv.slice(2)): WorkflowCliResult 
 			kind: opt(options, "kind"),
 			summary: opt(options, "summary"),
 			phaseId: typeof options["phase-id"] === "string" ? options["phase-id"] : undefined,
-			id: typeof options["receipt-id"] === "string" ? options["receipt-id"] : undefined,
+			id: optArray(options, "receipt-id")[0],
 		});
 	} else if (
 		["context-pack-create", "context_pack_create", "context-pack-update", "context_pack_update"].includes(command)
@@ -1253,6 +1416,16 @@ export function runWorkflowCli(argv = process.argv.slice(2)): WorkflowCliResult 
 		result = setPlanStatus({ root, topic, id: opt(options, "id"), status: opt(options, "status") });
 	} else if (command === "validation-complete-item" || command === "validation_complete_item") {
 		result = completeValidationItem({ root, topic, validationId: opt(options, "validation-id") });
+	} else if (command === "implement-start" || command === "implement_start") {
+		result = startImplementation({ root, topic });
+	} else if (command === "implement-step" || command === "implement_step") {
+		result = implementStep({ root, topic, path: typeof options.path === "string" ? options.path : undefined });
+	} else if (command === "implement-record" || command === "implement_record") {
+		result = implementRecord({ root, topic, receiptIds: optArray(options, "receipt-id") });
+	} else if (command === "implement-compact" || command === "implement_compact") {
+		result = implementCompact({ root, topic, trigger: opt(options, "trigger"), summary: typeof options.summary === "string" ? options.summary : undefined });
+	} else if (command === "implement-finalize" || command === "implement_finalize") {
+		result = finalizeImplementation({ root, topic, summary: typeof options.summary === "string" ? options.summary : undefined });
 	} else if (command === "transition-status" || command === "transition_status") {
 		result = getWorkflowStatus({ root, topic });
 	} else if (command === "transition-request-approval" || command === "transition_request_approval") {

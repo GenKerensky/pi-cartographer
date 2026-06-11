@@ -125,6 +125,11 @@ describe("cartographer tool registration", () => {
 		expect(JSON.stringify(planTool?.parameters)).toContain("generate-graph");
 		expect(statusTool).toBeTruthy();
 		expect(statusTool?.promptGuidelines?.join("\n")).toContain("manually editing plan status");
+		const implementTool = tools.find((tool) => tool.name === "cartographer_implement") as RegisteredTool & {
+			parameters?: unknown;
+		};
+		expect(implementTool).toBeTruthy();
+		expect(JSON.stringify(implementTool?.parameters)).toContain("finalize");
 	});
 
 	it("runs artifact summaries through the registered read-only tool", async () => {

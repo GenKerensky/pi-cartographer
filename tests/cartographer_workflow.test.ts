@@ -15,14 +15,19 @@ import {
 	createWorkflowFixture,
 	finalizePlan,
 	finalizeProposal,
+	finalizeImplementation,
 	generatePlanGraph,
 	getWorkflowStatus,
+	implementCompact,
+	implementRecord,
+	implementStep,
 	initProposal,
 	parseMinimalToml,
 	recordWorkflowTransition,
 	resolveApprover,
 	runWorkflowCli,
 	setPlanStatus,
+	startImplementation,
 	supportFact,
 	syncProposalAdr,
 	completeValidationItem,
@@ -371,6 +376,90 @@ describe("plan graph, status, and validation wrappers", () => {
 				"complete",
 			]).status,
 		).toBe("complete");
+	});
+});
+
+describe("implement runner and guard wrappers", () => {
+	function approvePlanForImplementation(root: string, topic = "demo"): void {
+		upsertContextPack({ root, topic, phaseId: "plan", summary: "Plan context" });
+		appendWorkflowReceipt({ root, topic, kind: "validation", phaseId: "plan", summary: "plan validation" });
+		appendWorkflowReceipt({ root, topic, kind: "audit", phaseId: "plan", summary: "plan auditor PASS" });
+		recordWorkflowTransition({ root, topic, action: "request-approval", gate: "plan", summary: "Plan ready" });
+		recordWorkflowTransition({ root, topic, action: "approve", gate: "plan", summary: "Plan approved", approvedBy: "Tester" });
+	}
+
+	it("starts implementation only after plan approval and initializes state/current pointer", () => {
+		const root = tempRoot();
+		createWorkflowFixture(root, { topic: "demo", phaseIds: ["P0", "P1"] });
+		expect(() => startImplementation({ root, topic: "demo" })).toThrow("plan approval");
+		approvePlanForImplementation(root);
+		const result = startImplementation({ root, topic: "demo" });
+		expect(result.phase_id).toBe("P0");
+		expect(fs.existsSync(path.join(root, ".cartographer", "demo", "state.json"))).toBe(true);
+		expect(fs.existsSync(path.join(root, ".cartographer", "current.json"))).toBe(true);
+		expect(fs.readFileSync(path.join(root, ".plan", "demo", "plan.md"), "utf8")).toContain("- **Status:** in-progress");
+	});
+
+	it("start keeps selected later phase aligned in state and step output", () => {
+		const root = tempRoot();
+		createWorkflowFixture(root, { topic: "demo", phaseIds: ["P0", "P1"] });
+		setPlanStatus({ root, topic: "demo", id: "P0", status: "complete" });
+		approvePlanForImplementation(root);
+		const result = startImplementation({ root, topic: "demo" });
+		expect(result.phase_id).toBe("P1");
+		const state = JSON.parse(fs.readFileSync(path.join(root, ".cartographer", "demo", "state.json"), "utf8"));
+		expect(state.current_phase_id).toBe("P1");
+		expect(implementStep({ root, topic: "demo" }).current_phase_id).toBe("P1");
+	});
+
+	it("step refuses missing state and reports working-set path guardrails", () => {
+		const root = tempRoot();
+		createWorkflowFixture(root, { topic: "demo", phaseIds: ["P0"] });
+		expect(() => implementStep({ root, topic: "demo" })).toThrow("Missing active implementation state");
+		approvePlanForImplementation(root);
+		startImplementation({ root, topic: "demo" });
+		expect(implementStep({ root, topic: "demo", path: "skills/plan/scripts/cartographer_workflow.ts" }).guard).toMatchObject({
+			mode: "write-allowed",
+		});
+		expect(() => implementStep({ root, topic: "demo", path: ".plan/_private/demo/raw.log" })).toThrow("forbidden");
+	});
+
+	it("records validation refs, compacts resume state, and blocks finalize with pending phases", () => {
+		const root = tempRoot();
+		createWorkflowFixture(root, { topic: "demo", phaseIds: ["P0"] });
+		approvePlanForImplementation(root);
+		startImplementation({ root, topic: "demo" });
+		appendWorkflowReceipt({ root, topic: "demo", kind: "validation", phaseId: "P0", id: "receipt:P0", summary: "P0 validation" });
+		expect(implementRecord({ root, topic: "demo", receiptIds: ["receipt:P0"] }).ok).toBe(true);
+		expect(implementCompact({ root, topic: "demo", trigger: "test", summary: "Compact" }).resume).toMatchObject({ ok: true });
+		expect(() => finalizeImplementation({ root, topic: "demo" })).toThrow("pending phases");
+	});
+
+	it("finalize requests final approval only after completed phases, full validation, audit, and ADR handling", () => {
+		const root = tempRoot();
+		createWorkflowFixture(root, { topic: "demo", phaseIds: ["P0"] });
+		setPlanStatus({ root, topic: "demo", id: "P0", status: "complete" });
+		expect(() => finalizeImplementation({ root, topic: "demo" })).toThrow("full validation");
+		appendJsonlAtomic(path.join(root, ".plan", "demo", "receipts.jsonl"), [
+			{ id: "receipt:implementation-full-validation", type: "validation-receipt", status: "passed", phase_id: "implementation", validation_ids: ["implementation-full-validation"], commands: [{ command: "npm run check", result: "passed" }] },
+		]);
+		expect(() => finalizeImplementation({ root, topic: "demo" })).toThrow("ADR handling");
+		appendWorkflowReceipt({ root, topic: "demo", kind: "decision", phaseId: "implementation", id: "receipt:adr-handled", summary: "ADR handling complete" });
+		fs.writeFileSync(path.join(root, ".plan", "demo", "auditor-report-implementation.md"), "PASS\n", "utf8");
+		appendWorkflowReceipt({ root, topic: "demo", kind: "audit", phaseId: "implementation", summary: "implementation auditor PASS", data: { report_path: ".plan/demo/auditor-report-implementation.md" } });
+		const result = finalizeImplementation({ root, topic: "demo", summary: "Implementation ready" });
+		expect(String(result.transition_receipt)).toContain("receipt:demo:transition:");
+		expect(getWorkflowStatus({ root, topic: "demo" }).pending_human_approvals).toEqual([
+			{ gate: "implementation", phase_id: "implementation" },
+		]);
+	});
+
+	it("supports implement CLI aliases", () => {
+		const root = tempRoot();
+		createWorkflowFixture(root, { topic: "demo", phaseIds: ["P0"] });
+		approvePlanForImplementation(root);
+		expect(runWorkflowCli(["implement-start", "--root", root, "--topic", "demo"]).phase_id).toBe("P0");
+		expect(runWorkflowCli(["implement-step", "--root", root, "--topic", "demo"]).ok).toBe(true);
 	});
 });
 
