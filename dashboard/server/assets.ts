@@ -86,7 +86,7 @@ function renderFallbackPage(options: DashboardAssetOptions, topic?: string): str
 	<main class="card" data-cartographer-dashboard-root="${safeRoot}" data-cartographer-dashboard-mode="read-only">
 		<h1>Pi Cartographer Dashboard</h1>
 		<p>The dashboard server is running in <strong>read-only</strong> mode.</p>
-		<p>Client assets have not been built yet. The runtime asset hook will serve <code>dashboard/client/dist</code> when P3 produces it.</p>
+		<p>The built TanStack Start dashboard output is not available, so this source-checkout compatibility fallback is serving read-only API links only. Run <code>npm run dashboard:build</code> to produce <code>dashboard/start/.output</code> for normal full-stack startup.</p>
 		${safeTopic ? `<p>Topic deep link: <strong>${safeTopic}</strong></p>` : ""}
 		<ul>
 			<li><a href="/api/health">API health</a></li>

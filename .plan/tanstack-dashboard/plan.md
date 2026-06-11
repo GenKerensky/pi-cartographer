@@ -363,7 +363,7 @@ Local UI state such as active tabs, filters, and drawer open state can remain Re
 
 ### Phase P6 — Legacy Cleanup, Docs, and ADR Readiness
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P5
 - **Unlocks:** implementation handoff complete
 - **Primary references:** `file:package.json`, `file:README.md`, `file:skills/dashboard/SKILL.md`, `file:docs/adr/0003-use-local-dashboard-stack-for-cartographer-planning-ui.md`, `file:tests/dashboard/smoke.test.ts`, `file:tests/dashboard/package-assets.test.ts`, [F001], [F011], [F012], [F013], [F015]
@@ -381,21 +381,21 @@ Remove or justify legacy split-stack code, update package scripts/docs/tests, ru
 
 #### Checklist
 
-- [ ] **P6.T1** Remove Hono-specific runtime/app/assets code and dependencies if fully replaced; otherwise document retained compatibility scope and risks.
-- [ ] **P6.T2** Update `dashboard:build`, `dashboard:check`, `check:scripts`, browser test config, package `files`, and package asset tests for TanStack Start output.
-- [ ] **P6.T3** Update README and `skills/dashboard/SKILL.md` to state that normal use is a single full-stack dashboard app with no separate frontend server.
-- [ ] **P6.T4** Update smoke tests to launch the built Start dashboard through `cartographer-dashboard`, exercise topic routes, live reload, graph/document surfaces, and stop cleanly.
-- [ ] **P6.T5** Run ADR evaluation/finalization guidance: after implementation validation, create a new ADR that supersedes/amends ADR-0003 or explicitly records why ADR-0003 remains current [F011].
-- [ ] **P6.T6** Re-run all deterministic Cartographer validation for this plan/topic and ensure receipts are appended.
+- [x] **P6.T1** Remove Hono-specific runtime/app/assets code and dependencies if fully replaced; otherwise document retained compatibility scope and risks.
+- [x] **P6.T2** Update `dashboard:build`, `dashboard:check`, `check:scripts`, browser test config, package `files`, and package asset tests for TanStack Start output.
+- [x] **P6.T3** Update README and `skills/dashboard/SKILL.md` to state that normal use is a single full-stack dashboard app with no separate frontend server.
+- [x] **P6.T4** Update smoke tests to launch the built Start dashboard through `cartographer-dashboard`, exercise topic routes, live reload, graph/document surfaces, and stop cleanly.
+- [x] **P6.T5** Run ADR evaluation/finalization guidance: after implementation validation, create a new ADR that supersedes/amends ADR-0003 or explicitly records why ADR-0003 remains current [F011].
+- [x] **P6.T6** Re-run all deterministic Cartographer validation for this plan/topic and ensure receipts are appended.
 
 #### Validation
 
-- [ ] **P6.V1** Run `npm run dashboard:check`; expect build plus browser smoke/dashboard checks to pass.
-- [ ] **P6.V2** Run `npm run test:ts -- tests/dashboard/package-assets.test.ts tests/dashboard/smoke.test.ts`; expect package files and installed-mode smoke behavior to pass.
-- [ ] **P6.V3** Run `npm run check`; expect full project validation to pass.
-- [ ] **P6.V4** Run `node --experimental-strip-types skills/plan/scripts/manage_jsonl.ts validate-topic --root "$PWD" --topic tanstack-dashboard --json`; expect topic artifacts to validate.
-- [ ] **P6.V5** Run `python skills/plan/scripts/validate_planning_graph.py --root "$PWD" --topic tanstack-dashboard --json`; expect plan graph validation to pass.
-- [ ] **P6.V6** Run `cartographer_adr evaluate --topic tanstack-dashboard` or tool equivalent after implementation receipts exist; expect ADR-required status to be resolved with a create/supersede/amend decision.
+- [x] **P6.V1** Run `npm run dashboard:check`; expect build plus browser smoke/dashboard checks to pass.
+- [x] **P6.V2** Run `npm run test:ts -- tests/dashboard/package-assets.test.ts tests/dashboard/smoke.test.ts`; expect package files and installed-mode smoke behavior to pass.
+- [x] **P6.V3** Run `npm run check`; expect full project validation to pass.
+- [x] **P6.V4** Run `node --experimental-strip-types skills/plan/scripts/manage_jsonl.ts validate-topic --root "$PWD" --topic tanstack-dashboard --json`; expect topic artifacts to validate.
+- [x] **P6.V5** Run `python skills/plan/scripts/validate_planning_graph.py --root "$PWD" --topic tanstack-dashboard --json`; expect plan graph validation to pass.
+- [x] **P6.V6** Run `cartographer_adr evaluate --topic tanstack-dashboard` or tool equivalent after implementation receipts exist; expect ADR-required status to be resolved with a create/supersede/amend decision.
 
 #### Exit Criteria
 
@@ -415,11 +415,11 @@ Do not mark implementation complete until `npm run check`, topic validation, pla
 
 ## Cross-Phase Validation
 
-- [ ] **CV.V1** After each phase that changes TypeScript/TSX, run `npm run typecheck` and the narrowest relevant dashboard tests.
-- [ ] **CV.V2** After package/script changes, run `npm run check:scripts` and a bounded CLI start/status/stop smoke against a temp root.
-- [ ] **CV.V3** After route/API changes, run dashboard API, artifact-reader, privacy, and live-reload tests against temporary fixtures.
-- [ ] **CV.V4** After UI/state changes, run browser/client-shell, topic page, graph, markdown/reference, and live collection tests.
-- [ ] **CV.V5** Before final handoff, run `npm run check`, topic JSONL validation, planning graph validation, and ADR evaluation/finalization.
+- [x] **CV.V1** After each phase that changes TypeScript/TSX, run `npm run typecheck` and the narrowest relevant dashboard tests.
+- [x] **CV.V2** After package/script changes, run `npm run check:scripts` and a bounded CLI start/status/stop smoke against a temp root.
+- [x] **CV.V3** After route/API changes, run dashboard API, artifact-reader, privacy, and live-reload tests against temporary fixtures.
+- [x] **CV.V4** After UI/state changes, run browser/client-shell, topic page, graph, markdown/reference, and live collection tests.
+- [x] **CV.V5** Before final handoff, run `npm run check`, topic JSONL validation, planning graph validation, and ADR evaluation/finalization.
 
 ## Open Questions
 

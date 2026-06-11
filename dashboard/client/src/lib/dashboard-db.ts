@@ -264,9 +264,7 @@ export function createLatestLiveReloadEventCollection(options: DashboardCollecti
 		{
 			queryKey: dashboardLiveEventQueryKey,
 			enabled: options.enabled,
-			queryFn: async () => {
-				return latestLiveReloadEvent ? [latestLiveReloadEvent] : [];
-			},
+			queryFn: () => (latestLiveReloadEvent ? [latestLiveReloadEvent] : []),
 			queryClient: options.queryClient ?? dashboardQueryClient,
 			getKey: (event: LiveReloadEvent) => event.id,
 		},
@@ -359,7 +357,7 @@ export function useDashboardOverview(enabled = true): DashboardCollectionSnapsho
 		() =>
 			enabled
 				? overviewCollection
-				: createDashboardOverviewCollection(async () => undefined as never, { enabled: false }),
+				: createDashboardOverviewCollection(() => Promise.resolve(undefined as never), { enabled: false }),
 		[enabled],
 	);
 	const snapshot = useLiveQuery(collection as any) as RawLiveQuerySnapshot;
@@ -449,7 +447,8 @@ export function useTopicGraph(topic: string): DashboardCollectionSnapshot<TopicG
 
 export function useAdrs(enabled = true): DashboardCollectionSnapshot<AdrSummary> {
 	const collection = useMemo(
-		() => (enabled ? adrsCollection : createAdrSummaryCollection(async () => ({ adrs: [] }), { enabled: false })),
+		() =>
+			enabled ? adrsCollection : createAdrSummaryCollection(() => Promise.resolve({ adrs: [] }), { enabled: false }),
 		[enabled],
 	);
 	const snapshot = useLiveQuery(collection as any) as RawLiveQuerySnapshot;
@@ -490,7 +489,9 @@ export function useLiveStatus(enabled = true): DashboardCollectionSnapshot<LiveR
 } {
 	const collection = useMemo(
 		() =>
-			enabled ? liveStatusCollection : createLiveStatusCollection(async () => undefined as never, { enabled: false }),
+			enabled
+				? liveStatusCollection
+				: createLiveStatusCollection(() => Promise.resolve(undefined as never), { enabled: false }),
 		[enabled],
 	);
 	const snapshot = useLiveQuery(collection as any) as RawLiveQuerySnapshot;

@@ -8,7 +8,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { createDashboardFixture } from "./fixtures.ts";
 
 const cliPath = path.resolve("bin", "cartographer-dashboard.js");
-const hasBuiltAssets = fs.existsSync("dashboard/client/dist/index.html");
+const hasBuiltAssets = fs.existsSync("dashboard/start/.output/server/index.mjs");
 const children: ChildProcessWithoutNullStreams[] = [];
 
 type StartedDashboard = {
@@ -116,7 +116,7 @@ afterEach(async () => {
 	);
 });
 
-describe.skipIf(!hasBuiltAssets)("dashboard browser smoke", () => {
+describe.skipIf(!hasBuiltAssets)("dashboard Start browser smoke", () => {
 	it("starts via CLI, renders dashboard surfaces, live reloads a safe topic document, and stops without dashboard writes", async () => {
 		const fixture = createDashboardFixture();
 		const runtime = runtimeDir();

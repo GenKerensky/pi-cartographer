@@ -5,11 +5,11 @@
   "source_refs": {
     "plan_md": {
       "path": ".plan/tanstack-dashboard/plan.md",
-      "sha256": "sha256:6f65754441b6c5c911cada6de40a7fe816e49d3c4327db06c3c704e49a91e021"
+      "sha256": "sha256:e5471d3b5dc9e803142223f3c0aa2015a6c41bc5b33a7130d9cb0c016d34e683"
     },
     "plan_nodes": {
       "path": ".plan/tanstack-dashboard/plan.nodes.jsonl",
-      "sha256": "sha256:423ae2debc455edb9e341499666ac767e747329bd943a959642f1e90bb75fc7f"
+      "sha256": "sha256:4722c7677b792aa1258f33d700a2f9c6b384ac47d47064c9f78e021d92aad143"
     },
     "plan_edges": {
       "path": ".plan/tanstack-dashboard/plan.edges.jsonl",
@@ -17,45 +17,50 @@
     },
     "receipts": {
       "path": ".plan/tanstack-dashboard/receipts.jsonl",
-      "sha256": "sha256:21bfa9f6e6eec01bb49ba3682f4e5e9025e78e66984e46f61cfadd44ef5612ed"
+      "sha256": "sha256:af37dacf3768ad5f46b4b279080394b5433d0b353bed567b19ae0c777c98f66a"
     },
     "context_packs": {
       "path": ".plan/tanstack-dashboard/context-packs.jsonl",
-      "sha256": "sha256:b7cd812c9b2c5d2d6a42c5488524ad2faa911b599b90303ca2a5713c2c048900"
+      "sha256": "sha256:d165ba8c739f5e6f0eda06c638a74eed0d78f32ea9e262a22ea070177ed4f370"
     }
   },
   "current_phase_id": "P0",
   "active_task_ids": [],
   "active_validation_ids": [],
   "next_action": {
-    "id": "next:P6.T1",
-    "kind": "task",
-    "summary": "Start Legacy Cleanup, Docs, and ADR Readiness by deciding/removing or documenting retained Hono compatibility scope and risks.",
-    "phase_id": "P6",
-    "task_id": "P6.T1"
+    "id": "next:tanstack-dashboard.complete",
+    "kind": "finalize",
+    "summary": "TanStack dashboard implementation plan is complete; ready for final commit/handoff.",
+    "phase_id": "P6"
   },
   "working_set": {
     "write_allowed": [
       {
-        "path": "dashboard/client/src/App.tsx"
+        "path": "package.json"
       },
       {
-        "path": "dashboard/start/src/routes/__root.tsx"
+        "path": "package-lock.json"
       },
       {
-        "path": "dashboard/start/src/routes/index.tsx"
+        "path": "README.md"
       },
       {
-        "path": "dashboard/start/src/routes/topics/$topic.tsx"
+        "path": "skills/dashboard/SKILL.md"
       },
       {
-        "path": "dashboard/client/src/lib/dashboard-db.ts"
+        "path": "tests/dashboard/smoke.test.ts"
       },
       {
-        "path": "tests/dashboard/client-shell.test.tsx"
+        "path": "tests/dashboard/package-assets.test.ts"
       },
       {
-        "path": "tests/dashboard/topic-pages.test.tsx"
+        "path": "dashboard/server/runtime.ts"
+      },
+      {
+        "path": "dashboard/server/assets.ts"
+      },
+      {
+        "path": "docs/adr/**"
       },
       {
         "path": ".plan/tanstack-dashboard/plan.md"
@@ -72,28 +77,19 @@
     ],
     "read_only": [
       {
-        "path": "dashboard/client/src/features/review-workflow.tsx"
+        "path": "dashboard/server/app.ts"
       },
       {
-        "path": "dashboard/client/src/features/graph-explorer.tsx"
+        "path": "dashboard/server/cli.ts"
       },
       {
-        "path": "dashboard/client/src/features/document-viewer.tsx"
+        "path": "dashboard/start/vite.config.ts"
       },
       {
-        "path": "dashboard/client/src/lib/api.ts"
+        "path": "dashboard/client/vite.config.ts"
       },
       {
-        "path": "dashboard/client/src/lib/events.ts"
-      },
-      {
-        "path": "dashboard/client/src/lib/live-refetch.ts"
-      },
-      {
-        "path": "dashboard/start/src/routeTree.gen.ts"
-      },
-      {
-        "path": "package.json"
+        "path": "tests/dashboard/*.test.ts"
       }
     ],
     "forbidden": [
@@ -108,7 +104,11 @@
     "receipt:P4:validation:2026-06-11T02:20:10+00:00",
     "receipt:P5:validation:2026-06-11T03:14:53+00:00",
     "receipt:P5:semantic-audit:2026-06-11T03:16:55+00:00",
-    "receipt:P5:validation:2026-06-11T03:17:07+00:00"
+    "receipt:P5:validation:2026-06-11T03:17:07+00:00",
+    "receipt:P6:validation:2026-06-11T05:06:03+00:00",
+    "receipt:P6:adr:2026-06-11T05:06:30+00:00",
+    "receipt:P6:semantic-audit:2026-06-11T05:11:20+00:00",
+    "receipt:P6:validation:2026-06-11T05:12:41+00:00"
   ],
   "journal_refs": [],
   "resume": {
@@ -119,15 +119,8 @@
       ".plan/tanstack-dashboard/plan.md",
       ".plan/tanstack-dashboard/receipts.jsonl"
     ],
-    "expected_first_response": [
-      "current_phase",
-      "next_action",
-      "files_to_inspect"
-    ],
-    "must_ignore": [
-      "prior chat speculation",
-      "stale generated snippets"
-    ]
+    "expected_first_response": ["current_phase", "next_action", "files_to_inspect"],
+    "must_ignore": ["prior chat speculation", "stale generated snippets"]
   },
-  "updated_at": "2026-06-11T03:17:14Z"
+  "updated_at": "2026-06-11T05:12:50Z"
 }

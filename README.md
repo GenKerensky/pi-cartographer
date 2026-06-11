@@ -189,7 +189,7 @@ Implementation uses a parent single-writer loop by default. The agent reads `.ca
 
 ## Planning dashboard
 
-The dashboard is a local, loopback-only, read-only browser view over Cartographer artifacts. It reads proposal/plan/fact/map/receipt/context/evidence/ADR/index files and never writes `.plan/`, ADRs, index/cache files, or source files.
+The dashboard is a local, loopback-only, read-only browser view over Cartographer artifacts. Normal use is a single TanStack Start full-stack app launched by `cartographer-dashboard`; it reads proposal/plan/fact/map/receipt/context/evidence/ADR/index files and never writes `.plan/`, ADRs, index/cache files, or source files.
 
 Start it from the project you want to inspect:
 
@@ -223,7 +223,8 @@ Dashboard behavior and safety boundaries:
 - The server defaults to loopback and rejects non-loopback hosts such as `0.0.0.0`, `::`, and LAN/public addresses.
 - Runtime metadata is stored under `XDG_RUNTIME_DIR` or an OS temp directory, keyed by repository root hash, not under `.plan/`.
 - Live reload watches safe `.plan/**` files, excludes `.plan/_private/**`, and summarizes `.plan/_index/**` changes as stale-index events.
-- The UI uses React, Tailwind CSS, shadcn/ui components, Shiki document/code highlighting, and React Flow graph visualization.
+- The UI uses TanStack Start routes, TanStack DB/TanStack Query read-only reactive projections, React, Tailwind CSS, shadcn/ui components, Shiki document/code highlighting, and React Flow graph visualization.
+- `dashboard/server/app.ts` remains as a source-checkout compatibility fallback and shared route contract for tests; packaged/normal startup prefers the built `dashboard/start/.output/server/index.mjs` full-stack app.
 - Private raw evidence should be imported through Cartographer private-artifact workflows and reviewed via sanitized evidence documents, not read directly in the dashboard or skill.
 
 ## What gets written
@@ -375,7 +376,7 @@ npm run format:check
 npm run test
 npm run test:py
 npm run test:ts
-npm run dashboard:build
-npm run dashboard:check
+npm run dashboard:build   # builds the TanStack Start full-stack dashboard output
+npm run dashboard:check   # builds Start output and runs the browser shell smoke
 npm run test:browser -- tests/dashboard/client-shell.test.tsx
 ```
