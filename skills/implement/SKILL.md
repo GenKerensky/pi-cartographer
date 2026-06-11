@@ -57,7 +57,7 @@ If the plan is missing, ask the user whether to generate it first with the `plan
 
 - `.plan/{topic}/plan.md`, `plan.nodes.jsonl`, `plan.edges.jsonl`, `receipts.jsonl`, and `context-packs.jsonl` remain authoritative for planning, checkoff, validation history, and implementation handoff context.
 - For scoped changes that affect a core user workflow or comparable durable behavior, requirements/design graph artifacts are supporting behavioral/design references for implementation. Small non-core-workflow changes may skip them when the accepted proposal scope gate says they are unnecessary.
-- Topic-local requirements are change deltas; accepted deltas fold into durable `docs/requirements.md` or split durable requirements docs during finalization/archive when the plan requires it.
+- Topic-local requirements are change deltas; accepted deltas fold into durable `docs/requirements.md` or split durable requirements docs during finalization/archive when the plan requires it. Requirement fold steps must preserve stable requirement/scenario IDs, source topic, change metadata, and receipt/audit references, and must leave a `requirements-fold` receipt or an approved `requirements-fold-skip` receipt.
 - `.cartographer/{topic}/state.json` is only compact execution/resume state.
 - `.cartographer/{topic}/journal.jsonl` is only a curated durable lessons journal.
 - `.cartographer/current.json` is git-ignored, local, non-authoritative, and safe to ignore when stale.

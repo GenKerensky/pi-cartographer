@@ -254,7 +254,7 @@ Cartographer writes planning artifacts under `.plan/` in your project. Depending
 - `receipts.jsonl`: deterministic checkoff receipts and audit history.
 - `context-packs.jsonl`: compact handoff context for child agents and auditor transitions.
 
-Accepted requirement deltas fold into durable `docs/requirements.md` (or split requirements docs when needed), similar to how durable architecture decisions live under `docs/adr/`.
+Accepted requirement deltas fold into durable `docs/requirements.md` (or split requirements docs under `docs/requirements/<domain>.md` when needed), similar to how durable architecture decisions live under `docs/adr/`. The fold lifecycle preserves stable `REQ-*` and `SCN-*` IDs, source topic, status/change metadata, and fold receipt references; implemented topics with requirement deltas should have either a `requirements-fold` receipt or an approved `requirements-fold-skip` receipt.
 
 Optional execution files can additionally appear under `.cartographer/<topic>/` and are not part of the plan graph:
 

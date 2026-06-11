@@ -253,7 +253,7 @@ This phase is mostly documentation/skill wiring. Avoid changing validator semant
 
 ### Phase P4 — Durable Requirements Fold Lifecycle
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P3
 - **Unlocks:** P5
 - **Primary references:** `artifact:docs-requirements`, `dir:docs/adr`, `artifact:requirements.md`, `artifact:requirements.nodes.jsonl`, `artifact:requirements.edges.jsonl`, [F014], [F016], [F017], [F018]
@@ -271,17 +271,17 @@ Implement the Cartographer-native fold/archive lifecycle that applies accepted t
 
 #### Checklist
 
-- [ ] **P4.T1** Document durable requirements file layout and split/domain strategy in README and workflow guidance.
-- [ ] **P4.T2** Implement or scaffold a Cartographer-native requirements fold helper that applies ADDED/MODIFIED/REMOVED/RENAMED-style deltas to `docs/requirements.md` or split files.
-- [ ] **P4.T3** Ensure fold output records or preserves stable requirement IDs, scenario IDs, supersession/removal metadata, source topic, and receipt/audit references.
-- [ ] **P4.T4** Add validation that implemented topics with requirement deltas either have folded durable requirements or an explicit approved skip receipt.
-- [ ] **P4.T5** Add temp-root tests for add/modify/remove/rename fold behavior, split/domain file behavior, duplicate durable IDs, and missing fold receipts.
+- [x] **P4.T1** Document durable requirements file layout and split/domain strategy in README and workflow guidance.
+- [x] **P4.T2** Implement or scaffold a Cartographer-native requirements fold helper that applies ADDED/MODIFIED/REMOVED/RENAMED-style deltas to `docs/requirements.md` or split files.
+- [x] **P4.T3** Ensure fold output records or preserves stable requirement IDs, scenario IDs, supersession/removal metadata, source topic, and receipt/audit references.
+- [x] **P4.T4** Add validation that implemented topics with requirement deltas either have folded durable requirements or an explicit approved skip receipt.
+- [x] **P4.T5** Add temp-root tests for add/modify/remove/rename fold behavior, split/domain file behavior, duplicate durable IDs, and missing fold receipts.
 
 #### Validation
 
-- [ ] **P4.V1** Run targeted fold helper tests, e.g. `python -m unittest tests.test_requirements_records` or the implemented equivalent.
-- [ ] **P4.V2** Run `npm run test:ts -- tests/manage_jsonl.test.ts tests/cartographer_tools.test.ts` if fold metadata touches TypeScript summaries/tools.
-- [ ] **P4.V3** Run `npm run check:scripts` and confirm helper syntax passes.
+- [x] **P4.V1** Run targeted fold helper tests, e.g. `python -m unittest discover tests -p 'test_requirements_records.py'` or the implemented equivalent.
+- [x] **P4.V2** Run `npm run test:ts -- tests/manage_jsonl.test.ts tests/cartographer_tools.test.ts` if fold metadata touches TypeScript summaries/tools.
+- [x] **P4.V3** Run `npm run check:scripts` and confirm helper syntax passes.
 
 #### Exit Criteria
 
