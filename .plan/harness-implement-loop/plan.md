@@ -377,7 +377,7 @@ Be explicit: users approve gates; tools enforce prerequisites; agents do not imp
 
 ### Phase P7 — Final Validation and ADR
 
-- **Status:** in-progress
+- **Status:** complete
 - **Depends on:** P6
 - **Unlocks:** none
 - **Primary references:** `file:package.json`, `file:docs/adr/0004-use-single-writer-cartographer-implementation-state.md`, `file:docs/adr/0002-require-auditable-cartographer-subagent-handoffs.md`, [F005], [F014], [F017], [F028]
@@ -399,7 +399,7 @@ Validate the complete workflow hardening implementation and record the architect
 - [x] **P7.T2** Run topic validation and planning graph validation for `harness-implement-loop`.
 - [x] **P7.T3** Run final semantic audit through `cartographer_handoff auditor` if available, otherwise record an explicit fallback receipt.
 - [x] **P7.T4** Create an ADR with `cartographer_adr` covering deterministic workflow wrappers, lifecycle gates, automatic implementation phase advancement, human approval receipts for major gates, and subagent dependency evaluation.
-- [ ] **P7.T5** Request final human approval with `cartographer_transition request-approval --gate implementation` and record approval with `cartographer_transition approve --gate implementation` when the human approves. _(approval requested; awaiting human approval)_.
+- [x] **P7.T5** Request final human approval with `cartographer_transition request-approval --gate implementation` and record approval with `cartographer_transition approve --gate implementation` when the human approves.
 
 #### Validation
 
