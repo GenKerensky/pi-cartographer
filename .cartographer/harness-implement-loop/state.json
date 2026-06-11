@@ -1,0 +1,142 @@
+{
+  "schema_version": 1,
+  "topic": "harness-implement-loop",
+  "source_status": "hashes-valid",
+  "source_refs": {
+    "plan_md": {
+      "path": ".plan/harness-implement-loop/plan.md",
+      "sha256": "sha256:9d95fad61e4c7cfa947cdda1d1eb70eb87e0f568053727af021712a084778dd1"
+    },
+    "plan_nodes": {
+      "path": ".plan/harness-implement-loop/plan.nodes.jsonl",
+      "sha256": "sha256:5b6dc4cc48373a16bc1dcc85545a910fc4d4543648c1e3da7f0a4e4134661217"
+    },
+    "plan_edges": {
+      "path": ".plan/harness-implement-loop/plan.edges.jsonl",
+      "sha256": "sha256:70c163543aa34253f277cd750159142bd18fe9e9917cd6f07c7151cc9eeca124"
+    },
+    "receipts": {
+      "path": ".plan/harness-implement-loop/receipts.jsonl",
+      "sha256": "sha256:cc1913c3a1fb66b0b4186a64c0392ad8cea371ed1c318caec21f9482222f9837"
+    },
+    "context_packs": {
+      "path": ".plan/harness-implement-loop/context-packs.jsonl",
+      "sha256": "sha256:6a976c0262f7601d1c2cd261c41a31c368c0fad812ef163474445a81bf3dd6aa"
+    }
+  },
+  "current_phase_id": "P0",
+  "active_task_ids": [],
+  "active_validation_ids": [],
+  "next_action": {
+    "id": "next:P1.T1",
+    "kind": "implement",
+    "summary": "Begin P1 by implementing schema-checked generic receipt append and foundational transition/context-pack wrappers.",
+    "phase_id": "P1",
+    "task_id": "P1.T1"
+  },
+  "working_set": {
+    "write_allowed": [
+      {
+        "path": "skills/plan/scripts/cartographer_workflow.ts*",
+        "reason": "P0 shared workflow contracts/runtime helpers"
+      },
+      {
+        "path": "tests/cartographer_workflow.test.ts*",
+        "reason": "P0 temp-root tests"
+      },
+      {
+        "path": ".gitignore",
+        "reason": "P0 gitignore .cartographer/config.toml"
+      },
+      {
+        "path": ".plan/harness-implement-loop/plan.md",
+        "reason": "P0 status/checkoff updates"
+      },
+      {
+        "path": ".plan/harness-implement-loop/plan.nodes.jsonl",
+        "reason": "P0 status updates"
+      },
+      {
+        "path": ".plan/harness-implement-loop/receipts.jsonl",
+        "reason": "P0 validation/status receipts"
+      },
+      {
+        "path": ".plan/harness-implement-loop/context-packs.jsonl",
+        "reason": "P0 phase context pack"
+      },
+      {
+        "path": ".cartographer/harness-implement-loop/state.json",
+        "reason": "state helper managed execution state"
+      },
+      {
+        "path": ".cartographer/harness-implement-loop/journal.jsonl",
+        "reason": "state helper managed journal"
+      },
+      {
+        "path": ".cartographer/current.json",
+        "reason": "local current pointer"
+      }
+    ],
+    "read_only": [
+      {
+        "path": "skills/plan/scripts/cartographer_state.ts",
+        "reason": "reference existing state helper patterns"
+      },
+      {
+        "path": "tests/cartographer_state.test.ts",
+        "reason": "reference temp-root test patterns"
+      },
+      {
+        "path": "extensions/cartographer-tools.ts",
+        "reason": "reference tool registration patterns"
+      },
+      {
+        "path": ".plan/harness-implement-loop/proposal.md",
+        "reason": "approved scope"
+      }
+    ],
+    "forbidden": [
+      {
+        "path": ".plan/_private/**",
+        "reason": "raw private inputs forbidden"
+      },
+      {
+        "path": ".plan/_index/**",
+        "reason": "generated index cache not committed"
+      }
+    ]
+  },
+  "known_failures": [],
+  "last_validation_receipt_ids": [
+    "receipt:P0:validation:2026-06-11T05:02:46+00:00",
+    "receipt:P0:validation:2026-06-11T05:02:50+00:00",
+    "receipt:P0:validation:2026-06-11T05:03:01+00:00",
+    "receipt:P0:validation:2026-06-11T05:03:24+00:00"
+  ],
+  "journal_refs": [
+    "journal:20260611T050334Z:compact"
+  ],
+  "resume": {
+    "template_id": "cartographer.single_writer.resume.v1",
+    "resume_order": [
+      ".cartographer/harness-implement-loop/state.json",
+      ".cartographer/harness-implement-loop/journal.jsonl",
+      ".plan/harness-implement-loop/plan.md",
+      ".plan/harness-implement-loop/receipts.jsonl"
+    ],
+    "expected_first_response": [
+      "current_phase",
+      "next_action",
+      "files_to_inspect"
+    ],
+    "must_ignore": [
+      "prior chat speculation",
+      "stale generated snippets"
+    ]
+  },
+  "updated_at": "2026-06-11T05:05:08Z",
+  "compaction": {
+    "trigger": "phase-complete",
+    "compacted_at": "2026-06-11T05:03:34Z"
+  }
+}
