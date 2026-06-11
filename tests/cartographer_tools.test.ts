@@ -130,6 +130,11 @@ describe("cartographer tool registration", () => {
 		};
 		expect(implementTool).toBeTruthy();
 		expect(JSON.stringify(implementTool?.parameters)).toContain("finalize");
+		const handoffTool = tools.find((tool) => tool.name === "cartographer_handoff") as RegisteredTool & {
+			parameters?: unknown;
+		};
+		expect(handoffTool).toBeTruthy();
+		expect(JSON.stringify(handoffTool?.parameters)).toContain("auditor");
 	});
 
 	it("runs artifact summaries through the registered read-only tool", async () => {

@@ -334,7 +334,7 @@ function parseCliArgs(argv: string[]): CliArgs {
 		const value = rest[index + 1];
 		if (value === undefined || value.startsWith("--")) throw new Error(`Missing value for --${name}`);
 		index += 1;
-		if (["artifact", "validation-receipt", "receipt-id"].includes(name)) {
+		if (["artifact", "validation-receipt", "receipt-id", "acceptance-criterion"].includes(name)) {
 			const current = options[name];
 			options[name] = Array.isArray(current) ? [...current, value] : [value];
 		} else {
@@ -364,6 +364,12 @@ function usage(exitCode: number): never {
   ${script} implement-record --root <root> --topic <topic> --receipt-id <id> [--json]
   ${script} implement-compact --root <root> --topic <topic> --trigger <name> [--summary <text>] [--json]
   ${script} implement-finalize --root <root> --topic <topic> [--summary <text>] [--json]
+  ${script} handoff-auditor --root <root> --topic <topic> --phase-id <id> --decision <PASS|FAIL> --report-path <path> --summary <text> [--validation-receipt <id>] [--json]
+  ${script} handoff-compass --root <root> --topic <topic> --phase-id <id> --decision <within_scope|requires_plan_change|requires_user_decision> --summary <text> [--json]
+  ${script} handoff-archivist --root <root> --topic <topic> --phase-id <id> --summary <text> [--json]
+  ${script} handoff-redactor --root <root> --topic <topic> --phase-id <id> --summary <text> [--json]
+  ${script} handoff-fallback --root <root> --topic <topic> --phase-id <id> --failure-mode <mode> --summary <text> [--fallback <name>] [--json]
+  ${script} handoff-output-capture --root <root> --topic <topic> --phase-id <id> --role <role> --output <text> --report-path <path> [--json]
   ${script} transition-status --root <root> --topic <topic> [--json]
   ${script} transition-request-approval --root <root> --topic <topic> --gate <gate> [--phase-id <id>] [--summary <text>] [--json]
   ${script} transition-approve --root <root> --topic <topic> --gate <gate> --summary <text> [--phase-id <id>] [--approved-by <name>] [--ci] [--json]
@@ -1237,6 +1243,78 @@ export function finalizeImplementation(params: { root: string; topic: string; su
 	return { validation_receipt: validationReceipt.id, audit_receipt: auditReceipt.id, transition_receipt: transition.id };
 }
 
+
+function assertSafeReportPath(root: string, reportPath: string): string {
+	const fullPath = path.resolve(path.isAbsolute(reportPath) ? reportPath : path.join(root, reportPath));
+	const normalized = path.relative(root, fullPath).split(path.sep).join("/");
+	if (normalized.startsWith("../") || path.isAbsolute(normalized)) throw new Error("Handoff report path must stay under project root");
+	if (normalized === ".plan/_private" || normalized.startsWith(".plan/_private/") || normalized.includes("/.plan/_private/")) throw new Error("Handoff report path must not reference private raw inputs");
+	fs.mkdirSync(path.dirname(fullPath), { recursive: true });
+	return fullPath;
+}
+
+function assertContextPackForPhase(root: string, topic: string, phaseId: string): void {
+	const packs = readJsonlRecords(contextPacksPath(root, topic));
+	if (!packs.some((pack) => pack.phase_id === phaseId || optionalString(pack.id).endsWith(`:${phaseId}`))) {
+		throw new Error(`Missing context pack for ${phaseId}`);
+	}
+}
+
+function assertValidationReceiptsExist(root: string, topic: string, receiptIds: string[]): void {
+	const receipts = readJsonlRecords(receiptsPath(root, topic));
+	for (const receiptId of receiptIds) if (!receipts.some((receipt) => receipt.id === receiptId)) throw new Error(`Missing validation receipt: ${receiptId}`);
+}
+
+export function captureAuditorHandoff(params: { root: string; topic: string; phaseId: string; decision: string; reportPath: string; summary: string; validationReceipts?: string[]; artifactSummaries?: string[]; acceptanceCriteria?: string[] }): Record<string, unknown> {
+	ensureTopicArtifacts(params.root, params.topic);
+	assertContextPackForPhase(params.root, params.topic, params.phaseId);
+	if (!params.validationReceipts?.length) throw new Error("auditor handoff requires validation receipt IDs");
+	assertValidationReceiptsExist(params.root, params.topic, params.validationReceipts);
+	if (!params.artifactSummaries?.length) throw new Error("auditor handoff requires artifact summaries");
+	if (!params.acceptanceCriteria?.length) throw new Error("auditor handoff requires acceptance criteria");
+	const decision = params.decision.toUpperCase();
+	if (!["PASS", "FAIL"].includes(decision)) throw new Error("auditor decision must be PASS or FAIL");
+	const summary = assertNonEmptyString(params.summary, "summary");
+	const reportFile = assertSafeReportPath(params.root, params.reportPath);
+	fs.writeFileSync(reportFile, `DECISION: ${decision}\nSUMMARY: ${summary}\nREQUIRED_CORRECTIONS:\n- ${decision === "PASS" ? "None" : "See summary."}\n`, "utf8");
+	return appendWorkflowReceipt({ root: params.root, topic: params.topic, kind: "audit", phaseId: params.phaseId, summary: `auditor ${decision}: ${summary}`, data: { role: "auditor", decision, report_path: path.relative(params.root, reportFile).split(path.sep).join("/"), validation_receipts: params.validationReceipts || [], artifact_summaries: params.artifactSummaries || [], acceptance_criteria: params.acceptanceCriteria || [] } });
+}
+
+export function captureCompassHandoff(params: { root: string; topic: string; phaseId: string; decision: string; summary: string }): Record<string, unknown> {
+	const allowed = new Set(["within_scope", "requires_plan_change", "requires_user_decision"]);
+	if (!allowed.has(params.decision)) throw new Error("Unsupported compass decision");
+	return appendWorkflowReceipt({ root: params.root, topic: params.topic, kind: "compass", phaseId: params.phaseId, summary: params.summary, data: { role: "compass", decision: params.decision, recommended_next_action: params.summary } });
+}
+
+
+export function captureHandoffOutput(params: { root: string; topic: string; phaseId: string; role: string; output: string; reportPath: string }): Record<string, unknown> {
+	const output = params.output.trim();
+	if (!output) throw new Error("Handoff harness failure: empty output");
+	if (!/^DECISION:\s*(PASS|FAIL|within_scope|requires_plan_change|requires_user_decision)/m.test(output) || !/^SUMMARY:\s+.+/m.test(output) || !/^REQUIRED_CORRECTIONS:\s*$/m.test(output)) {
+		throw new Error("Handoff harness failure: output schema mismatch");
+	}
+	const reportFile = assertSafeReportPath(params.root, params.reportPath);
+	fs.writeFileSync(reportFile, output.endsWith("\n") ? output : `${output}\n`, "utf8");
+	return appendWorkflowReceipt({ root: params.root, topic: params.topic, kind: "output-capture", phaseId: params.phaseId, summary: `${params.role} output captured`, data: { role: params.role, report_path: path.relative(params.root, reportFile).split(path.sep).join("/"), schema_valid: true } });
+}
+
+
+export function captureRoleHandoff(params: { root: string; topic: string; phaseId: string; role: "archivist" | "redactor"; summary: string }): Record<string, unknown> {
+	return appendWorkflowReceipt({ root: params.root, topic: params.topic, kind: "output-capture", phaseId: params.phaseId, summary: params.summary, data: { role: params.role, decision: "captured" } });
+}
+
+export function recordHandoffDependencyEvaluation(params: { root: string; topic: string; phaseId: string; recommendation: string; summary: string }): Record<string, unknown> {
+	const allowed = new Set(["keep", "patch", "replace"]);
+	if (!allowed.has(params.recommendation)) throw new Error("Unsupported dependency recommendation");
+	return appendWorkflowReceipt({ root: params.root, topic: params.topic, kind: "decision", phaseId: params.phaseId, summary: params.summary, data: { role: "handoff-dependency-evaluation", recommendation: params.recommendation, criteria: ["timeouts", "schema-mismatch", "missing-report"] } });
+}
+
+export function recordHandoffFallback(params: { root: string; topic: string; phaseId: string; failureMode: string; summary: string; fallback?: string }): Record<string, unknown> {
+	const failureModes = new Set(["timeout", "empty-output", "schema-mismatch", "report-missing", "usage-limit"]);
+	if (!failureModes.has(params.failureMode)) throw new Error("Unsupported handoff failure mode");
+	return appendWorkflowReceipt({ root: params.root, topic: params.topic, kind: "fallback", phaseId: params.phaseId, summary: params.summary, data: { role: "handoff", failure_mode: params.failureMode, fallback: params.fallback, reliability_metric: { attempts: 1, failures: 1, recommendation: params.fallback ? "fallback-used" : "retry-or-escalate" } } });
+}
+
 function assertTransitionPrerequisites(params: {
 	root: string;
 	topic: string;
@@ -1426,6 +1504,20 @@ export function runWorkflowCli(argv = process.argv.slice(2)): WorkflowCliResult 
 		result = implementCompact({ root, topic, trigger: opt(options, "trigger"), summary: typeof options.summary === "string" ? options.summary : undefined });
 	} else if (command === "implement-finalize" || command === "implement_finalize") {
 		result = finalizeImplementation({ root, topic, summary: typeof options.summary === "string" ? options.summary : undefined });
+	} else if (command === "handoff-auditor" || command === "handoff_auditor") {
+		result = captureAuditorHandoff({ root, topic, phaseId: opt(options, "phase-id"), decision: opt(options, "decision"), reportPath: opt(options, "report-path"), summary: opt(options, "summary"), validationReceipts: optArray(options, "validation-receipt"), artifactSummaries: optArray(options, "artifact"), acceptanceCriteria: optArray(options, "acceptance-criterion") });
+	} else if (command === "handoff-archivist" || command === "handoff_archivist") {
+		result = captureRoleHandoff({ root, topic, phaseId: opt(options, "phase-id"), role: "archivist", summary: opt(options, "summary") });
+	} else if (command === "handoff-redactor" || command === "handoff_redactor") {
+		result = captureRoleHandoff({ root, topic, phaseId: opt(options, "phase-id"), role: "redactor", summary: opt(options, "summary") });
+	} else if (command === "handoff-dependency-evaluation" || command === "handoff_dependency_evaluation") {
+		result = recordHandoffDependencyEvaluation({ root, topic, phaseId: opt(options, "phase-id"), recommendation: opt(options, "recommendation"), summary: opt(options, "summary") });
+	} else if (command === "handoff-compass" || command === "handoff_compass") {
+		result = captureCompassHandoff({ root, topic, phaseId: opt(options, "phase-id"), decision: opt(options, "decision"), summary: opt(options, "summary") });
+	} else if (command === "handoff-fallback" || command === "handoff_fallback") {
+		result = recordHandoffFallback({ root, topic, phaseId: opt(options, "phase-id"), failureMode: opt(options, "failure-mode"), summary: opt(options, "summary"), fallback: typeof options.fallback === "string" ? options.fallback : undefined });
+	} else if (command === "handoff-output-capture" || command === "handoff_output_capture") {
+		result = captureHandoffOutput({ root, topic, phaseId: opt(options, "phase-id"), role: opt(options, "role"), output: opt(options, "output"), reportPath: opt(options, "report-path") });
 	} else if (command === "transition-status" || command === "transition_status") {
 		result = getWorkflowStatus({ root, topic });
 	} else if (command === "transition-request-approval" || command === "transition_request_approval") {

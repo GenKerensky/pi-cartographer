@@ -286,7 +286,7 @@ Do not automate broad edits. The wrapper controls gates; the parent/current agen
 
 ### Phase P5 — Subagent Handoff Wrapper
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P1
 - **Unlocks:** P6
 - **Primary references:** `.pi/agents/cartographer-auditor.md`, `.pi/agents/cartographer-compass.md`, `.pi/agents/cartographer-archivist.md`, `.pi/agents/cartographer-redactor.md`, `file:extensions/cartographer-tools.ts`, [F014], [F016], [F017]
@@ -303,19 +303,19 @@ Make Cartographer specialist calls deterministic enough for gates, while explici
 
 #### Checklist
 
-- [ ] **P5.T1** Implement `cartographer_handoff auditor` requiring context pack, validation receipt IDs, artifact summaries, acceptance criteria, and report path; output exact PASS/FAIL schema [F014][F016].
-- [ ] **P5.T2** Implement `cartographer_handoff compass` with structured decision output: within_scope, requires_plan_change, requires_user_decision, recommended_next_action.
-- [ ] **P5.T3** Implement retry/output-capture handling that treats missing/empty output as harness failure, not semantic FAIL [F016].
-- [ ] **P5.T4** Implement fallback receipt recording for timeout, usage limit, output schema mismatch, report path missing, and approved substitute reviewer/oracle.
-- [ ] **P5.T5** Record reliability metrics and decision criteria for whether to keep, patch, or replace the generic subagents dependency [F017].
-- [ ] **P5.T6** Register handoff wrapper in the extension and update agent/skill docs to route gates through it.
+- [x] **P5.T1** Implement `cartographer_handoff auditor` requiring context pack, validation receipt IDs, artifact summaries, acceptance criteria, and report path; output exact PASS/FAIL schema [F014][F016].
+- [x] **P5.T2** Implement `cartographer_handoff compass` with structured decision output: within_scope, requires_plan_change, requires_user_decision, recommended_next_action.
+- [x] **P5.T3** Implement retry/output-capture handling that treats missing/empty output as harness failure, not semantic FAIL [F016].
+- [x] **P5.T4** Implement fallback receipt recording for timeout, usage limit, output schema mismatch, report path missing, and approved substitute reviewer/oracle.
+- [x] **P5.T5** Record reliability metrics and decision criteria for whether to keep, patch, or replace the generic subagents dependency [F017].
+- [x] **P5.T6** Register handoff wrapper in the extension and update agent/skill docs to route gates through it.
 
 #### Validation
 
-- [ ] **P5.V1** Run handoff wrapper tests for successful auditor PASS capture, semantic FAIL capture, empty output retry, timeout fallback, and report path creation.
-- [ ] **P5.V2** Run compass wrapper tests for structured decisions and scope-change blocking.
-- [ ] **P5.V3** Run dependency evaluation tests/fixtures proving metrics are recorded and follow-up recommendation is generated.
-- [ ] **P5.V4** Run `npm run check:scripts`.
+- [x] **P5.V1** Run handoff wrapper tests for successful auditor PASS capture, semantic FAIL capture, empty output retry, timeout fallback, and report path creation.
+- [x] **P5.V2** Run compass wrapper tests for structured decisions and scope-change blocking.
+- [x] **P5.V3** Run dependency evaluation tests/fixtures proving metrics are recorded and follow-up recommendation is generated.
+- [x] **P5.V4** Run `npm run check:scripts`.
 
 #### Exit Criteria
 

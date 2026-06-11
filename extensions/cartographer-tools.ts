@@ -218,6 +218,24 @@ type CartographerImplementParams = OutputShapeParams & {
 	summary?: string;
 };
 
+type CartographerHandoffParams = OutputShapeParams & {
+	action: "auditor" | "compass" | "archivist" | "redactor" | "fallback" | "output-capture" | "dependency-evaluation";
+	root?: string;
+	topic?: string;
+	phaseId?: string;
+	decision?: string;
+	reportPath?: string;
+	summary?: string;
+	role?: string;
+	output?: string;
+	artifact?: string[];
+	acceptanceCriterion?: string[];
+	recommendation?: string;
+	validationReceipt?: string[];
+	failureMode?: string;
+	fallback?: string;
+};
+
 type CartographerEvidenceParams = OutputShapeParams & {
 	action: "import" | "list";
 	root?: string;
@@ -1466,6 +1484,70 @@ export default function cartographerTools(pi: PiApi): void {
 				outputPath: params.outputPath,
 				raw: params.raw,
 				label: `cartographer-implement-${params.action}`,
+			});
+		},
+	});
+
+	pi.registerTool({
+		name: "cartographer_handoff",
+		label: "Cartographer Handoff",
+		description: "Capture deterministic Cartographer specialist handoff outcomes and fallback receipts.",
+		promptSnippet: "Record auditor/compass handoff reports, schema outcomes, and fallbacks",
+		promptGuidelines: [
+			"Use auditor after deterministic validation receipts and a context pack exist.",
+			"Treat missing, empty, or schema-invalid specialist output as harness failure, not semantic FAIL.",
+			"Record fallback receipts for timeout, usage limit, schema mismatch, or approved substitute reviewers.",
+		],
+		parameters: Type.Object({
+			action: Type.Union([Type.Literal("auditor"), Type.Literal("compass"), Type.Literal("archivist"), Type.Literal("redactor"), Type.Literal("fallback"), Type.Literal("output-capture"), Type.Literal("dependency-evaluation")]),
+			root: Type.Optional(Type.String({ description: "Project root. Defaults to current working directory." })),
+			topic: Type.String({ description: "Cartographer topic under .plan/." }),
+			phaseId: Type.String({ description: "Phase id for the handoff." }),
+			decision: Type.Optional(Type.String({ description: "PASS/FAIL or structured compass decision." })),
+			reportPath: Type.Optional(Type.String({ description: "Report path for auditor/output capture." })),
+			summary: Type.String({ description: "Compact handoff summary." }),
+			role: Type.Optional(Type.String({ description: "Role for output-capture." })),
+			output: Type.Optional(Type.String({ description: "Raw structured specialist output for output-capture." })),
+			artifact: Type.Optional(Type.Array(Type.String(), { description: "Artifact summaries for auditor context." })),
+			acceptanceCriterion: Type.Optional(Type.Array(Type.String(), { description: "Acceptance criteria for auditor review." })),
+			recommendation: Type.Optional(Type.String({ description: "Dependency recommendation: keep, patch, or replace." })),
+			validationReceipt: Type.Optional(Type.Array(Type.String(), { description: "Validation receipt ids." })),
+			failureMode: Type.Optional(Type.String({ description: "Fallback failure mode." })),
+			fallback: Type.Optional(Type.String({ description: "Approved fallback reviewer/role." })),
+			maxOutputChars: Type.Optional(Type.Number({ description: "Inline output budget." })),
+			outputPath: Type.Optional(Type.String({ description: "Optional full-output path for oversized output." })),
+			raw: Type.Optional(Type.Boolean({ description: "Return raw command output instead of a compact receipt." })),
+		}),
+		async execute(_toolCallId, rawParams, signal) {
+			const params = rawParams as CartographerHandoffParams;
+			const command = params.action === "fallback" ? "handoff-fallback" : params.action === "output-capture" ? "handoff-output-capture" : params.action === "dependency-evaluation" ? "handoff-dependency-evaluation" : `handoff-${params.action}`;
+			const args = [
+				command,
+				"--root",
+				params.root || process.cwd(),
+				"--topic",
+				requireString(params.topic, "cartographer_handoff requires topic"),
+				"--phase-id",
+				requireString(params.phaseId, "cartographer_handoff requires phaseId"),
+				"--summary",
+				requireString(params.summary, "cartographer_handoff requires summary"),
+				"--json",
+			];
+			if (params.decision) args.push("--decision", params.decision);
+			if (params.reportPath) args.push("--report-path", params.reportPath);
+			if (params.role) args.push("--role", params.role);
+			if (params.output) args.push("--output", params.output);
+			if (params.recommendation) args.push("--recommendation", params.recommendation);
+			for (const artifact of params.artifact || []) args.push("--artifact", artifact);
+			for (const criterion of params.acceptanceCriterion || []) args.push("--acceptance-criterion", criterion);
+			for (const receipt of params.validationReceipt || []) args.push("--validation-receipt", receipt);
+			if (params.failureMode) args.push("--failure-mode", params.failureMode);
+			if (params.fallback) args.push("--fallback", params.fallback);
+			return runCommand("node", ["--experimental-strip-types", workflowScript, ...args], signal, {
+				maxOutputChars: params.maxOutputChars,
+				outputPath: params.outputPath,
+				raw: params.raw,
+				label: `cartographer-handoff-${params.action}`,
 			});
 		},
 	});

@@ -256,7 +256,7 @@ Limit routine repair loops to 3 scoped fix attempts per distinct failing command
 
 ### 10. Audit and validate the phase
 
-Once quality tools are green and deterministic validation receipts exist, dispatch `cartographer-auditor` as the default read-only phase semantic gate.
+Once quality tools are green and deterministic validation receipts exist, route the semantic gate through `cartographer_handoff auditor` when available so the context pack, validation receipt IDs, artifact summaries, acceptance criteria, report path, PASS/FAIL outcome, and fallback metadata are captured deterministically. If `cartographer_handoff` is not yet available, dispatch `cartographer-auditor` as the read-only phase semantic gate and record an explicit fallback receipt.
 
 Provide the auditor:
 
@@ -268,7 +268,7 @@ Provide the auditor:
 - relevant proposal/map/fact references;
 - state/journal/compaction evidence when relevant.
 
-Ask for explicit PASS/FAIL. If the auditor rejects or any validation item fails:
+Ask for explicit PASS/FAIL and capture the report with `cartographer_handoff auditor` or an approved fallback receipt. If the auditor rejects or any validation item fails:
 
 1. apply a scoped fix;
 2. rerun affected checks;

@@ -1,0 +1,7 @@
+DECISION: FAIL
+SUMMARY: Reviewed receipts receipt:P5:validation:2026-06-11T13:35:37+00:00 and receipt:P5:validation:2026-06-11T13:35:59+00:00, plus P5 phase/context summaries. Did not write /var/home/falco/code/pi-cartographer/main/auditor-report.md because this audit is read-only.
+REQUIRED_CORRECTIONS:
+- Auditor handoff does not require validation receipt IDs despite P5.T1. `validationReceipt` is optional in `extensions/cartographer-tools.ts:1504`, and `captureAuditorHandoff` accepts an empty list at `skills/plan/scripts/cartographer_workflow.ts:1269`, allowing PASS audit receipts without deterministic validation evidence.
+- Auditor report capture does not preserve/enforce the required PASS/FAIL schema. It writes only `DECISION` and `SUMMARY` at `skills/plan/scripts/cartographer_workflow.ts:1274`, omitting `REQUIRED_CORRECTIONS` and any actual reviewer findings.
+- Report path safety is insufficient. `assertSafeReportPath` checks raw string substrings before normalization and creates directories before proving the path is safe at `skills/plan/scripts/cartographer_workflow.ts:1244-1250`; normalized `.plan/.../../_private/...` paths can bypass the private-input guard, and unsafe outside-root paths may be created before rejection.
+- P5.T3 is not actually implemented: there is no retry/output-capture path that detects missing/empty/schema-invalid specialist output as harness failure; only manual fallback receipt recording exists at `skills/plan/scripts/cartographer_workflow.ts:1284-1287`.
