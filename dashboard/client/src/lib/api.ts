@@ -4,6 +4,7 @@ import type {
 	DashboardDocument,
 	DashboardOverview,
 	HealthReport,
+	IndexManifestSummary,
 	LiveReloadStatus,
 	TopicArtifacts,
 	TopicGraph,
@@ -23,6 +24,7 @@ export const dashboardApi = {
 	health: () => getJson<HealthReport>("/api/health"),
 	overview: () => getJson<DashboardOverview>("/api/overview"),
 	topics: () => getJson<{ topics: TopicSummary[]; issues: unknown[] }>("/api/topics"),
+	index: () => getJson<IndexManifestSummary>("/api/index"),
 	topic: (topic: string) => getJson<TopicArtifacts>(`/api/topics/${encodeURIComponent(topic)}`),
 	document: (topic: string, kind: "proposal" | "plan") =>
 		getJson<DashboardDocument>(`/api/topics/${encodeURIComponent(topic)}/docs/${kind}`),

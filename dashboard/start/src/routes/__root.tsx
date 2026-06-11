@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { createRootRoute, HeadContent, Link, Outlet, Scripts } from "@tanstack/react-router";
+import { DashboardQueryProvider } from "../../../client/src/lib/dashboard-db.js";
 import appCss from "../../../client/src/styles/globals.css?url";
 
 export const Route = createRootRoute({
@@ -19,7 +20,9 @@ export const Route = createRootRoute({
 function RootComponent(): React.JSX.Element {
 	return (
 		<RootDocument>
-			<Outlet />
+			<DashboardQueryProvider>
+				<Outlet />
+			</DashboardQueryProvider>
 		</RootDocument>
 	);
 }
