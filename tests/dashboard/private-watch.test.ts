@@ -5,8 +5,8 @@ import {
 	createLiveReloadService,
 	shouldIgnorePlanWatchPath,
 	type LiveReloadService,
-} from "../../dashboard/server/live-reload.ts";
-import type { LiveReloadEvent } from "../../dashboard/shared/models.ts";
+} from "../../dashboard/src/server/live-reload.ts";
+import type { LiveReloadEvent } from "../../dashboard/src/shared/models.ts";
 import { createDashboardFixture } from "./fixtures.ts";
 
 const services: LiveReloadService[] = [];

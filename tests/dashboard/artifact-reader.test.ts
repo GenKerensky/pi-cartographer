@@ -8,8 +8,8 @@ import {
 	readSafeFile,
 	readTopicArtifacts,
 	readTopicGraph,
-} from "../../dashboard/server/artifact-reader.ts";
-import { PathSafetyError } from "../../dashboard/server/safety.ts";
+} from "../../dashboard/src/server/artifact-reader.ts";
+import { PathSafetyError } from "../../dashboard/src/server/safety.ts";
 import { createDashboardFixture } from "./fixtures.ts";
 
 describe("dashboard artifact reader", () => {

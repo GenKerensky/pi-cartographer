@@ -57,20 +57,20 @@ pi -e /path/to/pi-cartographer   # one-off local use
 
 | Resource                  | Type               | What it does                                                                                                                                                                                       |
 | ------------------------- | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `index-project`           | Skill + Python CLI | Builds and queries a shared SQLite + FTS5 project graph under `.plan/_index/`. |
-| `proposal`                | Skill              | Creates `.plan/<topic>/proposal.md` plus project map and research fact JSONL artifacts. |
-| `plan`                    | Skill              | Converts proposal/map/fact context into ordered phases, validations, and plan graph JSONL artifacts. |
+| `index-project`           | Skill + Python CLI | Builds and queries a shared SQLite + FTS5 project graph under `.plan/_index/`.                                                                                                                     |
+| `proposal`                | Skill              | Creates `.plan/<topic>/proposal.md` plus project map and research fact JSONL artifacts.                                                                                                            |
+| `plan`                    | Skill              | Converts proposal/map/fact context into ordered phases, validations, and plan graph JSONL artifacts.                                                                                               |
 | `implement`               | Skill              | Executes an existing plan phase-by-phase with a parent single-writer loop, `.cartographer` state, deterministic receipts, `cartographer-auditor` approval, plan updates, and conventional commits. |
-| `dashboard`               | Skill              | Starts, opens, checks, or stops the local read-only planning dashboard through the packaged `cartographer-dashboard` CLI. |
-| `cartographer_index`      | Extension tool     | Wraps index actions such as `ensure`, `query`, `context`, `read`, `slice-jsonl`, `status`, and `log-miss`. |
-| `cartographer_jsonl`      | Extension tool     | Wraps JSONL actions such as `validate-topic`, `validate-file`, `validate-misses`, `list-misses`, `list`, `upsert`, and `seed-pi-facts`. |
-| `cartographer_evidence`   | Extension tool     | Imports/list private proposal artifacts under `.plan/_private/<topic>/` without exposing raw contents and writes commit-safe evidence manifests. |
-| `cartographer_session`    | Extension tool     | Analyzes authorized Pi session JSONL into compact Markdown/JSON reports without exposing raw transcript contents. |
-| `cartographer_artifacts`  | Extension tool     | Provides read-only compact summaries for topic validation, fact citations, receipts, context packs, evidence manifests, and phase acceptance handoffs. |
-| `cartographer_validation` | Extension tool     | Parent-owned wrapper for validation commands and compact receipt output; it does not replace semantic auditor review. |
-| `cartographer_state`      | Extension tool     | Manages minimal `.cartographer/<topic>/state.json`, curated `journal.jsonl`, ignored `current.json`, compaction, and bounded resume context. |
-| `cartographer_adr`        | Extension tool     | Evaluates, drafts, creates, imports, validates, searches, and relates Architecture Decision Records. |
-| `cartographer-dashboard`  | CLI                | Runs the local loopback-only dashboard server and serves the React/Tailwind/shadcn planning UI for proposal, plan, graph, receipt, evidence, health, and document review. |
+| `dashboard`               | Skill              | Starts, opens, checks, or stops the local read-only planning dashboard through the packaged `cartographer-dashboard` CLI.                                                                          |
+| `cartographer_index`      | Extension tool     | Wraps index actions such as `ensure`, `query`, `context`, `read`, `slice-jsonl`, `status`, and `log-miss`.                                                                                         |
+| `cartographer_jsonl`      | Extension tool     | Wraps JSONL actions such as `validate-topic`, `validate-file`, `validate-misses`, `list-misses`, `list`, `upsert`, and `seed-pi-facts`.                                                            |
+| `cartographer_evidence`   | Extension tool     | Imports/list private proposal artifacts under `.plan/_private/<topic>/` without exposing raw contents and writes commit-safe evidence manifests.                                                   |
+| `cartographer_session`    | Extension tool     | Analyzes authorized Pi session JSONL into compact Markdown/JSON reports without exposing raw transcript contents.                                                                                  |
+| `cartographer_artifacts`  | Extension tool     | Provides read-only compact summaries for topic validation, fact citations, receipts, context packs, evidence manifests, and phase acceptance handoffs.                                             |
+| `cartographer_validation` | Extension tool     | Parent-owned wrapper for validation commands and compact receipt output; it does not replace semantic auditor review.                                                                              |
+| `cartographer_state`      | Extension tool     | Manages minimal `.cartographer/<topic>/state.json`, curated `journal.jsonl`, ignored `current.json`, compaction, and bounded resume context.                                                       |
+| `cartographer_adr`        | Extension tool     | Evaluates, drafts, creates, imports, validates, searches, and relates Architecture Decision Records.                                                                                               |
+| `cartographer-dashboard`  | CLI                | Runs the local loopback-only dashboard server and serves the React/Tailwind/shadcn planning UI for proposal, plan, graph, receipt, evidence, health, and document review.                          |
 
 Skill commands are available as `/skill:<name>` when pi skill commands are enabled.
 
@@ -189,7 +189,7 @@ Implementation uses a parent single-writer loop by default. The agent reads `.ca
 
 ## Planning dashboard
 
-The dashboard is a local, loopback-only, read-only browser view over Cartographer artifacts. It reads proposal/plan/fact/map/receipt/context/evidence/ADR/index files and never writes `.plan/`, ADRs, index/cache files, or source files.
+The dashboard is a local, loopback-only, read-only browser view over Cartographer artifacts. Normal use is a single TanStack Start full-stack app launched by `cartographer-dashboard`; it reads proposal/plan/fact/map/receipt/context/evidence/ADR/index files and never writes `.plan/`, ADRs, index/cache files, or source files.
 
 Start it from the project you want to inspect:
 
@@ -223,7 +223,10 @@ Dashboard behavior and safety boundaries:
 - The server defaults to loopback and rejects non-loopback hosts such as `0.0.0.0`, `::`, and LAN/public addresses.
 - Runtime metadata is stored under `XDG_RUNTIME_DIR` or an OS temp directory, keyed by repository root hash, not under `.plan/`.
 - Live reload watches safe `.plan/**` files, excludes `.plan/_private/**`, and summarizes `.plan/_index/**` changes as stale-index events.
-- The UI uses React, Tailwind CSS, shadcn/ui components, Shiki document/code highlighting, and React Flow graph visualization.
+- The UI uses TanStack Start routes, TanStack DB/TanStack Query read-only reactive projections, React, Tailwind CSS, shadcn/ui components, Shiki document/code highlighting, and React Flow graph visualization.
+- The dashboard is a single TanStack Start app under `dashboard/`; UI, routes, server helpers, shared models, and CLI runtime helpers live under `dashboard/src/**`.
+- `cartographer-dashboard` starts the built `dashboard/.output/server/index.mjs` full-stack app.
+- Source-checkout dashboard scripts mirror TanStack Start defaults from `dashboard`: `npm run dashboard:dev` runs `vite dev`, `npm run dashboard:build` runs `vite build`, and `npm run dashboard:start` runs `node .output/server/index.mjs`.
 - Private raw evidence should be imported through Cartographer private-artifact workflows and reviewed via sanitized evidence documents, not read directly in the dashboard or skill.
 
 ## What gets written
@@ -375,7 +378,7 @@ npm run format:check
 npm run test
 npm run test:py
 npm run test:ts
-npm run dashboard:build
-npm run dashboard:check
+npm run dashboard:build   # builds the TanStack Start full-stack dashboard output
+npm run dashboard:check   # builds Start output and runs the browser shell smoke
 npm run test:browser -- tests/dashboard/client-shell.test.tsx
 ```

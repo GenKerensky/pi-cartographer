@@ -3,7 +3,9 @@ node_modules/
 .ruff_cache/
 coverage/
 dist/
-dashboard/client/dist/
+dashboard/.output/
+dashboard/node_modules/
+dashboard/src/routeTree.gen.ts
 tests/dashboard/__screenshots__/
 .vitest-attachments/
 **/__pycache__/

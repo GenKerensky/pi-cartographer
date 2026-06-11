@@ -1,8 +1,12 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { Badge } from "../../dashboard/client/src/components/ui/badge.js";
-import { createLiveRefetchPlan, shouldRefetchForLiveEvent } from "../../dashboard/client/src/lib/live-refetch.js";
-import type { LiveReloadEvent } from "../../dashboard/shared/models.ts";
+import { Badge } from "../../dashboard/src/components/ui/badge.js";
+import {
+	collectionKeysForLiveReloadEvent,
+	createLiveRefetchPlan,
+	shouldRefetchForLiveEvent,
+} from "../../dashboard/src/lib/live-refetch.js";
+import type { LiveReloadEvent } from "../../dashboard/src/shared/models.ts";
 
 const topicEvent: LiveReloadEvent = {
 	id: "reload:1",
@@ -65,5 +69,19 @@ describe("dashboard live refetch decisions", () => {
 			shouldRefetch: true,
 			reason: "index-stale",
 		});
+	});
+
+	it("maps live reload events to DB collection invalidation keys", () => {
+		const keys = collectionKeysForLiveReloadEvent(topicEvent, { activeTopic: "demo" });
+		expect(keys).toContainEqual(["dashboard", "overview"]);
+		expect(keys).toContainEqual(["dashboard", "topics"]);
+		expect(keys).toContainEqual(["dashboard", "health"]);
+		expect(keys).toContainEqual(["dashboard", "adrs"]);
+		expect(keys).toContainEqual(["dashboard", "events", "status"]);
+		expect(keys).toContainEqual(["dashboard", "topic", "demo", "artifacts"]);
+		expect(keys).toContainEqual(["dashboard", "topic", "demo", "documents"]);
+		expect(keys).toContainEqual(["dashboard", "topic", "demo", "graph"]);
+		expect(keys).toContainEqual(["dashboard", "topic", "demo", "docs", "proposal"]);
+		expect(keys).toContainEqual(["dashboard", "topic", "demo", "docs", "plan"]);
 	});
 });

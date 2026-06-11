@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { readTopicArtifacts } from "../../dashboard/server/artifact-reader.ts";
+import { readTopicArtifacts } from "../../dashboard/src/server/artifact-reader.ts";
 import {
 	createReferenceIndex,
 	extractReferenceTokens,
 	resolveReference,
-} from "../../dashboard/client/src/lib/reference-resolver.js";
+} from "../../dashboard/src/lib/reference-resolver.js";
 import { createDashboardFixture } from "./fixtures.ts";
 
 describe("dashboard reference resolver", () => {

@@ -1,12 +1,12 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { readOverview, readTopicArtifacts } from "../../dashboard/server/artifact-reader.ts";
+import { readOverview, readTopicArtifacts } from "../../dashboard/src/server/artifact-reader.ts";
 import {
 	DashboardReviewWorkflow,
 	OverviewMetrics,
 	TopicWorkspace,
 	TopicsList,
-} from "../../dashboard/client/src/features/review-workflow.js";
+} from "../../dashboard/src/features/review-workflow.js";
 import { createDashboardFixture } from "./fixtures.ts";
 
 describe("dashboard topic review pages", () => {

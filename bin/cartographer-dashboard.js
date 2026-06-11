@@ -60,6 +60,6 @@ function registerSourceCheckoutResolver() {
 respawnWithTypeStrippingIfNeeded();
 registerSourceCheckoutResolver();
 
-const { runDashboardCli } = await import("../dashboard/server/cli.ts");
+const { runDashboardCli } = await import("../dashboard/src/server/cli.ts");
 const exitCode = await runDashboardCli(process.argv.slice(2));
 if (exitCode !== 0) process.exitCode = exitCode;

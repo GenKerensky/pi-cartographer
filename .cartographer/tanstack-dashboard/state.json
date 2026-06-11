@@ -1,0 +1,160 @@
+{
+  "schema_version": 1,
+  "topic": "tanstack-dashboard",
+  "source_status": "stale",
+  "source_refs": {
+    "plan_md": {
+      "path": ".plan/tanstack-dashboard/plan.md",
+      "sha256": "sha256:5a3c9991e59cce83d470c4d96fb8a016579ece8887ae14e401e1ad766b54b017"
+    },
+    "plan_nodes": {
+      "path": ".plan/tanstack-dashboard/plan.nodes.jsonl",
+      "sha256": "sha256:4722c7677b792aa1258f33d700a2f9c6b384ac47d47064c9f78e021d92aad143"
+    },
+    "plan_edges": {
+      "path": ".plan/tanstack-dashboard/plan.edges.jsonl",
+      "sha256": "sha256:92615c32b908f1f34bcfbb031856b79bc4b4049225fcb45d6a8bc22e64bc8811"
+    },
+    "receipts": {
+      "path": ".plan/tanstack-dashboard/receipts.jsonl",
+      "sha256": "sha256:452b49a4a1e1899e670972689b5787959aca5ed9b78469ce9a20f7775653c3cc"
+    },
+    "context_packs": {
+      "path": ".plan/tanstack-dashboard/context-packs.jsonl",
+      "sha256": "sha256:bbad218c178ed54787f386f6de429a5a103fda3b18cd920c882ea78c0e844cb4"
+    }
+  },
+  "current_phase_id": "P0",
+  "active_task_ids": [],
+  "active_validation_ids": [],
+  "next_action": {
+    "id": "next:tanstack-dashboard.complete",
+    "kind": "finalize",
+    "summary": "TanStack dashboard implementation plan is complete; ready for final commit/handoff.",
+    "phase_id": "P6"
+  },
+  "working_set": {
+    "write_allowed": [
+      {
+        "path": "package.json"
+      },
+      {
+        "path": "package-lock.json"
+      },
+      {
+        "path": "README.md"
+      },
+      {
+        "path": "skills/dashboard/SKILL.md"
+      },
+      {
+        "path": "tests/dashboard/smoke.test.ts"
+      },
+      {
+        "path": "tests/dashboard/package-assets.test.ts"
+      },
+      {
+        "path": "dashboard/src/server/runtime.ts"
+      },
+      {
+        "path": "dashboard/src/server/live-reload.ts"
+      },
+      {
+        "path": "dashboard/src/server/index.ts"
+      },
+      {
+        "path": "dashboard/src/server/dashboard-api.ts"
+      },
+      {
+        "path": "dashboard/src/routes/api/**"
+      },
+      {
+        "path": "dashboard/vite.config.ts"
+      },
+      {
+        "path": "docs/adr/**"
+      },
+      {
+        "path": ".plan/tanstack-dashboard/plan.md"
+      },
+      {
+        "path": ".plan/tanstack-dashboard/plan.nodes.jsonl"
+      },
+      {
+        "path": ".plan/tanstack-dashboard/plan.edges.jsonl"
+      },
+      {
+        "path": ".plan/tanstack-dashboard/map.nodes.jsonl"
+      },
+      {
+        "path": ".plan/tanstack-dashboard/map.edges.jsonl"
+      },
+      {
+        "path": ".plan/tanstack-dashboard/facts.nodes.jsonl"
+      },
+      {
+        "path": ".plan/tanstack-dashboard/facts.edges.jsonl"
+      },
+      {
+        "path": ".plan/tanstack-dashboard/receipts.jsonl"
+      },
+      {
+        "path": ".plan/tanstack-dashboard/context-packs.jsonl"
+      }
+    ],
+    "read_only": [
+      {
+        "path": "dashboard/src/server/cli.ts"
+      },
+      {
+        "path": "dashboard/src/server/artifact-reader.ts"
+      },
+      {
+        "path": "dashboard/src/server/safety.ts"
+      },
+      {
+        "path": "dashboard/client/**"
+      },
+      {
+        "path": "tests/dashboard/*.test.ts"
+      },
+      {
+        "path": "docs/adr/0003-use-local-dashboard-stack-for-cartographer-planning-ui.md"
+      }
+    ],
+    "forbidden": [
+      {
+        "path": ".plan/_private/**",
+        "reason": "Raw private inputs are never loaded into working context."
+      }
+    ]
+  },
+  "known_failures": [],
+  "last_validation_receipt_ids": [
+    "receipt:P4:validation:2026-06-11T02:20:10+00:00",
+    "receipt:P5:validation:2026-06-11T03:14:53+00:00",
+    "receipt:P5:semantic-audit:2026-06-11T03:16:55+00:00",
+    "receipt:P5:validation:2026-06-11T03:17:07+00:00",
+    "receipt:P6:validation:2026-06-11T05:06:03+00:00",
+    "receipt:P6:adr:2026-06-11T05:06:30+00:00",
+    "receipt:P6:semantic-audit:2026-06-11T05:11:20+00:00",
+    "receipt:P6:validation:2026-06-11T05:12:41+00:00",
+    "receipt:P6:validation:2026-06-11T05:39:50+00:00",
+    "receipt:P6:validation:2026-06-11T05:39:59+00:00",
+    "receipt:P6:semantic-audit:2026-06-11T05:40:30+00:00"
+  ],
+  "journal_refs": [],
+  "resume": {
+    "template_id": "cartographer.single_writer.resume.v1",
+    "resume_order": [
+      ".cartographer/tanstack-dashboard/state.json",
+      ".cartographer/tanstack-dashboard/journal.jsonl",
+      ".plan/tanstack-dashboard/plan.md",
+      ".plan/tanstack-dashboard/receipts.jsonl"
+    ],
+    "expected_first_response": ["current_phase", "next_action", "files_to_inspect"],
+    "must_ignore": ["prior chat speculation", "stale generated snippets"]
+  },
+  "updated_at": "2026-06-11T06:10:37Z",
+  "stale_reason": "Full dashboard source layout migration and validation receipts updated; source refs should be refreshed before future resume."
+}

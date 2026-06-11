@@ -12,7 +12,7 @@ updated: "2026-06-10"
 
 Use this skill when the user asks to start, open, view, inspect, check status for, or stop the Pi Cartographer planning dashboard.
 
-The dashboard is a **local, loopback-only, read-only** view over Cartographer planning artifacts. It must not mutate `.plan/`, ADRs, index/cache files, or source files.
+The dashboard is a **local, loopback-only, read-only** view over Cartographer planning artifacts. Normal use is a single TanStack Start full-stack app launched by the CLI; it must not mutate `.plan/`, ADRs, index/cache files, or source files.
 
 ## Contract
 
@@ -75,11 +75,11 @@ When reporting results to the user:
 - Show the URL from the JSON output when start/status succeeds.
 - Show the selected topic deep link when `--topic` was used.
 - Mention that live reload watches safe `.plan/**` files and excludes `.plan/_private/**`.
-- If startup fails because the built client assets are missing in a source checkout, suggest running `npm run dashboard:build` from the package root.
+- If startup fails because the built TanStack Start output is missing in a source checkout, suggest running `npm run dashboard:build` from the package root; this delegates to TanStack Start's default `vite build` from `dashboard`.
 
 ## Safety Rules
 
 - Do not pass non-loopback hosts such as `0.0.0.0`, `::`, or LAN/public addresses.
 - Do not add write endpoints, edit planning artifacts, or modify `.plan/` as part of starting/stopping the dashboard.
 - Do not inspect raw private evidence under `.plan/_private/`; the dashboard and skill should reference sanitized proposal/evidence artifacts only.
-- Keep this skill as documentation/procedure. Future server behavior belongs in `bin/cartographer-dashboard.js` and `dashboard/server/*`, not here.
+- Keep this skill as documentation/procedure. Future server behavior belongs in `bin/cartographer-dashboard.js`, `dashboard/*`, and minimal `dashboard/src/server/*` runtime/artifact helpers, not here.

@@ -1,9 +1,12 @@
 import fs from "node:fs";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { createDashboardApp } from "../../dashboard/server/app.ts";
-import { createLiveReloadService, type LiveReloadService } from "../../dashboard/server/live-reload.ts";
-import type { ApiResponse, LiveReloadEvent, LiveReloadStatus } from "../../dashboard/shared/models.ts";
+import {
+	createLiveReloadService,
+	createLiveReloadStream,
+	type LiveReloadService,
+} from "../../dashboard/src/server/live-reload.ts";
+import type { LiveReloadEvent } from "../../dashboard/src/shared/models.ts";
 import { createDashboardFixture } from "./fixtures.ts";
 
 const services: LiveReloadService[] = [];
@@ -30,9 +33,8 @@ function waitForEvent(service: LiveReloadService, action: () => void, timeoutMs 
 	});
 }
 
-async function readSseChunk(response: Response): Promise<string> {
-	const reader = response.body?.getReader();
-	if (!reader) throw new Error("SSE response has no body");
+async function readSseChunk(stream: ReadableStream<Uint8Array>): Promise<string> {
+	const reader = stream.getReader();
 	try {
 		const chunk = await reader.read();
 		if (!chunk.value) throw new Error("SSE response had no chunk");
@@ -50,15 +52,9 @@ describe("dashboard live reload service", () => {
 	it("coalesces safe .plan topic changes and exposes an SSE status stream", async () => {
 		const fixture = createDashboardFixture();
 		const service = await startService(fixture.root);
-		const app = createDashboardApp({ root: fixture.root, liveReload: service });
 
-		const statusResponse = await app.request("/api/events/status");
-		const statusPayload = (await statusResponse.json()) as ApiResponse<LiveReloadStatus>;
-		expect(statusPayload.data).toMatchObject({ enabled: true, state: "watching", root: fixture.root });
-
-		const streamResponse = await app.request("/api/events");
-		expect(streamResponse.headers.get("content-type")).toContain("text/event-stream");
-		expect(await readSseChunk(streamResponse)).toContain("event: status");
+		expect(service.status()).toMatchObject({ enabled: true, state: "watching", root: fixture.root });
+		expect(await readSseChunk(createLiveReloadStream(service))).toContain("event: status");
 
 		const planPath = path.join(fixture.root, ".plan", fixture.topic, "plan.md");
 		const event = await waitForEvent(service, () => {
