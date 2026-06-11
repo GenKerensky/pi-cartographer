@@ -283,6 +283,7 @@ Provide the auditor:
 - checked checklist items;
 - unchecked validation items;
 - relevant proposal/map/fact references;
+- relevant requirement/design IDs and read-only summaries from `requirements.nodes.jsonl`, `requirements.edges.jsonl`, `design.nodes.jsonl`, and `design.edges.jsonl` when present;
 - state/journal/compaction evidence when relevant.
 
 Ask for explicit PASS/FAIL and capture the report with `cartographer_handoff auditor` or an approved fallback receipt. If the auditor rejects or any validation item fails:
@@ -395,7 +396,8 @@ Timeout/fallback receipts should include:
 ```text
 Review phase <PHASE_ID> for topic <topic> after deterministic validation receipts passed.
 Use .plan/<topic>/plan.md, plan graph artifacts, relevant proposal/map/fact summaries,
-current diff/stat, receipt IDs, and state/journal evidence when relevant.
+requirements/design graph summaries when present, current diff/stat, receipt IDs,
+and state/journal evidence when relevant.
 Return PASS/FAIL with required corrections. Stay read-only.
 ```
 

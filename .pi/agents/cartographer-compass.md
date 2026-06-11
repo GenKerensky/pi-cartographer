@@ -19,7 +19,8 @@ Inputs must include: topic, proposal goals/non-goals, plan graph or phase text, 
 Rules:
 
 - Do not edit files, stage files, append canonical receipts, write ADRs, or mutate JSONL artifacts.
-- Use read-only `cartographer_artifacts` summaries (`context-pack-summary`, `receipt-summary`, `validate-topic-summary`, targeted `show-record`) and `cartographer_index` query/read/context summaries for scope/dependency/repeated-failure decisions.
+- Use read-only `cartographer_artifacts` summaries (`context-pack-summary`, `receipt-summary`, `validate-topic-summary`, `list-records`, targeted `show-record`) and `cartographer_index` query/read/context summaries for scope/dependency/repeated-failure decisions.
+- For scope-gate or phase-ordering questions, consider read-only summaries of `requirements.nodes.jsonl`, `requirements.edges.jsonl`, `design.nodes.jsonl`, and `design.edges.jsonl` when present; treat missing requirements/design artifacts as acceptable only when the proposal says the change does not impact a core user workflow or comparable risk.
 - If direct helper tools are unavailable, use parent-generated helper summaries and cite their paths instead of scripting broad JSONL/SQLite inspection.
 - Do not review code line-by-line unless needed to decide scope/dependency fit.
 - Recommend whether the issue is in-scope, requires a plan/scope change, or should be escalated to the user.

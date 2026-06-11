@@ -205,7 +205,7 @@ Keep design graph validation optional when no requirements/design artifacts are 
 
 ### Phase P3 — Workflow Skill Integration
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P2
 - **Unlocks:** P4
 - **Primary references:** `file:skills/proposal/SKILL.md`, `file:skills/plan/SKILL.md`, `file:skills/implement/SKILL.md`, `file:README.md`, [F001], [F002], [F008], [F009], [F010], [F019]
@@ -223,18 +223,18 @@ Update Cartographer skills so agents produce, consume, and validate proposal, re
 
 #### Checklist
 
-- [ ] **P3.T1** Update `skills/proposal/SKILL.md` skeleton/procedure so detailed `## Design` is replaced by next-artifact guidance while non-design sections remain.
-- [ ] **P3.T2** Add requirements/design workflow instructions, either as new skill docs or as clearly separated sections in existing proposal/plan guidance.
-- [ ] **P3.T3** Update `skills/plan/SKILL.md` to read `requirements.*` and `design.*` artifacts, require phase/task refs to requirement/design IDs where applicable, and preserve ADR metadata.
-- [ ] **P3.T4** Update `skills/implement/SKILL.md` to include requirements/design artifacts as supporting inputs and to preserve requirement/design refs in validation/auditor handoffs.
-- [ ] **P3.T5** Update role prompts and least-privilege guidance for drafter/compass/auditor to use read-only summaries of requirements/design artifacts.
-- [ ] **P3.T6** Update workflow docs/tests to assert the new lifecycle, scope gate, and required artifact boundaries.
+- [x] **P3.T1** Update `skills/proposal/SKILL.md` skeleton/procedure so detailed `## Design` is replaced by next-artifact guidance while non-design sections remain.
+- [x] **P3.T2** Add requirements/design workflow instructions, either as new skill docs or as clearly separated sections in existing proposal/plan guidance.
+- [x] **P3.T3** Update `skills/plan/SKILL.md` to read `requirements.*` and `design.*` artifacts, require phase/task refs to requirement/design IDs where applicable, and preserve ADR metadata.
+- [x] **P3.T4** Update `skills/implement/SKILL.md` to include requirements/design artifacts as supporting inputs and to preserve requirement/design refs in validation/auditor handoffs.
+- [x] **P3.T5** Update role prompts and least-privilege guidance for drafter/compass/auditor to use read-only summaries of requirements/design artifacts.
+- [x] **P3.T6** Update workflow docs/tests to assert the new lifecycle, scope gate, and required artifact boundaries.
 
 #### Validation
 
-- [ ] **P3.V1** Run `python -m unittest discover tests -p 'test_workflow_docs.py'` and confirm workflow docs tests pass.
-- [ ] **P3.V2** Run `rg -n "requirements.nodes|design.nodes|design.edges|core user workflow|docs/requirements|OpenSpec" README.md skills/proposal/SKILL.md skills/plan/SKILL.md skills/implement/SKILL.md` and confirm expected guidance exists.
-- [ ] **P3.V3** Run `npm run format:prettier:check` and confirm Markdown/JSON formatting passes or only pre-existing unrelated issues remain.
+- [x] **P3.V1** Run `python -m unittest discover tests -p 'test_workflow_docs.py'` and confirm workflow docs tests pass.
+- [x] **P3.V2** Run `rg -n "requirements.nodes|design.nodes|design.edges|core user workflow|docs/requirements|OpenSpec" README.md skills/proposal/SKILL.md skills/plan/SKILL.md skills/implement/SKILL.md` and confirm expected guidance exists.
+- [x] **P3.V3** Run `npm run format:prettier:check` and confirm Markdown/JSON formatting passes or only pre-existing unrelated issues remain.
 
 #### Exit Criteria
 

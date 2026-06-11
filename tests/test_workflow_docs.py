@@ -185,9 +185,26 @@ class WorkflowDocsTests(unittest.TestCase):
         self.assertIn("Background", proposal)
         self.assertIn("Viability", proposal)
         self.assertIn("requirements.nodes.jsonl", plan)
+        self.assertIn("requirements.edges.jsonl", plan)
         self.assertIn("design.nodes.jsonl", plan)
+        self.assertIn("design.edges.jsonl", plan)
         self.assertIn("requirements.nodes.jsonl", implement)
+        self.assertIn("requirements.edges.jsonl", implement)
         self.assertIn("design.nodes.jsonl", implement)
+        self.assertIn("design.edges.jsonl", implement)
+        self.assertNotIn("## Design\n", proposal)
+
+    def test_specialist_prompts_use_requirement_design_summaries(self) -> None:
+        auditor = (ROOT / ".pi/agents/cartographer-auditor.md").read_text(encoding="utf-8")
+        compass = (ROOT / ".pi/agents/cartographer-compass.md").read_text(encoding="utf-8")
+        drafter = (ROOT / ".pi/agents/cartographer-drafter.md").read_text(encoding="utf-8")
+        combined = "\n".join([auditor, compass, drafter])
+
+        for needle in ["requirements.nodes.jsonl", "requirements.edges.jsonl", "design.nodes.jsonl", "design.edges.jsonl"]:
+            self.assertIn(needle, combined)
+        self.assertIn("read-only summaries", combined)
+        self.assertIn("core user workflow", compass)
+        self.assertIn("do not put detailed architecture back into proposal", drafter.lower())
 
 
 if __name__ == "__main__":

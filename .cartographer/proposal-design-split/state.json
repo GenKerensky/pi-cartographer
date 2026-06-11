@@ -5,11 +5,11 @@
   "source_refs": {
     "plan_md": {
       "path": ".plan/proposal-design-split/plan.md",
-      "sha256": "sha256:ac08b0570502dc3dfa111fe4e91196a5bbc313701678a5e3ae494e65dc4bab84"
+      "sha256": "sha256:8713c63c4645cba2bcc9fe06e537f543ea6a13cc2bb007228a19ec74dee581fc"
     },
     "plan_nodes": {
       "path": ".plan/proposal-design-split/plan.nodes.jsonl",
-      "sha256": "sha256:c16f2f4a8e856818f0841b1ea29325a6143806c09fbb45b3fbe7aff67ad1b67e"
+      "sha256": "sha256:4dac2b286c21d0abd8d1eaf67d19c05bbca0eacb39dac2d10b25d6d86157103d"
     },
     "plan_edges": {
       "path": ".plan/proposal-design-split/plan.edges.jsonl",
@@ -17,23 +17,28 @@
     },
     "receipts": {
       "path": ".plan/proposal-design-split/receipts.jsonl",
-      "sha256": "sha256:3ed2378949f0511b5c7b64be5b45c5644eb18ef23dc64c66831469b9091aeecf"
+      "sha256": "sha256:f2b174a5decb710abe3cac326b2a320c0e7dd5fa25d3e1868601f9cf7c7f51ec"
     },
     "context_packs": {
       "path": ".plan/proposal-design-split/context-packs.jsonl",
-      "sha256": "sha256:539dbac3b0f1e636c0808c90e69da5bb2b1bf3e69f2f3ff22bfe8c3948453cd0"
+      "sha256": "sha256:eb54855af98ed45c5751ff1be6aa291c1fe1d132fcc51d7eb5347a89bca619f5"
     }
   },
   "current_phase_id": "P0",
   "active_task_ids": [],
   "active_validation_ids": [],
   "next_action": {
-    "id": "next:P2.T1",
+    "id": "next:P3.T1",
     "kind": "task",
-    "summary": "Extend validators to parse and validate optional design.md, design.nodes.jsonl, and design.edges.jsonl using Decision + Alternative MVP schema.",
-    "phase_id": "P2",
+    "summary": "Update workflow skill docs and tests to consume requirements/design artifacts and preserve traceability.",
+    "phase_id": "P3",
     "task_ids": [
-      "P2.T1"
+      "P3.T1",
+      "P3.T2",
+      "P3.T3",
+      "P3.T4",
+      "P3.T5",
+      "P3.T6"
     ]
   },
   "working_set": {
@@ -106,12 +111,17 @@
     "receipt:P2:validation:2026-06-11T13:24:49+00:00",
     "receipt:P2:validation:2026-06-11T13:30:32+00:00",
     "receipt:P2:validation:2026-06-11T13:32:29+00:00",
-    "receipt:proposal-design-split:P2-auditor-pass:2026-06-11T13:31:00Z"
+    "receipt:proposal-design-split:P2-auditor-pass:2026-06-11T13:31:00Z",
+    "receipt:P3:validation:2026-06-11T13:35:03+00:00",
+    "receipt:P3:validation:2026-06-11T13:35:17+00:00",
+    "receipt:P3:validation:2026-06-11T13:37:22+00:00",
+    "receipt:proposal-design-split:P3-auditor-pass:2026-06-11T13:36:00Z"
   ],
   "journal_refs": [
     "journal:20260611T061742Z:compact",
     "journal:20260611T132105Z:compact",
-    "journal:20260611T133243Z:compact"
+    "journal:20260611T133243Z:compact",
+    "journal:20260611T133732Z:compact"
   ],
   "resume": {
     "template_id": "cartographer.single_writer.resume.v1",
@@ -131,10 +141,10 @@
       "stale generated snippets"
     ]
   },
-  "updated_at": "2026-06-11T13:32:43Z",
+  "updated_at": "2026-06-11T13:37:32Z",
   "compaction": {
-    "trigger": "phase-end P2",
-    "compacted_at": "2026-06-11T13:32:43Z"
+    "trigger": "phase-end P3",
+    "compacted_at": "2026-06-11T13:37:32Z"
   },
   "stale_reason": "P1 plan/status/receipts/context packs changed after phase-end validation; regenerating compact state from authoritative artifacts."
 }

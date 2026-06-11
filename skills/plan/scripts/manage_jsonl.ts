@@ -508,13 +508,16 @@ function validateRequirementRecords(
 				errors.push(`${field} must be an array in ${label} record ${index + 1}`);
 		}
 		for (const ref of Array.isArray(record.scenario_refs) ? record.scenario_refs : [])
-			if (String(byId.get(String(ref))?.type) !== "scenario") errors.push(`Requirement ${id} references missing scenario ${JSON.stringify(ref)}`);
+			if (String(byId.get(String(ref))?.type) !== "scenario")
+				errors.push(`Requirement ${id} references missing scenario ${JSON.stringify(ref)}`);
 		for (const ref of Array.isArray(record.fact_refs) ? record.fact_refs : [])
 			if (!factIds.has(String(ref))) errors.push(`Requirement ${id} references missing fact ${JSON.stringify(ref)}`);
 		for (const ref of Array.isArray(record.source_refs) ? record.source_refs : [])
-			if (!sourceIds.has(String(ref))) errors.push(`Requirement ${id} references missing source ${JSON.stringify(ref)}`);
+			if (!sourceIds.has(String(ref)))
+				errors.push(`Requirement ${id} references missing source ${JSON.stringify(ref)}`);
 		for (const ref of Array.isArray(record.durable_refs) ? record.durable_refs : [])
-			if (!DURABLE_REQUIREMENT_REF_RE.test(String(ref))) errors.push(`Requirement ${id} has invalid durable ref ${JSON.stringify(ref)}`);
+			if (!DURABLE_REQUIREMENT_REF_RE.test(String(ref)))
+				errors.push(`Requirement ${id} has invalid durable ref ${JSON.stringify(ref)}`);
 	}
 }
 
@@ -526,7 +529,10 @@ function validateRequirementEdges(records: JsonRecord[], label: string, allowed:
 		}
 		if (!REQUIREMENT_EDGE_TYPES.has(String(record.type)))
 			errors.push(`Invalid requirement edge type ${JSON.stringify(record.type)} in ${label} record ${index + 1}`);
-		for (const [endpointName, endpoint] of [["from", record.from], ["to", record.to]] as const) {
+		for (const [endpointName, endpoint] of [
+			["from", record.from],
+			["to", record.to],
+		] as const) {
 			const value = String(endpoint);
 			if (allowed.has(value)) continue;
 			if (DURABLE_REQUIREMENT_REF_RE.test(value)) continue;
@@ -600,20 +606,31 @@ function validateDesignRecords(
 		const id = String(record.id || "");
 		const type = String(record.type || "");
 		if (!id) errors.push(`Missing id in ${label} record ${row}`);
-		if (!DESIGN_NODE_TYPES.has(type)) errors.push(`Invalid design node type ${JSON.stringify(record.type)} in ${label} record ${row}`);
+		if (!DESIGN_NODE_TYPES.has(type))
+			errors.push(`Invalid design node type ${JSON.stringify(record.type)} in ${label} record ${row}`);
 		for (const field of ["status", "title", "summary", "source"])
 			if (!record[field]) errors.push(`Missing ${field} in ${label} record ${row}`);
 		if (record.status && !DESIGN_STATUSES.has(String(record.status)))
 			errors.push(`Invalid design status ${JSON.stringify(record.status)} in ${label} record ${row}`);
 		for (const field of ["requirement_refs", "fact_refs", "alternatives", "fast_follow_refs"])
-			if (record[field] !== undefined && !Array.isArray(record[field])) errors.push(`${field} must be an array in ${label} record ${row}`);
+			if (record[field] !== undefined && !Array.isArray(record[field]))
+				errors.push(`${field} must be an array in ${label} record ${row}`);
 		for (const ref of Array.isArray(record.requirement_refs) ? record.requirement_refs : [])
-			if (!requirementIds.has(String(ref))) errors.push(`Design node ${id} references missing requirement ${JSON.stringify(ref)}`);
+			if (!requirementIds.has(String(ref)))
+				errors.push(`Design node ${id} references missing requirement ${JSON.stringify(ref)}`);
 		for (const ref of Array.isArray(record.fact_refs) ? record.fact_refs : [])
 			if (!factIds.has(String(ref))) errors.push(`Design node ${id} references missing fact ${JSON.stringify(ref)}`);
-		const infrastructureRationale = typeof record.infrastructure_only_rationale === "string" ? record.infrastructure_only_rationale.trim() : "";
-		if (type === "design-decision" && record.status === "accepted" && !satisfyingEdges.has(id) && !infrastructureRationale)
-			errors.push(`Accepted design decision ${id} must satisfy a requirement/scenario or include non-empty infrastructure_only_rationale`);
+		const infrastructureRationale =
+			typeof record.infrastructure_only_rationale === "string" ? record.infrastructure_only_rationale.trim() : "";
+		if (
+			type === "design-decision" &&
+			record.status === "accepted" &&
+			!satisfyingEdges.has(id) &&
+			!infrastructureRationale
+		)
+			errors.push(
+				`Accepted design decision ${id} must satisfy a requirement/scenario or include non-empty infrastructure_only_rationale`,
+			);
 		validateDesignSource(dir, record.source, label, row, errors);
 	}
 }
@@ -626,7 +643,10 @@ function validateDesignEdges(records: JsonRecord[], label: string, allowed: Set<
 		}
 		if (!DESIGN_EDGE_TYPES.has(String(record.type)))
 			errors.push(`Invalid design edge type ${JSON.stringify(record.type)} in ${label} record ${index + 1}`);
-		for (const [endpointName, endpoint] of [["from", record.from], ["to", record.to]] as const) {
+		for (const [endpointName, endpoint] of [
+			["from", record.from],
+			["to", record.to],
+		] as const) {
 			const value = String(endpoint);
 			if (allowed.has(value)) continue;
 			if (/^(file|doc|symbol|dependency):/.test(value)) continue;
@@ -691,8 +711,12 @@ function validateTopic(options: Record<string, string | boolean | string[]>): Va
 
 	const mapIds = validateUnique(mapNodes, "map.nodes.jsonl", errors);
 	const factIdsAll = validateUnique(factNodes, "facts.nodes.jsonl", errors);
-	const sourceIdsForRequirements = new Set(factNodes.filter((item) => item.type === "source" && item.id).map((item) => String(item.id)));
-	const factIdsForRequirements = new Set(factNodes.filter((item) => item.type === "fact" && item.id).map((item) => String(item.id)));
+	const sourceIdsForRequirements = new Set(
+		factNodes.filter((item) => item.type === "source" && item.id).map((item) => String(item.id)),
+	);
+	const factIdsForRequirements = new Set(
+		factNodes.filter((item) => item.type === "fact" && item.id).map((item) => String(item.id)),
+	);
 	const planIds = validateUnique(planNodes, "plan.nodes.jsonl", errors);
 	const requirementIds = validateUnique(requirementNodes, "requirements.nodes.jsonl", errors);
 	const designIds = validateUnique(designNodes, "design.nodes.jsonl", errors);
@@ -700,11 +724,40 @@ function validateTopic(options: Record<string, string | boolean | string[]>): Va
 	validateEdges(mapEdges, "map.edges.jsonl", allowed, errors);
 	validateEdges(factEdges, "facts.edges.jsonl", allowed, errors);
 	validateEdges(planEdges, "plan.edges.jsonl", allowed, errors);
-	validateRequirementRecords(requirementNodes, "requirements.nodes.jsonl", factIdsForRequirements, sourceIdsForRequirements, errors);
+	validateRequirementRecords(
+		requirementNodes,
+		"requirements.nodes.jsonl",
+		factIdsForRequirements,
+		sourceIdsForRequirements,
+		errors,
+	);
 	validateRequirementEdges(requirementEdges, "requirements.edges.jsonl", allowed, errors);
-	validateDesignRecords(dir, designNodes, designEdges, "design.nodes.jsonl", requirementIds, factIdsForRequirements, errors);
+	validateDesignRecords(
+		dir,
+		designNodes,
+		designEdges,
+		"design.nodes.jsonl",
+		requirementIds,
+		factIdsForRequirements,
+		errors,
+	);
 	validateDesignEdges(designEdges, "design.edges.jsonl", allowed, errors);
-	validateFileRefs(root, [...mapNodes, ...mapEdges, ...factNodes, ...factEdges, ...planNodes, ...planEdges, ...requirementNodes, ...requirementEdges, ...designNodes, ...designEdges], errors);
+	validateFileRefs(
+		root,
+		[
+			...mapNodes,
+			...mapEdges,
+			...factNodes,
+			...factEdges,
+			...planNodes,
+			...planEdges,
+			...requirementNodes,
+			...requirementEdges,
+			...designNodes,
+			...designEdges,
+		],
+		errors,
+	);
 	validateLifecycleAndRetrievalMetadata(mapNodes, "map.nodes.jsonl", errors, warnings);
 	validateLifecycleAndRetrievalMetadata(mapEdges, "map.edges.jsonl", errors, warnings);
 	validateLifecycleAndRetrievalMetadata(factNodes, "facts.nodes.jsonl", errors, warnings);

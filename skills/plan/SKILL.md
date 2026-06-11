@@ -44,6 +44,15 @@ Use or create/update these supporting artifacts when needed:
 
 Do not create `.cartographer/` execution state during planning. Plans may include implementation phases for `.cartographer/<topic>/state.json`, curated `journal.jsonl`, schemas, and ignored `current.json`, but `.plan/{topic}/plan.md` and plan JSONL remain authoritative for the plan itself.
 
+## Requirements and Design Artifact Guidance
+
+For scoped changes that affect a core user workflow or comparable durable behavior, planning should consume topic-local requirements and design artifacts before drafting implementation phases:
+
+- `requirements.md` is the human-readable requirements delta for the current Cartographer topic/change; `requirements.nodes.jsonl` and `requirements.edges.jsonl` are the graph-backed source for requirement, scenario, acceptance-check, source/fact, and durable `docs/requirements.md` references.
+- `design.md` is the human-readable design narrative; `design.nodes.jsonl` and `design.edges.jsonl` are the graph-backed Decision + Alternative MVP source for accepted decisions, rejected alternatives, components, risks, requirement satisfaction, supporting facts, constraints, and mitigations.
+- Plans should cite requirement IDs such as `REQ-*`, scenario IDs such as `SCN-*`, and design IDs when phases/tasks/validations implement or validate those behaviors. Small non-core-workflow changes may skip requirements/design artifacts when the accepted proposal scope gate says they are unnecessary.
+- Preserve ADR metadata from the proposal even when requirements/design artifacts are absent, and keep topic-local requirement deltas ready to fold into durable `docs/requirements.md` after acceptance/archive.
+
 `{topic}` is a concise summary of the user's requested topic in **3 words or less**. Prefer filesystem-safe lowercase kebab-case for paths.
 
 ## Procedure
