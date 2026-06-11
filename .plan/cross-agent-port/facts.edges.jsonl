@@ -1,0 +1,9 @@
+{"from":"F002","to":"S005","type":"supported_by"}
+{"from":"F001","to":"S005","type":"supported_by"}
+{"from":"F003","to":"S004","type":"supported_by"}
+{"from":"F005","to":"S006","type":"supported_by"}
+{"from":"F004","to":"S006","type":"supported_by"}
+{"from":"F006","to":"S006","type":"supported_by"}
+{"from":"F007","to":"S005","type":"supported_by"}
+{"from":"F009","to":"S005","type":"supported_by"}
+{"from":"F008","to":"S006","type":"supported_by"}
