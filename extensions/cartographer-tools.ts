@@ -123,12 +123,13 @@ type CartographerStateParams = OutputShapeParams & {
 };
 
 type CartographerValidationParams = OutputShapeParams & {
-	action: "run";
+	action: "run" | "complete-item";
 	root?: string;
-	command: string;
+	topic?: string;
+	command?: string;
 	phaseId?: string;
 	validationId?: string[];
-	receiptFile: string;
+	receiptFile?: string;
 	maxOutputChars?: number;
 	fullOutputDir?: string;
 	skipIfUnchanged?: boolean;
@@ -190,6 +191,21 @@ type CartographerFactParams = OutputShapeParams & {
 	factId?: string;
 	sourceId?: string;
 	id?: string;
+};
+
+type CartographerPlanParams = OutputShapeParams & {
+	action: "generate-graph" | "finalize";
+	root?: string;
+	topic?: string;
+	summary?: string;
+};
+
+type CartographerPlanStatusParams = OutputShapeParams & {
+	action: "set";
+	root?: string;
+	topic?: string;
+	id?: string;
+	status?: string;
 };
 
 type CartographerEvidenceParams = OutputShapeParams & {
@@ -1100,14 +1116,15 @@ export default function cartographerTools(pi: PiApi): void {
 			"Provide timeoutSec for bounded commands; failure and timeout receipts include a decision field for fallback handling.",
 		],
 		parameters: Type.Object({
-			action: Type.Literal("run"),
+			action: Type.Union([Type.Literal("run"), Type.Literal("complete-item")]),
 			root: Type.Optional(Type.String({ description: "Project root. Defaults to current working directory." })),
-			command: Type.String({ description: "Validation command to run via the shell." }),
+			topic: Type.Optional(Type.String({ description: "Cartographer topic under .plan/ for complete-item." })),
+			command: Type.Optional(Type.String({ description: "Validation command to run via the shell." })),
 			phaseId: Type.Optional(Type.String({ description: "Plan phase ID, such as P4." })),
 			validationId: Type.Optional(
 				Type.Array(Type.String(), { description: "Validation IDs satisfied by this command." }),
 			),
-			receiptFile: Type.String({ description: "Receipt JSONL file to append." }),
+			receiptFile: Type.Optional(Type.String({ description: "Receipt JSONL file to append." })),
 			maxOutputChars: Type.Optional(Type.Number({ description: "Inline output budget." })),
 			fullOutputDir: Type.Optional(Type.String({ description: "Directory for oversized validation logs." })),
 			skipIfUnchanged: Type.Optional(
@@ -1119,6 +1136,25 @@ export default function cartographerTools(pi: PiApi): void {
 		}),
 		async execute(_toolCallId, rawParams, signal) {
 			const params = rawParams as CartographerValidationParams;
+			if (params.action === "complete-item") {
+				const validationId = params.validationId?.[0];
+				const args = [
+					"validation-complete-item",
+					"--root",
+					params.root || process.cwd(),
+					"--topic",
+					requireString(params.topic, "cartographer_validation complete-item requires topic"),
+					"--validation-id",
+					requireString(validationId, "cartographer_validation complete-item requires validationId"),
+					"--json",
+				];
+				return runCommand("node", ["--experimental-strip-types", workflowScript, ...args], signal, {
+					maxOutputChars: params.maxOutputChars,
+					outputPath: params.outputPath,
+					raw: params.raw,
+					label: "cartographer-validation-complete-item",
+				});
+			}
 			const args: string[] = [
 				"--root",
 				params.root || process.cwd(),
@@ -1289,6 +1325,86 @@ export default function cartographerTools(pi: PiApi): void {
 				outputPath: params.outputPath,
 				raw: params.raw,
 				label: `cartographer-transition-${params.action}`,
+			});
+		},
+	});
+
+	pi.registerTool({
+		name: "cartographer_plan",
+		label: "Cartographer Plan",
+		description: "Generate and finalize Cartographer plan graph artifacts.",
+		promptSnippet: "Generate plan graph artifacts and route plan finalization through deterministic gates",
+		promptGuidelines: [
+			"Use generate-graph after drafting or editing plan.md.",
+			"Use finalize only after deterministic validation and a plan auditor PASS or approved fallback exists.",
+		],
+		parameters: Type.Object({
+			action: Type.Union([Type.Literal("generate-graph"), Type.Literal("finalize")]),
+			root: Type.Optional(Type.String({ description: "Project root. Defaults to current working directory." })),
+			topic: Type.String({ description: "Cartographer topic under .plan/." }),
+			summary: Type.Optional(Type.String({ description: "Finalize/context summary." })),
+			maxOutputChars: Type.Optional(Type.Number({ description: "Inline output budget." })),
+			outputPath: Type.Optional(Type.String({ description: "Optional full-output path for oversized output." })),
+			raw: Type.Optional(Type.Boolean({ description: "Return raw command output instead of a compact receipt." })),
+		}),
+		async execute(_toolCallId, rawParams, signal) {
+			const params = rawParams as CartographerPlanParams;
+			const args = [
+				params.action === "generate-graph" ? "plan-generate-graph" : "plan-finalize",
+				"--root",
+				params.root || process.cwd(),
+				"--topic",
+				requireString(params.topic, "cartographer_plan requires topic"),
+				"--json",
+			];
+			if (params.summary) args.push("--summary", params.summary);
+			return runCommand("node", ["--experimental-strip-types", workflowScript, ...args], signal, {
+				maxOutputChars: params.maxOutputChars,
+				outputPath: params.outputPath,
+				raw: params.raw,
+				label: `cartographer-plan-${params.action}`,
+			});
+		},
+	});
+
+	pi.registerTool({
+		name: "cartographer_plan_status",
+		label: "Cartographer Plan Status",
+		description: "Atomically update plan.md and plan.nodes.jsonl phase/task status.",
+		promptSnippet: "Synchronize plan Markdown checkboxes/status with plan graph nodes",
+		promptGuidelines: [
+			"Use set instead of manually editing plan status or checklist items.",
+			"Rollback is expected when Markdown and JSONL cannot both be updated safely.",
+		],
+		parameters: Type.Object({
+			action: Type.Literal("set"),
+			root: Type.Optional(Type.String({ description: "Project root. Defaults to current working directory." })),
+			topic: Type.String({ description: "Cartographer topic under .plan/." }),
+			id: Type.String({ description: "Phase, task, or validation id such as P3, P3.T1, or P3.V1." }),
+			status: Type.String({ description: "Status: pending, in-progress, complete, or blocked." }),
+			maxOutputChars: Type.Optional(Type.Number({ description: "Inline output budget." })),
+			outputPath: Type.Optional(Type.String({ description: "Optional full-output path for oversized output." })),
+			raw: Type.Optional(Type.Boolean({ description: "Return raw command output instead of a compact receipt." })),
+		}),
+		async execute(_toolCallId, rawParams, signal) {
+			const params = rawParams as CartographerPlanStatusParams;
+			const args = [
+				"plan-status-set",
+				"--root",
+				params.root || process.cwd(),
+				"--topic",
+				requireString(params.topic, "cartographer_plan_status requires topic"),
+				"--id",
+				requireString(params.id, "cartographer_plan_status set requires id"),
+				"--status",
+				requireString(params.status, "cartographer_plan_status set requires status"),
+				"--json",
+			];
+			return runCommand("node", ["--experimental-strip-types", workflowScript, ...args], signal, {
+				maxOutputChars: params.maxOutputChars,
+				outputPath: params.outputPath,
+				raw: params.raw,
+				label: "cartographer-plan-status-set",
 			});
 		},
 	});

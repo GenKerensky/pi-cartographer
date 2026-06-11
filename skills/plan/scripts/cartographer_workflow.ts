@@ -249,6 +249,7 @@ export function createWorkflowFixture(
 			`### Phase ${phaseId} — Fixture Phase ${index}`,
 			"",
 			"- **Status:** pending",
+			`- **Depends on:** ${index ? phaseIds[index - 1] : "none"}`,
 			"",
 			"#### Checklist",
 			`- [ ] **${phaseId}.T1** Fixture task.`,
@@ -354,6 +355,10 @@ function usage(exitCode: number): never {
   ${script} fact-add-source --root <root> --topic <topic> --title <text> [--url <url>] [--json]
   ${script} fact-add-fact --root <root> --topic <topic> --title <text> [--source-id <id>] [--json]
   ${script} fact-support-fact --root <root> --topic <topic> --fact-id <id> --source-id <id> [--json]
+  ${script} plan-generate-graph --root <root> --topic <topic> [--json]
+  ${script} plan-finalize --root <root> --topic <topic> [--summary <text>] [--json]
+  ${script} plan-status-set --root <root> --topic <topic> --id <phase|task|validation id> --status <status> [--json]
+  ${script} validation-complete-item --root <root> --topic <topic> --validation-id <id> [--json]
   ${script} transition-status --root <root> --topic <topic> [--json]
   ${script} transition-request-approval --root <root> --topic <topic> --gate <gate> [--phase-id <id>] [--summary <text>] [--json]
   ${script} transition-approve --root <root> --topic <topic> --gate <gate> --summary <text> [--phase-id <id>] [--approved-by <name>] [--ci] [--json]
@@ -892,6 +897,183 @@ function optionalString(value: unknown): string {
 	return typeof value === "string" ? value : "";
 }
 
+
+function planMdPath(root: string, topic: string): string {
+	return path.join(topicDir(root, topic), "plan.md");
+}
+
+function planNodesPath(root: string, topic: string): string {
+	return path.join(topicDir(root, topic), "plan.nodes.jsonl");
+}
+
+function planEdgesPath(root: string, topic: string): string {
+	return path.join(topicDir(root, topic), "plan.edges.jsonl");
+}
+
+type ParsedPlan = { nodes: Record<string, unknown>[]; edges: Record<string, unknown>[] };
+
+function checkboxStatus(mark: string): string {
+	return mark.toLowerCase() === "x" ? "complete" : "pending";
+}
+
+function commandFromValidationTitle(title: string): string | undefined {
+	const backtick = title.match(/`([^`]+)`/);
+	if (backtick) return backtick[1];
+	const run = title.match(/\bRun\s+(.+?)(?:;|\.|$)/i);
+	return run ? run[1].trim() : undefined;
+}
+
+export function parsePlanMarkdown(topic: string, markdown: string): ParsedPlan {
+	const nodes: Record<string, unknown>[] = [
+		{ id: `plan:${topic}`, type: "plan", title: `${topic} Plan`, source: "plan.md" },
+	];
+	const edges: Record<string, unknown>[] = [];
+	const phaseMatches = [...markdown.matchAll(/^### Phase (P\d+)\s+—\s+(.+)$/gm)];
+	for (const [index, match] of phaseMatches.entries()) {
+		const phaseId = match[1];
+		const title = match[2].trim();
+		const start = match.index || 0;
+		const end = phaseMatches[index + 1]?.index || markdown.length;
+		const block = markdown.slice(start, end);
+		const status = block.match(/^- \*\*Status:\*\*\s+(.+)$/m)?.[1]?.trim() || "pending";
+		const dependsText = block.match(/^- \*\*Depends on:\*\*\s+(.+)$/m)?.[1]?.trim() || "none";
+		const dependsOn = dependsText.toLowerCase() === "none" ? [] : [...dependsText.matchAll(/P\d+/g)].map((item) => item[0]);
+		const unlocksText = block.match(/^- \*\*Unlocks:\*\*\s+(.+)$/m)?.[1]?.trim() || "none";
+		const unlocks = unlocksText.toLowerCase() === "none" ? [] : [...unlocksText.matchAll(/P\d+/g)].map((item) => item[0]);
+		const referenceText = block.match(/^- \*\*Primary references:\*\*\s+(.+)$/m)?.[1] || "";
+		const references = [...new Set([...referenceText.matchAll(/\[(F\d+)\]/g)].map((item) => item[1]))];
+		const phaseNode: Record<string, unknown> = { id: `phase:${phaseId}`, type: "phase", phase_id: phaseId, title, status, depends_on: dependsOn, source: "plan.md" };
+		if (references.length) phaseNode.references = references;
+		nodes.push(phaseNode);
+		edges.push({ from: `plan:${topic}`, to: `phase:${phaseId}`, type: "contains" });
+		for (const dep of dependsOn) edges.push({ from: `phase:${phaseId}`, to: `phase:${dep}`, type: "depends_on" });
+		for (const unlock of unlocks) edges.push({ from: `phase:${phaseId}`, to: `phase:${unlock}`, type: "unlocks" });
+		for (const reference of references) edges.push({ from: `phase:${phaseId}`, to: reference, type: "references" });
+		for (const task of block.matchAll(/^- \[([ xX])\] \*\*((P\d+\.T\d+))\*\*\s*(.+)$/gm)) {
+			const taskId = task[2];
+			nodes.push({ id: `task:${taskId}`, type: "task", task_id: taskId, phase_id: phaseId, title: task[3].trim(), status: checkboxStatus(task[1]), source: "plan.md" });
+			edges.push({ from: `phase:${phaseId}`, to: `task:${taskId}`, type: "contains" });
+		}
+		for (const validation of block.matchAll(/^- \[([ xX])\] \*\*((P\d+\.V\d+))\*\*\s*(.+)$/gm)) {
+			const validationId = validation[2];
+			const validationTitle = validation[3].trim();
+			const node: Record<string, unknown> = { id: `validation:${validationId}`, type: "validation", validation_id: validationId, phase_id: phaseId, title: validationTitle, status: checkboxStatus(validation[1]), source: "plan.md" };
+			const command = commandFromValidationTitle(validationTitle);
+			if (command) node.command = command;
+			nodes.push(node);
+			edges.push({ from: `phase:${phaseId}`, to: `validation:${validationId}`, type: "contains" });
+			edges.push({ from: `validation:${validationId}`, to: `phase:${phaseId}`, type: "validates" });
+		}
+	}
+	if (phaseMatches.length === 0) throw new Error("No plan phases found in plan.md");
+	return { nodes, edges };
+}
+
+export function generatePlanGraph(params: { root: string; topic: string }): Record<string, unknown> {
+	ensureTopicArtifacts(params.root, params.topic);
+	const markdown = fs.readFileSync(planMdPath(params.root, params.topic), "utf8");
+	const parsed = parsePlanMarkdown(params.topic, markdown);
+	writeJsonlRecordsAtomic(planNodesPath(params.root, params.topic), parsed.nodes);
+	writeJsonlRecordsAtomic(planEdgesPath(params.root, params.topic), parsed.edges);
+	return { nodes: parsed.nodes.length, edges: parsed.edges.length, plan_nodes: path.relative(params.root, planNodesPath(params.root, params.topic)), plan_edges: path.relative(params.root, planEdgesPath(params.root, params.topic)) };
+}
+
+function replacePlanItemStatus(markdown: string, id: string, status: string): string {
+	if (/^P\d+$/.test(id)) {
+		const phasePattern = new RegExp(`(### Phase ${id}\\s+—[\\s\\S]*?^- \\*\\*Status:\\*\\*\\s+)(.+)$`, "m");
+		if (!phasePattern.test(markdown)) throw new Error(`Missing phase in plan.md: ${id}`);
+		return markdown.replace(phasePattern, `$1${status}`);
+	}
+	const checked = status === "complete" ? "x" : " ";
+	const itemPattern = new RegExp(`^- \\[([ xX])\\] (\\*\\*${id.replace(".", "\\.")}\\*\\*)`, "m");
+	if (!itemPattern.test(markdown)) throw new Error(`Missing checklist item in plan.md: ${id}`);
+	return markdown.replace(itemPattern, `- [${checked}] $2`);
+}
+
+export function setPlanStatus(params: { root: string; topic: string; id: string; status: string }): Record<string, unknown> {
+	ensureTopicArtifacts(params.root, params.topic);
+	const allowed = new Set(["pending", "in-progress", "complete", "blocked"]);
+	if (!allowed.has(params.status)) throw new Error(`Unsupported plan status: ${params.status}`);
+	const mdPath = planMdPath(params.root, params.topic);
+	const nodesPath = planNodesPath(params.root, params.topic);
+	const oldMd = fs.readFileSync(mdPath, "utf8");
+	const oldNodes = fs.existsSync(nodesPath) ? fs.readFileSync(nodesPath, "utf8") : "";
+	try {
+		const nextMd = replacePlanItemStatus(oldMd, params.id, params.status);
+		fs.writeFileSync(mdPath, nextMd, "utf8");
+		const records = readJsonlRecords(nodesPath);
+		const nodeId = params.id.includes(".T") ? `task:${params.id}` : params.id.includes(".V") ? `validation:${params.id}` : `phase:${params.id}`;
+		const index = records.findIndex((record) => record.id === nodeId);
+		if (index < 0) throw new Error(`Missing plan node: ${nodeId}`);
+		records[index] = { ...records[index], status: params.status };
+		writeJsonlRecordsAtomic(nodesPath, records);
+		parsePlanMarkdown(params.topic, nextMd);
+		return { id: params.id, status: params.status };
+	} catch (error) {
+		fs.writeFileSync(mdPath, oldMd, "utf8");
+		fs.writeFileSync(nodesPath, oldNodes, "utf8");
+		throw error;
+	}
+}
+
+function findPassedValidationReceipt(root: string, topic: string, validationId: string): Record<string, unknown> {
+	const receipts = readJsonlRecords(receiptsPath(root, topic));
+	const receipt = receipts.find((candidate) => {
+		const status = optionalString(candidate.status).toLowerCase();
+		const ids = Array.isArray(candidate.validation_ids) ? candidate.validation_ids.map(String) : [];
+		return (status === "passed" || candidate.verified === true) && (ids.includes(validationId) || optionalString(candidate.id).includes(validationId));
+	});
+	if (!receipt) throw new Error(`Missing passed validation receipt for ${validationId}`);
+	return receipt;
+}
+
+export function completeValidationItem(params: { root: string; topic: string; validationId: string }): Record<string, unknown> {
+	const receipt = findPassedValidationReceipt(params.root, params.topic, params.validationId);
+	const status = setPlanStatus({ root: params.root, topic: params.topic, id: params.validationId, status: "complete" });
+	return { ...status, validation_receipt: receipt.id };
+}
+
+function runPlanningGraphValidation(root: string, topic: string): string {
+	const script = path.join(path.dirname(fileURLToPath(import.meta.url)), "validate_planning_graph.py");
+	return execFileSync("python", [script, "--root", root, "--topic", topic, "--json"], {
+		cwd: root,
+		encoding: "utf8",
+		stdio: ["ignore", "pipe", "pipe"],
+	});
+}
+
+export function finalizePlan(params: { root: string; topic: string; summary?: string }): Record<string, unknown> {
+	const graph = generatePlanGraph({ root: params.root, topic: params.topic });
+	const topicValidation = runTopicValidation(params.root, params.topic);
+	const graphValidation = runPlanningGraphValidation(params.root, params.topic);
+	const validationReceipt = appendWorkflowReceipt({
+		root: params.root,
+		topic: params.topic,
+		kind: "validation",
+		phaseId: "plan",
+		summary: `plan finalize checks passed: ${JSON.stringify(graph)}; validate-topic: ${topicValidation.slice(0, 160)}; validate-graph: ${graphValidation.slice(0, 160)}`,
+	});
+	upsertContextPack({
+		root: params.root,
+		topic: params.topic,
+		phaseId: "plan",
+		summary: params.summary || "Plan finalization context.",
+		artifacts: [`.plan/${params.topic}/plan.md`, `.plan/${params.topic}/plan.nodes.jsonl`, `.plan/${params.topic}/plan.edges.jsonl`],
+		validationReceipts: [String(validationReceipt.id)],
+		mode: "update",
+	});
+	const auditReceipt = findAuditorPassReceipt(params.root, params.topic, "plan");
+	const transition = recordWorkflowTransition({
+		root: params.root,
+		topic: params.topic,
+		action: "request-approval",
+		gate: "plan",
+		phaseId: "plan",
+		summary: params.summary || "Plan ready for human review.",
+	});
+	return { validation_receipt: validationReceipt.id, audit_receipt: auditReceipt.id, transition_receipt: transition.id };
+}
+
 function assertTransitionPrerequisites(params: {
 	root: string;
 	topic: string;
@@ -1063,6 +1245,14 @@ export function runWorkflowCli(argv = process.argv.slice(2)): WorkflowCliResult 
 		});
 	} else if (command === "fact-support-fact" || command === "fact_support_fact") {
 		result = supportFact({ root, topic, factId: opt(options, "fact-id"), sourceId: opt(options, "source-id") });
+	} else if (command === "plan-generate-graph" || command === "plan_generate_graph") {
+		result = generatePlanGraph({ root, topic });
+	} else if (command === "plan-finalize" || command === "plan_finalize") {
+		result = finalizePlan({ root, topic, summary: typeof options.summary === "string" ? options.summary : undefined });
+	} else if (command === "plan-status-set" || command === "plan_status_set") {
+		result = setPlanStatus({ root, topic, id: opt(options, "id"), status: opt(options, "status") });
+	} else if (command === "validation-complete-item" || command === "validation_complete_item") {
+		result = completeValidationItem({ root, topic, validationId: opt(options, "validation-id") });
 	} else if (command === "transition-status" || command === "transition_status") {
 		result = getWorkflowStatus({ root, topic });
 	} else if (command === "transition-request-approval" || command === "transition_request_approval") {

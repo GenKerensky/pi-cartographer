@@ -195,7 +195,7 @@ Do not remove the ability to edit proposal prose. The wrapper should enforce str
 
 ### Phase P3 — Plan Graph, Status, and Validation Wrappers
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P1
 - **Unlocks:** P6
 - **Primary references:** `file:skills/plan/SKILL.md`, `file:skills/plan/scripts/validate_planning_graph.py`, `file:skills/plan/scripts/manage_jsonl.ts`, [F021], [F023], [F024], [F026]
@@ -212,19 +212,19 @@ Make plan graph generation, plan finalization, phase status updates, and validat
 
 #### Checklist
 
-- [ ] **P3.T1** Implement `cartographer_plan generate-graph` to parse `plan.md` phases/tasks/validations/dependencies/references into `plan.nodes.jsonl` and `plan.edges.jsonl` [F024].
-- [ ] **P3.T2** Implement `cartographer_plan finalize` to run graph generation/reconciliation, `validate-topic`, `validate_planning_graph.py`, context-pack creation, deterministic auditor handoff, and `cartographer_transition request-approval --gate plan` [F023].
-- [ ] **P3.T3** Implement `cartographer_plan_status set` to atomically update `plan.md` and `plan.nodes.jsonl` phase/task status and roll back on validation failure [F021].
-- [ ] **P3.T4** Implement `cartographer_validation complete-item` to verify a matching passed receipt before marking validation items complete [F026].
-- [ ] **P3.T5** Register plan/status/validation-completion wrappers in the extension.
+- [x] **P3.T1** Implement `cartographer_plan generate-graph` to parse `plan.md` phases/tasks/validations/dependencies/references into `plan.nodes.jsonl` and `plan.edges.jsonl` [F024].
+- [x] **P3.T2** Implement `cartographer_plan finalize` to run graph generation/reconciliation, `validate-topic`, `validate_planning_graph.py`, context-pack creation, deterministic auditor handoff, and `cartographer_transition request-approval --gate plan` [F023].
+- [x] **P3.T3** Implement `cartographer_plan_status set` to atomically update `plan.md` and `plan.nodes.jsonl` phase/task status and roll back on validation failure [F021].
+- [x] **P3.T4** Implement `cartographer_validation complete-item` to verify a matching passed receipt before marking validation items complete [F026].
+- [x] **P3.T5** Register plan/status/validation-completion wrappers in the extension.
 
 #### Validation
 
-- [ ] **P3.V1** Run graph-generation tests from Markdown fixtures with dependencies, task IDs, validation IDs, and citations.
-- [ ] **P3.V2** Run status-sync tests proving Markdown and JSONL remain aligned after success and are unchanged after failure.
-- [ ] **P3.V3** Run validation-completion tests for passed receipt, missing receipt, failed receipt, and wrong validation ID.
-- [ ] **P3.V4** Run plan finalize tests proving human approval is required before implementation can start.
-- [ ] **P3.V5** Run `npm run check:scripts`.
+- [x] **P3.V1** Run graph-generation tests from Markdown fixtures with dependencies, task IDs, validation IDs, and citations.
+- [x] **P3.V2** Run status-sync tests proving Markdown and JSONL remain aligned after success and are unchanged after failure.
+- [x] **P3.V3** Run validation-completion tests for passed receipt, missing receipt, failed receipt, and wrong validation ID.
+- [x] **P3.V4** Run plan finalize tests proving human approval is required before implementation can start.
+- [x] **P3.V5** Run `npm run check:scripts`.
 
 #### Exit Criteria
 

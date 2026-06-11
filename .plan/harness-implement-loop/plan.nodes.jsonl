@@ -30,17 +30,17 @@
 {"id":"validation:P2.V2","type":"validation","validation_id":"P2.V2","phase_id":"P2","title":"Run fact wrapper tests","status":"complete","source":"plan.md"}
 {"id":"validation:P2.V3","type":"validation","validation_id":"P2.V3","phase_id":"P2","title":"Run proposal finalize tests","status":"complete","source":"plan.md"}
 {"id":"validation:P2.V4","type":"validation","validation_id":"P2.V4","phase_id":"P2","title":"Run npm run check:scripts","status":"complete","source":"plan.md","command":"npm run check:scripts"}
-{"id":"phase:P3","type":"phase","phase_id":"P3","title":"Plan Graph, Status, and Validation Wrappers","status":"pending","depends_on":["P1"],"source":"plan.md","references":["F021","F023","F024","F026"]}
-{"id":"task:P3.T1","type":"task","task_id":"P3.T1","phase_id":"P3","title":"Implement plan graph generation","status":"pending","source":"plan.md"}
-{"id":"task:P3.T2","type":"task","task_id":"P3.T2","phase_id":"P3","title":"Implement plan finalize","status":"pending","source":"plan.md"}
-{"id":"task:P3.T3","type":"task","task_id":"P3.T3","phase_id":"P3","title":"Implement plan status set","status":"pending","source":"plan.md"}
-{"id":"task:P3.T4","type":"task","task_id":"P3.T4","phase_id":"P3","title":"Implement validation complete-item","status":"pending","source":"plan.md"}
-{"id":"task:P3.T5","type":"task","task_id":"P3.T5","phase_id":"P3","title":"Register plan/status wrappers","status":"pending","source":"plan.md"}
-{"id":"validation:P3.V1","type":"validation","validation_id":"P3.V1","phase_id":"P3","title":"Run plan graph generation tests","status":"pending","source":"plan.md"}
-{"id":"validation:P3.V2","type":"validation","validation_id":"P3.V2","phase_id":"P3","title":"Run status sync tests","status":"pending","source":"plan.md"}
-{"id":"validation:P3.V3","type":"validation","validation_id":"P3.V3","phase_id":"P3","title":"Run validation completion tests","status":"pending","source":"plan.md"}
-{"id":"validation:P3.V4","type":"validation","validation_id":"P3.V4","phase_id":"P3","title":"Run plan finalize approval tests","status":"pending","source":"plan.md"}
-{"id":"validation:P3.V5","type":"validation","validation_id":"P3.V5","phase_id":"P3","title":"Run npm run check:scripts","status":"pending","source":"plan.md","command":"npm run check:scripts"}
+{"id":"phase:P3","type":"phase","phase_id":"P3","title":"Plan Graph, Status, and Validation Wrappers","status":"complete","depends_on":["P1"],"source":"plan.md","references":["F021","F023","F024","F026"]}
+{"id":"task:P3.T1","type":"task","task_id":"P3.T1","phase_id":"P3","title":"Implement plan graph generation","status":"complete","source":"plan.md"}
+{"id":"task:P3.T2","type":"task","task_id":"P3.T2","phase_id":"P3","title":"Implement plan finalize","status":"complete","source":"plan.md"}
+{"id":"task:P3.T3","type":"task","task_id":"P3.T3","phase_id":"P3","title":"Implement plan status set","status":"complete","source":"plan.md"}
+{"id":"task:P3.T4","type":"task","task_id":"P3.T4","phase_id":"P3","title":"Implement validation complete-item","status":"complete","source":"plan.md"}
+{"id":"task:P3.T5","type":"task","task_id":"P3.T5","phase_id":"P3","title":"Register plan/status wrappers","status":"complete","source":"plan.md"}
+{"id":"validation:P3.V1","type":"validation","validation_id":"P3.V1","phase_id":"P3","title":"Run plan graph generation tests","status":"complete","source":"plan.md"}
+{"id":"validation:P3.V2","type":"validation","validation_id":"P3.V2","phase_id":"P3","title":"Run status sync tests","status":"complete","source":"plan.md"}
+{"id":"validation:P3.V3","type":"validation","validation_id":"P3.V3","phase_id":"P3","title":"Run validation completion tests","status":"complete","source":"plan.md"}
+{"id":"validation:P3.V4","type":"validation","validation_id":"P3.V4","phase_id":"P3","title":"Run plan finalize approval tests","status":"complete","source":"plan.md"}
+{"id":"validation:P3.V5","type":"validation","validation_id":"P3.V5","phase_id":"P3","title":"Run npm run check:scripts","status":"complete","source":"plan.md","command":"npm run check:scripts"}
 {"id":"phase:P4","type":"phase","phase_id":"P4","title":"Implement Runner and Harness Guards","status":"pending","depends_on":["P1"],"source":"plan.md","references":["F001","F002","F003","F004","F007","F013"]}
 {"id":"task:P4.T1","type":"task","task_id":"P4.T1","phase_id":"P4","title":"Implement implement start","status":"pending","source":"plan.md"}
 {"id":"task:P4.T2","type":"task","task_id":"P4.T2","phase_id":"P4","title":"Implement implement step","status":"pending","source":"plan.md"}

@@ -5,11 +5,11 @@
   "source_refs": {
     "plan_md": {
       "path": ".plan/harness-implement-loop/plan.md",
-      "sha256": "sha256:910b787b6b2195547ba9c27036075fee82eb24fe15b191ac60150ff7619d38f2"
+      "sha256": "sha256:657e69b496a6e4be676c112fa21d647ddac988b21a03922d84fdc3b61c37d14e"
     },
     "plan_nodes": {
       "path": ".plan/harness-implement-loop/plan.nodes.jsonl",
-      "sha256": "sha256:7957686a1a8d7bca613c05b33d6f2d52725ec08143e96ccac82c807bd745be0f"
+      "sha256": "sha256:d6a0f16ffff61f68fb9c3af599e398dc8df41af58690b7cc629cb832910c2a3e"
     },
     "plan_edges": {
       "path": ".plan/harness-implement-loop/plan.edges.jsonl",
@@ -17,27 +17,26 @@
     },
     "receipts": {
       "path": ".plan/harness-implement-loop/receipts.jsonl",
-      "sha256": "sha256:660ba4c65014b00325ff98939392e6d6ea4d978f86dff8f6148356385d6ca33b"
+      "sha256": "sha256:26ad0447838d08a582c8de419357d2b543da7414bc19cf19905d2732c44ce770"
     },
     "context_packs": {
       "path": ".plan/harness-implement-loop/context-packs.jsonl",
-      "sha256": "sha256:4ba77bc4c679879430719c222bae803c0e5820f0de887db0ef1df39ff12ead40"
+      "sha256": "sha256:7d94811579614c8b643966cce2ffceb7d24902bbb484720bdda4fd69e3c07b6d"
     }
   },
   "current_phase_id": "P2",
   "active_task_ids": [],
   "active_validation_ids": [],
   "next_action": {
-    "id": "P3.T1",
+    "id": "P4.T1",
     "kind": "implementation-task",
-    "summary": "Start P3 plan graph, status, and validation wrappers.",
-    "phase_id": "P3",
-    "task_id": "P3.T1",
+    "summary": "Start P4 implement runner and harness guards.",
+    "phase_id": "P4",
+    "task_id": "P4.T1",
     "files_to_inspect": [
       ".plan/harness-implement-loop/plan.md",
-      "skills/plan/SKILL.md",
-      "skills/plan/scripts/validate_planning_graph.py",
-      "skills/plan/scripts/manage_jsonl.ts",
+      "skills/implement/SKILL.md",
+      "skills/plan/scripts/cartographer_state.ts",
       "skills/plan/scripts/cartographer_workflow.ts",
       "extensions/cartographer-tools.ts",
       "tests/cartographer_workflow.test.ts"
@@ -47,45 +46,45 @@
     "write_allowed": [
       {
         "path": "skills/plan/scripts/cartographer_workflow.ts",
-        "reason": "P3 plan/status/validation wrapper implementation"
+        "reason": "P4 implement runner wrapper implementation"
       },
       {
         "path": "tests/cartographer_workflow.test.ts",
-        "reason": "P3 temp-root wrapper tests"
+        "reason": "P4 implement runner tests"
       },
       {
         "path": "extensions/cartographer-tools.ts",
-        "reason": "P3 extension tool registrations"
+        "reason": "P4 extension tool registration and guardrails"
       },
       {
         "path": ".plan/harness-implement-loop/plan.md",
-        "reason": "P3 phase status/checklist updates"
+        "reason": "P4 phase status/checklist updates"
       },
       {
         "path": ".plan/harness-implement-loop/plan.nodes.jsonl",
-        "reason": "P3 phase/task/validation status updates"
+        "reason": "P4 phase/task/validation status updates"
       },
       {
         "path": ".plan/harness-implement-loop/receipts.jsonl",
-        "reason": "P3 validation/audit receipts"
+        "reason": "P4 validation/audit receipts"
       },
       {
         "path": ".plan/harness-implement-loop/context-packs.jsonl",
-        "reason": "P3 context pack"
+        "reason": "P4 context pack"
       }
     ],
     "read_only": [
       {
-        "path": "skills/plan/SKILL.md",
-        "reason": "P3 wrapper behavior reference"
+        "path": "skills/implement/SKILL.md",
+        "reason": "P4 wrapper behavior reference"
       },
       {
-        "path": "skills/plan/scripts/validate_planning_graph.py",
-        "reason": "P3 graph validation reference"
+        "path": "skills/plan/scripts/cartographer_state.ts",
+        "reason": "P4 state command reference"
       },
       {
         "path": "skills/plan/scripts/manage_jsonl.ts",
-        "reason": "P3 JSONL validation/upsert behavior reference"
+        "reason": "P4 topic validation reference"
       }
     ],
     "forbidden": [
@@ -105,12 +104,15 @@
     "receipt:P0:validation:2026-06-11T05:02:50+00:00",
     "receipt:P0:validation:2026-06-11T05:03:01+00:00",
     "receipt:P0:validation:2026-06-11T05:03:24+00:00",
-    "receipt:P1:validation:2026-06-11T05:42:01+00:00"
+    "receipt:P1:validation:2026-06-11T05:42:01+00:00",
+    "receipt:P3:validation:2026-06-11T13:18:57+00:00",
+    "receipt:P3:validation:2026-06-11T13:20:49+00:00"
   ],
   "journal_refs": [
     "journal:20260611T050334Z:compact",
     "journal:20260611T054231Z:compact",
-    "journal:20260611T061914Z:compact"
+    "journal:20260611T061914Z:compact",
+    "journal:20260611T132107Z:compact"
   ],
   "resume": {
     "template_id": "cartographer.single_writer.resume.v1",
@@ -130,10 +132,10 @@
       "stale generated snippets"
     ]
   },
-  "updated_at": "2026-06-11T06:20:27Z",
+  "updated_at": "2026-06-11T13:21:18Z",
   "compaction": {
     "trigger": "phase-end",
-    "compacted_at": "2026-06-11T06:19:14Z"
+    "compacted_at": "2026-06-11T13:21:07Z"
   },
-  "stale_reason": "P1 audit-status validation receipt appended."
+  "stale_reason": "P3 plan, plan.nodes, receipts, and context pack artifacts updated after validation/audit."
 }

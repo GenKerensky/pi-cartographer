@@ -13,15 +13,19 @@ import {
 	appendWorkflowReceipt,
 	assertHumanLabel,
 	createWorkflowFixture,
+	finalizePlan,
 	finalizeProposal,
+	generatePlanGraph,
 	getWorkflowStatus,
 	initProposal,
 	parseMinimalToml,
 	recordWorkflowTransition,
 	resolveApprover,
 	runWorkflowCli,
+	setPlanStatus,
 	supportFact,
 	syncProposalAdr,
+	completeValidationItem,
 	updateJsonAtomic,
 	upsertContextPack,
 	writeJsonAtomic,
@@ -264,6 +268,109 @@ describe("proposal and fact wrappers", () => {
 				"S001",
 			]).id,
 		).toBe("F001");
+	});
+});
+
+describe("plan graph, status, and validation wrappers", () => {
+	it("generates plan graph records from Markdown phases, dependencies, tasks, and validations", () => {
+		const root = tempRoot();
+		createWorkflowFixture(root, { topic: "demo", phaseIds: ["P0", "P1"] });
+		const planPath = path.join(root, ".plan", "demo", "plan.md");
+		fs.writeFileSync(
+			planPath,
+			fs.readFileSync(planPath, "utf8").replace("- **Depends on:** P0", "- **Depends on:** P0\n- **Primary references:** [F021] [F024]"),
+			"utf8",
+		);
+		const result = generatePlanGraph({ root, topic: "demo" });
+		expect(result.nodes).toBe(7);
+		expect(result.edges).toBe(11);
+		const edges = fs
+			.readFileSync(path.join(root, ".plan", "demo", "plan.edges.jsonl"), "utf8")
+			.trim()
+			.split("\n")
+			.map((line) => JSON.parse(line));
+		expect(edges).toContainEqual({ from: "phase:P1", to: "phase:P0", type: "depends_on" });
+		expect(edges).toContainEqual({ from: "phase:P1", to: "F021", type: "references" });
+		const nodes = fs
+			.readFileSync(path.join(root, ".plan", "demo", "plan.nodes.jsonl"), "utf8")
+			.trim()
+			.split("\n")
+			.map((line) => JSON.parse(line));
+		expect(nodes.find((node) => node.id === "phase:P1")?.references).toEqual(["F021", "F024"]);
+	});
+
+	it("sets plan phase/task status atomically in Markdown and JSONL", () => {
+		const root = tempRoot();
+		createWorkflowFixture(root, { topic: "demo", phaseIds: ["P0"] });
+		setPlanStatus({ root, topic: "demo", id: "P0", status: "in-progress" });
+		setPlanStatus({ root, topic: "demo", id: "P0.T1", status: "complete" });
+		const markdown = fs.readFileSync(path.join(root, ".plan", "demo", "plan.md"), "utf8");
+		expect(markdown).toContain("- **Status:** in-progress");
+		expect(markdown).toContain("- [x] **P0.T1** Fixture task.");
+		expect(() => setPlanStatus({ root, topic: "demo", id: "P0.T404", status: "complete" })).toThrow(
+			"Missing checklist item",
+		);
+		expect(fs.readFileSync(path.join(root, ".plan", "demo", "plan.md"), "utf8")).toContain(
+			"- [x] **P0.T1** Fixture task.",
+		);
+	});
+
+	it("completes validation items only with matching passed receipts", () => {
+		const root = tempRoot();
+		createWorkflowFixture(root, { topic: "demo", phaseIds: ["P0"] });
+		expect(() => completeValidationItem({ root, topic: "demo", validationId: "P0.V1" })).toThrow("Missing passed");
+		appendJsonlAtomic(path.join(root, ".plan", "demo", "receipts.jsonl"), [
+			{ id: "receipt:P0.V1", type: "validation-receipt", status: "failed", validation_ids: ["P0.V1"] },
+		]);
+		expect(() => completeValidationItem({ root, topic: "demo", validationId: "P0.V1" })).toThrow("Missing passed");
+		appendJsonlAtomic(path.join(root, ".plan", "demo", "receipts.jsonl"), [
+			{ id: "receipt:P0.V1:pass", type: "validation-receipt", status: "passed", validation_ids: ["P0.V1"] },
+		]);
+		const result = completeValidationItem({ root, topic: "demo", validationId: "P0.V1" });
+		expect(result.validation_receipt).toBe("receipt:P0.V1:pass");
+		expect(fs.readFileSync(path.join(root, ".plan", "demo", "plan.md"), "utf8")).toContain(
+			"- [x] **P0.V1** Fixture validation.",
+		);
+	});
+
+	it("finalizes plans through graph generation, validation, context pack, audit, and approval request", () => {
+		const root = tempRoot();
+		createWorkflowFixture(root, { topic: "demo", phaseIds: ["P0"] });
+		expect(() => finalizePlan({ root, topic: "demo" })).toThrow("auditor PASS");
+		fs.writeFileSync(path.join(root, ".plan", "demo", "auditor-report-plan.md"), "PASS\n", "utf8");
+		appendWorkflowReceipt({
+			root,
+			topic: "demo",
+			kind: "audit",
+			phaseId: "plan",
+			summary: "plan auditor PASS",
+			data: { report_path: ".plan/demo/auditor-report-plan.md" },
+		});
+		const result = finalizePlan({ root, topic: "demo", summary: "Plan ready" });
+		expect(String(result.validation_receipt)).toContain("receipt:demo:validation:");
+		expect(String(result.transition_receipt)).toContain("receipt:demo:transition:");
+		expect(getWorkflowStatus({ root, topic: "demo" }).pending_human_approvals).toEqual([
+			{ gate: "plan", phase_id: "plan" },
+		]);
+	});
+
+	it("supports plan/status/validation CLI aliases", () => {
+		const root = tempRoot();
+		createWorkflowFixture(root, { topic: "demo", phaseIds: ["P0"] });
+		expect(runWorkflowCli(["plan-generate-graph", "--root", root, "--topic", "demo"]).ok).toBe(true);
+		expect(
+			runWorkflowCli([
+				"plan-status-set",
+				"--root",
+				root,
+				"--topic",
+				"demo",
+				"--id",
+				"P0.T1",
+				"--status",
+				"complete",
+			]).status,
+		).toBe("complete");
 	});
 });
 
