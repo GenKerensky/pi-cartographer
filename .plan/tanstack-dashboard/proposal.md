@@ -98,7 +98,7 @@ Server-only modules such as `dashboard/server/artifact-reader.ts`, `dashboard/se
 
 ### 3. Migrate read-only API handlers to Start server routes/functions
 
-Port the current `READ_ONLY_ROUTES` surface from `dashboard/server/app.ts` into TanStack Start server routes or server functions [F002] [F006]. Preserve the `ApiResponse<T>` envelope and shared models so the client and tests can migrate incrementally.
+Port the current `READ_ONLY_ROUTES` surface from `dashboard/start/src/server/dashboard-api.ts` into TanStack Start server routes or server functions [F002] [F006]. Preserve the `ApiResponse<T>` envelope and shared models so the client and tests can migrate incrementally.
 
 Initial route parity should include:
 

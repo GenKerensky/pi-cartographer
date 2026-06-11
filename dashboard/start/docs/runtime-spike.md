@@ -1,15 +1,15 @@
 # TanStack Start runtime spike
 
-This directory is the P0 proof point for converting the dashboard to TanStack Start.
+This directory began as the P0 proof point for converting the dashboard to TanStack Start and is now the full dashboard runtime.
 
 Current status:
 
-- `dashboard/start/vite.config.ts` builds a minimal TanStack Start app with the Start Vite plugin before React, plus Nitro for a Node production server output.
-- `dashboard/start/src/routes/__root.tsx`, `index.tsx`, and `topics/$topic.tsx` prove the route tree, SSR loader/server function, and topic deep-link shape.
-- The existing Hono runtime in `dashboard/server/**` and the standalone Vite client in `dashboard/client/**` remain authoritative until later phases port CLI startup, server route parity, TanStack DB collections, Chokidar live reload, and the full UI.
+- `dashboard/start/vite.config.ts` builds the TanStack Start app with the Start Vite plugin before React, plus Nitro for a Node production server output.
+- `dashboard/start/src/routes/**` owns UI routing, API routes, and live event endpoints.
+- `cartographer-dashboard start` launches the built Start output from `dashboard/start/.output/server/index.mjs`.
 
-Compatibility boundary:
+Runtime boundary:
 
-- Do not remove `dashboard/server/**`, `dashboard/client/**`, or Hono dependencies during P0.
-- Later phases should use this spike to decide how `cartographer-dashboard start` launches the production Start server without requiring a separate frontend process.
-- TanStack DB must remain a read-only reactive projection of planning artifacts; `.plan/**` files remain the source of truth.
+- The old Hono server/app/assets path has been removed.
+- `dashboard/client/**` remains the shared React UI and state code consumed by the Start app.
+- TanStack DB remains a read-only reactive projection of planning artifacts; `.plan/**` files remain the source of truth.

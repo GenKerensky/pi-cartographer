@@ -2,7 +2,7 @@
 {"from":"topic:tanstack-dashboard","to":"file:bin/cartographer-dashboard.js","type":"relevant_to","evidence":"User-facing CLI command should remain stable while the runtime behind it changes.","confidence":"high"}
 {"from":"topic:tanstack-dashboard","to":"file:dashboard/server/cli.ts","type":"relevant_to","evidence":"CLI start/status/stop contract should continue to work for the single full-stack app.","confidence":"high"}
 {"from":"topic:tanstack-dashboard","to":"file:dashboard/server/runtime.ts","type":"relevant_to","evidence":"Current server lifecycle and loopback/runtime metadata must be adapted to TanStack Start.","confidence":"high"}
-{"from":"topic:tanstack-dashboard","to":"file:dashboard/server/app.ts","type":"relevant_to","evidence":"Current read-only Hono API routes should be migrated to TanStack Start server routes/functions.","confidence":"high"}
+{"from":"topic:tanstack-dashboard","to":"file:dashboard/start/src/server/dashboard-api.ts","type":"relevant_to","evidence":"Current read-only Hono API routes should be migrated to TanStack Start server routes/functions.","confidence":"high"}
 {"from":"topic:tanstack-dashboard","to":"file:dashboard/server/artifact-reader.ts","type":"relevant_to","evidence":"Server artifact readers remain reusable server-only logic behind TanStack Start routes.","confidence":"high"}
 {"from":"topic:tanstack-dashboard","to":"file:dashboard/server/live-reload.ts","type":"relevant_to","evidence":"Chokidar event producer is central to the requested realtime state management.","confidence":"high"}
 {"from":"topic:tanstack-dashboard","to":"file:dashboard/shared/models.ts","type":"relevant_to","evidence":"Shared live reload and artifact models should drive TanStack DB collection schemas.","confidence":"high"}
@@ -21,11 +21,11 @@
 {"from":"topic:tanstack-dashboard","to":"file:docs/adr/0003-use-local-dashboard-stack-for-cartographer-planning-ui.md","type":"constrained_by","evidence":"ADR-0003 is the accepted current stack and likely needs supersession or amendment.","confidence":"high"}
 {"from":"file:bin/cartographer-dashboard.js","to":"file:dashboard/server/cli.ts","type":"imports","reference":"bin/cartographer-dashboard.js:63","confidence":"high"}
 {"from":"file:dashboard/server/cli.ts","to":"file:dashboard/server/runtime.ts","type":"depends_on","reference":"dashboard/server/cli.ts:9","confidence":"high"}
-{"from":"file:dashboard/server/runtime.ts","to":"file:dashboard/server/app.ts","type":"imports","reference":"dashboard/server/runtime.ts:9","confidence":"high"}
+{"from":"file:dashboard/server/runtime.ts","to":"file:dashboard/start/src/server/dashboard-api.ts","type":"imports","reference":"dashboard/server/runtime.ts:9","confidence":"high"}
 {"from":"file:dashboard/server/runtime.ts","to":"file:dashboard/server/live-reload.ts","type":"imports","reference":"dashboard/server/runtime.ts:10","confidence":"high"}
-{"from":"file:dashboard/server/app.ts","to":"file:dashboard/server/artifact-reader.ts","type":"depends_on","reference":"dashboard/server/app.ts:8","confidence":"high"}
-{"from":"file:dashboard/server/app.ts","to":"file:dashboard/server/live-reload.ts","type":"imports","reference":"dashboard/server/app.ts:7","confidence":"high"}
-{"from":"file:dashboard/server/app.ts","to":"file:dashboard/server/assets.ts","type":"imports","reference":"dashboard/server/app.ts:6","confidence":"high"}
+{"from":"file:dashboard/start/src/server/dashboard-api.ts","to":"file:dashboard/server/artifact-reader.ts","type":"depends_on","reference":"dashboard/start/src/server/dashboard-api.ts:8","confidence":"high"}
+{"from":"file:dashboard/start/src/server/dashboard-api.ts","to":"file:dashboard/server/live-reload.ts","type":"imports","reference":"dashboard/start/src/server/dashboard-api.ts:7","confidence":"high"}
+{"from":"file:dashboard/start/src/server/dashboard-api.ts","to":"file:dashboard/start/vite.config.ts","type":"imports","reference":"dashboard/start/src/server/dashboard-api.ts:6","confidence":"high"}
 {"from":"file:dashboard/server/live-reload.ts","to":"dependency:npm:chokidar","type":"depends_on","reference":"dashboard/server/live-reload.ts:2","confidence":"high"}
 {"from":"file:dashboard/server/live-reload.ts","to":"file:dashboard/shared/models.ts","type":"imports","reference":"dashboard/server/live-reload.ts:5","confidence":"high"}
 {"from":"file:dashboard/client/src/App.tsx","to":"file:dashboard/client/src/lib/api.ts","type":"depends_on","reference":"dashboard/client/src/App.tsx:12","confidence":"high"}

@@ -1,14 +1,10 @@
 import { spawn, type ChildProcess } from "node:child_process";
 import { createHash } from "node:crypto";
 import { promises as fs } from "node:fs";
-import { createServer, type AddressInfo } from "node:net";
+import { createServer } from "node:net";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { serve, type ServerType } from "@hono/node-server";
-import type { Hono } from "hono";
-import { createDashboardApp } from "./app.js";
-import { createLiveReloadService, type LiveReloadService } from "./live-reload.js";
 import { canonicalizeRoot } from "./safety.js";
 
 export const DASHBOARD_MODE = "read-only" as const;
@@ -69,9 +65,6 @@ export type StartDashboardServerOptions = {
 
 export type DashboardServerHandle = {
 	metadata: DashboardServerMetadata;
-	app?: Hono;
-	server?: ServerType;
-	liveReload?: LiveReloadService;
 	child?: ChildProcess;
 	stop: () => Promise<DashboardStopResult>;
 };
@@ -296,34 +289,6 @@ async function removeMetadataIfCurrent(metadata: DashboardServerMetadata): Promi
 	}
 }
 
-function closeServer(server: ServerType): Promise<void> {
-	return new Promise((resolve, reject) => {
-		server.close((error?: Error) => {
-			if (error) reject(error);
-			else resolve();
-		});
-	});
-}
-
-function onceListening(app: Hono, host: string, port: number): Promise<{ server: ServerType; address: AddressInfo }> {
-	let server!: ServerType;
-	return new Promise((resolve, reject) => {
-		let settled = false;
-		const onError = (error: Error): void => {
-			if (settled) return;
-			settled = true;
-			reject(error);
-		};
-		server = serve({ fetch: app.fetch, hostname: host, port }, (address) => {
-			if (settled) return;
-			settled = true;
-			server.off("error", onError);
-			resolve({ server, address });
-		});
-		server.once("error", onError);
-	});
-}
-
 function installSignalHandlers(handle: DashboardServerHandle): void {
 	let shuttingDown = false;
 	const shutdown = (signal: NodeJS.Signals): void => {
@@ -335,16 +300,6 @@ function installSignalHandlers(handle: DashboardServerHandle): void {
 	};
 	process.once("SIGINT", shutdown);
 	process.once("SIGTERM", shutdown);
-}
-
-async function fileExists(filePath: string): Promise<boolean> {
-	try {
-		const stat = await fs.stat(filePath);
-		return stat.isFile();
-	} catch (error) {
-		if (nodeErrorCode(error) === "ENOENT" || nodeErrorCode(error) === "ENOTDIR") return false;
-		throw error;
-	}
 }
 
 async function reservePort(host: string, requestedPort: number): Promise<number> {
@@ -500,83 +455,20 @@ export async function startDashboardServer(options: StartDashboardServerOptions 
 		});
 	}
 
-	if (await fileExists(START_SERVER_ENTRY_PATH)) {
-		const handle = await startTanStackDashboardServer(location, host, port, options);
-		if (options.installSignalHandlers === true) installSignalHandlers(handle);
-		return handle;
-	}
-
-	const liveReload = await createLiveReloadService({ root: location.root });
-	await liveReload.start();
-	const app = createDashboardApp({ root: location.root, liveReload });
-	let listened: Awaited<ReturnType<typeof onceListening>>;
 	try {
-		listened = await onceListening(app, host, port);
+		await fs.access(START_SERVER_ENTRY_PATH);
 	} catch (error) {
-		await liveReload.close();
-		throw error;
-	}
-	const { server, address } = listened;
-	const actualPort = address.port;
-	const url = dashboardUrl(host, actualPort);
-	const metadata: DashboardServerMetadata = {
-		pid: process.pid,
-		root: location.root,
-		rootHash: location.rootHash,
-		host,
-		port: actualPort,
-		url,
-		mode: DASHBOARD_MODE,
-		startedAt: new Date().toISOString(),
-		metadataPath: location.metadataPath,
-		processStartToken: await readProcessStartToken(process.pid),
-	};
-	if (options.topic) {
-		metadata.topic = options.topic;
-		metadata.topicUrl = topicUrl(url, options.topic);
+		throw new DashboardRuntimeError(
+			"metadata-error",
+			"Built TanStack Start dashboard output is missing; run npm run dashboard:build before starting the packaged dashboard.",
+			{
+				entry: START_SERVER_ENTRY_PATH,
+				cause: error instanceof Error ? error.message : String(error),
+			},
+		);
 	}
 
-	let stopped = false;
-	const handle: DashboardServerHandle = {
-		app,
-		metadata,
-		server,
-		liveReload,
-		stop: async (): Promise<DashboardStopResult> => {
-			if (stopped) {
-				return {
-					status: "stopped",
-					stopped: true,
-					root: metadata.root,
-					rootHash: metadata.rootHash,
-					metadataPath: metadata.metadataPath,
-					previous: metadata,
-				};
-			}
-			stopped = true;
-			activeHandles.delete(metadata.rootHash);
-			await closeServer(server);
-			await liveReload.close();
-			await removeMetadataIfCurrent(metadata);
-			return {
-				status: "stopped",
-				stopped: true,
-				root: metadata.root,
-				rootHash: metadata.rootHash,
-				metadataPath: metadata.metadataPath,
-				previous: metadata,
-			};
-		},
-	};
-
-	try {
-		await writeMetadata(location, metadata);
-	} catch (error) {
-		await closeServer(server);
-		await liveReload.close();
-		throw error;
-	}
-	activeHandles.set(metadata.rootHash, handle);
+	const handle = await startTanStackDashboardServer(location, host, port, options);
 	if (options.installSignalHandlers === true) installSignalHandlers(handle);
 	return handle;
 }

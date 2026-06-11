@@ -224,7 +224,7 @@ Dashboard behavior and safety boundaries:
 - Runtime metadata is stored under `XDG_RUNTIME_DIR` or an OS temp directory, keyed by repository root hash, not under `.plan/`.
 - Live reload watches safe `.plan/**` files, excludes `.plan/_private/**`, and summarizes `.plan/_index/**` changes as stale-index events.
 - The UI uses TanStack Start routes, TanStack DB/TanStack Query read-only reactive projections, React, Tailwind CSS, shadcn/ui components, Shiki document/code highlighting, and React Flow graph visualization.
-- `dashboard/server/app.ts` remains as a source-checkout compatibility fallback and shared route contract for tests; packaged/normal startup prefers the built `dashboard/start/.output/server/index.mjs` full-stack app.
+- The dashboard server/API now lives in the TanStack Start app; `cartographer-dashboard` starts the built `dashboard/start/.output/server/index.mjs` full-stack app.
 - Private raw evidence should be imported through Cartographer private-artifact workflows and reviewed via sanitized evidence documents, not read directly in the dashboard or skill.
 
 ## What gets written

@@ -75,11 +75,11 @@ When reporting results to the user:
 - Show the URL from the JSON output when start/status succeeds.
 - Show the selected topic deep link when `--topic` was used.
 - Mention that live reload watches safe `.plan/**` files and excludes `.plan/_private/**`.
-- If startup falls back or fails because the built TanStack Start output is missing in a source checkout, suggest running `npm run dashboard:build` from the package root.
+- If startup fails because the built TanStack Start output is missing in a source checkout, suggest running `npm run dashboard:build` from the package root.
 
 ## Safety Rules
 
 - Do not pass non-loopback hosts such as `0.0.0.0`, `::`, or LAN/public addresses.
 - Do not add write endpoints, edit planning artifacts, or modify `.plan/` as part of starting/stopping the dashboard.
 - Do not inspect raw private evidence under `.plan/_private/`; the dashboard and skill should reference sanitized proposal/evidence artifacts only.
-- Keep this skill as documentation/procedure. Future server behavior belongs in `bin/cartographer-dashboard.js`, `dashboard/start/*`, and shared `dashboard/server/*` runtime helpers, not here.
+- Keep this skill as documentation/procedure. Future server behavior belongs in `bin/cartographer-dashboard.js`, `dashboard/start/*`, and minimal `dashboard/server/*` runtime/artifact helpers, not here.

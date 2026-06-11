@@ -8,14 +8,14 @@
 - `.plan/tanstack-dashboard/context-packs.jsonl` — `context:tanstack-dashboard:proposal` compact implementation context.
 - `.plan/tanstack-dashboard/receipts.jsonl` — proposal validation and serial audit fallback receipts.
 - `.plan/_index/project-graph.sqlite` and `.plan/_index/project-graph-manifest.json` — refreshed shared project index.
-- Verified project references: `file:package.json`, `file:bin/cartographer-dashboard.js`, `file:dashboard/server/cli.ts`, `file:dashboard/server/runtime.ts`, `file:dashboard/server/app.ts`, `file:dashboard/server/artifact-reader.ts`, `file:dashboard/server/live-reload.ts`, `file:dashboard/shared/models.ts`, `file:dashboard/client/src/App.tsx`, `file:dashboard/client/src/lib/events.ts`, `file:dashboard/client/src/lib/live-refetch.ts`, `file:docs/adr/0003-use-local-dashboard-stack-for-cartographer-planning-ui.md`, and dashboard tests.
+- Verified project references: `file:package.json`, `file:bin/cartographer-dashboard.js`, `file:dashboard/server/cli.ts`, `file:dashboard/server/runtime.ts`, `file:dashboard/start/src/server/dashboard-api.ts`, `file:dashboard/server/artifact-reader.ts`, `file:dashboard/server/live-reload.ts`, `file:dashboard/shared/models.ts`, `file:dashboard/client/src/App.tsx`, `file:dashboard/client/src/lib/events.ts`, `file:dashboard/client/src/lib/live-refetch.ts`, `file:docs/adr/0003-use-local-dashboard-stack-for-cartographer-planning-ui.md`, and dashboard tests.
 
 ## Planning Assumptions
 
 ### Confirmed facts
 
 - The current dashboard is split between a Hono Node runtime and a separately built Vite React client, coordinated by package scripts and the `cartographer-dashboard` bin [F001].
-- Current read-only API routes are centralized in `dashboard/server/app.ts` and expose only GET routes for dashboard artifact reads and live events [F002].
+- Current read-only API routes are centralized in `dashboard/start/src/server/dashboard-api.ts` and expose only GET routes for dashboard artifact reads and live events [F002].
 - Chokidar already watches safe `.plan/**` paths, ignores `.plan/_private/**`, debounces changes, and publishes shared `LiveReloadEvent` records over SSE [F003] [F005].
 - Client state currently lives in React hooks and manual refetch effects in `dashboard/client/src/App.tsx` [F004].
 - TanStack Start supports full-stack route files with server handlers/functions and Vite plugin configuration [F006] [F007].
@@ -37,8 +37,8 @@
 ### Retrieval probes used
 
 1. Package and script probes: `package.json`, `dashboard:build`, `dashboard:check`, `check:scripts`, `test:browser`, `cartographer-dashboard` bin.
-2. Runtime probes: `bin/cartographer-dashboard.js`, `dashboard/server/cli.ts`, `dashboard/server/runtime.ts`, `dashboard/server/assets.ts`.
-3. API/safety probes: `dashboard/server/app.ts`, `dashboard/server/artifact-reader.ts`, `dashboard/server/safety.ts`, `dashboard/server/jsonl.ts`.
+2. Runtime probes: `bin/cartographer-dashboard.js`, `dashboard/server/cli.ts`, `dashboard/server/runtime.ts`, `dashboard/start/vite.config.ts`.
+3. API/safety probes: `dashboard/start/src/server/dashboard-api.ts`, `dashboard/server/artifact-reader.ts`, `dashboard/server/safety.ts`, `dashboard/server/jsonl.ts`.
 4. Live reload probes: `dashboard/server/live-reload.ts`, `dashboard/shared/models.ts`, `dashboard/client/src/lib/events.ts`, `dashboard/client/src/lib/live-refetch.ts`.
 5. UI probes: `dashboard/client/src/App.tsx`, `dashboard/client/src/features/review-workflow.tsx`, `dashboard/client/src/features/graph-explorer.tsx`, `dashboard/client/src/features/document-viewer.tsx`.
 6. Test probes: `tests/dashboard/live-reload.test.ts`, `tests/dashboard/privacy-regressions.test.tsx`, `tests/dashboard/client-shell.test.tsx`, `tests/dashboard/smoke.test.ts`, `tests/dashboard/package-assets.test.ts`.
@@ -126,7 +126,7 @@ Use Context7 docs during implementation for exact current package names and comm
 - **Status:** complete
 - **Depends on:** P0
 - **Unlocks:** P2
-- **Primary references:** `file:bin/cartographer-dashboard.js`, `file:dashboard/server/cli.ts`, `file:dashboard/server/runtime.ts`, `file:dashboard/server/assets.ts`, `file:README.md`, [F001], [F006], [F012]
+- **Primary references:** `file:bin/cartographer-dashboard.js`, `file:dashboard/server/cli.ts`, `file:dashboard/server/runtime.ts`, `file:dashboard/start/vite.config.ts`, `file:README.md`, [F001], [F006], [F012]
 
 #### Objective
 
@@ -173,7 +173,7 @@ Do not alter dashboard product behavior yet. This phase is runtime plumbing plus
 - **Status:** complete
 - **Depends on:** P1
 - **Unlocks:** P3, P4
-- **Primary references:** `file:dashboard/server/app.ts`, `file:dashboard/server/artifact-reader.ts`, `file:dashboard/server/safety.ts`, `file:dashboard/server/jsonl.ts`, `file:dashboard/shared/models.ts`, `file:tests/dashboard/api-health.test.ts`, `file:tests/dashboard/privacy-regressions.test.tsx`, [F002], [F006], [F012], [F013]
+- **Primary references:** `file:dashboard/start/src/server/dashboard-api.ts`, `file:dashboard/server/artifact-reader.ts`, `file:dashboard/server/safety.ts`, `file:dashboard/server/jsonl.ts`, `file:dashboard/shared/models.ts`, `file:tests/dashboard/api-health.test.ts`, `file:tests/dashboard/privacy-regressions.test.tsx`, [F002], [F006], [F012], [F013]
 
 #### Objective
 

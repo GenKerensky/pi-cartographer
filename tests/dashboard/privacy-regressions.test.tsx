@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { createDashboardApp, READ_ONLY_ROUTES } from "../../dashboard/server/app.ts";
+import { dashboardLoaders, READ_ONLY_ROUTES, routeJson } from "../../dashboard/start/src/server/dashboard-api.ts";
 import { readTopicArtifacts } from "../../dashboard/server/artifact-reader.ts";
 import type { ApiResponse, TopicGraph } from "../../dashboard/shared/models.ts";
 import { GraphExplorer } from "../../dashboard/client/src/features/graph-explorer.js";
@@ -14,28 +14,39 @@ async function json<T>(response: Response): Promise<ApiResponse<T>> {
 	return (await response.json()) as ApiResponse<T>;
 }
 
+async function withDashboardRoot<T>(root: string, run: () => Promise<T>): Promise<T> {
+	const previous = process.env.CARTOGRAPHER_DASHBOARD_ROOT;
+	process.env.CARTOGRAPHER_DASHBOARD_ROOT = root;
+	try {
+		return await run();
+	} finally {
+		if (previous === undefined) delete process.env.CARTOGRAPHER_DASHBOARD_ROOT;
+		else process.env.CARTOGRAPHER_DASHBOARD_ROOT = previous;
+	}
+}
+
 describe("dashboard privacy and read-only regressions", () => {
 	it("blocks private/outside file API reads and exposes no mutating routes", async () => {
 		const fixture = createDashboardFixture();
-		const app = createDashboardApp({ root: fixture.root });
-		const privateResponse = await app.request(
-			`/api/files?path=${encodeURIComponent(`.plan/_private/${fixture.topic}/raw.log`)}`,
-		);
-		const traversalResponse = await app.request(`/api/files?path=${encodeURIComponent("../package.json")}`);
+		await withDashboardRoot(fixture.root, async () => {
+			const privateResponse = await routeJson(() => dashboardLoaders.file(`.plan/_private/${fixture.topic}/raw.log`));
+			const traversalResponse = await routeJson(() => dashboardLoaders.file("../package.json"));
 
-		expect(privateResponse.status).toBe(403);
-		expect(await privateResponse.text()).not.toContain("secret raw artifact");
-		expect(traversalResponse.status).toBeGreaterThanOrEqual(400);
-		expect(await traversalResponse.text()).not.toContain("pi-cartographer");
-		expect(READ_ONLY_ROUTES.every((route) => route.method === "GET")).toBe(true);
+			expect(privateResponse.status).toBe(403);
+			expect(await privateResponse.text()).not.toContain("secret raw artifact");
+			expect(traversalResponse.status).toBeGreaterThanOrEqual(400);
+			expect(await traversalResponse.text()).not.toContain("pi-cartographer");
+			expect(READ_ONLY_ROUTES.every((route) => route.method === "GET")).toBe(true);
+		});
 	});
 
 	it("keeps private paths out of graph and rendered Markdown UI surfaces", async () => {
 		const fixture = createDashboardFixture();
-		const app = createDashboardApp({ root: fixture.root });
-		const graphPayload = await json<TopicGraph>(await app.request(`/api/topics/${fixture.topic}/graph`));
-		const graphText = JSON.stringify(graphPayload);
-		expect(graphText).not.toContain("secret raw artifact");
+		await withDashboardRoot(fixture.root, async () => {
+			const graphPayload = await json<TopicGraph>(await routeJson(() => dashboardLoaders.topicGraph(fixture.topic)));
+			const graphText = JSON.stringify(graphPayload);
+			expect(graphText).not.toContain("secret raw artifact");
+		});
 
 		const artifacts = await readTopicArtifacts(fixture.root, fixture.topic);
 		const graphHtml = renderToStaticMarkup(<GraphExplorer artifacts={artifacts} />);

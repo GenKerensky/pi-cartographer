@@ -1,7 +1,5 @@
 import path from "node:path";
 import chokidar, { type FSWatcher } from "chokidar";
-import type { Hono } from "hono";
-import { apiSuccess } from "../shared/api.js";
 import type { LiveReloadEvent, LiveReloadStatus } from "../shared/models.js";
 import { canonicalizeRoot } from "./safety.js";
 
@@ -242,35 +240,4 @@ export function createLiveReloadStream(service?: LiveReloadService): ReadableStr
 			cleanup();
 		},
 	});
-}
-
-export function registerLiveReloadRoutes(app: Hono, service?: LiveReloadService): void {
-	app.get(
-		"/api/events",
-		() =>
-			new Response(createLiveReloadStream(service), {
-				headers: {
-					"cache-control": "no-store",
-					connection: "keep-alive",
-					"content-type": "text/event-stream; charset=utf-8",
-					"x-accel-buffering": "no",
-				},
-			}),
-	);
-	app.get("/api/events/status", (context) =>
-		context.json(
-			apiSuccess(
-				service?.status() ??
-					({
-						enabled: false,
-						state: "manual-refresh",
-						root: undefined,
-						debounceMs: DEFAULT_DEBOUNCE_MS,
-						heartbeatMs: DEFAULT_HEARTBEAT_MS,
-						ignored: [".plan/_private/**"],
-						indexEvents: "summarized-as-stale-index",
-					} satisfies LiveReloadStatus),
-			),
-		),
-	);
 }

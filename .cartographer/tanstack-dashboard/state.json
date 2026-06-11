@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
   "topic": "tanstack-dashboard",
-  "source_status": "hashes-valid",
+  "source_status": "stale",
   "source_refs": {
     "plan_md": {
       "path": ".plan/tanstack-dashboard/plan.md",
-      "sha256": "sha256:e5471d3b5dc9e803142223f3c0aa2015a6c41bc5b33a7130d9cb0c016d34e683"
+      "sha256": "sha256:5a3c9991e59cce83d470c4d96fb8a016579ece8887ae14e401e1ad766b54b017"
     },
     "plan_nodes": {
       "path": ".plan/tanstack-dashboard/plan.nodes.jsonl",
@@ -13,15 +13,15 @@
     },
     "plan_edges": {
       "path": ".plan/tanstack-dashboard/plan.edges.jsonl",
-      "sha256": "sha256:55546e110a5f5919883b7194f6f254517b92796bd8e17d184550ba2beb07fdb8"
+      "sha256": "sha256:92615c32b908f1f34bcfbb031856b79bc4b4049225fcb45d6a8bc22e64bc8811"
     },
     "receipts": {
       "path": ".plan/tanstack-dashboard/receipts.jsonl",
-      "sha256": "sha256:af37dacf3768ad5f46b4b279080394b5433d0b353bed567b19ae0c777c98f66a"
+      "sha256": "sha256:452b49a4a1e1899e670972689b5787959aca5ed9b78469ce9a20f7775653c3cc"
     },
     "context_packs": {
       "path": ".plan/tanstack-dashboard/context-packs.jsonl",
-      "sha256": "sha256:d165ba8c739f5e6f0eda06c638a74eed0d78f32ea9e262a22ea070177ed4f370"
+      "sha256": "sha256:bbad218c178ed54787f386f6de429a5a103fda3b18cd920c882ea78c0e844cb4"
     }
   },
   "current_phase_id": "P0",
@@ -57,7 +57,19 @@
         "path": "dashboard/server/runtime.ts"
       },
       {
-        "path": "dashboard/server/assets.ts"
+        "path": "dashboard/server/live-reload.ts"
+      },
+      {
+        "path": "dashboard/server/index.ts"
+      },
+      {
+        "path": "dashboard/start/src/server/dashboard-api.ts"
+      },
+      {
+        "path": "dashboard/start/src/routes/api/**"
+      },
+      {
+        "path": "dashboard/start/vite.config.ts"
       },
       {
         "path": "docs/adr/**"
@@ -69,6 +81,21 @@
         "path": ".plan/tanstack-dashboard/plan.nodes.jsonl"
       },
       {
+        "path": ".plan/tanstack-dashboard/plan.edges.jsonl"
+      },
+      {
+        "path": ".plan/tanstack-dashboard/map.nodes.jsonl"
+      },
+      {
+        "path": ".plan/tanstack-dashboard/map.edges.jsonl"
+      },
+      {
+        "path": ".plan/tanstack-dashboard/facts.nodes.jsonl"
+      },
+      {
+        "path": ".plan/tanstack-dashboard/facts.edges.jsonl"
+      },
+      {
         "path": ".plan/tanstack-dashboard/receipts.jsonl"
       },
       {
@@ -77,19 +104,22 @@
     ],
     "read_only": [
       {
-        "path": "dashboard/server/app.ts"
-      },
-      {
         "path": "dashboard/server/cli.ts"
       },
       {
-        "path": "dashboard/start/vite.config.ts"
+        "path": "dashboard/server/artifact-reader.ts"
       },
       {
-        "path": "dashboard/client/vite.config.ts"
+        "path": "dashboard/server/safety.ts"
+      },
+      {
+        "path": "dashboard/client/**"
       },
       {
         "path": "tests/dashboard/*.test.ts"
+      },
+      {
+        "path": "docs/adr/0003-use-local-dashboard-stack-for-cartographer-planning-ui.md"
       }
     ],
     "forbidden": [
@@ -108,7 +138,10 @@
     "receipt:P6:validation:2026-06-11T05:06:03+00:00",
     "receipt:P6:adr:2026-06-11T05:06:30+00:00",
     "receipt:P6:semantic-audit:2026-06-11T05:11:20+00:00",
-    "receipt:P6:validation:2026-06-11T05:12:41+00:00"
+    "receipt:P6:validation:2026-06-11T05:12:41+00:00",
+    "receipt:P6:validation:2026-06-11T05:39:50+00:00",
+    "receipt:P6:validation:2026-06-11T05:39:59+00:00",
+    "receipt:P6:semantic-audit:2026-06-11T05:40:30+00:00"
   ],
   "journal_refs": [],
   "resume": {
@@ -119,8 +152,16 @@
       ".plan/tanstack-dashboard/plan.md",
       ".plan/tanstack-dashboard/receipts.jsonl"
     ],
-    "expected_first_response": ["current_phase", "next_action", "files_to_inspect"],
-    "must_ignore": ["prior chat speculation", "stale generated snippets"]
+    "expected_first_response": [
+      "current_phase",
+      "next_action",
+      "files_to_inspect"
+    ],
+    "must_ignore": [
+      "prior chat speculation",
+      "stale generated snippets"
+    ]
   },
-  "updated_at": "2026-06-11T05:12:50Z"
+  "updated_at": "2026-06-11T05:42:56Z",
+  "stale_reason": "Receipts and planning context updated for Hono dashboard removal follow-up; state source_refs need refresh before future resume."
 }

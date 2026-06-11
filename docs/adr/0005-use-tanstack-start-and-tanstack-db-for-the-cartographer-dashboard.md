@@ -27,7 +27,7 @@ keywords:
   - tanstack-db
   - chokidar
   - read-only
-  - hono-compatibility
+
 decision_kind: technology-stack
 supersedes:
   - ADR-0003
@@ -45,7 +45,7 @@ Accepted on 2026-06-11.
 
 ## Decision
 
-Adopt TanStack Start as the normal full-stack runtime for the local Cartographer planning dashboard and TanStack DB/TanStack Query as read-only reactive projections for dashboard artifact state, while retaining the existing Hono server/app modules only as a documented source-checkout compatibility fallback and shared route contract during transition.
+Adopt TanStack Start as the full-stack runtime for the local Cartographer planning dashboard and TanStack DB/TanStack Query as read-only reactive projections for dashboard artifact state. Remove the old Hono server/app/assets path entirely so API routes, live events, and UI routing live in the TanStack app.
 
 ## Context
 
@@ -53,24 +53,23 @@ The tanstack-dashboard implementation validated route parity, collection-backed 
 
 ## Considered Options
 
-- Supersede ADR-0003 completely with TanStack Start and remove all Hono fallback code immediately.
+- Supersede ADR-0003 completely with TanStack Start and remove all Hono fallback code.
 - Amend/supersede ADR-0003 for the normal runtime while retaining Hono modules as a compatibility fallback and route-contract test harness.
 - Keep ADR-0003 current and treat TanStack Start as an experiment only.
 
 ## Why This Decision
 
-Validated implementation evidence shows the Start runtime can serve the full dashboard through cartographer-dashboard, package/smoke tests pass against Start output, and TanStack DB/Query removes manual fetch/refetch state while preserving read-only semantics. Keeping Hono modules temporarily reduces source-checkout and route-contract risk until a future cleanup can remove fallback code safely.
+Validated implementation evidence shows the Start runtime can serve the full dashboard through cartographer-dashboard, package/smoke tests pass against Start output, and TanStack DB/Query removes manual fetch/refetch state while preserving read-only semantics. Removing the Hono fallback makes the runtime boundary simpler: Start owns HTTP routing, server handlers, live events, and UI delivery.
 
 ## Consequences
 
 - Normal dashboard startup depends on built dashboard/start/.output/server/index.mjs and package checks assert that output is packed.
 - TanStack DB is a read-only reactive cache/projection over planning artifacts, not a write-capable dashboard database.
-- Hono dependencies and modules remain only for documented compatibility fallback and shared route-contract tests, not as the primary runtime.
-- Future cleanup may remove Hono once Start source-checkout behavior and API test coverage no longer need it.
+- Hono dependencies and modules are removed; route-contract tests target TanStack Start server helpers and route behavior instead.
 
 ## How to Use This Decision
 
-Dashboard changes should target TanStack Start routes/server helpers and TanStack DB collection hooks first. Any retained Hono code must stay loopback-only/read-only and documented as compatibility-only until removed by a later ADR or cleanup plan.
+Dashboard changes should target TanStack Start routes/server helpers and TanStack DB collection hooks. Do not reintroduce a parallel Hono dashboard server unless a new ADR establishes a clear need.
 
 ## Validation
 

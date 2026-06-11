@@ -13,6 +13,8 @@ describe.skipIf(!hasBuiltStartOutput)("dashboard package assets", () => {
 
 		expect(files.has("bin/cartographer-dashboard.js")).toBe(true);
 		expect(files.has("dashboard/server/cli.ts")).toBe(true);
+		expect(files.has("dashboard/server/app.ts")).toBe(false);
+		expect(files.has("dashboard/server/assets.ts")).toBe(false);
 		expect(files.has("dashboard/start/.output/server/index.mjs")).toBe(true);
 		expect([...files].some((file) => file.startsWith("dashboard/start/.output/public/"))).toBe(true);
 		expect(files.has("skills/dashboard/SKILL.md")).toBe(true);

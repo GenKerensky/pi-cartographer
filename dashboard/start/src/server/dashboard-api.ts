@@ -20,6 +20,29 @@ import {
 } from "../../../server/live-reload.js";
 import { PathSafetyError } from "../../../server/safety.js";
 
+export type ReadOnlyRouteDefinition = {
+	method: "GET";
+	path: string;
+	description: string;
+};
+
+export const READ_ONLY_ROUTES: ReadOnlyRouteDefinition[] = [
+	{ method: "GET", path: "/api/health", description: "Dashboard artifact health diagnostics" },
+	{ method: "GET", path: "/api/overview", description: "Topic, index, ADR, and health overview" },
+	{ method: "GET", path: "/api/topics", description: "Discovered planning topics" },
+	{ method: "GET", path: "/api/topics/:topic", description: "Normalized topic artifact bundle" },
+	{ method: "GET", path: "/api/topics/:topic/docs", description: "Proposal and plan documents" },
+	{ method: "GET", path: "/api/topics/:topic/docs/:kind", description: "Single proposal or plan document" },
+	{ method: "GET", path: "/api/topics/:topic/graph", description: "Map/fact/plan graph records" },
+	{ method: "GET", path: "/api/topics/:topic/evidence", description: "Sanitized evidence manifest and file list" },
+	{ method: "GET", path: "/api/files", description: "Safe read-only file content by relative path query" },
+	{ method: "GET", path: "/api/adrs", description: "ADR Markdown and graph records" },
+	{ method: "GET", path: "/api/adrs/:id", description: "Single ADR by graph id or ADR id" },
+	{ method: "GET", path: "/api/index", description: "Project index manifest summary" },
+	{ method: "GET", path: "/api/events", description: "Server-sent live reload stream for safe planning changes" },
+	{ method: "GET", path: "/api/events/status", description: "Live reload connection/watch status metadata" },
+];
+
 export function dashboardRoot(): string {
 	return process.env.CARTOGRAPHER_DASHBOARD_ROOT ?? process.cwd();
 }

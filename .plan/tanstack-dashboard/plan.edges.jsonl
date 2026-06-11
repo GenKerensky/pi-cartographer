@@ -32,7 +32,7 @@
 {"from":"phase:P1","to":"file:bin/cartographer-dashboard.js","type":"references"}
 {"from":"phase:P1","to":"file:dashboard/server/cli.ts","type":"references"}
 {"from":"phase:P1","to":"file:dashboard/server/runtime.ts","type":"references"}
-{"from":"phase:P1","to":"file:dashboard/server/assets.ts","type":"references"}
+{"from":"phase:P1","to":"file:dashboard/start/vite.config.ts","type":"references"}
 {"from":"phase:P1","to":"file:README.md","type":"references"}
 {"from":"phase:P1","to":"F001","type":"references"}
 {"from":"phase:P1","to":"F006","type":"references"}
@@ -52,7 +52,7 @@
 {"from":"phase:P2","to":"phase:P1","type":"depends_on"}
 {"from":"phase:P2","to":"phase:P3","type":"unlocks"}
 {"from":"phase:P2","to":"phase:P4","type":"unlocks"}
-{"from":"phase:P2","to":"file:dashboard/server/app.ts","type":"references"}
+{"from":"phase:P2","to":"file:dashboard/start/src/server/dashboard-api.ts","type":"references"}
 {"from":"phase:P2","to":"file:dashboard/server/artifact-reader.ts","type":"references"}
 {"from":"phase:P2","to":"file:dashboard/server/safety.ts","type":"references"}
 {"from":"phase:P2","to":"file:dashboard/server/jsonl.ts","type":"references"}
