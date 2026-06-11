@@ -287,7 +287,19 @@ At the end of each completed phase:
 - ensure `git status --short` contains only intended files;
 - commit with a conventional commit message.
 
-If the phase is a true no-op, mark it complete with an explanatory note and avoid an empty commit.
+A phase commit is a checkpoint, **not a stopping point**. After the commit succeeds, immediately re-orient from disk, validate/resume state, select the next incomplete dependency-unblocked phase, and continue the loop in the same assistant turn when context and tool budget allow.
+
+Stop after a phase commit only when one of these conditions is true:
+
+- the next phase, plan metadata, or transition status explicitly marks the phase as human-gated;
+- the next required transition is a major human approval gate: proposal-to-plan, plan-to-implementation, or final implementation approval;
+- validation/fallback/auditor evidence leaves an unresolved blocker or residual risk needing user direction;
+- repository safety checks find unrelated user changes or ambiguous intended files;
+- the user explicitly asked for only one phase or asked to stop after the phase.
+
+When continuing automatically, still create/update the phase context pack, compact/resume state, set the next action/working set, and avoid carrying stale transcript assumptions across the phase boundary.
+
+If the phase is a true no-op, mark it complete with an explanatory note, avoid an empty commit, then apply the same automatic-continuation rules.
 
 ### 12. Final implementation validation and ADR handling
 
