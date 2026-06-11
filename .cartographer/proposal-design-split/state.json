@@ -5,11 +5,11 @@
   "source_refs": {
     "plan_md": {
       "path": ".plan/proposal-design-split/plan.md",
-      "sha256": "sha256:d469ccf68ca34e0471743b37710d7faff84d8af74ade99f24d7536ee672805b1"
+      "sha256": "sha256:ac08b0570502dc3dfa111fe4e91196a5bbc313701678a5e3ae494e65dc4bab84"
     },
     "plan_nodes": {
       "path": ".plan/proposal-design-split/plan.nodes.jsonl",
-      "sha256": "sha256:ef61e1f9b2aa8d78673120d16e33f5d0b6998dacceab1e32fee10506d430a5f5"
+      "sha256": "sha256:c16f2f4a8e856818f0841b1ea29325a6143806c09fbb45b3fbe7aff67ad1b67e"
     },
     "plan_edges": {
       "path": ".plan/proposal-design-split/plan.edges.jsonl",
@@ -17,32 +17,82 @@
     },
     "receipts": {
       "path": ".plan/proposal-design-split/receipts.jsonl",
-      "sha256": "sha256:71c4d4529408a040185d6c67a5c52f7683a716f2e9d2a1619e351e2be2ed238b"
+      "sha256": "sha256:3ed2378949f0511b5c7b64be5b45c5644eb18ef23dc64c66831469b9091aeecf"
     },
     "context_packs": {
       "path": ".plan/proposal-design-split/context-packs.jsonl",
-      "sha256": "sha256:a1842c530d9a313ded58e54732ea489af8e3d23769fc1f9e17ac0f6efbb46844"
+      "sha256": "sha256:539dbac3b0f1e636c0808c90e69da5bb2b1bf3e69f2f3ff22bfe8c3948453cd0"
     }
   },
   "current_phase_id": "P0",
   "active_task_ids": [],
   "active_validation_ids": [],
   "next_action": {
-    "id": "next:P1.T1",
+    "id": "next:P2.T1",
     "kind": "task",
-    "summary": "Extend topic artifact discovery and validation for requirements.md, requirements.nodes.jsonl, and requirements.edges.jsonl.",
-    "phase_id": "P1",
+    "summary": "Extend validators to parse and validate optional design.md, design.nodes.jsonl, and design.edges.jsonl using Decision + Alternative MVP schema.",
+    "phase_id": "P2",
     "task_ids": [
-      "P1.T1"
+      "P2.T1"
     ]
   },
   "working_set": {
-    "write_allowed": [],
-    "read_only": [],
+    "write_allowed": [
+      {
+        "path": "skills/plan/scripts/manage_jsonl.ts",
+        "reason": "Add design graph validation to TS topic validator."
+      },
+      {
+        "path": "skills/plan/scripts/validate_planning_graph.py",
+        "reason": "Add design graph validation to Python planning validator."
+      },
+      {
+        "path": "tests/manage_jsonl.test.ts",
+        "reason": "Add temp-root TS tests for design graph validation."
+      },
+      {
+        "path": "tests/test_validate_planning_graph.py",
+        "reason": "Add temp-root Python tests for design graph validation."
+      },
+      {
+        "path": ".plan/proposal-design-split/plan.md",
+        "reason": "Update P2 status/checklist after evidence."
+      },
+      {
+        "path": ".plan/proposal-design-split/plan.nodes.jsonl",
+        "reason": "Mirror P2 status/checklist after evidence."
+      },
+      {
+        "path": ".plan/proposal-design-split/receipts.jsonl",
+        "reason": "Record P2 validation receipts."
+      },
+      {
+        "path": ".plan/proposal-design-split/context-packs.jsonl",
+        "reason": "Record P2 context pack."
+      },
+      {
+        "path": ".cartographer/proposal-design-split/**",
+        "reason": "Maintain compact execution state via cartographer_state."
+      }
+    ],
+    "read_only": [
+      {
+        "path": ".plan/proposal-design-split/proposal.md",
+        "reason": "Phase rationale."
+      },
+      {
+        "path": ".plan/proposal-design-split/facts.nodes.jsonl",
+        "reason": "Source-backed context."
+      },
+      {
+        "path": ".plan/proposal-design-split/facts.edges.jsonl",
+        "reason": "Source-backed context."
+      }
+    ],
     "forbidden": [
       {
         "path": ".plan/_private/**",
-        "reason": "Raw private inputs are never loaded into working context."
+        "reason": "Raw private inputs are never loaded into implementation context."
       }
     ]
   },
@@ -51,11 +101,17 @@
     "receipt:P0:validation:2026-06-11T06:15:35+00:00",
     "receipt:proposal-design-split:P0-auditor-pass:2026-06-11T06:16:00Z",
     "receipt:P1:validation:2026-06-11T13:18:16+00:00",
-    "receipt:P1:validation:2026-06-11T13:18:21+00:00"
+    "receipt:P1:validation:2026-06-11T13:18:21+00:00",
+    "receipt:P2:validation:2026-06-11T13:24:39+00:00",
+    "receipt:P2:validation:2026-06-11T13:24:49+00:00",
+    "receipt:P2:validation:2026-06-11T13:30:32+00:00",
+    "receipt:P2:validation:2026-06-11T13:32:29+00:00",
+    "receipt:proposal-design-split:P2-auditor-pass:2026-06-11T13:31:00Z"
   ],
   "journal_refs": [
     "journal:20260611T061742Z:compact",
-    "journal:20260611T132105Z:compact"
+    "journal:20260611T132105Z:compact",
+    "journal:20260611T133243Z:compact"
   ],
   "resume": {
     "template_id": "cartographer.single_writer.resume.v1",
@@ -75,10 +131,10 @@
       "stale generated snippets"
     ]
   },
-  "updated_at": "2026-06-11T13:21:05Z",
+  "updated_at": "2026-06-11T13:32:43Z",
   "compaction": {
-    "trigger": "phase-end P1",
-    "compacted_at": "2026-06-11T13:21:05Z"
+    "trigger": "phase-end P2",
+    "compacted_at": "2026-06-11T13:32:43Z"
   },
   "stale_reason": "P1 plan/status/receipts/context packs changed after phase-end validation; regenerating compact state from authoritative artifacts."
 }

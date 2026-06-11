@@ -263,13 +263,75 @@ describe("manage_jsonl CLI", () => {
 			"utf8",
 		);
 
+		fs.writeFileSync(
+			path.join(topicDir, "design.md"),
+			"# Design\n\n## Decision One\n\nSatisfies [REQ-DEMO-001].\n\n## Alternative One\n\nRejected.\n",
+			"utf8",
+		);
+		fs.writeFileSync(
+			path.join(topicDir, "design.nodes.jsonl"),
+			[
+				{
+					id: "DES-DEC-001",
+					type: "design-decision",
+					status: "accepted",
+					title: "Decision one",
+					summary: "Use the validated path.",
+					source: "design.md#decision-one",
+					requirement_refs: ["REQ-DEMO-001"],
+					fact_refs: ["F001"],
+					fast_follow_refs: ["implemented_by"],
+				},
+				{
+					id: "DES-ALT-001",
+					type: "design-alternative",
+					status: "rejected",
+					title: "Alternative one",
+					summary: "Do not use this path.",
+					source: "design.md#alternative-one",
+				},
+			]
+				.map((record) => JSON.stringify(record))
+				.join("\n") + "\n",
+			"utf8",
+		);
+		fs.writeFileSync(
+			path.join(topicDir, "design.edges.jsonl"),
+			`${JSON.stringify({ from: "DES-DEC-001", to: "REQ-DEMO-001", type: "satisfies" })}\n${JSON.stringify({ from: "DES-DEC-001", to: "F001", type: "supported_by" })}\n${JSON.stringify({ from: "DES-ALT-001", to: "DES-DEC-001", type: "alternative_to" })}\n`,
+			"utf8",
+		);
 		const report = runJson(["validate-topic", "--root", root, "--topic", "demo"]);
 		expect(report.ok).toBe(true);
 		expect(report.counts.requirement_nodes).toBe(2);
 		expect(report.counts.requirement_edges).toBe(3);
+		expect(report.counts.design_nodes).toBe(2);
+		expect(report.counts.design_edges).toBe(3);
 
-		fs.writeFileSync(path.join(topicDir, "design.md"), "# Design\n\nMissing [REQ-DEMO-999].\n", "utf8");
+		fs.writeFileSync(
+			path.join(topicDir, "design.nodes.jsonl"),
+			`${JSON.stringify({ id: "DES-DEC-002", type: "design-decision", status: "accepted", title: "Orphan", summary: "No requirement.", source: {}, requirement_refs: ["REQ-MISSING"], fact_refs: ["F999"], infrastructure_only_rationale: true, evidence: ".plan/_private/demo/raw.log" })}\n${JSON.stringify({ id: "DES-ALT-002", type: "design-alternative", status: "rejected", title: "Bad source", summary: "Invalid source format.", source: "README.md:1" })}\n`,
+			"utf8",
+		);
+		fs.writeFileSync(
+			path.join(topicDir, "design.edges.jsonl"),
+			`${JSON.stringify({ from: "DES-DEC-002", to: "REQ-MISSING", type: "satisfies" })}\n`,
+			"utf8",
+		);
 		let invalid = runJsonUnchecked(["validate-topic", "--root", root, "--topic", "demo"]);
+		let errors = invalid.payload.errors.join("\n");
+		expect(errors).toContain("Accepted design decision DES-DEC-002 must satisfy");
+		expect(errors).toContain("non-empty infrastructure_only_rationale");
+		expect(errors).toContain("references missing requirement");
+		expect(errors).toContain("references missing fact");
+		expect(errors).toContain("must be a non-empty string using design.md#heading");
+		expect(errors).toContain("must use design.md#heading");
+		expect(errors).toContain("Direct private artifact reference");
+		expect(errors).toContain("Unresolved to endpoint");
+
+		fs.rmSync(path.join(topicDir, "design.nodes.jsonl"));
+		fs.rmSync(path.join(topicDir, "design.edges.jsonl"));
+		fs.writeFileSync(path.join(topicDir, "design.md"), "# Design\n\nMissing [REQ-DEMO-999].\n", "utf8");
+		invalid = runJsonUnchecked(["validate-topic", "--root", root, "--topic", "demo"]);
 		expect(invalid.status).not.toBe(0);
 		expect(invalid.payload.errors.join("\n")).toContain("missing requirement/scenario [REQ-DEMO-999]");
 
@@ -300,7 +362,7 @@ describe("manage_jsonl CLI", () => {
 			"utf8",
 		);
 		invalid = runJsonUnchecked(["validate-topic", "--root", root, "--topic", "demo"]);
-		const errors = invalid.payload.errors.join("\n");
+		errors = invalid.payload.errors.join("\n");
 		expect(errors).toContain("Invalid requirement id");
 		expect(errors).toContain("Invalid change_type");
 		expect(errors).toContain("references missing scenario");

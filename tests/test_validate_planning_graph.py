@@ -230,9 +230,102 @@ Finish the feature.
                 + "\n",
                 encoding="utf-8",
             )
+            (topic_dir / "design.md").write_text(
+                "# Design\n\n## Decision One\n\nSatisfies [REQ-DEMO-001].\n\n## Alternative One\n\nRejected.\n",
+                encoding="utf-8",
+            )
+            (topic_dir / "design.nodes.jsonl").write_text(
+                "\n".join(
+                    [
+                        json.dumps(
+                            {
+                                "id": "DES-DEC-001",
+                                "type": "design-decision",
+                                "status": "accepted",
+                                "title": "Decision one",
+                                "summary": "Use the validated path.",
+                                "source": "design.md#decision-one",
+                                "requirement_refs": ["REQ-DEMO-001"],
+                                "fact_refs": ["F001"],
+                                "fast_follow_refs": ["implemented_by"],
+                            }
+                        ),
+                        json.dumps(
+                            {
+                                "id": "DES-ALT-001",
+                                "type": "design-alternative",
+                                "status": "rejected",
+                                "title": "Alternative one",
+                                "summary": "Do not use this path.",
+                                "source": "design.md#alternative-one",
+                            }
+                        ),
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (topic_dir / "design.edges.jsonl").write_text(
+                json.dumps({"from": "DES-DEC-001", "to": "REQ-DEMO-001", "type": "satisfies"})
+                + "\n"
+                + json.dumps({"from": "DES-DEC-001", "to": "F001", "type": "supported_by"})
+                + "\n"
+                + json.dumps({"from": "DES-ALT-001", "to": "DES-DEC-001", "type": "alternative_to"})
+                + "\n",
+                encoding="utf-8",
+            )
             result = self.run_validator(project)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
+            (topic_dir / "design.nodes.jsonl").write_text(
+                json.dumps(
+                    {
+                        "id": "DES-DEC-002",
+                        "type": "design-decision",
+                        "status": "accepted",
+                        "title": "Orphan",
+                        "summary": "No requirement.",
+                        "source": {},
+                        "requirement_refs": ["REQ-MISSING"],
+                        "fact_refs": ["F999"],
+                        "infrastructure_only_rationale": True,
+                        "evidence": ".plan/_private/demo/raw.log",
+                    }
+                )
+                + "\n"
+                + json.dumps(
+                    {
+                        "id": "DES-ALT-002",
+                        "type": "design-alternative",
+                        "status": "rejected",
+                        "title": "Bad source",
+                        "summary": "Invalid source format.",
+                        "source": "README.md:1",
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (topic_dir / "design.edges.jsonl").write_text(
+                json.dumps({"from": "DES-DEC-002", "to": "REQ-MISSING", "type": "satisfies"}) + "\n",
+                encoding="utf-8",
+            )
+            result = self.run_validator(project)
+            self.assertNotEqual(result.returncode, 0)
+            for expected in [
+                "Accepted design decision DES-DEC-002 must satisfy",
+                "non-empty infrastructure_only_rationale",
+                "references missing requirement",
+                "references missing fact",
+                "must be a non-empty string using design.md#heading",
+                "must use design.md#heading",
+                "Direct private artifact reference",
+                "Unresolved to endpoint",
+            ]:
+                self.assertIn(expected, result.stdout)
+
+            (topic_dir / "design.nodes.jsonl").unlink()
+            (topic_dir / "design.edges.jsonl").unlink()
             (topic_dir / "design.md").write_text("# Design\n\nMissing [REQ-DEMO-999].\n", encoding="utf-8")
             result = self.run_validator(project)
             self.assertNotEqual(result.returncode, 0)

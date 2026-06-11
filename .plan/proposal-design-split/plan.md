@@ -158,7 +158,7 @@ Use temp/mock projects in tests. Do not create real `docs/requirements.md` or mu
 
 ### Phase P2 — Design Graph and Validators
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P1
 - **Unlocks:** P3
 - **Primary references:** `artifact:design.md`, `artifact:design.nodes.jsonl`, `artifact:design.edges.jsonl`, `artifact:requirements.nodes.jsonl`, `file:skills/plan/scripts/manage_jsonl.ts`, `file:skills/plan/scripts/validate_planning_graph.py`, [F015], [F020]
@@ -176,17 +176,17 @@ Add graph-backed design artifacts using the selected Decision + Alternative MVP 
 
 #### Checklist
 
-- [ ] **P2.T1** Extend validators to parse and validate `design.nodes.jsonl` and `design.edges.jsonl` when present.
-- [ ] **P2.T2** Enforce unique design node IDs, valid `type`, `status`, `title`, `summary`, `source`, and valid requirement/fact refs.
-- [ ] **P2.T3** Enforce that accepted `design-decision` nodes either have a `satisfies` edge to a requirement/scenario or carry an explicit infrastructure-only rationale.
-- [ ] **P2.T4** Validate `alternative_to`, `supported_by`, and `constrained_by` endpoints against known design, requirement, fact, map, and file nodes.
-- [ ] **P2.T5** Add tests for valid Decision + Alternative design graphs, rejected alternatives, orphan accepted decisions, unresolved requirement refs, and source heading checks.
+- [x] **P2.T1** Extend validators to parse and validate `design.nodes.jsonl` and `design.edges.jsonl` when present.
+- [x] **P2.T2** Enforce unique design node IDs, valid `type`, `status`, `title`, `summary`, `source`, and valid requirement/fact refs.
+- [x] **P2.T3** Enforce that accepted `design-decision` nodes either have a `satisfies` edge to a requirement/scenario or carry an explicit infrastructure-only rationale.
+- [x] **P2.T4** Validate `alternative_to`, `supported_by`, and `constrained_by` endpoints against known design, requirement, fact, map, and file nodes.
+- [x] **P2.T5** Add tests for valid Decision + Alternative design graphs, rejected alternatives, orphan accepted decisions, unresolved requirement refs, and source heading checks.
 
 #### Validation
 
-- [ ] **P2.V1** Run `npm run test:ts -- tests/manage_jsonl.test.ts tests/cartographer_tools.test.ts` and confirm design graph validation and summaries pass.
-- [ ] **P2.V2** Run `python -m unittest tests.test_validate_planning_graph` and confirm design graph cross-reference checks pass.
-- [ ] **P2.V3** Run `npm run check:scripts` and confirm helper syntax passes.
+- [x] **P2.V1** Run `npm run test:ts -- tests/manage_jsonl.test.ts tests/cartographer_tools.test.ts` and confirm design graph validation and summaries pass.
+- [x] **P2.V2** Run `python -m unittest discover tests -p 'test_validate_planning_graph.py'` and confirm design graph cross-reference checks pass.
+- [x] **P2.V3** Run `npm run check:scripts` and confirm helper syntax passes.
 
 #### Exit Criteria
 
