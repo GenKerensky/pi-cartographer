@@ -71,7 +71,12 @@ Use deterministic wrappers for proposal mutations whenever available. Prefer `ca
      - `adr_options_status`: not-applicable
      - `adr_tool_mode`: evaluate-only
 
-     ## Design
+     ## Scope Gate
+
+     - `requirements_required`: false
+     - `requirements_reason`: Small non-core-workflow changes do not need requirements/design graph artifacts by default.
+
+     ## Next Artifacts
      ```
 
    - Create empty or initialized `.plan/{topic}/map.nodes.jsonl`, `.plan/{topic}/map.edges.jsonl`, `.plan/{topic}/facts.nodes.jsonl`, and `.plan/{topic}/facts.edges.jsonl`.
@@ -243,19 +248,17 @@ Use deterministic wrappers for proposal mutations whenever available. Prefer `ca
    - Research assertions in those sections must cite fact IDs from `facts.nodes.jsonl`, for example `[F003]`.
    - `## Viability` should answer whether this has been done before, what examples/tools exist, and how hard it would be to implement in this project for the specific problem.
 
-7. **Design with `planner` and per-step `oracle` review, or serial planner/oracle passes**
-   - Ask `planner`, or in approved serial mode act as the planner, to combine the problem statement, goals/non-goals, concise map/fact summaries, and artifact paths into a rough plan. Do not inline large map/research/scout outputs; use `outputMode: "file-only"` for large subagent outputs and pass file paths plus short summaries.
-   - First pass: produce high-level implementation steps under `## Design`, with each step as `### <step>`.
-   - Examples of step names: `### Scaffold Vite App`, `### Configure Terraform Infra`, `### Create API Project`, `### Add Docker Compose Database`.
-   - Before finalizing each design step, call `oracle`, or in approved serial mode pause and perform a separate skeptical oracle check yourself, to verify that the step makes sense in context and does not conflict with the proposal scope, indexed project graph, file map, or research.
-   - Fill in each accepted step with:
-     - purpose and expected outcome
-     - relevant current project files from the curated map graph (`map.nodes.jsonl` and `map.edges.jsonl`) and indexed nodes/chunks
-     - libraries, tools, or docs from the research graph (`facts.nodes.jsonl` and `facts.edges.jsonl`)
-     - dependencies and prerequisites
-     - major risks or unknowns
-     - references to fact IDs and file map/index entries
-   - Include Mermaid diagrams and tables where they clarify control flow, data flow, responsibilities, dependencies, or sequencing.
+7. **Evaluate the requirements/design scope gate and write next-artifact guidance**
+   - Keep the current proposal structure through the non-design sections: `## Description`, `## Problem Statement`, `## Goals`, `## Non-Goals`, `## Background`, `## Viability`, risks, and `## ADR Metadata` remain in `proposal.md`.
+   - Do not put detailed architecture or implementation design steps in `proposal.md` for scoped changes. The split starts where detailed design begins.
+   - Decide whether requirements/design artifacts are required using an ADR-style scope/risk gate:
+     - set `requirements_required: true` when the change impacts a core user workflow, changes durable product behavior, changes a public/API contract, introduces migration/security/privacy risk, or otherwise needs a behavioral contract;
+     - set `requirements_required: false` for small changes that do not impact a core user workflow and have no comparable contract/risk signal.
+   - Write the decision under `## Scope Gate` with a concise reason.
+   - Under `## Next Artifacts`, state either:
+     - scoped path: `proposal -> requirements delta -> design -> plan -> implement -> fold accepted deltas into docs/requirements.md`; or
+     - lightweight path: `proposal -> plan -> implement` with a note explaining why requirements/design graph artifacts are not needed.
+   - Requirements and design details are produced by downstream artifacts, not by the proposal. Topic-local requirements are deltas for the current Cartographer topic/change and later fold into durable `docs/requirements.md` when accepted.
 
 8. **Run deterministic validation, then `cartographer-auditor` semantic audit**
    - Deterministic validation before `cartographer-auditor` is mandatory for a proposal to become accepted. Run JSONL artifact validation first and record a validation receipt:
@@ -376,7 +379,7 @@ Recommended prompts for delegated mode:
 - `delegate`: "Think deeply about the user's request and current context. Define the proposal scope. You have read access to the index tool commands; run `ensure` if freshness is uncertain, then use concise query output only as background context. Focus on the problem and desired outcome, not implementation details. Produce Description, Problem Statement, Goals, and Non-Goals sections for `.plan/{topic}/proposal.md`."
 - Optional `scout`: "Start from `cartographer_index query/read` outputs and existing map JSONL for `{topic}`, then use focused `rg`/grep searches for exact identifiers, filenames, scripts, tests, commands, and error strings that may be missing or questionable. Do not rediscover the repo broadly or read whole large files unless index snippets and lexical hits are insufficient. Do not rewrite map JSONL and do not create `map.graph.json`; return concise suggested node/edge additions with evidence."
 - `researcher`: "Research only missing or stale facts for `{topic}` in light of indexed project context. First inspect existing fact JSONL summaries; do not re-summarize local Pi docs or pi-subagents docs when existing supported fact nodes cover them. You have read access to Cartographer tools; run `cartographer_index ensure` if freshness is uncertain and use `query`/`read` for project context. Return concise JSONL node/edge suggestions and Background/Viability prose citing fact IDs. Every source-backed claim needs a fact node, source node, and `supported_by` edge. Do not read whole large docs unless targeted facts are missing."
-- `planner`: "Using proposal scope, concise map/fact summaries, artifact paths, and the shared project index, create high-level design steps under `## Design`, then fill each step with details, citations, dependencies, diagrams, and tables as appropriate. Use Cartographer tools for targeted reads before citing indexed context. Do not request or inline full raw map/research/scout outputs when file paths plus concise summaries are sufficient."
+- `planner`: "Using proposal scope, concise map/fact summaries, artifact paths, and the shared project index, evaluate the requirements/design scope gate. Keep proposal non-design sections intact and write `## Scope Gate` plus `## Next Artifacts`; do not create detailed architecture under proposal `## Design`. If requirements are required, point to the downstream requirements delta and design artifacts."
 - `cartographer-compass`/fallback `oracle`: "Before the planner finalizes this step, check whether the step makes sense in context, fits the scope, respects goals/non-goals, aligns with facts, and references real project files or indexed nodes. Use provided `cartographer_artifacts` fact/context/receipt summaries and `cartographer_index` query/read summaries, or parent-generated summary paths if helper tools are unavailable. Return concerns and suggested corrections only."
 - `cartographer-auditor`: "Final-validate the complete proposal artifacts after deterministic validation receipts pass. Use the provided `cartographer_jsonl validate-topic` receipt, `cartographer_artifacts` validate/fact/receipt summaries, helper summary paths, acceptance criteria, and deterministic auditor receipt path instead of manually re-parsing large JSONL. Run targeted `cartographer_index` reads only when freshness or references are uncertain. Check required sections, fact citations/support, map/fact JSONL validity, file references, goals/non-goals alignment, ADR metadata, and handoff readiness. Do not create new design content; return `PASS`/`FAIL` with required corrections."
 - Fallback `reviewer`/serial validator: "Use only when `cartographer-auditor` is unavailable or the user approved substitution. Review the same artifacts and deterministic receipts, then write or request an explicit fallback receipt with outcome and residual risk."
@@ -390,7 +393,7 @@ Serial-mode role prompts:
 - Scope writer: define `## Description`, `## Problem Statement`, `## Goals`, and `## Non-Goals` from the user's intent and current context, using index-query output only as background.
 - Codebase mapper: inspect the shared SQLite index and starter map JSONL, verify relevant files with focused `rg`/grep and selective reads as needed, and write `map.nodes.jsonl` plus `map.edges.jsonl` with valid file references and resolvable graph IDs.
 - Researcher: search or inspect documentation yourself, using indexed project constraints to focus the search, and append each source-backed finding as JSONL graph records to `facts.nodes.jsonl` and `facts.edges.jsonl` before continuing.
-- Planner: draft `## Design` as high-level `###` steps, then fill each step with dependencies, references to facts and indexed files, risks, diagrams, and tables where helpful.
+- Planner: evaluate the requirements/design scope gate, preserve proposal non-design sections, and write `## Scope Gate` plus `## Next Artifacts` instead of detailed proposal-owned design steps.
 - Compass/oracle checker: before each step is finalized, switch perspective and challenge the step for scope fit, fact alignment, index/file-reference validity, and hidden assumptions.
 - Final validator: perform a cartographer-auditor-style artifact validation pass after deterministic JSONL validation, correct missing dependencies, invalid references, unsupported citations, missing index citations, or scope drift, and write a fallback receipt because the default auditor was not used.
 
@@ -428,8 +431,8 @@ Before finalizing, verify:
 - Every cited source-backed fact has a `supported_by` edge to a `source` node.
 - Every file reference in `map.nodes.jsonl` or `map.edges.jsonl` points to an existing project file, ideally with a line number.
 - Every indexed node ID cited in `map.nodes.jsonl`, `map.edges.jsonl`, or `proposal.md` exists in `.plan/_index/project-graph.sqlite`.
-- `## Design` contains high-level `###` steps plus details, dependencies, references, and any useful diagrams/tables.
-- Design steps use indexed project files where relevant instead of relying only on ad-hoc file discovery.
+- `## Scope Gate` states whether requirements/design artifacts are required, including the core user workflow or comparable risk rationale.
+- `## Next Artifacts` points to requirements delta + design for scoped changes or records why the lightweight proposal -> plan path is enough.
 - `## ADR Metadata` includes `adr_required`, `adr_reason`, `adr_options_status`, and `adr_tool_mode`.
 - Directed ADR-worthy choices include alternatives or user-provided rationale, or the proposal records that clarification is still needed.
 - A final `cartographer-auditor` `PASS` has been recorded after deterministic validation, or an approved reviewer/oracle/serial fallback receipt exists and corrections were applied.

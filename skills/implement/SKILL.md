@@ -31,6 +31,12 @@ Supporting artifacts, when present:
 - `.plan/{topic}/plan.nodes.jsonl`
 - `.plan/{topic}/plan.edges.jsonl`
 - `.plan/{topic}/proposal.md`
+- `.plan/{topic}/requirements.md`
+- `.plan/{topic}/requirements.nodes.jsonl`
+- `.plan/{topic}/requirements.edges.jsonl`
+- `.plan/{topic}/design.md`
+- `.plan/{topic}/design.nodes.jsonl`
+- `.plan/{topic}/design.edges.jsonl`
 - `.plan/{topic}/map.nodes.jsonl`
 - `.plan/{topic}/map.edges.jsonl`
 - `.plan/{topic}/facts.nodes.jsonl`
@@ -50,6 +56,8 @@ If the plan is missing, ask the user whether to generate it first with the `plan
 ### Source-of-truth boundaries
 
 - `.plan/{topic}/plan.md`, `plan.nodes.jsonl`, `plan.edges.jsonl`, `receipts.jsonl`, and `context-packs.jsonl` remain authoritative for planning, checkoff, validation history, and implementation handoff context.
+- For scoped changes that affect a core user workflow or comparable durable behavior, requirements/design graph artifacts are supporting behavioral/design references for implementation. Small non-core-workflow changes may skip them when the accepted proposal scope gate says they are unnecessary.
+- Topic-local requirements are change deltas; accepted deltas fold into durable `docs/requirements.md` or split durable requirements docs during finalization/archive when the plan requires it.
 - `.cartographer/{topic}/state.json` is only compact execution/resume state.
 - `.cartographer/{topic}/journal.jsonl` is only a curated durable lessons journal.
 - `.cartographer/current.json` is git-ignored, local, non-authoritative, and safe to ignore when stale.

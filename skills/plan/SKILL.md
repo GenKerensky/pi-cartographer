@@ -35,6 +35,8 @@ Use or create/update these supporting artifacts when needed:
 - `.plan/_index/project-graph.sqlite`
 - `.plan/_index/project-graph-manifest.json`
 - `.plan/{topic}/proposal.md` when it already exists or when the user provides enough scope to summarize
+- `.plan/{topic}/requirements.md` plus `requirements.nodes.jsonl` / `requirements.edges.jsonl` for scope-gated topic/change requirements deltas
+- `.plan/{topic}/design.md` plus `design.nodes.jsonl` / `design.edges.jsonl` for scope-gated design decisions and alternatives
 - `.plan/{topic}/map.nodes.jsonl`
 - `.plan/{topic}/map.edges.jsonl`
 - `.plan/{topic}/facts.nodes.jsonl`
@@ -106,9 +108,10 @@ Use deterministic wrappers for plan mutations whenever available. Prefer `cartog
      - problem statement
      - goals
      - non-goals
-     - design steps
      - background and viability claims
+     - scope gate metadata such as `requirements_required` and whether this topic impacts a core user workflow
      - ADR metadata (`adr_required`, `adr_reason`, `adr_options_status`, and `adr_tool_mode`) when present
+   - For scoped changes, read `.plan/{topic}/requirements.md`, `requirements.nodes.jsonl`, `requirements.edges.jsonl`, `.plan/{topic}/design.md`, `design.nodes.jsonl`, and `design.edges.jsonl` when present. A Cartographer topic maps to an OpenSpec-style change: requirements are topic-local deltas that later fold into durable `docs/requirements.md`. Small non-core-workflow changes may skip requirements/design graph artifacts when the proposal scope gate says they are unnecessary.
    - Parse these JSON/JSONL artifacts if they exist:
      - `.plan/{topic}/map.nodes.jsonl`
      - `.plan/{topic}/map.edges.jsonl`

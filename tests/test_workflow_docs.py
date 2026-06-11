@@ -164,6 +164,31 @@ class WorkflowDocsTests(unittest.TestCase):
         self.assertIn("React Flow", text)
         self.assertIn("npm run dashboard:build", text)
 
+    def test_requirements_design_split_scope_gate_is_documented(self) -> None:
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        proposal = (ROOT / "skills/proposal/SKILL.md").read_text(encoding="utf-8")
+        plan = (ROOT / "skills/plan/SKILL.md").read_text(encoding="utf-8")
+        implement = (ROOT / "skills/implement/SKILL.md").read_text(encoding="utf-8")
+
+        combined = "\n".join([readme, proposal, plan, implement])
+
+        self.assertIn("proposal → requirements delta → design → plan → implement", readme)
+        self.assertIn("core user workflow", combined)
+        self.assertIn("docs/requirements.md", combined)
+        self.assertIn("Small changes that do not impact a core user workflow do not need", readme)
+        self.assertIn("non-core-workflow changes", proposal)
+        self.assertIn("requirements_required", proposal)
+        self.assertIn("## Scope Gate", proposal)
+        self.assertIn("## Next Artifacts", proposal)
+        self.assertIn("Description", proposal)
+        self.assertIn("Problem Statement", proposal)
+        self.assertIn("Background", proposal)
+        self.assertIn("Viability", proposal)
+        self.assertIn("requirements.nodes.jsonl", plan)
+        self.assertIn("design.nodes.jsonl", plan)
+        self.assertIn("requirements.nodes.jsonl", implement)
+        self.assertIn("design.nodes.jsonl", implement)
+
 
 if __name__ == "__main__":
     unittest.main()
