@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Activity, Boxes, FileText, GitBranch, Radar, ShieldCheck, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,9 +11,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
 import { DashboardReviewWorkflow, type DashboardSectionId } from "@/features/review-workflow";
-import { dashboardApi } from "@/lib/api";
+import {
+	dashboardQueryClient,
+	useAdrs,
+	useDashboardOverview,
+	useLatestLiveReloadEvent,
+	useLiveStatus,
+	useTopicArtifacts,
+} from "@/lib/dashboard-db";
 import { useLiveConnection, type LiveConnectionState } from "@/lib/events";
-import { createLiveRefetchPlan } from "@/lib/live-refetch";
+import { invalidateCollectionsForLiveReloadEvent } from "@/lib/live-refetch";
 import type { AdrCollection, DashboardOverview, TopicArtifacts } from "../../shared/models.js";
 
 const navigation: { id: DashboardSectionId; label: string; icon: typeof Activity; status: "ready" }[] = [
@@ -35,12 +42,22 @@ function statusVariant(state: LiveConnectionState): "success" | "warning" | "sec
 	return "secondary";
 }
 
+function liveStatusToConnectionState(statusState?: string, enabled = true): LiveConnectionState | undefined {
+	if (!statusState) return undefined;
+	if (!enabled || statusState === "manual-refresh") return "manual-refresh";
+	if (statusState === "watching" || statusState === "idle") return "connected";
+	if (statusState === "unavailable" || statusState === "closed") return "disconnected";
+	return undefined;
+}
+
 export type DashboardShellProps = {
 	liveStateOverride?: LiveConnectionState;
 	initialOverview?: DashboardOverview;
 	initialTopic?: TopicArtifacts;
 	initialAdrs?: AdrCollection;
 	disableDataFetch?: boolean;
+	routeTopicId?: string;
+	onTopicNavigate?: (topicId: string) => void;
 };
 
 export function DashboardShell({
@@ -49,83 +66,56 @@ export function DashboardShell({
 	initialTopic,
 	initialAdrs,
 	disableDataFetch = false,
+	routeTopicId,
+	onTopicNavigate,
 }: DashboardShellProps): React.JSX.Element {
 	const live = useLiveConnection(liveStateOverride === undefined);
-	const liveState = liveStateOverride ?? live.state;
-	const [overview, setOverview] = useState<DashboardOverview | undefined>(initialOverview);
-	const [selectedTopic, setSelectedTopic] = useState<TopicArtifacts | undefined>(initialTopic);
-	const [adrs, setAdrs] = useState<AdrCollection | undefined>(initialAdrs);
-	const [loadError, setLoadError] = useState<string | undefined>();
-	const [activeSection, setActiveSection] = useState<DashboardSectionId>("overview");
-
-	const loadTopic = useCallback(
-		async (
-			topicId: string,
-			options: { updateLocation?: boolean; focusSection?: DashboardSectionId } = {},
-		): Promise<void> => {
-			try {
-				const topic = await dashboardApi.topic(topicId);
-				setSelectedTopic(topic);
-				setLoadError(undefined);
-				if (options.updateLocation && typeof window !== "undefined") {
-					window.history.pushState(null, "", `/topics/${encodeURIComponent(topicId)}`);
-				}
-				if (options.focusSection) setActiveSection(options.focusSection);
-			} catch (error) {
-				setLoadError(error instanceof Error ? error.message : String(error));
-			}
-		},
-		[],
+	const liveStatusSnapshot = useLiveStatus(!disableDataFetch);
+	const liveEventSnapshot = useLatestLiveReloadEvent(!disableDataFetch);
+	const collectionLiveState = liveStatusToConnectionState(
+		liveStatusSnapshot.statusData?.state,
+		liveStatusSnapshot.statusData?.enabled,
 	);
+	const liveState = liveStateOverride ?? collectionLiveState ?? live.state;
+	const overviewSnapshot = useDashboardOverview(!disableDataFetch);
+	const adrsSnapshot = useAdrs(!disableDataFetch);
+	const [selectedTopicId, setSelectedTopicId] = useState<string | undefined>(routeTopicId ?? initialTopic?.topic.id);
+	const [activeSection, setActiveSection] = useState<DashboardSectionId>(routeTopicId ? "documents" : "overview");
+	const overview = disableDataFetch ? initialOverview : (overviewSnapshot.overview ?? initialOverview);
+	const effectiveTopicId = routeTopicId ?? selectedTopicId ?? initialTopic?.topic.id ?? overview?.topics[0]?.id;
+	const selectedTopicSnapshot = useTopicArtifacts(effectiveTopicId, !disableDataFetch);
+	const selectedTopic = disableDataFetch ? initialTopic : (selectedTopicSnapshot.artifacts ?? initialTopic);
+	const adrs = useMemo<AdrCollection | undefined>(() => {
+		if (disableDataFetch) return initialAdrs;
+		return {
+			adrs: adrsSnapshot.rows,
+			graph: initialAdrs?.graph ?? { nodes: [], edges: [], warnings: [] },
+			warnings: initialAdrs?.warnings ?? [],
+		};
+	}, [adrsSnapshot.rows, disableDataFetch, initialAdrs]);
+	const loadError = [overviewSnapshot, selectedTopicSnapshot, adrsSnapshot].some((snapshot) => snapshot.isError)
+		? "Dashboard collection load failed"
+		: undefined;
 
 	useEffect(() => {
-		if (disableDataFetch) return undefined;
-		let cancelled = false;
-		async function load(): Promise<void> {
-			try {
-				const [nextOverview, nextAdrs] = await Promise.all([dashboardApi.overview(), dashboardApi.adrs()]);
-				if (cancelled) return;
-				setOverview(nextOverview);
-				setAdrs(nextAdrs);
-				const routedTopic =
-					typeof window === "undefined"
-						? undefined
-						: decodeURIComponent(window.location.pathname.match(/^\/topics\/([^/]+)/)?.[1] ?? "");
-				const topicToLoad = routedTopic || nextOverview.topics[0]?.id;
-				if (topicToLoad) await loadTopic(topicToLoad, { focusSection: routedTopic ? "documents" : "overview" });
-				setLoadError(undefined);
-			} catch (error) {
-				if (!cancelled) setLoadError(error instanceof Error ? error.message : String(error));
-			}
+		if (routeTopicId) {
+			setSelectedTopicId(routeTopicId);
+			setActiveSection("documents");
 		}
-		void load();
-		return () => {
-			cancelled = true;
-		};
-	}, [disableDataFetch, loadTopic]);
+	}, [routeTopicId]);
+
+	useEffect(() => {
+		if (!selectedTopicId && overview?.topics[0]?.id) {
+			setSelectedTopicId(overview.topics[0].id);
+		}
+	}, [overview, selectedTopicId]);
 
 	useEffect(() => {
 		if (disableDataFetch || !live.lastEvent) return;
-		const resources = [
-			{ kind: "overview" as const },
-			{ kind: "health" as const },
-			...(selectedTopic ? [{ kind: "topic" as const, topic: selectedTopic.topic.id }] : []),
-		];
-		if (createLiveRefetchPlan(resources, live.lastEvent).length === 0) return;
-		void dashboardApi
-			.overview()
-			.then(setOverview)
-			.catch(() => undefined);
-		void dashboardApi
-			.adrs()
-			.then(setAdrs)
-			.catch(() => undefined);
-		if (selectedTopic)
-			void dashboardApi
-				.topic(selectedTopic.topic.id)
-				.then(setSelectedTopic)
-				.catch(() => undefined);
-	}, [disableDataFetch, live.lastEvent, selectedTopic]);
+		void invalidateCollectionsForLiveReloadEvent(live.lastEvent, dashboardQueryClient, {
+			activeTopic: effectiveTopicId,
+		}).catch(() => undefined);
+	}, [disableDataFetch, effectiveTopicId, live.lastEvent]);
 
 	useEffect(() => {
 		const id = activeSection === "graph" ? "dashboard-section-graph" : `dashboard-section-${activeSection}`;
@@ -134,6 +124,12 @@ export function DashboardShell({
 		}, 0);
 		return () => window.clearTimeout(timeout);
 	}, [activeSection, selectedTopic?.topic.id]);
+
+	const handleTopicSelect = (topicId: string): void => {
+		setSelectedTopicId(topicId);
+		setActiveSection("documents");
+		onTopicNavigate?.(topicId);
+	};
 
 	const handleSectionNav = (section: DashboardSectionId): void => {
 		setActiveSection(section);
@@ -200,7 +196,11 @@ export function DashboardShell({
 												Live: {liveState}
 											</Badge>
 										</TooltipTrigger>
-										<TooltipContent>Safe .plan changes refresh visible data without write access.</TooltipContent>
+										<TooltipContent>
+											{liveEventSnapshot.latestEvent
+												? `Latest ${liveEventSnapshot.latestEvent.resource} refresh: ${liveEventSnapshot.latestEvent.events.join(", ")}`
+												: "Safe .plan changes refresh visible data without write access."}
+										</TooltipContent>
 									</Tooltip>
 									<Button variant="outline" size="sm">
 										<ShieldCheck className="size-4" />
@@ -219,13 +219,11 @@ export function DashboardShell({
 									<DashboardReviewWorkflow
 										overview={overview}
 										selectedTopic={selectedTopic}
-										selectedTopicId={selectedTopic?.topic.id}
+										selectedTopicId={effectiveTopicId}
 										adrs={adrs}
 										activeSection={activeSection}
 										onSectionChange={setActiveSection}
-										onTopicSelect={(topicId) =>
-											void loadTopic(topicId, { updateLocation: true, focusSection: "documents" })
-										}
+										onTopicSelect={handleTopicSelect}
 									/>
 								) : (
 									<div className="grid gap-4 md:grid-cols-3">
