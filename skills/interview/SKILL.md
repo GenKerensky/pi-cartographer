@@ -136,13 +136,19 @@ Example edges:
 
 ## Mockup Decision Aids
 
-For UI-affecting decisions, use a mockup only when text options would be ambiguous. Keep v1 lightweight:
+For UI-affecting decisions, use a mockup only when text options would be ambiguous. A mockup is warranted when the user must choose layout, visual hierarchy, information density, interaction sequence, or copy placement and those differences are hard to compare as prose. A mockup is not warranted when a concise option list fully describes the behavior.
 
-- prefer a single-file HTML mockup or static markdown/wireframe;
-- optionally use browser/headless screenshot tooling when available;
-- store durable mockup references only when they are intentionally cited;
-- avoid `.plan/_private/**` for generated mockups;
-- do not build a persistent mockup editor as part of the interview.
+Keep v1 lightweight and preview-first:
+
+1. Start with structured text options and a recommended answer.
+2. If visual comparison is needed, create a temporary single-file HTML mockup or static markdown/wireframe.
+3. Render it with `preview_export` when markdown is enough, or open/capture it with existing browser or Playwright tooling when HTML fidelity matters.
+4. Share the preview/screenshot as a decision aid, then record only the decision and any intentionally durable mockup reference.
+5. Store throwaway mockups under `/tmp` or another temporary run directory; store durable topic-local mockup notes under `.plan/<topic>/evidence/` only when intentionally cited.
+6. Avoid `.plan/_private/**` for generated mockups and do not commit throwaway screenshots.
+7. Always offer a non-visual fallback: concise option labels, ASCII wireframes, or markdown tables.
+
+Do not build a persistent mockup editor as part of the interview.
 
 ## Specialist Boundaries
 

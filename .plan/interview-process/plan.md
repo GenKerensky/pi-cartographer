@@ -192,7 +192,7 @@ Use the `grill-me` and Superpowers references through existing fact citations, n
 
 ### Phase P3 — Mockup Decision Aid
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P2
 - **Unlocks:** P4
 - **Primary references:** `package.json:92`, `docs/adr/0003-use-local-dashboard-stack-for-cartographer-planning-ui.md:1`, `/var/home/linuxbrew/.linuxbrew/lib/node_modules/@earendil-works/pi-coding-agent/docs/tui.md:89`, `REQ-INT-005`, `DES-DEC-004`, `[F004]`, `[F005]`
@@ -209,16 +209,16 @@ Add a lightweight, optional mockup/wireframe decision-aid path for UI-affecting 
 
 #### Checklist
 
-- [ ] **P3.T1** Extend `skills/interview/SKILL.md` with criteria for when a UI mockup is warranted versus when structured text options are enough.
-- [ ] **P3.T2** Add a minimal helper path, such as `skills/interview/scripts/mockup_preview.ts` or documented `preview_export`/Playwright usage, for rendering single-file HTML and optional screenshots.
-- [ ] **P3.T3** Document safe storage and cleanup for mockup artifacts, avoiding `.plan/_private/**` and avoiding committed throwaway screenshots unless intentionally cited.
-- [ ] **P3.T4** Add tests or script checks for any new helper code, and add documentation tests for mockup-mode guidance.
+- [x] **P3.T1** Extend `skills/interview/SKILL.md` with criteria for when a UI mockup is warranted versus when structured text options are enough.
+- [x] **P3.T2** Add a minimal helper path, such as `skills/interview/scripts/mockup_preview.ts` or documented `preview_export`/Playwright usage, for rendering single-file HTML and optional screenshots.
+- [x] **P3.T3** Document safe storage and cleanup for mockup artifacts, avoiding `.plan/_private/**` and avoiding committed throwaway screenshots unless intentionally cited.
+- [x] **P3.T4** Add tests or script checks for any new helper code, and add documentation tests for mockup-mode guidance.
 
 #### Validation
 
-- [ ] **P3.V1** Run `npm run check:scripts`; expected result: any new helper script passes syntax checks.
-- [ ] **P3.V2** Run `npm run test:ts -- tests/manage_jsonl.test.ts`; expected result: artifact validation tests still pass.
-- [ ] **P3.V3** If a browser screenshot helper is added, run its focused test or `npm run test:browser -- <focused-test>`; expected result: headless rendering works or is explicitly documented as manual fallback.
+- [x] **P3.V1** Run `npm run check:scripts`; expected result: any new helper script passes syntax checks.
+- [x] **P3.V2** Run `npm run test:ts -- tests/manage_jsonl.test.ts`; expected result: artifact validation tests still pass.
+- [x] **P3.V3** If a browser screenshot helper is added, run its focused test or `npm run test:browser -- <focused-test>`; expected result: headless rendering works or is explicitly documented as manual fallback.
 
 #### Exit Criteria
 
