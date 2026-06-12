@@ -5,11 +5,11 @@
   "source_refs": {
     "plan_md": {
       "path": ".plan/initial-requirements/plan.md",
-      "sha256": "sha256:a71d2f2371fdc1c3118832ac7eee470d9d098f94e12c7525ee6759767f57c5a9"
+      "sha256": "sha256:c686446c7c3be7e5b9453919a8480b3855d79fc43faf4aff55792512b3383227"
     },
     "plan_nodes": {
       "path": ".plan/initial-requirements/plan.nodes.jsonl",
-      "sha256": "sha256:4835a5becfd1f9f2a21962f8f128273ecde87c2beebf3ea10628729ba62ffa24"
+      "sha256": "sha256:752f18ee342e7bfc59a7e87a3ed60a260ecc3df93c0ce354fb47b70c5ae5e8e7"
     },
     "plan_edges": {
       "path": ".plan/initial-requirements/plan.edges.jsonl",
@@ -17,11 +17,11 @@
     },
     "receipts": {
       "path": ".plan/initial-requirements/receipts.jsonl",
-      "sha256": "sha256:60ce09da22098111c84f0ec5d15a070bd944ab8a66c2e6f8400d296664720682"
+      "sha256": "sha256:669b135e68927fda12a839f55e99844d1d52787e1c9f4a542fef9e33e97a2d67"
     },
     "context_packs": {
       "path": ".plan/initial-requirements/context-packs.jsonl",
-      "sha256": "sha256:d8386ddab0eb768664b6194c63d6d0eed6abeba04873d78f4e6b2599e49b1635"
+      "sha256": "sha256:665e294e734097c159e7bac44cd32d6d6e1ccaf44e1b0b4ba20cfb251eed14a5"
     }
   },
   "current_phase_id": "P0",
@@ -36,16 +36,28 @@
   "working_set": {
     "write_allowed": [
       {
-        "path": "tests/test_requirements_records.py",
-        "reason": "Add temp-root init regression tests."
+        "path": "README.md",
+        "reason": "Document requirements init command."
+      },
+      {
+        "path": "skills/plan/SKILL.md",
+        "reason": "Mention init when planning durable requirements/fold work."
+      },
+      {
+        "path": "skills/implement/SKILL.md",
+        "reason": "Optional clarity for fold/archive finalization."
+      },
+      {
+        "path": "tests/test_workflow_docs.py",
+        "reason": "Add docs regression assertions if needed."
       },
       {
         "path": ".plan/initial-requirements/plan.md",
-        "reason": "Update P1 status/checklist after validation."
+        "reason": "Update P2 status/checklist after validation."
       },
       {
         "path": ".plan/initial-requirements/plan.nodes.jsonl",
-        "reason": "Mirror P1 status/checklist."
+        "reason": "Mirror P2 status/checklist."
       },
       {
         "path": ".plan/initial-requirements/receipts.jsonl",
@@ -53,27 +65,27 @@
       },
       {
         "path": ".plan/initial-requirements/context-packs.jsonl",
-        "reason": "Record P1 context pack."
+        "reason": "Record P2 context pack."
       },
       {
         "path": ".cartographer/initial-requirements/**",
-        "reason": "Maintain implementation state."
+        "reason": "Maintain state."
       }
     ],
     "read_only": [
       {
         "path": "skills/plan/scripts/requirements_records.py",
-        "reason": "Implemented behavior under test."
+        "reason": "Document implemented command."
       },
       {
-        "path": ".plan/initial-requirements/proposal.md",
-        "reason": "Scope reference."
+        "path": "tests/test_requirements_records.py",
+        "reason": "Test coverage reference."
       }
     ],
     "forbidden": [
       {
         "path": "docs/requirements.md",
-        "reason": "Tests must not mutate real durable requirements doc."
+        "reason": "Do not create/mutate real durable requirements doc."
       },
       {
         "path": ".plan/_private/**",
@@ -88,9 +100,17 @@
     "receipt:initial-requirements:audit:2026-06-12T04:08:08Z",
     "receipt:P1:validation:2026-06-12T04:09:09+00:00",
     "receipt:P1:validation:2026-06-12T04:09:55+00:00",
-    "receipt:initial-requirements:audit:2026-06-12T04:11:39Z"
+    "receipt:initial-requirements:audit:2026-06-12T04:11:39Z",
+    "receipt:P2:validation:2026-06-12T04:13:02+00:00",
+    "receipt:P2:validation:2026-06-12T04:13:17+00:00",
+    "receipt:P2:validation:2026-06-12T04:14:01+00:00",
+    "receipt:initial-requirements:P2-reviewer-pass:2026-06-12T04:17:00Z"
   ],
-  "journal_refs": ["journal:20260612T040819Z:compact", "journal:20260612T041149Z:compact"],
+  "journal_refs": [
+    "journal:20260612T040819Z:compact",
+    "journal:20260612T041149Z:compact",
+    "journal:20260612T041731Z:compact"
+  ],
   "resume": {
     "template_id": "cartographer.single_writer.resume.v1",
     "resume_order": [
@@ -102,9 +122,10 @@
     "expected_first_response": ["current_phase", "next_action", "files_to_inspect"],
     "must_ignore": ["prior chat speculation", "stale generated snippets"]
   },
-  "updated_at": "2026-06-12T04:11:49Z",
+  "updated_at": "2026-06-12T04:17:31Z",
   "compaction": {
-    "trigger": "phase-end-P1",
-    "compacted_at": "2026-06-12T04:11:49Z"
-  }
+    "trigger": "phase-end-P2",
+    "compacted_at": "2026-06-12T04:17:31Z"
+  },
+  "stale_reason": "Plan artifacts changed after P1 status updates and P2 phase start; authoritative plan remains .plan/initial-requirements/plan.md."
 }

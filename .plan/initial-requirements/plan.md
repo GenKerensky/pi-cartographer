@@ -153,7 +153,7 @@ The project instructions require tests to use temp/mock roots. Do not point test
 
 ### Phase P2 — Workflow Documentation
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P1
 - **Unlocks:** P3
 - **Primary references:** `file:README.md`, `file:skills/plan/SKILL.md`, `file:skills/implement/SKILL.md`, [F001], [F005], [F006], [F007]
@@ -172,17 +172,17 @@ Document the durable requirements bootstrap path and set correct expectations ab
 
 #### Checklist
 
-- [ ] **P2.T1** Add a README snippet showing `python skills/plan/scripts/requirements_records.py init --root "$PWD" --json`.
-- [ ] **P2.T2** Document that init is idempotent and preserves existing `docs/requirements.md`.
-- [ ] **P2.T3** Update `skills/plan/SKILL.md` to mention initialization when planning durable requirements/fold work.
-- [ ] **P2.T4** Decide whether `skills/implement/SKILL.md` needs a short note; update it only if useful.
-- [ ] **P2.T5** Add or update workflow documentation tests if there are existing assertions for durable requirements/fold guidance.
+- [x] **P2.T1** Add a README snippet showing `python skills/plan/scripts/requirements_records.py init --root "$PWD" --json`.
+- [x] **P2.T2** Document that init is idempotent and preserves existing `docs/requirements.md`.
+- [x] **P2.T3** Update `skills/plan/SKILL.md` to mention initialization when planning durable requirements/fold work.
+- [x] **P2.T4** Decide whether `skills/implement/SKILL.md` needs a short note; update it only if useful.
+- [x] **P2.T5** Add or update workflow documentation tests if there are existing assertions for durable requirements/fold guidance.
 
 #### Validation
 
-- [ ] **P2.V1** Run `python -m unittest discover tests -p 'test_workflow_docs.py'` and confirm workflow documentation tests pass.
-- [ ] **P2.V2** Run `rg -n "requirements_records.py init|docs/requirements.md|durable requirements|OpenSpec" README.md skills/plan/SKILL.md skills/implement/SKILL.md` and confirm the intended guidance is discoverable.
-- [ ] **P2.V3** Run `npm run format:prettier:check -- README.md skills/plan/SKILL.md skills/implement/SKILL.md .plan/initial-requirements/plan.md` and confirm formatting passes.
+- [x] **P2.V1** Run `python -m unittest discover tests -p 'test_workflow_docs.py'` and confirm workflow documentation tests pass.
+- [x] **P2.V2** Run `rg -n "requirements_records.py init|docs/requirements.md|durable requirements|OpenSpec" README.md skills/plan/SKILL.md skills/implement/SKILL.md` and confirm the intended guidance is discoverable.
+- [x] **P2.V3** Run `npm run format:prettier:check -- README.md skills/plan/SKILL.md skills/implement/SKILL.md .plan/initial-requirements/plan.md` and confirm formatting passes.
 
 #### Exit Criteria
 

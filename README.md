@@ -256,6 +256,14 @@ Cartographer writes planning artifacts under `.plan/` in your project. Depending
 
 Accepted requirement deltas fold into durable `docs/requirements.md` (or split requirements docs under `docs/requirements/<domain>.md` when needed), similar to how durable architecture decisions live under `docs/adr/`. The fold lifecycle preserves stable `REQ-*` and `SCN-*` IDs, source topic, status/change metadata, and fold receipt references; implemented topics with requirement deltas should have either a `requirements-fold` receipt or an approved `requirements-fold-skip` receipt.
 
+To bootstrap the durable requirements container document without inventing product requirements, run:
+
+```bash
+python skills/plan/scripts/requirements_records.py init --root "$PWD" --json
+```
+
+The command creates `docs/requirements.md` only when it is absent, creates the `docs/` parent directory as needed, and preserves an existing requirements document unchanged. Real requirements still come from accepted topic-local deltas or deliberate curated documentation edits.
+
 Optional execution files can additionally appear under `.cartographer/<topic>/` and are not part of the plan graph:
 
 - `state.json`: current execution status and hashes.
