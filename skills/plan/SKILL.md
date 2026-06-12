@@ -35,6 +35,7 @@ Use or create/update these supporting artifacts when needed:
 - `.plan/_index/project-graph.sqlite`
 - `.plan/_index/project-graph-manifest.json`
 - `.plan/{topic}/proposal.md` when it already exists or when the user provides enough scope to summarize
+- `.plan/{topic}/interview.md` plus `interview.nodes.jsonl` / `interview.edges.jsonl` for optional post-research clarification records when unresolved user-owned decisions remain
 - `.plan/{topic}/requirements.md` plus `requirements.nodes.jsonl` / `requirements.edges.jsonl` for scope-gated topic/change requirements deltas
 - `.plan/{topic}/design.md` plus `design.nodes.jsonl` / `design.edges.jsonl` for scope-gated design decisions and alternatives
 - `.plan/{topic}/map.nodes.jsonl`
@@ -48,9 +49,10 @@ Do not create `.cartographer/` execution state during planning. Plans may includ
 
 For scoped changes that affect a core user workflow or comparable durable behavior, planning should consume topic-local requirements and design artifacts before drafting implementation phases:
 
+- `interview.md` is the optional post-research clarification record for unresolved user-owned decisions; `interview.nodes.jsonl` and `interview.edges.jsonl` preserve researched answers, recommendations, user answers, accepted decisions, deferrals, blockers, and dependencies that feed requirements/design.
 - `requirements.md` is the human-readable requirements delta for the current Cartographer topic/change; `requirements.nodes.jsonl` and `requirements.edges.jsonl` are the graph-backed source for requirement, scenario, acceptance-check, source/fact, and durable `docs/requirements.md` references.
 - `design.md` is the human-readable design narrative; `design.nodes.jsonl` and `design.edges.jsonl` are the graph-backed Decision + Alternative MVP source for accepted decisions, rejected alternatives, components, risks, requirement satisfaction, supporting facts, constraints, and mitigations.
-- Plans should cite requirement IDs such as `REQ-*`, scenario IDs such as `SCN-*`, and design IDs when phases/tasks/validations implement or validate those behaviors. Small non-core-workflow changes may skip requirements/design artifacts when the accepted proposal scope gate says they are unnecessary.
+- Plans should cite interview decision IDs when they clarify user-owned choices, requirement IDs such as `REQ-*`, scenario IDs such as `SCN-*`, and design IDs when phases/tasks/validations implement or validate those behaviors. Small non-core-workflow changes may skip interview and requirements/design artifacts when the accepted proposal scope gate says they are unnecessary.
 - Preserve ADR metadata from the proposal even when requirements/design artifacts are absent, and keep topic-local requirement deltas ready to fold into durable `docs/requirements.md` or split `docs/requirements/<domain>.md` files after acceptance/archive.
 - When a project needs the durable requirements container before any deltas have been folded, plan an explicit `python skills/plan/scripts/requirements_records.py init --root "$PWD" --json` step. This initializes `docs/requirements.md` only when absent, preserves existing files, and does not invent product requirements.
 - When planning the fold/archive step, include validation that implemented topics with requirement deltas produce a `requirements-fold` receipt or an approved `requirements-fold-skip` receipt, preserving stable requirement/scenario IDs, supersession/removal metadata, source topic, and validation/audit receipt references.
@@ -122,7 +124,7 @@ Use deterministic wrappers for plan mutations whenever available. Prefer `cartog
      - background and viability claims
      - scope gate metadata such as `requirements_required` and whether this topic impacts a core user workflow
      - ADR metadata (`adr_required`, `adr_reason`, `adr_options_status`, and `adr_tool_mode`) when present
-   - For scoped changes, read `.plan/{topic}/requirements.md`, `requirements.nodes.jsonl`, `requirements.edges.jsonl`, `.plan/{topic}/design.md`, `design.nodes.jsonl`, and `design.edges.jsonl` when present. A Cartographer topic maps to an OpenSpec-style change: requirements are topic-local deltas that later fold into durable `docs/requirements.md`. Small non-core-workflow changes may skip requirements/design graph artifacts when the proposal scope gate says they are unnecessary.
+   - For scoped changes, read `.plan/{topic}/interview.md`, `interview.nodes.jsonl`, `interview.edges.jsonl`, `.plan/{topic}/requirements.md`, `requirements.nodes.jsonl`, `requirements.edges.jsonl`, `.plan/{topic}/design.md`, `design.nodes.jsonl`, and `design.edges.jsonl` when present. Interview artifacts are optional clarification inputs produced after relevant research is exhausted; requirements are topic-local deltas that later fold into durable `docs/requirements.md`. Small non-core-workflow changes may skip interview and requirements/design graph artifacts when the proposal scope gate says they are unnecessary.
    - Parse these JSON/JSONL artifacts if they exist:
      - `.plan/{topic}/map.nodes.jsonl`
      - `.plan/{topic}/map.edges.jsonl`

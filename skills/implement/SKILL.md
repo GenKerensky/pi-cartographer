@@ -31,6 +31,9 @@ Supporting artifacts, when present:
 - `.plan/{topic}/plan.nodes.jsonl`
 - `.plan/{topic}/plan.edges.jsonl`
 - `.plan/{topic}/proposal.md`
+- `.plan/{topic}/interview.md`
+- `.plan/{topic}/interview.nodes.jsonl`
+- `.plan/{topic}/interview.edges.jsonl`
 - `.plan/{topic}/requirements.md`
 - `.plan/{topic}/requirements.nodes.jsonl`
 - `.plan/{topic}/requirements.edges.jsonl`
@@ -56,7 +59,7 @@ If the plan is missing, ask the user whether to generate it first with the `plan
 ### Source-of-truth boundaries
 
 - `.plan/{topic}/plan.md`, `plan.nodes.jsonl`, `plan.edges.jsonl`, `receipts.jsonl`, and `context-packs.jsonl` remain authoritative for planning, checkoff, validation history, and implementation handoff context.
-- For scoped changes that affect a core user workflow or comparable durable behavior, requirements/design graph artifacts are supporting behavioral/design references for implementation. Small non-core-workflow changes may skip them when the accepted proposal scope gate says they are unnecessary.
+- For scoped changes that affect a core user workflow or comparable durable behavior, interview artifacts and requirements/design graph artifacts are supporting behavioral/design references for implementation. Interview artifacts are optional, post-research clarification inputs for unresolved user-owned decisions; requirements/design remain the authoritative behavior/design deltas. Small non-core-workflow changes may skip them when the accepted proposal scope gate says they are unnecessary.
 - Topic-local requirements are change deltas; accepted deltas fold into durable `docs/requirements.md` or split durable requirements docs during finalization/archive when the plan requires it. If a plan calls for bootstrapping the durable requirements container, use `python skills/plan/scripts/requirements_records.py init --root "$PWD" --json`; it creates `docs/requirements.md` only when absent and preserves existing files. Requirement fold steps must preserve stable requirement/scenario IDs, source topic, change metadata, and receipt/audit references, and must leave a `requirements-fold` receipt or an approved `requirements-fold-skip` receipt.
 - `.cartographer/{topic}/state.json` is only compact execution/resume state.
 - `.cartographer/{topic}/journal.jsonl` is only a curated durable lessons journal.
@@ -396,7 +399,7 @@ Timeout/fallback receipts should include:
 ```text
 Review phase <PHASE_ID> for topic <topic> after deterministic validation receipts passed.
 Use .plan/<topic>/plan.md, plan graph artifacts, relevant proposal/map/fact summaries,
-requirements/design graph summaries when present, current diff/stat, receipt IDs,
+interview and requirements/design graph summaries when present, current diff/stat, receipt IDs,
 and state/journal evidence when relevant.
 Return PASS/FAIL with required corrections. Stay read-only.
 ```
@@ -435,6 +438,7 @@ allowed files, stop rules, evidence requirements, and require no commits/staging
 Before finalizing an implementation, verify:
 
 - `.plan/{topic}/plan.md` exists and every implemented phase is marked complete.
+- Optional `interview.md`, `interview.nodes.jsonl`, and `interview.edges.jsonl` inputs were consumed when present and remain clarification records, not substitutes for requirements/design deltas.
 - `plan.nodes.jsonl` mirrors phase/task/validation statuses.
 - `.cartographer/{topic}/state.json` validates or the absence of state is intentionally receipted for a legacy plan.
 - `journal.jsonl` contains only curated important lessons, if any.

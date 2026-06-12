@@ -172,7 +172,16 @@ class WorkflowDocsTests(unittest.TestCase):
 
         combined = "\n".join([readme, proposal, plan, implement])
 
-        self.assertIn("proposal → requirements delta → design → plan → implement", readme)
+        self.assertIn("proposal → research → interview → requirements delta → design → plan → implement", readme)
+        self.assertIn("research-exhausted interview", proposal)
+        self.assertIn("exhausted research", proposal)
+        self.assertIn("re-enter interview one question at a time", proposal)
+        self.assertIn("interview.nodes.jsonl", readme)
+        self.assertIn("interview.edges.jsonl", readme)
+        self.assertIn("interview.nodes.jsonl", plan)
+        self.assertIn("interview.edges.jsonl", plan)
+        self.assertIn("interview.nodes.jsonl", implement)
+        self.assertIn("interview.edges.jsonl", implement)
         self.assertIn("core user workflow", combined)
         self.assertIn("docs/requirements.md", combined)
         self.assertIn("requirements_records.py init", combined)

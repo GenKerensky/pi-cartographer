@@ -1,0 +1,12 @@
+{"from":"REQ-INT-001","to":"F001","type":"supported_by"}
+{"from":"REQ-INT-001","to":"F002","type":"supported_by"}
+{"from":"REQ-INT-001","to":"docs/requirements.md#interview-process","type":"folds_into"}
+{"from":"REQ-INT-002","to":"F001","type":"supported_by"}
+{"from":"REQ-INT-002","to":"docs/requirements.md#interview-process","type":"folds_into"}
+{"from":"REQ-INT-003","to":"F003","type":"supported_by"}
+{"from":"REQ-INT-003","to":"docs/requirements.md#interview-process","type":"folds_into"}
+{"from":"REQ-INT-004","to":"F002","type":"supported_by"}
+{"from":"REQ-INT-004","to":"docs/requirements.md#interview-process","type":"folds_into"}
+{"from":"REQ-INT-005","to":"F004","type":"supported_by"}
+{"from":"REQ-INT-005","to":"F005","type":"supported_by"}
+{"from":"REQ-INT-005","to":"docs/requirements.md#interview-process","type":"folds_into"}

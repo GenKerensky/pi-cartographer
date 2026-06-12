@@ -1,0 +1,147 @@
+{
+  "schema_version": 1,
+  "topic": "interview-process",
+  "source_status": "hashes-valid",
+  "source_refs": {
+    "plan_md": {
+      "path": ".plan/interview-process/plan.md",
+      "sha256": "sha256:1296400845e5bea2727fe68c9eb89834053ad53b773c1e7de617495e1c8fcef8"
+    },
+    "plan_nodes": {
+      "path": ".plan/interview-process/plan.nodes.jsonl",
+      "sha256": "sha256:2c5562a8e06fb2f543655c0fdd59e947eda08eddafbf18d2e589fd0bafb0911e"
+    },
+    "plan_edges": {
+      "path": ".plan/interview-process/plan.edges.jsonl",
+      "sha256": "sha256:6b9c1b9b141d517fc53c6241ec03649062e2d7ea8fdf8845dda106400882cfb4"
+    },
+    "receipts": {
+      "path": ".plan/interview-process/receipts.jsonl",
+      "sha256": "sha256:e27bbf28356d875d8bed7cd15c28213d7a5edb0e8d8a90d8b12cee15ea1a81cd"
+    },
+    "context_packs": {
+      "path": ".plan/interview-process/context-packs.jsonl",
+      "sha256": "sha256:b4b9ee083bffd019c7b62770fc8cf9ce547463bbf24010c6b1a6980cb3c1e54c"
+    }
+  },
+  "current_phase_id": "P0",
+  "active_task_ids": [],
+  "active_validation_ids": [],
+  "next_action": {
+    "id": "P0.T1",
+    "kind": "implementation-task",
+    "summary": "Update README workflow docs for proposal → research → interview → requirements/design → plan → implement.",
+    "phase_id": "P0",
+    "task_id": "P0.T1",
+    "files_to_inspect": [
+      "README.md",
+      "skills/proposal/SKILL.md",
+      "skills/plan/SKILL.md",
+      "skills/implement/SKILL.md",
+      "tests/test_workflow_docs.py",
+      ".plan/interview-process/plan.md"
+    ]
+  },
+  "working_set": {
+    "write_allowed": [
+      {
+        "path": "README.md",
+        "reason": "P0 workflow documentation"
+      },
+      {
+        "path": "skills/proposal/SKILL.md",
+        "reason": "P0 proposal next-artifacts guidance"
+      },
+      {
+        "path": "skills/plan/SKILL.md",
+        "reason": "P0 plan input guidance"
+      },
+      {
+        "path": "skills/implement/SKILL.md",
+        "reason": "P0 implementation input guidance"
+      },
+      {
+        "path": "tests/test_workflow_docs.py",
+        "reason": "P0 documentation tests"
+      },
+      {
+        "path": ".plan/interview-process/plan.md",
+        "reason": "P0 plan status/checklist updates"
+      },
+      {
+        "path": ".plan/interview-process/plan.nodes.jsonl",
+        "reason": "P0 plan node status updates"
+      },
+      {
+        "path": ".plan/interview-process/receipts.jsonl",
+        "reason": "P0 validation receipts"
+      },
+      {
+        "path": ".plan/interview-process/context-packs.jsonl",
+        "reason": "P0 context pack"
+      }
+    ],
+    "read_only": [
+      {
+        "path": ".plan/interview-process/proposal.md",
+        "reason": "approved scope reference"
+      },
+      {
+        "path": ".plan/interview-process/requirements.md",
+        "reason": "requirements reference"
+      },
+      {
+        "path": ".plan/interview-process/design.md",
+        "reason": "design reference"
+      },
+      {
+        "path": ".plan/interview-process/plan.edges.jsonl",
+        "reason": "dependency reference"
+      }
+    ],
+    "forbidden": [
+      {
+        "path": ".plan/_private/**",
+        "reason": "raw private inputs are off-limits"
+      },
+      {
+        "path": ".plan/_index/**",
+        "reason": "generated index/cache artifacts"
+      }
+    ]
+  },
+  "known_failures": [],
+  "last_validation_receipt_ids": [
+    "receipt:P0:validation:2026-06-12T21:43:51+00:00",
+    "receipt:P0:validation:2026-06-12T21:44:02+00:00",
+    "receipt:P0:validation:2026-06-12T21:44:48+00:00",
+    "receipt:interview-process:audit:2026-06-12T21:48:03Z"
+  ],
+  "journal_refs": [
+    "journal:20260612T214817Z:compact"
+  ],
+  "resume": {
+    "template_id": "cartographer.single_writer.resume.v1",
+    "resume_order": [
+      ".cartographer/interview-process/state.json",
+      ".cartographer/interview-process/journal.jsonl",
+      ".plan/interview-process/plan.md",
+      ".plan/interview-process/receipts.jsonl"
+    ],
+    "expected_first_response": [
+      "current_phase",
+      "next_action",
+      "files_to_inspect"
+    ],
+    "must_ignore": [
+      "prior chat speculation",
+      "stale generated snippets"
+    ]
+  },
+  "updated_at": "2026-06-12T21:48:17Z",
+  "stale_reason": "Implementation compact requested after artifact updates.",
+  "compaction": {
+    "trigger": "phase P0 complete",
+    "compacted_at": "2026-06-12T21:48:17Z"
+  }
+}

@@ -1,0 +1,16 @@
+{"from":"DES-DEC-001","to":"REQ-INT-001","type":"satisfies"}
+{"from":"DES-DEC-001","to":"REQ-INT-002","type":"satisfies"}
+{"from":"DES-DEC-001","to":"F001","type":"supported_by"}
+{"from":"DES-DEC-001","to":"F002","type":"supported_by"}
+{"from":"DES-DEC-002","to":"REQ-INT-003","type":"satisfies"}
+{"from":"DES-DEC-002","to":"REQ-INT-004","type":"satisfies"}
+{"from":"DES-DEC-002","to":"F003","type":"supported_by"}
+{"from":"DES-DEC-003","to":"REQ-INT-004","type":"satisfies"}
+{"from":"DES-DEC-003","to":"F002","type":"supported_by"}
+{"from":"DES-DEC-004","to":"REQ-INT-005","type":"satisfies"}
+{"from":"DES-DEC-004","to":"F004","type":"supported_by"}
+{"from":"DES-DEC-004","to":"F005","type":"supported_by"}
+{"from":"DES-ALT-001","to":"DES-DEC-001","type":"alternative_to"}
+{"from":"DES-ALT-002","to":"DES-DEC-002","type":"alternative_to"}
+{"from":"DES-ALT-003","to":"DES-DEC-002","type":"alternative_to"}
+{"from":"DES-ALT-004","to":"DES-DEC-004","type":"alternative_to"}
