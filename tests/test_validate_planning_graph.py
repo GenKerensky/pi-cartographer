@@ -376,6 +376,132 @@ Finish the feature.
             ]:
                 self.assertIn(expected, result.stdout)
 
+    def test_interview_graph_validation(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            topic_dir = self.write_valid_project(project)
+            (topic_dir / "requirements.md").write_text("# Requirements\n\nUses [REQ-DEMO-001].\n", encoding="utf-8")
+            (topic_dir / "design.md").write_text("# Design\n\n## Decision One\n\nSatisfies [REQ-DEMO-001].\n", encoding="utf-8")
+            (topic_dir / "interview.md").write_text("# Interview\n\n## Decision One\n\nAccepted.\n", encoding="utf-8")
+            (topic_dir / "requirements.nodes.jsonl").write_text(
+                json.dumps(
+                    {
+                        "id": "REQ-DEMO-001",
+                        "type": "requirement",
+                        "title": "Demo requirement",
+                        "statement": "The system MUST validate interview artifacts.",
+                        "change_type": "ADDED",
+                        "domain": "demo",
+                        "priority": "must",
+                        "status": "accepted",
+                        "fact_refs": ["F001"],
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (topic_dir / "requirements.edges.jsonl").write_text(
+                json.dumps({"from": "REQ-DEMO-001", "to": "F001", "type": "supported_by"}) + "\n",
+                encoding="utf-8",
+            )
+            (topic_dir / "design.nodes.jsonl").write_text(
+                json.dumps(
+                    {
+                        "id": "DES-DEC-001",
+                        "type": "design-decision",
+                        "status": "accepted",
+                        "title": "Decision one",
+                        "summary": "Use the validated path.",
+                        "source": "design.md#decision-one",
+                        "requirement_refs": ["REQ-DEMO-001"],
+                        "fact_refs": ["F001"],
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (topic_dir / "design.edges.jsonl").write_text(
+                json.dumps({"from": "DES-DEC-001", "to": "REQ-DEMO-001", "type": "satisfies"}) + "\n",
+                encoding="utf-8",
+            )
+            (topic_dir / "interview.nodes.jsonl").write_text(
+                "\n".join(
+                    [
+                        json.dumps(
+                            {
+                                "id": "INT-Q-001",
+                                "type": "candidate-question",
+                                "status": "asked",
+                                "title": "Choose behavior",
+                                "summary": "Ask the user.",
+                                "source": "interview.md#decision-one",
+                                "fact_refs": ["F001"],
+                            }
+                        ),
+                        json.dumps(
+                            {
+                                "id": "INT-D-001",
+                                "type": "accepted-decision",
+                                "status": "accepted",
+                                "title": "Use validated path",
+                                "summary": "User accepted it.",
+                                "source": "interview.md#decision-one",
+                                "requirement_refs": ["REQ-DEMO-001"],
+                                "design_refs": ["DES-DEC-001"],
+                                "fact_refs": ["F001"],
+                            }
+                        ),
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (topic_dir / "interview.edges.jsonl").write_text(
+                json.dumps({"from": "INT-Q-001", "to": "INT-D-001", "type": "answered_by"})
+                + "\n"
+                + json.dumps({"from": "INT-D-001", "to": "REQ-DEMO-001", "type": "feeds_requirement"})
+                + "\n",
+                encoding="utf-8",
+            )
+            result = self.run_validator(project)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+            (topic_dir / "interview.nodes.jsonl").write_text(
+                json.dumps(
+                    {
+                        "id": "INT-BAD-001",
+                        "type": "unknown",
+                        "status": "bogus",
+                        "title": "Bad",
+                        "summary": "Bad",
+                        "source": "README.md:1",
+                        "requirement_refs": ["REQ-MISSING"],
+                        "design_refs": ["DES-MISSING"],
+                        "fact_refs": ["F999"],
+                        "evidence": ".plan/_private/demo/raw.log",
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (topic_dir / "interview.edges.jsonl").write_text(
+                json.dumps({"from": "INT-BAD-001", "to": "REQ-MISSING", "type": "scenario_for"}) + "\n",
+                encoding="utf-8",
+            )
+            result = self.run_validator(project)
+            self.assertNotEqual(result.returncode, 0)
+            for expected in [
+                "Invalid interview node type",
+                "Invalid interview status",
+                "references missing requirement",
+                "references missing design",
+                "references missing fact",
+                "must use interview.md#heading",
+                "Invalid interview edge type",
+                "Direct private artifact reference",
+            ]:
+                self.assertIn(expected, result.stdout)
+
     def test_late_phase_dependency_fails(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)

@@ -75,7 +75,7 @@ export type DashboardOverview = {
 	health: HealthReport;
 };
 
-export type DocumentKind = "proposal" | "requirements" | "design" | "plan" | "adr" | "evidence" | "file";
+export type DocumentKind = "proposal" | "interview" | "requirements" | "design" | "plan" | "adr" | "evidence" | "file";
 
 export type DashboardDocument = {
 	id: string;
@@ -100,6 +100,8 @@ export type GraphRecordSource =
 	| "requirements.edges"
 	| "design.nodes"
 	| "design.edges"
+	| "interview.nodes"
+	| "interview.edges"
 	| "adr.nodes"
 	| "adr.edges";
 

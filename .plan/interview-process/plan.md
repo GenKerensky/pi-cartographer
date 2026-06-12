@@ -103,7 +103,7 @@ Do not implement validation or UI behavior in this phase. Keep this phase limite
 
 ### Phase P1 — Interview Artifact Validation
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P0
 - **Unlocks:** P2
 - **Primary references:** `skills/plan/scripts/manage_jsonl.ts:701`, `skills/plan/scripts/validate_planning_graph.py:695`, `dashboard/src/server/artifact-reader.ts:211`, `tests/manage_jsonl.test.ts:238`, `tests/test_validate_planning_graph.py:185`, `REQ-INT-003`, `DES-DEC-002`
@@ -120,16 +120,16 @@ Make interview artifacts durable and mechanically checkable: `interview.md`, `in
 
 #### Checklist
 
-- [ ] **P1.T1** Extend `skills/plan/scripts/manage_jsonl.ts` topic validation to read and validate optional `interview.nodes.jsonl` and `interview.edges.jsonl`.
-- [ ] **P1.T2** Extend `skills/plan/scripts/validate_planning_graph.py` to validate interview-to-requirement/design references when interview artifacts are present.
-- [ ] **P1.T3** Add read-only artifact summary support for interview nodes/edges in `extensions/cartographer-tools.ts` and dashboard/server artifact readers if they enumerate topic artifact types.
-- [ ] **P1.T4** Add unit tests covering valid interview artifacts, unresolved references, invalid edge types, and private-path rejection.
+- [x] **P1.T1** Extend `skills/plan/scripts/manage_jsonl.ts` topic validation to read and validate optional `interview.nodes.jsonl` and `interview.edges.jsonl`.
+- [x] **P1.T2** Extend `skills/plan/scripts/validate_planning_graph.py` to validate interview-to-requirement/design references when interview artifacts are present.
+- [x] **P1.T3** Add read-only artifact summary support for interview nodes/edges in `extensions/cartographer-tools.ts` and dashboard/server artifact readers if they enumerate topic artifact types.
+- [x] **P1.T4** Add unit tests covering valid interview artifacts, unresolved references, invalid edge types, and private-path rejection.
 
 #### Validation
 
-- [ ] **P1.V1** Run `node --experimental-strip-types skills/plan/scripts/manage_jsonl.ts validate-topic --root "$PWD" --topic interview-process --json`; expected result: topic validation passes with interview artifacts absent or present.
-- [ ] **P1.V2** Run `python -m unittest tests.test_validate_planning_graph`; expected result: planning graph validation tests pass.
-- [ ] **P1.V3** Run `npm run test:ts -- tests/manage_jsonl.test.ts`; expected result: TypeScript JSONL validation tests pass.
+- [x] **P1.V1** Run `node --experimental-strip-types skills/plan/scripts/manage_jsonl.ts validate-topic --root "$PWD" --topic interview-process --json`; expected result: topic validation passes with interview artifacts absent or present.
+- [x] **P1.V2** Run `python -m unittest tests.test_validate_planning_graph`; expected result: planning graph validation tests pass.
+- [x] **P1.V3** Run `npm run test:ts -- tests/manage_jsonl.test.ts`; expected result: TypeScript JSONL validation tests pass.
 
 #### Exit Criteria
 

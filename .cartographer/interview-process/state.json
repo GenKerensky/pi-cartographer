@@ -5,11 +5,11 @@
   "source_refs": {
     "plan_md": {
       "path": ".plan/interview-process/plan.md",
-      "sha256": "sha256:1296400845e5bea2727fe68c9eb89834053ad53b773c1e7de617495e1c8fcef8"
+      "sha256": "sha256:e2b90183b365753f3f2eb877fcb99f286c3a01b8d962bfa5676ee9cfe7691de9"
     },
     "plan_nodes": {
       "path": ".plan/interview-process/plan.nodes.jsonl",
-      "sha256": "sha256:2c5562a8e06fb2f543655c0fdd59e947eda08eddafbf18d2e589fd0bafb0911e"
+      "sha256": "sha256:5aae515a08af6d861f8b7abe5b1d9fcacc339c914f239380920eae1853d24fee"
     },
     "plan_edges": {
       "path": ".plan/interview-process/plan.edges.jsonl",
@@ -17,82 +17,83 @@
     },
     "receipts": {
       "path": ".plan/interview-process/receipts.jsonl",
-      "sha256": "sha256:e27bbf28356d875d8bed7cd15c28213d7a5edb0e8d8a90d8b12cee15ea1a81cd"
+      "sha256": "sha256:f664dcefa217c0bfeec832644b1ea6f3bd228393faf0686044d369b1800a17d8"
     },
     "context_packs": {
       "path": ".plan/interview-process/context-packs.jsonl",
-      "sha256": "sha256:b4b9ee083bffd019c7b62770fc8cf9ce547463bbf24010c6b1a6980cb3c1e54c"
+      "sha256": "sha256:23591eed8c85ac7d1cc09eba1123c4634ae5f6992538b9909e9ab2b36ffe3ce2"
     }
   },
   "current_phase_id": "P0",
   "active_task_ids": [],
   "active_validation_ids": [],
   "next_action": {
-    "id": "P0.T1",
+    "id": "P1.T1",
     "kind": "implementation-task",
-    "summary": "Update README workflow docs for proposal → research → interview → requirements/design → plan → implement.",
-    "phase_id": "P0",
-    "task_id": "P0.T1",
+    "summary": "Extend TypeScript topic validation to read and validate optional interview.nodes.jsonl and interview.edges.jsonl.",
+    "phase_id": "P1",
+    "task_id": "P1.T1",
     "files_to_inspect": [
-      "README.md",
-      "skills/proposal/SKILL.md",
-      "skills/plan/SKILL.md",
-      "skills/implement/SKILL.md",
-      "tests/test_workflow_docs.py",
+      "skills/plan/scripts/manage_jsonl.ts",
+      "skills/plan/scripts/validate_planning_graph.py",
+      "extensions/cartographer-tools.ts",
+      "dashboard/src/server/artifact-reader.ts",
+      "tests/manage_jsonl.test.ts",
+      "tests/test_validate_planning_graph.py",
       ".plan/interview-process/plan.md"
     ]
   },
   "working_set": {
     "write_allowed": [
       {
-        "path": "README.md",
-        "reason": "P0 workflow documentation"
+        "path": "skills/plan/scripts/manage_jsonl.ts",
+        "reason": "P1 interview artifact validation"
       },
       {
-        "path": "skills/proposal/SKILL.md",
-        "reason": "P0 proposal next-artifacts guidance"
+        "path": "skills/plan/scripts/validate_planning_graph.py",
+        "reason": "P1 interview graph validation"
       },
       {
-        "path": "skills/plan/SKILL.md",
-        "reason": "P0 plan input guidance"
+        "path": "extensions/cartographer-tools.ts",
+        "reason": "P1 artifact summaries"
       },
       {
-        "path": "skills/implement/SKILL.md",
-        "reason": "P0 implementation input guidance"
+        "path": "dashboard/src/server/artifact-reader.ts",
+        "reason": "P1 artifact reader support if enumerated"
       },
       {
-        "path": "tests/test_workflow_docs.py",
-        "reason": "P0 documentation tests"
+        "path": "tests/manage_jsonl.test.ts",
+        "reason": "P1 validation tests"
+      },
+      {
+        "path": "tests/test_validate_planning_graph.py",
+        "reason": "P1 graph validation tests"
       },
       {
         "path": ".plan/interview-process/plan.md",
-        "reason": "P0 plan status/checklist updates"
+        "reason": "P1 status updates"
       },
       {
         "path": ".plan/interview-process/plan.nodes.jsonl",
-        "reason": "P0 plan node status updates"
+        "reason": "P1 status updates"
       },
       {
         "path": ".plan/interview-process/receipts.jsonl",
-        "reason": "P0 validation receipts"
+        "reason": "P1 receipts"
       },
       {
         "path": ".plan/interview-process/context-packs.jsonl",
-        "reason": "P0 context pack"
+        "reason": "P1 context pack"
       }
     ],
     "read_only": [
       {
-        "path": ".plan/interview-process/proposal.md",
-        "reason": "approved scope reference"
-      },
-      {
         "path": ".plan/interview-process/requirements.md",
-        "reason": "requirements reference"
+        "reason": "requirement/design reference"
       },
       {
         "path": ".plan/interview-process/design.md",
-        "reason": "design reference"
+        "reason": "requirement/design reference"
       },
       {
         "path": ".plan/interview-process/plan.edges.jsonl",
@@ -115,10 +116,18 @@
     "receipt:P0:validation:2026-06-12T21:43:51+00:00",
     "receipt:P0:validation:2026-06-12T21:44:02+00:00",
     "receipt:P0:validation:2026-06-12T21:44:48+00:00",
-    "receipt:interview-process:audit:2026-06-12T21:48:03Z"
+    "receipt:interview-process:audit:2026-06-12T21:48:03Z",
+    "receipt:P1:validation:2026-06-12T21:55:08+00:00",
+    "receipt:P1:validation:2026-06-12T21:55:13+00:00",
+    "receipt:P1:validation:2026-06-12T21:55:22+00:00",
+    "receipt:P1:validation:2026-06-12T21:55:34+00:00",
+    "receipt:P1:validation:2026-06-12T21:55:48+00:00",
+    "receipt:P1:validation:2026-06-12T22:05:59+00:00",
+    "receipt:interview-process:audit:2026-06-12T22:05:51Z"
   ],
   "journal_refs": [
-    "journal:20260612T214817Z:compact"
+    "journal:20260612T214817Z:compact",
+    "journal:20260612T220610Z:compact"
   ],
   "resume": {
     "template_id": "cartographer.single_writer.resume.v1",
@@ -138,10 +147,10 @@
       "stale generated snippets"
     ]
   },
-  "updated_at": "2026-06-12T21:48:17Z",
+  "updated_at": "2026-06-12T22:06:10Z",
   "stale_reason": "Implementation compact requested after artifact updates.",
   "compaction": {
-    "trigger": "phase P0 complete",
-    "compacted_at": "2026-06-12T21:48:17Z"
+    "trigger": "phase P1 complete",
+    "compacted_at": "2026-06-12T22:06:10Z"
   }
 }

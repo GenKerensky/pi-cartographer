@@ -52,7 +52,7 @@ type JsonlReadResult = {
 	issues: HealthIssue[];
 };
 
-type TopicDocumentKind = "proposal" | "requirements" | "design" | "plan";
+type TopicDocumentKind = "proposal" | "interview" | "requirements" | "design" | "plan";
 
 type GraphFileSpec = {
 	source: GraphRecordSource;
@@ -189,14 +189,21 @@ export async function readTopicDocuments(
 	topic: string,
 ): Promise<{ documents: DashboardDocument[]; issues: HealthIssue[] }> {
 	const proposal = await topicDocument(root, topic, "proposal");
+	const interview = await topicDocument(root, topic, "interview");
 	const requirements = await topicDocument(root, topic, "requirements");
 	const design = await topicDocument(root, topic, "design");
 	const plan = await topicDocument(root, topic, "plan");
 	return {
-		documents: [proposal.document, requirements.document, design.document, plan.document].filter(
+		documents: [proposal.document, interview.document, requirements.document, design.document, plan.document].filter(
 			(document): document is DashboardDocument => document !== undefined,
 		),
-		issues: dedupeIssues([...proposal.issues, ...requirements.issues, ...design.issues, ...plan.issues]),
+		issues: dedupeIssues([
+			...proposal.issues,
+			...interview.issues,
+			...requirements.issues,
+			...design.issues,
+			...plan.issues,
+		]),
 	};
 }
 
@@ -212,6 +219,8 @@ function topicGraphSpecs(topic: string): GraphFileSpec[] {
 		{ source: "requirements.edges", relativePath: topicPath(topic, "requirements.edges.jsonl"), kind: "edge" },
 		{ source: "design.nodes", relativePath: topicPath(topic, "design.nodes.jsonl"), kind: "node" },
 		{ source: "design.edges", relativePath: topicPath(topic, "design.edges.jsonl"), kind: "edge" },
+		{ source: "interview.nodes", relativePath: topicPath(topic, "interview.nodes.jsonl"), kind: "node" },
+		{ source: "interview.edges", relativePath: topicPath(topic, "interview.edges.jsonl"), kind: "edge" },
 	];
 }
 
