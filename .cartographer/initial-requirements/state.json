@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "topic": "initial-requirements",
+  "source_status": "hashes-valid",
+  "source_refs": {
+    "plan_md": {
+      "path": ".plan/initial-requirements/plan.md",
+      "sha256": "sha256:7618cc11f9421f18138f7e729cd60f0cf34eaa84bc438f8ee9d039534a1870dc"
+    },
+    "plan_nodes": {
+      "path": ".plan/initial-requirements/plan.nodes.jsonl",
+      "sha256": "sha256:7913018704098b9223caad72397fb126886935e1975bb16e404159dc498e4505"
+    },
+    "plan_edges": {
+      "path": ".plan/initial-requirements/plan.edges.jsonl",
+      "sha256": "sha256:8e5f3c758cfb985180f7d280e51926c400b88378fb71e9b2b8995eda874f6701"
+    },
+    "receipts": {
+      "path": ".plan/initial-requirements/receipts.jsonl",
+      "sha256": "sha256:0d64f3eb33d22800b7b50854ca12fc93c3c0306e360911c284ae4fa96e7dd1a3"
+    },
+    "context_packs": {
+      "path": ".plan/initial-requirements/context-packs.jsonl",
+      "sha256": "sha256:34243dca2745bedf22ecb19c599d4885249d178098058bf20255457e160f9805"
+    }
+  },
+  "current_phase_id": "P0",
+  "active_task_ids": [],
+  "active_validation_ids": [],
+  "next_action": {
+    "id": "next:P0.orient",
+    "kind": "orient",
+    "summary": "Load state, selected journal records, and authoritative .plan artifacts before editing.",
+    "phase_id": "P0"
+  },
+  "working_set": {
+    "write_allowed": [
+      {
+        "path": "skills/plan/scripts/requirements_records.py",
+        "reason": "Add init subcommand and shared skeleton."
+      },
+      {
+        "path": ".plan/initial-requirements/plan.md",
+        "reason": "Update P0 status/checklist after validation."
+      },
+      {
+        "path": ".plan/initial-requirements/plan.nodes.jsonl",
+        "reason": "Mirror P0 status/checklist."
+      },
+      {
+        "path": ".plan/initial-requirements/receipts.jsonl",
+        "reason": "Record validation receipts."
+      },
+      {
+        "path": ".cartographer/initial-requirements/**",
+        "reason": "Maintain implementation state."
+      }
+    ],
+    "read_only": [
+      {
+        "path": "tests/test_requirements_records.py",
+        "reason": "Existing behavior to preserve; P1 will edit tests."
+      },
+      {
+        "path": ".plan/initial-requirements/proposal.md",
+        "reason": "Scope reference."
+      }
+    ],
+    "forbidden": [
+      {
+        "path": "docs/requirements.md",
+        "reason": "Do not create or mutate real durable requirements doc during implementation smoke tests."
+      },
+      {
+        "path": ".plan/_private/**",
+        "reason": "Raw private inputs off limits."
+      }
+    ]
+  },
+  "known_failures": [],
+  "last_validation_receipt_ids": [
+    "receipt:P0:validation:2026-06-12T04:05:44+00:00",
+    "receipt:P0:validation:2026-06-12T04:06:57+00:00",
+    "receipt:initial-requirements:audit:2026-06-12T04:08:08Z"
+  ],
+  "journal_refs": ["journal:20260612T040819Z:compact"],
+  "resume": {
+    "template_id": "cartographer.single_writer.resume.v1",
+    "resume_order": [
+      ".cartographer/initial-requirements/state.json",
+      ".cartographer/initial-requirements/journal.jsonl",
+      ".plan/initial-requirements/plan.md",
+      ".plan/initial-requirements/receipts.jsonl"
+    ],
+    "expected_first_response": ["current_phase", "next_action", "files_to_inspect"],
+    "must_ignore": ["prior chat speculation", "stale generated snippets"]
+  },
+  "updated_at": "2026-06-12T04:08:19Z",
+  "compaction": {
+    "trigger": "phase-end-P0",
+    "compacted_at": "2026-06-12T04:08:19Z"
+  }
+}

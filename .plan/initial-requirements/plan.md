@@ -56,7 +56,7 @@ flowchart TD
 
 ### Phase P0 — CLI Contract and Skeleton
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** none
 - **Unlocks:** P1
 - **Primary references:** `file:skills/plan/scripts/requirements_records.py`, `file:package.json`, [F002], [F003], [F006], [F007]
@@ -77,16 +77,16 @@ Add the focused durable requirements initialization command without changing fol
 
 #### Checklist
 
-- [ ] **P0.T1** Refactor the durable requirements header/skeleton helper so both `init` and `fold` use the same content when creating a missing durable file.
-- [ ] **P0.T2** Add `requirements_records.py init` with `--root` and `--json`, intentionally not requiring `--topic`.
-- [ ] **P0.T3** Implement idempotent no-overwrite behavior for existing `docs/requirements.md`.
-- [ ] **P0.T4** Return structured output with stable repo-relative `path`, `created`, `ok`, and message/reason fields.
-- [ ] **P0.T5** Run a manual smoke check against a temporary root, not the real repository docs.
+- [x] **P0.T1** Refactor the durable requirements header/skeleton helper so both `init` and `fold` use the same content when creating a missing durable file.
+- [x] **P0.T2** Add `requirements_records.py init` with `--root` and `--json`, intentionally not requiring `--topic`.
+- [x] **P0.T3** Implement idempotent no-overwrite behavior for existing `docs/requirements.md`.
+- [x] **P0.T4** Return structured output with stable repo-relative `path`, `created`, `ok`, and message/reason fields.
+- [x] **P0.T5** Run a manual smoke check against a temporary root, not the real repository docs.
 
 #### Validation
 
-- [ ] **P0.V1** Run `python -m py_compile skills/plan/scripts/requirements_records.py` and confirm syntax passes.
-- [ ] **P0.V2** Run `tmp=$(mktemp -d) && python skills/plan/scripts/requirements_records.py init --root "$tmp" --json && test -f "$tmp/docs/requirements.md"` and confirm it creates the durable requirements document in the temp root.
+- [x] **P0.V1** Run `python -m py_compile skills/plan/scripts/requirements_records.py` and confirm syntax passes.
+- [x] **P0.V2** Run `tmp=$(mktemp -d) && python skills/plan/scripts/requirements_records.py init --root "$tmp" --json && test -f "$tmp/docs/requirements.md"` and confirm it creates the durable requirements document in the temp root.
 
 #### Exit Criteria
 

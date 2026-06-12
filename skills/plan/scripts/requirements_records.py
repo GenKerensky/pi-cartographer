@@ -48,11 +48,44 @@ def durable_path(root: Path, requirement: dict[str, Any], split_domain: bool) ->
     return root / "docs" / "requirements.md"
 
 
+def initial_requirements_content(path: Path) -> str:
+    title = "Requirements" if path.name == "requirements.md" else f"Requirements: {path.stem}"
+    return (
+        f"# {title}\n\n"
+        "This file contains durable requirements folded from accepted Cartographer topic deltas.\n\n"
+        "## Purpose\n\n"
+        "Describe the stable behavioral requirements this project currently satisfies.\n\n"
+        "## Requirements\n\n"
+        "Durable requirement blocks use stable `REQ-*` identifiers and may be folded from "
+        "`.plan/<topic>/requirements.nodes.jsonl`.\n\n"
+    )
+
+
 def ensure_header(path: Path) -> str:
     if path.exists():
         return path.read_text(encoding="utf-8")
-    title = "Requirements" if path.name == "requirements.md" else f"Requirements: {path.stem}"
-    return f"# {title}\n\nThis file contains durable requirements folded from accepted Cartographer topic deltas.\n\n"
+    return initial_requirements_content(path)
+
+
+def init_requirements(root: Path) -> dict[str, Any]:
+    path = root / "docs" / "requirements.md"
+    relative = str(path.relative_to(root))
+    if path.exists():
+        return {
+            "ok": True,
+            "path": relative,
+            "created": False,
+            "reason": "exists",
+            "message": "Durable requirements document already exists",
+        }
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(initial_requirements_content(path), encoding="utf-8")
+    return {
+        "ok": True,
+        "path": relative,
+        "created": True,
+        "message": "Created durable requirements document",
+    }
 
 
 def parse_blocks(text: str) -> dict[str, tuple[int, int]]:
@@ -203,6 +236,11 @@ def validate_fold(root: Path, topic: str) -> dict[str, Any]:
 def main() -> int:
     parser = argparse.ArgumentParser()
     sub = parser.add_subparsers(dest="command", required=True)
+
+    init_parser = sub.add_parser("init")
+    init_parser.add_argument("--root", default=".")
+    init_parser.add_argument("--json", action="store_true")
+
     for name in ["fold", "validate-fold"]:
         p = sub.add_parser(name)
         p.add_argument("--root", default=".")
@@ -212,11 +250,14 @@ def main() -> int:
         p.add_argument("--receipt-id", action="append", default=[])
     args = parser.parse_args()
     root = Path(args.root).resolve()
-    result = (
-        fold(root, args.topic, args.split_domain, args.receipt_id)
-        if args.command == "fold"
-        else validate_fold(root, args.topic)
-    )
+    if args.command == "init":
+        result = init_requirements(root)
+    else:
+        result = (
+            fold(root, args.topic, args.split_domain, args.receipt_id)
+            if args.command == "fold"
+            else validate_fold(root, args.topic)
+        )
     if args.json:
         print(json.dumps(result, indent=2, sort_keys=True))
     else:
