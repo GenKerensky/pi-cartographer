@@ -1,0 +1,155 @@
+{
+  "schema_version": 1,
+  "topic": "proposal-design-split",
+  "source_status": "hashes-valid",
+  "source_refs": {
+    "plan_md": {
+      "path": ".plan/proposal-design-split/plan.md",
+      "sha256": "sha256:990ea1a5308068531f308b1f45c22fb650bc96addf672c3f34264515bb87ba75"
+    },
+    "plan_nodes": {
+      "path": ".plan/proposal-design-split/plan.nodes.jsonl",
+      "sha256": "sha256:53b67f492c8d260412a2fdcafd737a6e97f74744c051f1f10572be24e0f0e950"
+    },
+    "plan_edges": {
+      "path": ".plan/proposal-design-split/plan.edges.jsonl",
+      "sha256": "sha256:3da1108c446eb11ce2e9d9dd3b3abdab3e4449e6c60f6c55384128dcf455e598"
+    },
+    "receipts": {
+      "path": ".plan/proposal-design-split/receipts.jsonl",
+      "sha256": "sha256:0410d3b1375ef4be8bdd860c2024facf6e14e28d8d14d735d17dcd70270d3f62"
+    },
+    "context_packs": {
+      "path": ".plan/proposal-design-split/context-packs.jsonl",
+      "sha256": "sha256:b67b1b47addf72fdd55458573bff8a035ff5f2775cc79468e98363582277a2ed"
+    }
+  },
+  "current_phase_id": "P0",
+  "active_task_ids": [],
+  "active_validation_ids": [],
+  "next_action": {
+    "id": "next:P3.T1",
+    "kind": "task",
+    "summary": "Update workflow skill docs and tests to consume requirements/design artifacts and preserve traceability.",
+    "phase_id": "P3",
+    "task_ids": ["P3.T1", "P3.T2", "P3.T3", "P3.T4", "P3.T5", "P3.T6"]
+  },
+  "working_set": {
+    "write_allowed": [
+      {
+        "path": "skills/plan/scripts/manage_jsonl.ts",
+        "reason": "Add design graph validation to TS topic validator."
+      },
+      {
+        "path": "skills/plan/scripts/validate_planning_graph.py",
+        "reason": "Add design graph validation to Python planning validator."
+      },
+      {
+        "path": "tests/manage_jsonl.test.ts",
+        "reason": "Add temp-root TS tests for design graph validation."
+      },
+      {
+        "path": "tests/test_validate_planning_graph.py",
+        "reason": "Add temp-root Python tests for design graph validation."
+      },
+      {
+        "path": ".plan/proposal-design-split/plan.md",
+        "reason": "Update P2 status/checklist after evidence."
+      },
+      {
+        "path": ".plan/proposal-design-split/plan.nodes.jsonl",
+        "reason": "Mirror P2 status/checklist after evidence."
+      },
+      {
+        "path": ".plan/proposal-design-split/receipts.jsonl",
+        "reason": "Record P2 validation receipts."
+      },
+      {
+        "path": ".plan/proposal-design-split/context-packs.jsonl",
+        "reason": "Record P2 context pack."
+      },
+      {
+        "path": ".cartographer/proposal-design-split/**",
+        "reason": "Maintain compact execution state via cartographer_state."
+      }
+    ],
+    "read_only": [
+      {
+        "path": ".plan/proposal-design-split/proposal.md",
+        "reason": "Phase rationale."
+      },
+      {
+        "path": ".plan/proposal-design-split/facts.nodes.jsonl",
+        "reason": "Source-backed context."
+      },
+      {
+        "path": ".plan/proposal-design-split/facts.edges.jsonl",
+        "reason": "Source-backed context."
+      }
+    ],
+    "forbidden": [
+      {
+        "path": ".plan/_private/**",
+        "reason": "Raw private inputs are never loaded into implementation context."
+      }
+    ]
+  },
+  "known_failures": [],
+  "last_validation_receipt_ids": [
+    "receipt:P0:validation:2026-06-11T06:15:35+00:00",
+    "receipt:proposal-design-split:P0-auditor-pass:2026-06-11T06:16:00Z",
+    "receipt:P1:validation:2026-06-11T13:18:16+00:00",
+    "receipt:P1:validation:2026-06-11T13:18:21+00:00",
+    "receipt:P2:validation:2026-06-11T13:24:39+00:00",
+    "receipt:P2:validation:2026-06-11T13:24:49+00:00",
+    "receipt:P2:validation:2026-06-11T13:30:32+00:00",
+    "receipt:P2:validation:2026-06-11T13:32:29+00:00",
+    "receipt:proposal-design-split:P2-auditor-pass:2026-06-11T13:31:00Z",
+    "receipt:P3:validation:2026-06-11T13:35:03+00:00",
+    "receipt:P3:validation:2026-06-11T13:35:17+00:00",
+    "receipt:P3:validation:2026-06-11T13:37:22+00:00",
+    "receipt:proposal-design-split:P3-auditor-pass:2026-06-11T13:36:00Z",
+    "receipt:P4:validation:2026-06-11T13:40:20+00:00",
+    "receipt:P4:validation:2026-06-11T13:42:35+00:00",
+    "receipt:proposal-design-split:P4-auditor-pass:2026-06-11T13:41:00Z",
+    "receipt:P5:validation:2026-06-11T13:47:36+00:00",
+    "receipt:P5:validation:2026-06-11T13:47:21+00:00",
+    "receipt:P5:validation:2026-06-11T13:50:28+00:00",
+    "receipt:proposal-design-split:P5-auditor-pass:2026-06-11T13:49:00Z",
+    "receipt:P6:validation:2026-06-11T13:52:16+00:00",
+    "receipt:P6:validation:2026-06-11T13:52:24+00:00",
+    "receipt:P6:validation:2026-06-11T13:55:41+00:00",
+    "receipt:P6:validation:2026-06-11T13:56:25+00:00",
+    "receipt:proposal-design-split:P6-final-auditor-pass:2026-06-11T13:54:00Z",
+    "receipt:P6:validation:2026-06-11T22:50:47+00:00",
+    "receipt:P6:validation:2026-06-11T22:50:53+00:00",
+    "receipt:P6:validation:2026-06-11T22:51:30+00:00",
+    "receipt:proposal-design-split:P6-refresh-auditor-pass:2026-06-11T22:55:00Z"
+  ],
+  "journal_refs": [
+    "journal:20260611T061742Z:compact",
+    "journal:20260611T132105Z:compact",
+    "journal:20260611T133243Z:compact",
+    "journal:20260611T133732Z:compact",
+    "journal:20260611T134246Z:compact",
+    "journal:20260611T135042Z:compact",
+    "journal:20260611T135642Z:compact"
+  ],
+  "resume": {
+    "template_id": "cartographer.single_writer.resume.v1",
+    "resume_order": [
+      ".cartographer/proposal-design-split/state.json",
+      ".cartographer/proposal-design-split/journal.jsonl",
+      ".plan/proposal-design-split/plan.md",
+      ".plan/proposal-design-split/receipts.jsonl"
+    ],
+    "expected_first_response": ["current_phase", "next_action", "files_to_inspect"],
+    "must_ignore": ["prior chat speculation", "stale generated snippets"]
+  },
+  "updated_at": "2026-06-11T22:53:37Z",
+  "compaction": {
+    "trigger": "final-implementation",
+    "compacted_at": "2026-06-11T13:56:42Z"
+  },
+  "stale_reason": "P1 plan/status/receipts/context packs changed after phase-end validation; regenerating compact state from authoritative artifacts."
+}

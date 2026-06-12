@@ -1,0 +1,47 @@
+{"from":"F001","to":"S001","type":"supported_by","evidence":"User explicitly requested a lightweight proposal and separate design phase.","confidence":"high"}
+{"from":"F002","to":"S001","type":"supported_by","evidence":"User explicitly requested a requirements phase between proposal and design.","confidence":"high"}
+{"from":"F003","to":"S001","type":"supported_by","evidence":"User explicitly requested current proposal contents, build process, and detailed research stay the same but split.","confidence":"high"}
+{"from":"F004","to":"S002","type":"supported_by","evidence":"OpenSpec concepts describe specs/ as source of truth and changes/ as proposed modifications.","confidence":"high"}
+{"from":"F005","to":"S002","type":"supported_by","evidence":"OpenSpec concepts Artifacts section documents proposal -> specs -> design -> tasks -> implement.","confidence":"high"}
+{"from":"F005","to":"S003","type":"supported_by","evidence":"OpenSpec getting-started artifact table documents proposal, specs, design, and tasks.","confidence":"high"}
+{"from":"F006","to":"S002","type":"supported_by","evidence":"OpenSpec concepts Delta Specs section documents ADDED/MODIFIED/REMOVED Requirements.","confidence":"high"}
+{"from":"F006","to":"S003","type":"supported_by","evidence":"OpenSpec getting-started explains ADDED, MODIFIED, and REMOVED requirements.","confidence":"high"}
+{"from":"F007","to":"S002","type":"supported_by","evidence":"OpenSpec concepts says specs are behavior contracts and avoid implementation details.","confidence":"high"}
+{"from":"F008","to":"S004","type":"supported_by","evidence":"Proposal skill skeleton and procedure include ## Design in proposal.md.","confidence":"high"}
+{"from":"F009","to":"S005","type":"supported_by","evidence":"Plan skill outputs list plan.md and plan graph JSONL artifacts.","confidence":"high"}
+{"from":"F010","to":"S006","type":"supported_by","evidence":"Implement skill states .plan artifacts remain authoritative.","confidence":"high"}
+{"from":"F011","to":"S008","type":"supported_by","evidence":"Validators read topic JSONL, proposal, plan, receipts, and context-packs.","confidence":"high"}
+{"from":"F012","to":"S001","type":"supported_by","evidence":"User included research recommending OpenSpec-compatible adapters without hard dependency.","confidence":"high"}
+{"from":"F013","to":"S001","type":"supported_by","evidence":"User included example graph-backed requirement records with stable IDs and trace links.","confidence":"high"}
+{"from":"F008","to":"file:skills/proposal/SKILL.md","type":"applies_to","evidence":"Current proposal workflow is the primary file to change.","confidence":"high"}
+{"from":"F009","to":"file:skills/plan/SKILL.md","type":"applies_to","evidence":"Plan generation should consume new requirements/design artifacts.","confidence":"high"}
+{"from":"F010","to":"file:skills/implement/SKILL.md","type":"applies_to","evidence":"Implementation should preserve existing authoritative plan/receipt semantics.","confidence":"medium"}
+{"from":"F011","to":"file:skills/plan/scripts/manage_jsonl.ts","type":"applies_to","evidence":"JSONL validator likely needs requirements/design checks.","confidence":"medium"}
+{"from":"F011","to":"file:skills/plan/scripts/validate_planning_graph.py","type":"applies_to","evidence":"Planning graph validator likely needs cross-artifact traceability checks.","confidence":"medium"}
+{"from":"F012","to":"external:openspec-concepts","type":"related_to","evidence":"OpenSpec docs provide the compatible external shape.","confidence":"high"}
+{"from":"F013","to":"artifact:requirements.nodes.jsonl","type":"applies_to","evidence":"Requirement nodes provide the stable IDs and status fields.","confidence":"high"}
+{"from":"F013","to":"artifact:requirements.edges.jsonl","type":"applies_to","evidence":"Requirement edges provide traceability to facts, design, plan, validation, and receipts.","confidence":"high"}
+{"from":"F014","to":"S001","type":"supported_by","evidence":"User clarified topic/change equivalence and durable docs/requirements.md fold-in lifecycle.","confidence":"high"}
+{"from":"F014","to":"artifact:requirements.md","type":"applies_to","evidence":"Topic-local requirements.md is the change delta artifact.","confidence":"high"}
+{"from":"F014","to":"artifact:docs-requirements","type":"applies_to","evidence":"Accepted deltas fold into durable docs/requirements.md.","confidence":"high"}
+{"from":"F014","to":"dir:docs/adr","type":"related_to","evidence":"docs/requirements.md should be durable in the same project-docs spirit as docs/adr.","confidence":"medium"}
+{"from":"F015","to":"S001","type":"supported_by","evidence":"User explicitly decided to add design JSONL in the first implementation.","confidence":"high"}
+{"from":"F015","to":"artifact:design.nodes.jsonl","type":"applies_to","evidence":"Design nodes are required for structured design decisions and requirement references.","confidence":"high"}
+{"from":"F015","to":"artifact:design.edges.jsonl","type":"applies_to","evidence":"Design edges are required to encode design-to-requirement and design-to-plan traceability.","confidence":"high"}
+{"from":"F015","to":"artifact:requirements.nodes.jsonl","type":"related_to","evidence":"Design graph records should reference requirement nodes.","confidence":"high"}
+{"from":"F016","to":"S009","type":"supported_by","evidence":"Workflows docs describe verify and archive lifecycle.","confidence":"high"}
+{"from":"F016","to":"S010","type":"supported_by","evidence":"Commands docs describe sync and archive behavior.","confidence":"high"}
+{"from":"F016","to":"S011","type":"supported_by","evidence":"CLI docs describe openspec archive validation, merge, and archive movement.","confidence":"high"}
+{"from":"F017","to":"S011","type":"supported_by","evidence":"CLI docs list agent-compatible JSON commands and schema/status instructions.","confidence":"high"}
+{"from":"F017","to":"S012","type":"supported_by","evidence":"Customization docs define schema.yaml artifact fields and dependencies.","confidence":"high"}
+{"from":"F018","to":"S002","type":"supported_by","evidence":"Concepts docs describe domains, specs, scenarios, artifacts, delta specs, and archive.","confidence":"high"}
+{"from":"F018","to":"S010","type":"supported_by","evidence":"Commands docs note sync parses ADDED/MODIFIED/REMOVED/RENAMED sections.","confidence":"high"}
+{"from":"F018","to":"S011","type":"supported_by","evidence":"CLI docs describe validate/status/schema/archive JSON-capable operations.","confidence":"high"}
+{"from":"F016","to":"artifact:docs-requirements","type":"applies_to","evidence":"Durable requirements fold should mirror sync/archive lifecycle.","confidence":"high"}
+{"from":"F018","to":"artifact:requirements.nodes.jsonl","type":"applies_to","evidence":"Requirements schema should preserve fields required for future OpenSpec import/export.","confidence":"high"}
+{"from":"F019","to":"S001","type":"supported_by","evidence":"User explicitly clarified small non-core-workflow changes do not need requirements.","confidence":"high"}
+{"from":"F019","to":"artifact:requirements.md","type":"constrains","evidence":"Requirements artifact is mandatory only when scope/risk warrants it.","confidence":"high"}
+{"from":"F019","to":"artifact:design.nodes.jsonl","type":"constrains","evidence":"Design graph follows requirements scope gating for non-core changes.","confidence":"high"}
+{"from":"F020","to":"S001","type":"supported_by","evidence":"User selected Decision + Alternative schema first and full traceability as fast-follow.","confidence":"high"}
+{"from":"F020","to":"artifact:design.nodes.jsonl","type":"applies_to","evidence":"Defines first implementation node types and fast-follow node types.","confidence":"high"}
+{"from":"F020","to":"artifact:design.edges.jsonl","type":"applies_to","evidence":"Defines first implementation edge types and fast-follow traceability edges.","confidence":"high"}

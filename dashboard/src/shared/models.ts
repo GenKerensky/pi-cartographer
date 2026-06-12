@@ -55,6 +55,10 @@ export type TopicSummary = {
 		factEdges: number;
 		planNodes: number;
 		planEdges: number;
+		requirementNodes: number;
+		requirementEdges: number;
+		designNodes: number;
+		designEdges: number;
 		receipts: number;
 		contextPacks: number;
 		evidenceFiles: number;
@@ -71,7 +75,7 @@ export type DashboardOverview = {
 	health: HealthReport;
 };
 
-export type DocumentKind = "proposal" | "plan" | "adr" | "evidence" | "file";
+export type DocumentKind = "proposal" | "requirements" | "design" | "plan" | "adr" | "evidence" | "file";
 
 export type DashboardDocument = {
 	id: string;
@@ -92,6 +96,10 @@ export type GraphRecordSource =
 	| "facts.edges"
 	| "plan.nodes"
 	| "plan.edges"
+	| "requirements.nodes"
+	| "requirements.edges"
+	| "design.nodes"
+	| "design.edges"
 	| "adr.nodes"
 	| "adr.edges";
 

@@ -21,7 +21,7 @@ The index lives in the current project:
 
 The indexer also ensures `.plan/_index/` and `.plan/_private/` are present in the target project's `.gitignore`, creating `.gitignore` if needed. Topic planning artifacts remain text/JSONL source-of-truth files and are not automatically ignored.
 
-Committed `.plan/<topic>/proposal.md`, `.plan/<topic>/plan.md`, related JSONL rationale artifacts, and sanitized `.plan/<topic>/evidence/` analyses are indexed in the explicit `plans` retrieval scope. They are excluded from the default `code` scope. ADR Markdown such as `docs/adr/0001-*.md` is ordinary repository documentation and is indexed in `code`/`all` scopes; ADR graph JSONL under `<adr-dir>/_graph/` should be queried with `cartographer_adr query/show/validate` rather than broad JSONL indexing. `.plan/_index/` cache files and raw `.plan/_private/` inputs are never indexed.
+Committed `.plan/<topic>/proposal.md`, `.plan/<topic>/requirements.md`, `.plan/<topic>/design.md`, `.plan/<topic>/plan.md`, related JSONL rationale artifacts, and sanitized `.plan/<topic>/evidence/` analyses are indexed in the explicit `plans` retrieval scope. They are excluded from the default `code` scope. Durable requirements Markdown such as `docs/requirements.md` or `docs/requirements/<domain>.md` and ADR Markdown such as `docs/adr/0001-*.md` are ordinary repository documentation and are indexed in `code`/`all` scopes; ADR graph JSONL under `<adr-dir>/_graph/` should be queried with `cartographer_adr query/show/validate` rather than broad JSONL indexing. `.plan/_index/` cache files and raw `.plan/_private/` inputs are never indexed.
 
 Do not place topic-specific proposal content inside `.plan/_index/`; proposals should query this shared artifact and write their own slices under `.plan/{topic}/`.
 
@@ -147,7 +147,7 @@ Node IDs are stable and typed, for example:
 Cartographer separates retrieval into three planned scopes:
 
 - `code` — default source-code retrieval over project code/docs/config, including committed docs such as `docs/adr/*.md`. This scope excludes committed `.plan/` rationale artifacts and never treats `.plan/_index/` cache files as source.
-- `plans` — explicit rationale retrieval over committed `.plan/<topic>/proposal.md`, `.plan/<topic>/plan.md`, map/fact/plan JSONL, sanitized `.plan/<topic>/evidence/` analyses, and retrieval miss logs.
+- `plans` — explicit rationale retrieval over committed `.plan/<topic>/proposal.md`, `.plan/<topic>/requirements.md`, `.plan/<topic>/design.md`, `.plan/<topic>/plan.md`, map/fact/requirements/design/plan JSONL, sanitized `.plan/<topic>/evidence/` analyses, and retrieval miss logs.
 - `all` — explicit combined retrieval for architecture review, migration, or reasoning across source and rationale.
 
 The scoped query CLI (`--scope code|plans|all`) is implemented for `query`, `context`, `slice`, and `slice-jsonl`. `code` is the default; use `plans` only for explicit rationale retrieval.

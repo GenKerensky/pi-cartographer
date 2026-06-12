@@ -31,6 +31,12 @@ Supporting artifacts, when present:
 - `.plan/{topic}/plan.nodes.jsonl`
 - `.plan/{topic}/plan.edges.jsonl`
 - `.plan/{topic}/proposal.md`
+- `.plan/{topic}/requirements.md`
+- `.plan/{topic}/requirements.nodes.jsonl`
+- `.plan/{topic}/requirements.edges.jsonl`
+- `.plan/{topic}/design.md`
+- `.plan/{topic}/design.nodes.jsonl`
+- `.plan/{topic}/design.edges.jsonl`
 - `.plan/{topic}/map.nodes.jsonl`
 - `.plan/{topic}/map.edges.jsonl`
 - `.plan/{topic}/facts.nodes.jsonl`
@@ -50,6 +56,8 @@ If the plan is missing, ask the user whether to generate it first with the `plan
 ### Source-of-truth boundaries
 
 - `.plan/{topic}/plan.md`, `plan.nodes.jsonl`, `plan.edges.jsonl`, `receipts.jsonl`, and `context-packs.jsonl` remain authoritative for planning, checkoff, validation history, and implementation handoff context.
+- For scoped changes that affect a core user workflow or comparable durable behavior, requirements/design graph artifacts are supporting behavioral/design references for implementation. Small non-core-workflow changes may skip them when the accepted proposal scope gate says they are unnecessary.
+- Topic-local requirements are change deltas; accepted deltas fold into durable `docs/requirements.md` or split durable requirements docs during finalization/archive when the plan requires it. If a plan calls for bootstrapping the durable requirements container, use `python skills/plan/scripts/requirements_records.py init --root "$PWD" --json`; it creates `docs/requirements.md` only when absent and preserves existing files. Requirement fold steps must preserve stable requirement/scenario IDs, source topic, change metadata, and receipt/audit references, and must leave a `requirements-fold` receipt or an approved `requirements-fold-skip` receipt.
 - `.cartographer/{topic}/state.json` is only compact execution/resume state.
 - `.cartographer/{topic}/journal.jsonl` is only a curated durable lessons journal.
 - `.cartographer/current.json` is git-ignored, local, non-authoritative, and safe to ignore when stale.
@@ -275,6 +283,7 @@ Provide the auditor:
 - checked checklist items;
 - unchecked validation items;
 - relevant proposal/map/fact references;
+- relevant requirement/design IDs and read-only summaries from `requirements.nodes.jsonl`, `requirements.edges.jsonl`, `design.nodes.jsonl`, and `design.edges.jsonl` when present;
 - state/journal/compaction evidence when relevant.
 
 Ask for explicit PASS/FAIL and capture the report with `cartographer_handoff auditor` or an approved fallback receipt. If the auditor rejects or any validation item fails:
@@ -387,7 +396,8 @@ Timeout/fallback receipts should include:
 ```text
 Review phase <PHASE_ID> for topic <topic> after deterministic validation receipts passed.
 Use .plan/<topic>/plan.md, plan graph artifacts, relevant proposal/map/fact summaries,
-current diff/stat, receipt IDs, and state/journal evidence when relevant.
+requirements/design graph summaries when present, current diff/stat, receipt IDs,
+and state/journal evidence when relevant.
 Return PASS/FAIL with required corrections. Stay read-only.
 ```
 

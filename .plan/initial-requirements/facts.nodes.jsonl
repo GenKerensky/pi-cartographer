@@ -1,0 +1,13 @@
+{"id":"S001","type":"source","title":"README workflow and requirements documentation","url":"file:README.md","created_at":"2026-06-11T23:31:56Z"}
+{"id":"S002","type":"source","title":"requirements_records.py fold helper","url":"file:skills/plan/scripts/requirements_records.py","created_at":"2026-06-11T23:31:59Z"}
+{"id":"S003","type":"source","title":"OpenSpec README quick start","url":"https://github.com/Fission-AI/OpenSpec","created_at":"2026-06-11T23:32:02Z"}
+{"id":"S004","type":"source","title":"requirements_records.py tests","url":"file:tests/test_requirements_records.py","created_at":"2026-06-11T23:32:05Z"}
+{"id":"F001","type":"fact","title":"Cartographer durable requirements docs are produced by folding accepted topic deltas","created_at":"2026-06-11T23:32:08Z"}
+{"id":"F002","type":"fact","title":"requirements_records.py currently exposes fold and validate-fold, not a standalone init command","created_at":"2026-06-11T23:32:15Z"}
+{"id":"F003","type":"fact","title":"requirements_records.py already contains the durable requirements header text used when fold creates a missing requirements file","created_at":"2026-06-11T23:32:21Z"}
+{"id":"F004","type":"fact","title":"Existing requirements_records tests cover fold, split-domain output, validate-fold receipts, and duplicate durable IDs","created_at":"2026-06-11T23:32:28Z"}
+{"id":"F005","type":"fact","title":"OpenSpec quick start includes an openspec init command before proposing changes","created_at":"2026-06-11T23:32:34Z"}
+{"id":"S005","type":"source","title":"OpenSpec initialization analysis evidence","url":"file:.plan/initial-requirements/evidence/openspec-init-analysis.md","created_at":"2026-06-11T23:42:32Z"}
+{"id":"S006","type":"source","title":"Cartographer OpenSpec delta evidence","url":"file:.plan/initial-requirements/evidence/cartographer-openspec-delta.md","created_at":"2026-06-11T23:42:36Z"}
+{"id":"F006","type":"fact","title":"OpenSpec init creates the OpenSpec home, specs/changes/archive containers, config, and AI integrations but not every durable spec document","created_at":"2026-06-11T23:42:40Z"}
+{"id":"F007","type":"fact","title":"The most important Cartographer delta is explicit safe idempotent bootstrap for docs/requirements.md rather than full OpenSpec-style project init","created_at":"2026-06-11T23:42:46Z"}

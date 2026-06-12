@@ -164,6 +164,56 @@ class WorkflowDocsTests(unittest.TestCase):
         self.assertIn("React Flow", text)
         self.assertIn("npm run dashboard:build", text)
 
+    def test_requirements_design_split_scope_gate_is_documented(self) -> None:
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        proposal = (ROOT / "skills/proposal/SKILL.md").read_text(encoding="utf-8")
+        plan = (ROOT / "skills/plan/SKILL.md").read_text(encoding="utf-8")
+        implement = (ROOT / "skills/implement/SKILL.md").read_text(encoding="utf-8")
+
+        combined = "\n".join([readme, proposal, plan, implement])
+
+        self.assertIn("proposal → requirements delta → design → plan → implement", readme)
+        self.assertIn("core user workflow", combined)
+        self.assertIn("docs/requirements.md", combined)
+        self.assertIn("requirements_records.py init", combined)
+        self.assertIn("preserves an existing requirements document unchanged", readme)
+        self.assertIn("does not invent product requirements", plan)
+        self.assertIn("Small changes that do not impact a core user workflow do not need", readme)
+        self.assertIn("non-core-workflow changes", proposal)
+        self.assertIn("requirements_required", proposal)
+        self.assertIn("## Scope Gate", proposal)
+        self.assertIn("## Next Artifacts", proposal)
+        self.assertIn("Description", proposal)
+        self.assertIn("Problem Statement", proposal)
+        self.assertIn("Background", proposal)
+        self.assertIn("Viability", proposal)
+        self.assertIn("requirements.nodes.jsonl", plan)
+        self.assertIn("requirements.edges.jsonl", plan)
+        self.assertIn("design.nodes.jsonl", plan)
+        self.assertIn("design.edges.jsonl", plan)
+        self.assertIn("requirements.nodes.jsonl", implement)
+        self.assertIn("requirements.edges.jsonl", implement)
+        self.assertIn("design.nodes.jsonl", implement)
+        self.assertIn("design.edges.jsonl", implement)
+        self.assertNotIn("## Design\n", proposal)
+
+    def test_specialist_prompts_use_requirement_design_summaries(self) -> None:
+        auditor = (ROOT / ".pi/agents/cartographer-auditor.md").read_text(encoding="utf-8")
+        compass = (ROOT / ".pi/agents/cartographer-compass.md").read_text(encoding="utf-8")
+        drafter = (ROOT / ".pi/agents/cartographer-drafter.md").read_text(encoding="utf-8")
+        combined = "\n".join([auditor, compass, drafter])
+
+        for needle in [
+            "requirements.nodes.jsonl",
+            "requirements.edges.jsonl",
+            "design.nodes.jsonl",
+            "design.edges.jsonl",
+        ]:
+            self.assertIn(needle, combined)
+        self.assertIn("read-only summaries", combined)
+        self.assertIn("core user workflow", compass)
+        self.assertIn("do not put detailed architecture back into proposal", drafter.lower())
+
 
 if __name__ == "__main__":
     unittest.main()

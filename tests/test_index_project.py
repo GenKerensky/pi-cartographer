@@ -57,8 +57,14 @@ class IndexProjectTests(unittest.TestCase):
             "# Guide\n\nThis guide documents the helper function and links to [index](../src/index.ts).\n",
             encoding="utf-8",
         )
+        (root / "docs/requirements.md").write_text(
+            "# Requirements\n\n### REQ-DOC-001 — Durable docs\n\nDurable requirements are indexed as project docs.\n",
+            encoding="utf-8",
+        )
         (root / "node_modules/pkg/index.js").write_text("ignored dependency\n", encoding="utf-8")
         (root / ".plan/old/proposal.md").write_text("ignored plan\n", encoding="utf-8")
+        (root / ".plan/old/requirements.md").write_text("# Delta Requirements\n\n[REQ-OLD-001]\n", encoding="utf-8")
+        (root / ".plan/old/design.md").write_text("# Delta Design\n\n[DES-OLD-001]\n", encoding="utf-8")
         (root / ".plan/old/evidence").mkdir(parents=True)
         (root / ".plan/old/evidence/session-analysis.md").write_text(
             "# Evidence\n\nSanitized evidence\n", encoding="utf-8"
@@ -73,7 +79,7 @@ class IndexProjectTests(unittest.TestCase):
 
             index_result = self.run_script("index", "--root", str(project), "--no-git-root", "--json")
             summary = json.loads(index_result.stdout)
-            self.assertEqual(summary["files_seen"], 8)
+            self.assertEqual(summary["files_seen"], 11)
             self.assertTrue(summary["gitignore_updated"])
             gitignore_text = (project / ".gitignore").read_text(encoding="utf-8")
             self.assertIn(".plan/_index/", gitignore_text)
@@ -86,10 +92,13 @@ class IndexProjectTests(unittest.TestCase):
             self.assertEqual(
                 files,
                 [
+                    ".plan/old/design.md",
                     ".plan/old/evidence/session-analysis.md",
                     ".plan/old/proposal.md",
+                    ".plan/old/requirements.md",
                     "README.md",
                     "docs/guide.md",
+                    "docs/requirements.md",
                     "package.json",
                     "src/index.ts",
                     "src/settings.ts",
@@ -205,6 +214,22 @@ class IndexProjectTests(unittest.TestCase):
             )
             plans_scope = json.loads(plans_scope_result.stdout)
             self.assertTrue(any(item["path"] == ".plan/old/proposal.md" for item in plans_scope))
+            self.assertTrue(any(item["path"] == ".plan/old/requirements.md" for item in plans_scope))
+            durable_scope_result = self.run_script(
+                "query",
+                "--root",
+                str(project),
+                "--no-git-root",
+                "--topic",
+                "durable requirements",
+                "--scope",
+                "code",
+                "--limit",
+                "5",
+                "--json",
+            )
+            durable_scope = json.loads(durable_scope_result.stdout)
+            self.assertTrue(any(item["path"] == "docs/requirements.md" for item in durable_scope))
 
             generic_result = self.run_script(
                 "query",
@@ -458,7 +483,7 @@ class IndexProjectTests(unittest.TestCase):
             self.run_script("index", "--root", str(project), "--no-git-root", "--json")
             second = json.loads(self.run_script("index", "--root", str(project), "--no-git-root", "--json").stdout)
             self.assertEqual(second["files_indexed"], 0)
-            self.assertEqual(second["files_skipped_unchanged"], 8)
+            self.assertEqual(second["files_skipped_unchanged"], 11)
 
             (project / "src/index.ts").unlink()
             third = json.loads(self.run_script("index", "--root", str(project), "--no-git-root", "--json").stdout)

@@ -1,0 +1,8 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Cartographer curated journal record",
+  "type": "object",
+  "required": ["id", "ts", "kind", "summary", "impact", "evidence", "importance", "status"],
+  "additionalProperties": false,
+  "description": "Append-only curated durable lessons/gotchas/constraints; not a transcript or receipt log."
+}

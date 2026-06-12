@@ -8,7 +8,16 @@ import type {
 	TopicArtifacts,
 } from "../shared/models.js";
 
-export type GraphLayer = "map" | "facts" | "plan" | "receipts" | "context" | "evidence" | "adr";
+export type GraphLayer =
+	| "map"
+	| "facts"
+	| "plan"
+	| "requirements"
+	| "design"
+	| "receipts"
+	| "context"
+	| "evidence"
+	| "adr";
 
 export type NormalizedGraphNode = {
 	id: string;
@@ -60,6 +69,8 @@ export type HighlightChain = {
 function layerForSource(source: string): GraphLayer {
 	if (source.startsWith("fact")) return "facts";
 	if (source.startsWith("plan")) return "plan";
+	if (source.startsWith("requirements")) return "requirements";
+	if (source.startsWith("design")) return "design";
 	if (source.startsWith("adr")) return "adr";
 	return "map";
 }
@@ -303,6 +314,8 @@ const layerX: Record<GraphLayer, number> = {
 	map: 0,
 	facts: 300,
 	plan: 600,
+	requirements: 750,
+	design: 825,
 	receipts: 900,
 	context: 900,
 	evidence: 1200,

@@ -37,6 +37,8 @@ const layerLabels: Record<GraphLayer, string> = {
 	map: "Map",
 	facts: "Facts",
 	plan: "Plan",
+	requirements: "Requirements",
+	design: "Design",
 	receipts: "Receipts",
 	context: "Context",
 	evidence: "Evidence",
@@ -45,7 +47,7 @@ const layerLabels: Record<GraphLayer, string> = {
 
 function layerVariant(layer: GraphLayer): "secondary" | "success" | "warning" | "outline" {
 	if (layer === "facts") return "success";
-	if (layer === "plan") return "secondary";
+	if (layer === "plan" || layer === "requirements" || layer === "design") return "secondary";
 	if (layer === "receipts" || layer === "evidence") return "warning";
 	return "outline";
 }

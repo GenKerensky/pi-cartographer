@@ -143,11 +143,18 @@ Start pi from the repository you want to plan against, then run the workflow as 
 flowchart TD
   A[User request] --> B[proposal]
   B --> C[.plan/topic/proposal.md]
-  C --> D[plan]
-  D --> E[.plan/topic/plan.md]
-  E --> F[implement]
-  F --> G[Validated phase commits]
+  C --> D{Core user workflow or durable behavior change?}
+  D -->|yes| E[requirements delta]
+  E --> F[design]
+  F --> G[plan]
+  D -->|small non-core change| G
+  G --> H[.plan/topic/plan.md]
+  H --> I[implement]
+  I --> J[fold accepted deltas into docs/requirements.md]
+  J --> K[Validated phase commits]
 ```
+
+For scoped changes, a Cartographer `topic` is the local change folder: proposal → requirements delta → design → plan → implement → fold accepted requirements into `docs/requirements.md`. Small changes that do not impact a core user workflow do not need requirements/design graph artifacts by default; use the same kind of scope/risk judgment as ADRs.
 
 ### Create a proposal
 
@@ -157,7 +164,7 @@ flowchart TD
 
 Creates `.plan/<topic>/proposal.md` plus supporting map/fact JSONL files.
 
-Use this when the work needs design, scope, tradeoff, or rationale before coding.
+Use this when the work needs scope, tradeoff, or rationale before coding. The proposal keeps today's non-design sections — Description, Problem Statement, Goals, Non-Goals, Background, Viability, risks, and ADR metadata — while detailed design moves to `design.md` for scoped changes.
 
 ### Create a plan
 
@@ -167,7 +174,7 @@ Use this when the work needs design, scope, tradeoff, or rationale before coding
 
 Creates `.plan/<topic>/plan.md` with ordered phases, dependencies, checklists, validation steps, and machine-readable plan graph files.
 
-Use this after a proposal exists, or when the request is already clear enough to plan directly.
+Use this after a proposal exists, or when the request is already clear enough to plan directly. For changes that affect a core user workflow or durable product behavior, requirements and design artifacts should sit between proposal and plan so implementation can trace tasks back to behavioral requirements.
 
 ### Implement a plan
 
@@ -239,11 +246,23 @@ Dashboard behavior and safety boundaries:
 
 Cartographer writes planning artifacts under `.plan/` in your project. Depending on which skills have run, a topic can contain:
 
-- `proposal.md`: human-readable context and assumptions.
+- `proposal.md`: human-readable context and assumptions, preserving Description, Problem Statement, Goals, Non-Goals, Background, Viability, risks, and ADR metadata.
+- `requirements.md`, `requirements.nodes.jsonl`, and `requirements.edges.jsonl`: scope-gated topic/change requirements deltas for core user workflow or durable behavior changes.
+- `design.md`, `design.nodes.jsonl`, and `design.edges.jsonl`: scope-gated design narrative plus Decision + Alternative design graph.
 - `map.nodes.jsonl` and `map.edges.jsonl`: durable map graph.
 - `facts.nodes.jsonl` and `facts.edges.jsonl`: extracted facts and provenance links.
 - `receipts.jsonl`: deterministic checkoff receipts and audit history.
 - `context-packs.jsonl`: compact handoff context for child agents and auditor transitions.
+
+Accepted requirement deltas fold into durable `docs/requirements.md` (or split requirements docs under `docs/requirements/<domain>.md` when needed), similar to how durable architecture decisions live under `docs/adr/`. The fold lifecycle preserves stable `REQ-*` and `SCN-*` IDs, source topic, status/change metadata, and fold receipt references; implemented topics with requirement deltas should have either a `requirements-fold` receipt or an approved `requirements-fold-skip` receipt.
+
+To bootstrap the durable requirements container document without inventing product requirements, run:
+
+```bash
+python skills/plan/scripts/requirements_records.py init --root "$PWD" --json
+```
+
+The command creates `docs/requirements.md` only when it is absent, creates the `docs/` parent directory as needed, and preserves an existing requirements document unchanged. Real requirements still come from accepted topic-local deltas or deliberate curated documentation edits.
 
 Optional execution files can additionally appear under `.cartographer/<topic>/` and are not part of the plan graph:
 

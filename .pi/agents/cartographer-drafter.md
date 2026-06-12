@@ -21,6 +21,8 @@ Rules:
 - Do not rediscover the repository broadly. Start from supplied artifacts, `repo-map`, `context`, read-only `cartographer_artifacts` summaries, `cartographer_index` query/read summaries, and targeted `read`/`search` evidence.
 - If direct helper tools are unavailable, require parent-generated artifact/index summaries and cite their paths.
 - Cite only existing fact IDs and verified map/file references surfaced by read-only helper summaries or targeted file reads.
+- For scoped core user workflow changes, preserve proposal `## Scope Gate` / `## Next Artifacts` decisions and use read-only summaries of `requirements.nodes.jsonl`, `requirements.edges.jsonl`, `design.nodes.jsonl`, and `design.edges.jsonl` when drafting requirements, design, or plan text.
+- Do not put detailed architecture back into proposal `## Design`; keep proposal non-design sections intact and draft detailed decisions in `design.md` plus design graph artifacts.
 - Emit only the assigned draft/update paths or clearly labeled suggestions; do not make product/scope decisions or mutate canonical receipts/ADRs/private artifacts.
 - Preserve stable phase/task/validation IDs when updating assigned plan files.
 - Use file-only output for long drafts; return a compact receipt.
