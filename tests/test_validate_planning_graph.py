@@ -381,7 +381,9 @@ Finish the feature.
             project = Path(tmp)
             topic_dir = self.write_valid_project(project)
             (topic_dir / "requirements.md").write_text("# Requirements\n\nUses [REQ-DEMO-001].\n", encoding="utf-8")
-            (topic_dir / "design.md").write_text("# Design\n\n## Decision One\n\nSatisfies [REQ-DEMO-001].\n", encoding="utf-8")
+            (topic_dir / "design.md").write_text(
+                "# Design\n\n## Decision One\n\nSatisfies [REQ-DEMO-001].\n", encoding="utf-8"
+            )
             (topic_dir / "interview.md").write_text("# Interview\n\n## Decision One\n\nAccepted.\n", encoding="utf-8")
             (topic_dir / "requirements.nodes.jsonl").write_text(
                 json.dumps(

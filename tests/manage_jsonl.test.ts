@@ -380,39 +380,85 @@ describe("manage_jsonl CLI", () => {
 		fs.writeFileSync(path.join(root, "README.md"), "hello\n", "utf8");
 		fs.writeFileSync(path.join(topicDir, "proposal.md"), "# Demo\n\nUses [F001].\n", "utf8");
 		fs.writeFileSync(path.join(topicDir, "requirements.md"), "# Requirements\n\nUses [REQ-DEMO-001].\n", "utf8");
-		fs.writeFileSync(path.join(topicDir, "design.md"), "# Design\n\n## Decision One\n\nSatisfies [REQ-DEMO-001].\n", "utf8");
-		fs.writeFileSync(path.join(topicDir, "interview.md"), "# Interview\n\n## Decision One\n\nUser accepted the path.\n", "utf8");
-		fs.writeFileSync(path.join(topicDir, "map.nodes.jsonl"), `${JSON.stringify({ id: "topic:demo", type: "topic", title: "Demo" })}\n`, "utf8");
+		fs.writeFileSync(
+			path.join(topicDir, "design.md"),
+			"# Design\n\n## Decision One\n\nSatisfies [REQ-DEMO-001].\n",
+			"utf8",
+		);
+		fs.writeFileSync(
+			path.join(topicDir, "interview.md"),
+			"# Interview\n\n## Decision One\n\nUser accepted the path.\n",
+			"utf8",
+		);
+		fs.writeFileSync(
+			path.join(topicDir, "map.nodes.jsonl"),
+			`${JSON.stringify({ id: "topic:demo", type: "topic", title: "Demo" })}\n`,
+			"utf8",
+		);
 		fs.writeFileSync(path.join(topicDir, "map.edges.jsonl"), "", "utf8");
 		fs.writeFileSync(
 			path.join(topicDir, "facts.nodes.jsonl"),
 			`${JSON.stringify({ id: "S001", type: "source", title: "Readme", reference: "README.md:1" })}\n${JSON.stringify({ id: "F001", type: "fact", title: "Fact" })}\n`,
 			"utf8",
 		);
-		fs.writeFileSync(path.join(topicDir, "facts.edges.jsonl"), `${JSON.stringify({ from: "F001", to: "S001", type: "supported_by" })}\n`, "utf8");
+		fs.writeFileSync(
+			path.join(topicDir, "facts.edges.jsonl"),
+			`${JSON.stringify({ from: "F001", to: "S001", type: "supported_by" })}\n`,
+			"utf8",
+		);
 		fs.writeFileSync(
 			path.join(topicDir, "requirements.nodes.jsonl"),
 			`${JSON.stringify({ id: "REQ-DEMO-001", type: "requirement", title: "Demo requirement", statement: "The system MUST validate interview artifacts.", change_type: "ADDED", domain: "demo", priority: "must", status: "accepted", fact_refs: ["F001"] })}\n`,
 			"utf8",
 		);
-		fs.writeFileSync(path.join(topicDir, "requirements.edges.jsonl"), `${JSON.stringify({ from: "REQ-DEMO-001", to: "F001", type: "supported_by" })}\n`, "utf8");
+		fs.writeFileSync(
+			path.join(topicDir, "requirements.edges.jsonl"),
+			`${JSON.stringify({ from: "REQ-DEMO-001", to: "F001", type: "supported_by" })}\n`,
+			"utf8",
+		);
 		fs.writeFileSync(
 			path.join(topicDir, "design.nodes.jsonl"),
 			`${JSON.stringify({ id: "DES-DEC-001", type: "design-decision", status: "accepted", title: "Decision one", summary: "Use it.", source: "design.md#decision-one", requirement_refs: ["REQ-DEMO-001"], fact_refs: ["F001"] })}\n`,
 			"utf8",
 		);
-		fs.writeFileSync(path.join(topicDir, "design.edges.jsonl"), `${JSON.stringify({ from: "DES-DEC-001", to: "REQ-DEMO-001", type: "satisfies" })}\n`, "utf8");
+		fs.writeFileSync(
+			path.join(topicDir, "design.edges.jsonl"),
+			`${JSON.stringify({ from: "DES-DEC-001", to: "REQ-DEMO-001", type: "satisfies" })}\n`,
+			"utf8",
+		);
 		fs.writeFileSync(
 			path.join(topicDir, "interview.nodes.jsonl"),
 			[
-				{ id: "INT-Q-001", type: "candidate-question", status: "asked", title: "Choose behavior", summary: "Ask the user.", source: "interview.md#decision-one", fact_refs: ["F001"] },
-				{ id: "INT-D-001", type: "accepted-decision", status: "accepted", title: "Use validated path", summary: "User accepted the recommended path.", source: "interview.md#decision-one", requirement_refs: ["REQ-DEMO-001"], design_refs: ["DES-DEC-001"], fact_refs: ["F001"] },
+				{
+					id: "INT-Q-001",
+					type: "candidate-question",
+					status: "asked",
+					title: "Choose behavior",
+					summary: "Ask the user.",
+					source: "interview.md#decision-one",
+					fact_refs: ["F001"],
+				},
+				{
+					id: "INT-D-001",
+					type: "accepted-decision",
+					status: "accepted",
+					title: "Use validated path",
+					summary: "User accepted the recommended path.",
+					source: "interview.md#decision-one",
+					requirement_refs: ["REQ-DEMO-001"],
+					design_refs: ["DES-DEC-001"],
+					fact_refs: ["F001"],
+				},
 			]
 				.map((record) => JSON.stringify(record))
 				.join("\n") + "\n",
 			"utf8",
 		);
-		fs.writeFileSync(path.join(topicDir, "interview.edges.jsonl"), `${JSON.stringify({ from: "INT-Q-001", to: "INT-D-001", type: "answered_by" })}\n${JSON.stringify({ from: "INT-D-001", to: "REQ-DEMO-001", type: "feeds_requirement" })}\n`, "utf8");
+		fs.writeFileSync(
+			path.join(topicDir, "interview.edges.jsonl"),
+			`${JSON.stringify({ from: "INT-Q-001", to: "INT-D-001", type: "answered_by" })}\n${JSON.stringify({ from: "INT-D-001", to: "REQ-DEMO-001", type: "feeds_requirement" })}\n`,
+			"utf8",
+		);
 
 		const report = runJson(["validate-topic", "--root", root, "--topic", "demo"]);
 		expect(report.ok).toBe(true);
@@ -424,7 +470,11 @@ describe("manage_jsonl CLI", () => {
 			`${JSON.stringify({ id: "INT-BAD-001", type: "unknown", status: "bogus", title: "Bad", summary: "Bad", source: "README.md:1", requirement_refs: ["REQ-MISSING"], design_refs: ["DES-MISSING"], fact_refs: ["F999"], evidence: ".plan/_private/demo/raw.log" })}\n`,
 			"utf8",
 		);
-		fs.writeFileSync(path.join(topicDir, "interview.edges.jsonl"), `${JSON.stringify({ from: "INT-BAD-001", to: "REQ-MISSING", type: "scenario_for" })}\n`, "utf8");
+		fs.writeFileSync(
+			path.join(topicDir, "interview.edges.jsonl"),
+			`${JSON.stringify({ from: "INT-BAD-001", to: "REQ-MISSING", type: "scenario_for" })}\n`,
+			"utf8",
+		);
 		const invalid = runJsonUnchecked(["validate-topic", "--root", root, "--topic", "demo"]);
 		const errors = invalid.payload.errors.join("\n");
 		expect(errors).toContain("Invalid interview node type");

@@ -281,7 +281,7 @@ Keep the dashboard read-only. Do not add write endpoints for interview artifacts
 
 ### Phase P5 — Final Integration and ADR
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P4
 - **Unlocks:** none
 - **Primary references:** `package.json:103`, `skills/plan/scripts/requirements_records.py:1`, `docs/adr/0007-split-cartographer-proposal-design-and-requirements-workflow.md:1`, `REQ-INT-001`, `REQ-INT-005`, `DES-DEC-001`, `DES-DEC-004`
@@ -298,17 +298,17 @@ Run full integration validation, prepare requirement folding, and complete ADR h
 
 #### Checklist
 
-- [ ] **P5.T1** Run full quality and workflow checks, correcting failures caused by interview lifecycle changes.
-- [ ] **P5.T2** Run or plan `python skills/plan/scripts/requirements_records.py init --root "$PWD" --json` if `docs/requirements.md` is absent, then fold accepted requirement deltas during implementation finalization.
-- [ ] **P5.T3** Run `cartographer_adr evaluate/create` or equivalent ADR workflow after deterministic validation, capturing the durable decision around the interview phase and artifact model.
-- [ ] **P5.T4** Update final receipts/context packs and ensure implementation handoff mentions ADR and requirements-fold expectations.
+- [x] **P5.T1** Run full quality and workflow checks, correcting failures caused by interview lifecycle changes.
+- [x] **P5.T2** Run or plan `python skills/plan/scripts/requirements_records.py init --root "$PWD" --json` if `docs/requirements.md` is absent, then fold accepted requirement deltas during implementation finalization.
+- [x] **P5.T3** Run `cartographer_adr evaluate/create` or equivalent ADR workflow after deterministic validation, capturing the durable decision around the interview phase and artifact model.
+- [x] **P5.T4** Update final receipts/context packs and ensure implementation handoff mentions ADR and requirements-fold expectations.
 
 #### Validation
 
-- [ ] **P5.V1** Run `npm run check`; expected result: full repository validation passes.
-- [ ] **P5.V2** Run `node --experimental-strip-types skills/plan/scripts/manage_jsonl.ts validate-topic --root "$PWD" --topic interview-process --json`; expected result: topic validation passes.
-- [ ] **P5.V3** Run `python skills/plan/scripts/validate_planning_graph.py --root "$PWD" --topic interview-process --json`; expected result: planning graph validation passes.
-- [ ] **P5.V4** Verify ADR handling: accepted ADR exists or an approved deferral receipt cites the validation receipts and rationale.
+- [x] **P5.V1** Run `npm run check`; expected result: full repository validation passes.
+- [x] **P5.V2** Run `node --experimental-strip-types skills/plan/scripts/manage_jsonl.ts validate-topic --root "$PWD" --topic interview-process --json`; expected result: topic validation passes.
+- [x] **P5.V3** Run `python skills/plan/scripts/validate_planning_graph.py --root "$PWD" --topic interview-process --json`; expected result: planning graph validation passes.
+- [x] **P5.V4** Verify ADR handling: accepted ADR exists or an approved deferral receipt cites the validation receipts and rationale.
 
 #### Exit Criteria
 

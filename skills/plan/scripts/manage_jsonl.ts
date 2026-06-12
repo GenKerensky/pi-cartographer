@@ -578,7 +578,9 @@ function validateInterviewSource(dir: string, source: unknown, label: string, in
 	}
 	const interviewPath = path.join(dir, "interview.md");
 	if (!fs.existsSync(interviewPath)) {
-		errors.push(`Interview source ${JSON.stringify(source)} in ${label} record ${index} references missing interview.md`);
+		errors.push(
+			`Interview source ${JSON.stringify(source)} in ${label} record ${index} references missing interview.md`,
+		);
 		return;
 	}
 	if (!markdownAnchors(fs.readFileSync(interviewPath, "utf8")).has(match[1].toLowerCase()))
@@ -612,7 +614,8 @@ function validateInterviewRecords(
 			if (!requirementIds.has(String(ref)))
 				errors.push(`Interview node ${id} references missing requirement ${JSON.stringify(ref)}`);
 		for (const ref of Array.isArray(record.design_refs) ? record.design_refs : [])
-			if (!designIds.has(String(ref))) errors.push(`Interview node ${id} references missing design ${JSON.stringify(ref)}`);
+			if (!designIds.has(String(ref)))
+				errors.push(`Interview node ${id} references missing design ${JSON.stringify(ref)}`);
 		for (const ref of Array.isArray(record.fact_refs) ? record.fact_refs : [])
 			if (!factIds.has(String(ref))) errors.push(`Interview node ${id} references missing fact ${JSON.stringify(ref)}`);
 		validateInterviewSource(dir, record.source, label, row, errors);
@@ -843,7 +846,15 @@ function validateTopic(options: Record<string, string | boolean | string[]>): Va
 		errors,
 	);
 	validateDesignEdges(designEdges, "design.edges.jsonl", allowed, errors);
-	validateInterviewRecords(dir, interviewNodes, "interview.nodes.jsonl", requirementIds, designIds, factIdsForRequirements, errors);
+	validateInterviewRecords(
+		dir,
+		interviewNodes,
+		"interview.nodes.jsonl",
+		requirementIds,
+		designIds,
+		factIdsForRequirements,
+		errors,
+	);
 	validateInterviewEdges(interviewEdges, "interview.edges.jsonl", allowed, errors);
 	validateFileRefs(
 		root,

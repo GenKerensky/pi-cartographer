@@ -362,7 +362,9 @@ def validate_interview_source(topic_dir: Path, source: Any, label: str, index: i
     if source is None:
         return
     if not isinstance(source, str) or not source.strip():
-        errors.append(f"Interview source in {label} record {index} must be a non-empty string using interview.md#heading")
+        errors.append(
+            f"Interview source in {label} record {index} must be a non-empty string using interview.md#heading"
+        )
         return
     match = re.match(r"^interview\.md#([A-Za-z0-9_.-]+)$", source)
     if not match:
@@ -412,7 +414,9 @@ def validate_interview_records(
         validate_interview_source(topic_dir, record.get("source"), label, index, errors)
 
 
-def validate_interview_edges(records: list[dict[str, Any]], label: str, allowed_ids: set[str], errors: list[str]) -> None:
+def validate_interview_edges(
+    records: list[dict[str, Any]], label: str, allowed_ids: set[str], errors: list[str]
+) -> None:
     for index, record in enumerate(records, start=1):
         if not record.get("from") or not record.get("to") or not record.get("type"):
             errors.append(f"Interview edge in {label} record {index} must include from, to, and type")
@@ -823,7 +827,13 @@ def main() -> int:
     )
     validate_design_edges(design_edges, "design.edges.jsonl", allowed_ids, db_path, errors)
     validate_interview_records(
-        topic_dir, interview_nodes, "interview.nodes.jsonl", requirement_ids, design_ids, fact_ids_for_requirements, errors
+        topic_dir,
+        interview_nodes,
+        "interview.nodes.jsonl",
+        requirement_ids,
+        design_ids,
+        fact_ids_for_requirements,
+        errors,
     )
     validate_interview_edges(interview_edges, "interview.edges.jsonl", allowed_ids, errors)
     validate_file_references(
