@@ -24,6 +24,14 @@ class RequirementsRecordsTests(unittest.TestCase):
             check=False,
         )
 
+    def run_init(self, root: Path) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(
+            ["python", str(SCRIPT), "init", "--root", str(root), "--json"],
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+
     def write_topic(self, root: Path, records: list[dict[str, object]]) -> Path:
         topic = root / ".plan" / "demo"
         topic.mkdir(parents=True, exist_ok=True)
@@ -31,9 +39,44 @@ class RequirementsRecordsTests(unittest.TestCase):
         (topic / "receipts.jsonl").write_text("", encoding="utf-8")
         return topic
 
+    def test_init_creates_durable_requirements_document(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            result = self.run_init(root)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertTrue(payload["ok"])
+            self.assertTrue(payload["created"])
+            self.assertEqual(payload["path"], "docs/requirements.md")
+            durable = root / "docs" / "requirements.md"
+            self.assertTrue(durable.exists())
+            text = durable.read_text(encoding="utf-8")
+            self.assertIn("# Requirements", text)
+            self.assertIn("## Purpose", text)
+            self.assertIn("## Requirements", text)
+            self.assertIn("durable requirements folded from accepted Cartographer topic deltas", text)
+
+    def test_init_is_idempotent_and_preserves_existing_file(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            durable = root / "docs" / "requirements.md"
+            durable.parent.mkdir(parents=True)
+            original = "# Requirements\n\nCustom durable requirements.\n"
+            durable.write_text(original, encoding="utf-8")
+
+            result = self.run_init(root)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertTrue(payload["ok"])
+            self.assertFalse(payload["created"])
+            self.assertEqual(payload["path"], "docs/requirements.md")
+            self.assertEqual(payload["reason"], "exists")
+            self.assertEqual(durable.read_text(encoding="utf-8"), original)
+
     def test_fold_add_modify_remove_and_receipt(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
+            self.assertEqual(self.run_init(root).returncode, 0)
             self.write_topic(
                 root,
                 [

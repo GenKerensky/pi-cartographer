@@ -106,7 +106,7 @@ Use `mktemp` or `tempfile` for all smoke checks. Do not run the init command aga
 
 ### Phase P1 — Init Behavior Tests
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P0
 - **Unlocks:** P2
 - **Primary references:** `file:tests/test_requirements_records.py`, `file:skills/plan/scripts/requirements_records.py`, [F004]
@@ -125,16 +125,16 @@ Add temp-root regression coverage for the new initialization lifecycle and prove
 
 #### Checklist
 
-- [ ] **P1.T1** Add a temp-root test for `init` creating `docs/requirements.md` and its missing parent directory.
-- [ ] **P1.T2** Add assertions for the initialized skeleton, including top heading and `## Purpose` / `## Requirements` sections.
-- [ ] **P1.T3** Add tests for idempotent no-op behavior and exact preservation of existing content.
-- [ ] **P1.T4** Add tests for stable JSON output fields in created and existing cases.
-- [ ] **P1.T5** Add or update a fold compatibility test that folds a requirement into an init-created durable document.
+- [x] **P1.T1** Add a temp-root test for `init` creating `docs/requirements.md` and its missing parent directory.
+- [x] **P1.T2** Add assertions for the initialized skeleton, including top heading and `## Purpose` / `## Requirements` sections.
+- [x] **P1.T3** Add tests for idempotent no-op behavior and exact preservation of existing content.
+- [x] **P1.T4** Add tests for stable JSON output fields in created and existing cases.
+- [x] **P1.T5** Add or update a fold compatibility test that folds a requirement into an init-created durable document.
 
 #### Validation
 
-- [ ] **P1.V1** Run `python -m unittest discover tests -p 'test_requirements_records.py'` and confirm all requirements record tests pass.
-- [ ] **P1.V2** Run `npm run check:scripts` and confirm Python/TypeScript helper syntax checks pass.
+- [x] **P1.V1** Run `python -m unittest discover tests -p 'test_requirements_records.py'` and confirm all requirements record tests pass.
+- [x] **P1.V2** Run `npm run check:scripts` and confirm Python/TypeScript helper syntax checks pass.
 
 #### Exit Criteria
 
