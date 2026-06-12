@@ -5,11 +5,11 @@
   "source_refs": {
     "plan_md": {
       "path": ".plan/interview-process/plan.md",
-      "sha256": "sha256:a4dc691ae5e0ea096d1221b83923a1fa8442b913676f94fced4cf091c6f8fc32"
+      "sha256": "sha256:0127cda1d143327000334df94bf534e12e3bdcecc72ce9ea39400c65bd33c32d"
     },
     "plan_nodes": {
       "path": ".plan/interview-process/plan.nodes.jsonl",
-      "sha256": "sha256:3dce7860efd61878d749818eb91c58d4ff574afcb3eeb40a6f7de9e9697fc049"
+      "sha256": "sha256:3ad98e3b50f2b9266069a611eb78e78ac1aa2fa8ab23429485e02cb7c13a2c32"
     },
     "plan_edges": {
       "path": ".plan/interview-process/plan.edges.jsonl",
@@ -17,11 +17,11 @@
     },
     "receipts": {
       "path": ".plan/interview-process/receipts.jsonl",
-      "sha256": "sha256:bc7fef960c011041e0f478305f1f338da2711a00ec017e6c98592480a4b76392"
+      "sha256": "sha256:63980c1d981d6bbd49fe94ea40142752557d176e6fff1f63ec48d34080687e74"
     },
     "context_packs": {
       "path": ".plan/interview-process/context-packs.jsonl",
-      "sha256": "sha256:1480fe7b13c3dd3d8aff68f01b6f0dda0636a3bc118b75cdc31810c5814368a4"
+      "sha256": "sha256:9472b8cc48f6df2127ee9b872b85dd4777d28dfce48cb635c064c32773bd0794"
     }
   },
   "current_phase_id": "P0",
@@ -138,13 +138,19 @@
     "receipt:P3:validation:2026-06-12T22:12:23+00:00",
     "receipt:P3:validation:2026-06-12T22:12:45+00:00",
     "receipt:P3:validation:2026-06-12T22:13:48+00:00",
-    "receipt:interview-process:audit:2026-06-12T22:13:38Z"
+    "receipt:interview-process:audit:2026-06-12T22:13:38Z",
+    "receipt:P4:validation:2026-06-12T22:14:46+00:00",
+    "receipt:P4:validation:2026-06-12T22:14:51+00:00",
+    "receipt:P4:validation:2026-06-12T22:15:00+00:00",
+    "receipt:P4:validation:2026-06-12T22:16:16+00:00",
+    "receipt:interview-process:audit:2026-06-12T22:16:06Z"
   ],
   "journal_refs": [
     "journal:20260612T214817Z:compact",
     "journal:20260612T220610Z:compact",
     "journal:20260612T221130Z:compact",
-    "journal:20260612T221358Z:compact"
+    "journal:20260612T221358Z:compact",
+    "journal:20260612T221630Z:compact"
   ],
   "resume": {
     "template_id": "cartographer.single_writer.resume.v1",
@@ -164,10 +170,10 @@
       "stale generated snippets"
     ]
   },
-  "updated_at": "2026-06-12T22:13:58Z",
+  "updated_at": "2026-06-12T22:16:30Z",
   "stale_reason": "Implementation compact requested after artifact updates.",
   "compaction": {
-    "trigger": "phase P3 complete",
-    "compacted_at": "2026-06-12T22:13:58Z"
+    "trigger": "phase P4 complete",
+    "compacted_at": "2026-06-12T22:16:30Z"
   }
 }

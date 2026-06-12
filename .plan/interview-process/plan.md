@@ -237,7 +237,7 @@ If helper implementation becomes larger than expected, stop after documenting th
 
 ### Phase P4 — Dashboard and Handoff Surfaces
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P3
 - **Unlocks:** P5
 - **Primary references:** `dashboard/src/server/artifact-reader.ts:211`, `README.md:245`, `extensions/cartographer-tools.ts:1`, `.pi/agents/cartographer-auditor.md`, `.pi/agents/cartographer-drafter.md`, `REQ-INT-003`, `REQ-INT-004`, `DES-DEC-002`
@@ -254,16 +254,16 @@ Expose interview artifacts through existing read-only planning surfaces and ensu
 
 #### Checklist
 
-- [ ] **P4.T1** Update dashboard artifact readers and fixtures to include `interview.md`, `interview.nodes.jsonl`, and `interview.edges.jsonl` when present.
-- [ ] **P4.T2** Update Cartographer artifact helper summaries in `extensions/cartographer-tools.ts` or backing scripts to include interview nodes/edges where supported.
-- [ ] **P4.T3** Update `.pi/agents/cartographer-drafter.md`, `.pi/agents/cartographer-compass.md`, and `.pi/agents/cartographer-auditor.md` to consume interview summaries read-only.
-- [ ] **P4.T4** Add tests for dashboard/artifact-reader behavior and specialist prompt coverage.
+- [x] **P4.T1** Update dashboard artifact readers and fixtures to include `interview.md`, `interview.nodes.jsonl`, and `interview.edges.jsonl` when present.
+- [x] **P4.T2** Update Cartographer artifact helper summaries in `extensions/cartographer-tools.ts` or backing scripts to include interview nodes/edges where supported.
+- [x] **P4.T3** Update `.pi/agents/cartographer-drafter.md`, `.pi/agents/cartographer-compass.md`, and `.pi/agents/cartographer-auditor.md` to consume interview summaries read-only.
+- [x] **P4.T4** Add tests for dashboard/artifact-reader behavior and specialist prompt coverage.
 
 #### Validation
 
-- [ ] **P4.V1** Run `npm run test:browser -- tests/dashboard/client-shell.test.tsx` and `npm run test:ts -- tests/manage_jsonl.test.ts`; expected result: dashboard browser smoke and relevant TypeScript tests pass.
-- [ ] **P4.V2** Run `python -m unittest tests.test_workflow_docs`; expected result: specialist prompt/documentation assertions pass.
-- [ ] **P4.V3** Run `npm run dashboard:check` if dashboard reader/client behavior changed; expected result: dashboard build and browser smoke pass.
+- [x] **P4.V1** Run `npm run test:browser -- tests/dashboard/client-shell.test.tsx` and `npm run test:ts -- tests/manage_jsonl.test.ts`; expected result: dashboard browser smoke and relevant TypeScript tests pass.
+- [x] **P4.V2** Run `python -m unittest tests.test_workflow_docs`; expected result: specialist prompt/documentation assertions pass.
+- [x] **P4.V3** Run `npm run dashboard:check` if dashboard reader/client behavior changed; expected result: dashboard build and browser smoke pass.
 
 #### Exit Criteria
 
