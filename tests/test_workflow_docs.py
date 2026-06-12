@@ -206,6 +206,39 @@ class WorkflowDocsTests(unittest.TestCase):
         self.assertIn("design.edges.jsonl", implement)
         self.assertNotIn("## Design\n", proposal)
 
+    def test_interview_skill_documents_post_research_workflow(self) -> None:
+        interview = (ROOT / "skills/interview/SKILL.md").read_text(encoding="utf-8")
+        agents = "\n".join(
+            [
+                (ROOT / ".pi/agents/cartographer-auditor.md").read_text(encoding="utf-8"),
+                (ROOT / ".pi/agents/cartographer-compass.md").read_text(encoding="utf-8"),
+                (ROOT / ".pi/agents/cartographer-drafter.md").read_text(encoding="utf-8"),
+            ]
+        )
+
+        for needle in [
+            "after relevant research is exhausted",
+            "one question at a time",
+            "recommended answer first",
+            "pause",
+            "re-enter interview one question at a time",
+            "Approval Summary",
+            "interview.md",
+            "interview.nodes.jsonl",
+            "interview.edges.jsonl",
+            "candidate-question",
+            "researched-answer",
+            "recommendation",
+            "user-answer",
+            "accepted-decision",
+            "deferred-choice",
+            "unresolved-blocker",
+        ]:
+            self.assertIn(needle, interview)
+        self.assertIn("read-only summaries", interview)
+        self.assertIn("interview.nodes.jsonl", agents)
+        self.assertIn("interview.edges.jsonl", agents)
+
     def test_specialist_prompts_use_requirement_design_summaries(self) -> None:
         auditor = (ROOT / ".pi/agents/cartographer-auditor.md").read_text(encoding="utf-8")
         compass = (ROOT / ".pi/agents/cartographer-compass.md").read_text(encoding="utf-8")

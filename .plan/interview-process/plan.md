@@ -148,7 +148,7 @@ Prefer narrow validation types and explicit edge enums. Do not broaden JSONL val
 
 ### Phase P2 — Interview Skill Workflow
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P1
 - **Unlocks:** P3
 - **Primary references:** `skills/proposal/SKILL.md:382`, `skills/plan/SKILL.md:409`, `.pi/agents/cartographer-drafter.md`, `.pi/agents/cartographer-compass.md`, `REQ-INT-001`, `REQ-INT-002`, `REQ-INT-003`, `REQ-INT-004`, `DES-DEC-001`, `DES-DEC-002`, `DES-DEC-003`, `[F001]`, `[F002]`
@@ -165,15 +165,15 @@ Create the operational interview workflow that an agent can invoke after researc
 
 #### Checklist
 
-- [ ] **P2.T1** Create `skills/interview/SKILL.md` with trigger conditions, artifacts, procedure, pitfalls, and verification checklist.
-- [ ] **P2.T2** Specify `interview.md`, `interview.nodes.jsonl`, and `interview.edges.jsonl` record shapes with examples for researched answers, recommendations, user answers, decisions, dependencies, deferrals, and blockers.
-- [ ] **P2.T3** Update specialist prompts or handoff guidance so drafter/compass/auditor can consume interview artifact summaries without mutating them.
-- [ ] **P2.T4** Add documentation tests that assert the interview skill includes research exhaustion, one-question behavior, recommended answers, pause/resume/re-entry, and approval summary.
+- [x] **P2.T1** Create `skills/interview/SKILL.md` with trigger conditions, artifacts, procedure, pitfalls, and verification checklist.
+- [x] **P2.T2** Specify `interview.md`, `interview.nodes.jsonl`, and `interview.edges.jsonl` record shapes with examples for researched answers, recommendations, user answers, decisions, dependencies, deferrals, and blockers.
+- [x] **P2.T3** Update specialist prompts or handoff guidance so drafter/compass/auditor can consume interview artifact summaries without mutating them.
+- [x] **P2.T4** Add documentation tests that assert the interview skill includes research exhaustion, one-question behavior, recommended answers, pause/resume/re-entry, and approval summary.
 
 #### Validation
 
-- [ ] **P2.V1** Run `python -m unittest tests.test_workflow_docs`; expected result: interview workflow docs are covered.
-- [ ] **P2.V2** Run `node --experimental-strip-types skills/plan/scripts/manage_jsonl.ts validate-topic --root "$PWD" --topic interview-process --json`; expected result: topic validation passes after example artifact references are updated.
+- [x] **P2.V1** Run `python -m unittest tests.test_workflow_docs`; expected result: interview workflow docs are covered.
+- [x] **P2.V2** Run `node --experimental-strip-types skills/plan/scripts/manage_jsonl.ts validate-topic --root "$PWD" --topic interview-process --json`; expected result: topic validation passes after example artifact references are updated.
 
 #### Exit Criteria
 
