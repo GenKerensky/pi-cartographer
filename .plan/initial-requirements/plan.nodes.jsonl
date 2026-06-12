@@ -24,15 +24,15 @@
 {"id":"validation:P2.V1","type":"validation","validation_id":"P2.V1","phase_id":"P2","title":"P2.V1","status":"complete","source":"plan.md"}
 {"id":"validation:P2.V2","type":"validation","validation_id":"P2.V2","phase_id":"P2","title":"P2.V2","status":"complete","source":"plan.md"}
 {"id":"validation:P2.V3","type":"validation","validation_id":"P2.V3","phase_id":"P2","title":"P2.V3","status":"complete","source":"plan.md"}
-{"id":"phase:P3","type":"phase","phase_id":"P3","title":"Final Validation","status":"pending","depends_on":["P2"],"source":"plan.md","references":["F004","F007"]}
-{"id":"task:P3.T1","type":"task","task_id":"P3.T1","phase_id":"P3","title":"P3.T1","status":"pending","source":"plan.md"}
-{"id":"task:P3.T2","type":"task","task_id":"P3.T2","phase_id":"P3","title":"P3.T2","status":"pending","source":"plan.md"}
-{"id":"task:P3.T3","type":"task","task_id":"P3.T3","phase_id":"P3","title":"P3.T3","status":"pending","source":"plan.md"}
-{"id":"task:P3.T4","type":"task","task_id":"P3.T4","phase_id":"P3","title":"P3.T4","status":"pending","source":"plan.md"}
-{"id":"task:P3.T5","type":"task","task_id":"P3.T5","phase_id":"P3","title":"P3.T5","status":"pending","source":"plan.md"}
-{"id":"validation:P3.V1","type":"validation","validation_id":"P3.V1","phase_id":"P3","title":"P3.V1","status":"pending","source":"plan.md"}
-{"id":"validation:P3.V2","type":"validation","validation_id":"P3.V2","phase_id":"P3","title":"P3.V2","status":"pending","source":"plan.md"}
-{"id":"validation:P3.V3","type":"validation","validation_id":"P3.V3","phase_id":"P3","title":"P3.V3","status":"pending","source":"plan.md"}
-{"id":"validation:P3.V4","type":"validation","validation_id":"P3.V4","phase_id":"P3","title":"P3.V4","status":"pending","source":"plan.md"}
-{"id":"validation:P3.V5","type":"validation","validation_id":"P3.V5","phase_id":"P3","title":"P3.V5","status":"pending","source":"plan.md"}
-{"id":"validation:P3.V6","type":"validation","validation_id":"P3.V6","phase_id":"P3","title":"P3.V6","status":"pending","source":"plan.md"}
+{"id":"phase:P3","type":"phase","phase_id":"P3","title":"Final Validation","status":"complete","depends_on":["P2"],"source":"plan.md","references":["F004","F007"]}
+{"id":"task:P3.T1","type":"task","task_id":"P3.T1","phase_id":"P3","title":"P3.T1","status":"complete","source":"plan.md"}
+{"id":"task:P3.T2","type":"task","task_id":"P3.T2","phase_id":"P3","title":"P3.T2","status":"complete","source":"plan.md"}
+{"id":"task:P3.T3","type":"task","task_id":"P3.T3","phase_id":"P3","title":"P3.T3","status":"complete","source":"plan.md"}
+{"id":"task:P3.T4","type":"task","task_id":"P3.T4","phase_id":"P3","title":"P3.T4","status":"complete","source":"plan.md"}
+{"id":"task:P3.T5","type":"task","task_id":"P3.T5","phase_id":"P3","title":"P3.T5","status":"complete","source":"plan.md"}
+{"id":"validation:P3.V1","type":"validation","validation_id":"P3.V1","phase_id":"P3","title":"P3.V1","status":"complete","source":"plan.md"}
+{"id":"validation:P3.V2","type":"validation","validation_id":"P3.V2","phase_id":"P3","title":"P3.V2","status":"complete","source":"plan.md"}
+{"id":"validation:P3.V3","type":"validation","validation_id":"P3.V3","phase_id":"P3","title":"P3.V3","status":"complete","source":"plan.md"}
+{"id":"validation:P3.V4","type":"validation","validation_id":"P3.V4","phase_id":"P3","title":"P3.V4","status":"complete","source":"plan.md"}
+{"id":"validation:P3.V5","type":"validation","validation_id":"P3.V5","phase_id":"P3","title":"P3.V5","status":"complete","source":"plan.md"}
+{"id":"validation:P3.V6","type":"validation","validation_id":"P3.V6","phase_id":"P3","title":"P3.V6","status":"complete","source":"plan.md"}

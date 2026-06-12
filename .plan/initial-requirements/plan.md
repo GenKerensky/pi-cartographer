@@ -201,7 +201,7 @@ Prefer concise docs. Do not add long OpenSpec analysis to README; keep detailed 
 
 ### Phase P3 — Final Validation
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P2
 - **Unlocks:** none
 - **Primary references:** `file:package.json`, `file:skills/plan/scripts/requirements_records.py`, `file:tests/test_requirements_records.py`, `file:README.md`, `file:skills/plan/SKILL.md`, [F004], [F007]
@@ -220,20 +220,20 @@ Run broad validation, validate the planning topic artifacts, obtain semantic rev
 
 #### Checklist
 
-- [ ] **P3.T1** Run targeted requirements record tests and script checks after all implementation/doc changes.
-- [ ] **P3.T2** Run full project validation or the broadest practical project check.
-- [ ] **P3.T3** Validate topic JSONL and planning graph artifacts for `initial-requirements`.
-- [ ] **P3.T4** Confirm no hard OpenSpec runtime dependency, import/export command, generated tool integration, or broad `cartographer init` behavior was introduced.
-- [ ] **P3.T5** Obtain final read-only semantic review from `cartographer-auditor` or an approved fallback.
+- [x] **P3.T1** Run targeted requirements record tests and script checks after all implementation/doc changes.
+- [x] **P3.T2** Run full project validation or the broadest practical project check.
+- [x] **P3.T3** Validate topic JSONL and planning graph artifacts for `initial-requirements`.
+- [x] **P3.T4** Confirm no hard OpenSpec runtime dependency, import/export command, generated tool integration, or broad `cartographer init` behavior was introduced.
+- [x] **P3.T5** Obtain final read-only semantic review from `cartographer-auditor` or an approved fallback.
 
 #### Validation
 
-- [ ] **P3.V1** Run `python -m unittest discover tests -p 'test_requirements_records.py'` and confirm it passes.
-- [ ] **P3.V2** Run `npm run check:scripts` and confirm it passes.
-- [ ] **P3.V3** Run `npm run check` and confirm it passes, or record an approved narrower validation set if unrelated failures appear.
-- [ ] **P3.V4** Run `node --experimental-strip-types skills/plan/scripts/manage_jsonl.ts validate-topic --root "$PWD" --topic initial-requirements --json` and confirm it passes.
-- [ ] **P3.V5** Run `python skills/plan/scripts/validate_planning_graph.py --root "$PWD" --topic initial-requirements --json` and confirm it passes.
-- [ ] **P3.V6** Run `rg -n "openspec|OpenSpec" package.json requirements-dev.txt pyproject.toml skills/plan/scripts/requirements_records.py` and confirm any matches are documentation/comments only and no runtime dependency is added.
+- [x] **P3.V1** Run `python -m unittest discover tests -p 'test_requirements_records.py'` and confirm it passes.
+- [x] **P3.V2** Run `npm run check:scripts` and confirm it passes.
+- [x] **P3.V3** Run `npm run check` and confirm it passes, or record an approved narrower validation set if unrelated failures appear.
+- [x] **P3.V4** Run `node --experimental-strip-types skills/plan/scripts/manage_jsonl.ts validate-topic --root "$PWD" --topic initial-requirements --json` and confirm it passes.
+- [x] **P3.V5** Run `python skills/plan/scripts/validate_planning_graph.py --root "$PWD" --topic initial-requirements --json` and confirm it passes.
+- [x] **P3.V6** Run `rg -n "openspec|OpenSpec" package.json requirements-dev.txt pyproject.toml skills/plan/scripts/requirements_records.py` and confirm any matches are documentation/comments only and no runtime dependency is added.
 
 #### Exit Criteria
 
