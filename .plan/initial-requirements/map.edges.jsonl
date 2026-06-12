@@ -1,0 +1,5 @@
+{"from":"topic:initial-requirements","to":"file:skills/plan/scripts/requirements_records.py","type":"relevant_to","evidence":"The helper owns durable requirements fold behavior and already contains header creation logic.","confidence":"high"}
+{"from":"topic:initial-requirements","to":"file:tests/test_requirements_records.py","type":"relevant_to","evidence":"The init command should be covered with temp-root tests alongside existing fold tests.","confidence":"high"}
+{"from":"topic:initial-requirements","to":"file:README.md","type":"documents","evidence":"README describes durable requirements and should document the bootstrap command.","confidence":"high"}
+{"from":"topic:initial-requirements","to":"file:skills/plan/SKILL.md","type":"may_update","evidence":"Planning guidance may need to mention initialization before fold/archive work.","confidence":"medium"}
+{"from":"topic:initial-requirements","to":"file:package.json","type":"may_update","evidence":"Package scripts may be relevant if the plan adds a convenience command or check coverage.","confidence":"medium"}
