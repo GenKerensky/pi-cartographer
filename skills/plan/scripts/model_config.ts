@@ -53,6 +53,46 @@ export type ApplyResult = ValidationResult & {
 	written?: boolean;
 };
 
+export type ModelFailureMode = "usage-limit" | "model-unavailable" | "provider-error" | "non-retryable";
+
+export type ModelFailure = {
+	retryable: boolean;
+	failureMode: ModelFailureMode;
+	message: string;
+	statusCode?: number;
+	resetSeconds?: number;
+	resetSecondarySeconds?: number;
+};
+
+export type FallbackReceiptEvent = {
+	failure_mode: Exclude<ModelFailureMode, "non-retryable">;
+	from_model: string;
+	to_model: string;
+	approved_by: "auto" | "user" | "pre-approved";
+	reset_seconds?: number;
+	reset_secondary_seconds?: number;
+};
+
+export class ModelFallbackError extends Error {
+	constructor(
+		message: string,
+		readonly failure: ModelFailure,
+		readonly attempts: string[],
+	) {
+		super(message);
+	}
+}
+
+export class CrossProviderApprovalRequiredError extends Error {
+	constructor(
+		readonly fromModel: string,
+		readonly toModel: string,
+		readonly failure: ModelFailure,
+	) {
+		super(`Cross-provider fallback requires approval: ${fromModel} -> ${toModel}`);
+	}
+}
+
 function isObject(value: unknown): value is JsonObject {
 	return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -210,6 +250,124 @@ export function validateModelConfigProposal(
 	}
 
 	return { ok: errors.length === 0, errors, warnings, recommendedFinalFallbacks };
+}
+
+function nestedString(value: unknown, pathParts: string[]): string | undefined {
+	let current: unknown = value;
+	for (const part of pathParts) {
+		if (!isObject(current)) return undefined;
+		current = current[part];
+	}
+	return typeof current === "string" ? current : undefined;
+}
+
+function nestedNumber(value: unknown, pathParts: string[]): number | undefined {
+	let current: unknown = value;
+	for (const part of pathParts) {
+		if (!isObject(current)) return undefined;
+		current = current[part];
+	}
+	return typeof current === "number" ? current : undefined;
+}
+
+function errorHeaders(error: unknown): Record<string, unknown> {
+	if (!isObject(error)) return {};
+	const headers = error.headers;
+	return isObject(headers) ? headers : {};
+}
+
+function headerNumber(headers: Record<string, unknown>, name: string): number | undefined {
+	const value = headers[name] ?? headers[name.toLowerCase()];
+	if (typeof value === "number") return value;
+	if (typeof value === "string" && value.trim()) {
+		const parsed = Number(value);
+		return Number.isFinite(parsed) ? parsed : undefined;
+	}
+	return undefined;
+}
+
+export function classifyModelError(error: unknown): ModelFailure {
+	const statusCode = nestedNumber(error, ["status_code"]) ?? nestedNumber(error, ["statusCode"]);
+	const type = nestedString(error, ["error", "type"]) ?? nestedString(error, ["type"]);
+	const message =
+		nestedString(error, ["error", "message"]) ??
+		nestedString(error, ["message"]) ??
+		(error instanceof Error ? error.message : String(error));
+	const headers = errorHeaders(error);
+	const resetSeconds = headerNumber(headers, "X-Codex-Primary-Reset-After-Seconds");
+	const resetSecondarySeconds = headerNumber(headers, "X-Codex-Secondary-Reset-After-Seconds");
+	const lower = message.toLowerCase();
+
+	if (statusCode === 429 || type === "usage_limit_reached" || lower.includes("usage_limit_reached")) {
+		return { retryable: true, failureMode: "usage-limit", message, statusCode, resetSeconds, resetSecondarySeconds };
+	}
+	if (
+		type === "model_not_found" ||
+		lower.includes("model not found") ||
+		lower.includes("model not supported") ||
+		lower.includes("model unavailable")
+	) {
+		return { retryable: true, failureMode: "model-unavailable", message, statusCode, resetSeconds, resetSecondarySeconds };
+	}
+	if (statusCode === 503 || statusCode === 502 || statusCode === 504 || lower.includes("timeout")) {
+		return { retryable: true, failureMode: "provider-error", message, statusCode, resetSeconds, resetSecondarySeconds };
+	}
+	return { retryable: false, failureMode: "non-retryable", message, statusCode, resetSeconds, resetSecondarySeconds };
+}
+
+function providerOf(modelId: string): string {
+	return modelId.split("/")[0] ?? modelId;
+}
+
+export function crossesProvider(fromModel: string, toModel: string): boolean {
+	return providerOf(fromModel) !== providerOf(toModel);
+}
+
+export async function executeWithModelFallback<T>(params: {
+	models: string[];
+	invoke: (model: string, attemptIndex: number) => Promise<T>;
+	allowCrossProvider?: boolean;
+	approveCrossProvider?: (event: { fromModel: string; toModel: string; failure: ModelFailure }) => Promise<boolean> | boolean;
+	onFallback?: (event: FallbackReceiptEvent) => Promise<void> | void;
+}): Promise<T> {
+	const attempts: string[] = [];
+	let lastFailure: ModelFailure | undefined;
+	for (let index = 0; index < params.models.length; index += 1) {
+		const model = params.models[index];
+		attempts.push(model);
+		try {
+			return await params.invoke(model, index);
+		} catch (error) {
+			const failure = classifyModelError(error);
+			lastFailure = failure;
+			const nextModel = params.models[index + 1];
+			if (!failure.retryable || !nextModel) {
+				throw new ModelFallbackError(`Model call failed after ${attempts.length} attempt(s): ${failure.message}`, failure, attempts);
+			}
+			let approvedBy: FallbackReceiptEvent["approved_by"] = "auto";
+			if (crossesProvider(model, nextModel)) {
+				if (params.allowCrossProvider) approvedBy = "pre-approved";
+				else {
+					const approved = await params.approveCrossProvider?.({ fromModel: model, toModel: nextModel, failure });
+					if (!approved) throw new CrossProviderApprovalRequiredError(model, nextModel, failure);
+					approvedBy = "user";
+				}
+			}
+			await params.onFallback?.({
+				failure_mode: failure.failureMode as Exclude<ModelFailureMode, "non-retryable">,
+				from_model: model,
+				to_model: nextModel,
+				approved_by: approvedBy,
+				reset_seconds: failure.resetSeconds,
+				reset_secondary_seconds: failure.resetSecondarySeconds,
+			});
+		}
+	}
+	throw new ModelFallbackError("Model call failed with exhausted fallback chain", lastFailure ?? {
+		retryable: false,
+		failureMode: "non-retryable",
+		message: "no models configured",
+	}, attempts);
 }
 
 export function mergeSettings(

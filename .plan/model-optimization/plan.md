@@ -203,7 +203,7 @@ Use `ask_user_question` for actual interactive provider choices when implementin
 
 ### Phase P3 — Fallback Runtime Integration
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P1
 - **Unlocks:** P4
 - **Primary references:** `.plan/model-optimization/design.md#decision-d003-workflow-fallback-wrapper`, `.plan/model-optimization/design.md#decision-d004-cross-provider-approval-gate`, `[REQ-12]`, `[REQ-13]`, `[REQ-14]`, `[REQ-16]`, `extensions/cartographer-tools.ts`, `skills/plan/scripts/cartographer_workflow.ts`, `C002`, `C003`, `C004`, `C005`
@@ -224,18 +224,18 @@ Implement fallback behavior for Cartographer-controlled model/handoff workflow s
 
 #### Checklist
 
-- [ ] **P3.T1** Implement or extend a failure classifier utility with tests for Codex 429/usage-limit payloads and unavailable model errors.
-- [ ] **P3.T2** Implement fallback chain selection using validated config from P1.
-- [ ] **P3.T3** Implement cross-provider detection and approval/pre-approval handling.
-- [ ] **P3.T4** Integrate fallback receipt writing through existing `cartographer_handoff fallback`/workflow receipt helpers where possible.
-- [ ] **P3.T5** Add retry wrapper to Cartographer-owned handoff/workflow paths without changing generic Pi runtime behavior.
-- [ ] **P3.T6** Add tests for within-provider retry, cross-provider approval, decline behavior, exhausted chain behavior, and receipt schema.
+- [x] **P3.T1** Implement or extend a failure classifier utility with tests for Codex 429/usage-limit payloads and unavailable model errors.
+- [x] **P3.T2** Implement fallback chain selection using validated config from P1.
+- [x] **P3.T3** Implement cross-provider detection and approval/pre-approval handling.
+- [x] **P3.T4** Integrate fallback receipt writing through existing `cartographer_handoff fallback`/workflow receipt helpers where possible.
+- [x] **P3.T5** Add retry wrapper to Cartographer-owned handoff/workflow paths without changing generic Pi runtime behavior.
+- [x] **P3.T6** Add tests for within-provider retry, cross-provider approval, decline behavior, exhausted chain behavior, and receipt schema.
 
 #### Validation
 
-- [ ] **P3.V1** Run `npm run test:ts` or targeted TS tests for fallback runtime utilities.
-- [ ] **P3.V2** Run `npm run check:scripts` and expect pass.
-- [ ] **P3.V3** Run simulated fallback tests with mock provider errors and verify deterministic receipts.
+- [x] **P3.V1** Run `npm run test:ts` or targeted TS tests for fallback runtime utilities.
+- [x] **P3.V2** Run `npm run check:scripts` and expect pass.
+- [x] **P3.V3** Run simulated fallback tests with mock provider errors and verify deterministic receipts.
 
 #### Exit Criteria
 
