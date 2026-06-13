@@ -230,8 +230,18 @@ Finish the feature.
                 + "\n",
                 encoding="utf-8",
             )
+            (topic_dir / "plan.md").write_text(
+                (topic_dir / "plan.md")
+                .read_text(encoding="utf-8")
+                .replace(
+                    "#### Validation\n- [ ] **P1.V1** Run final manual check.\n",
+                    "#### Validation\n- [ ] **P1.V1** Run final manual check. Testing Strategy Trace: covers REQ-DEMO-001 and SCN-DEMO-001; layer E2E; command `python -m unittest tests.test_demo`; concrete artifact tests/test_demo.py.\n",
+                )
+                + "\n## Requirement Test Coverage Matrix\n\n| Requirement / Scenario | Validation |\n| --- | --- |\n| REQ-DEMO-001 | P1.V1 |\n| SCN-DEMO-001 | P1.V1 |\n",
+                encoding="utf-8",
+            )
             (topic_dir / "design.md").write_text(
-                "# Design\n\n## Decision One\n\nSatisfies [REQ-DEMO-001].\n\n## Alternative One\n\nRejected.\n",
+                "# Design\n\n## Decision One\n\nSatisfies [REQ-DEMO-001].\n\n## Testing Strategy\n\nLanguage: Python. App type: CLI. Existing test tools: unittest. Docs consulted: Python unittest docs. Unit strategy: focused functions. Integration strategy: temp filesystem command boundaries. E2E strategy: run one CLI smoke. Related ADR notes: none found. Requirement/scenario coverage: REQ-DEMO-001 and SCN-DEMO-001 map to P1.V1.\n\n## Alternative One\n\nRejected.\n",
                 encoding="utf-8",
             )
             (topic_dir / "design.nodes.jsonl").write_text(
@@ -381,8 +391,19 @@ Finish the feature.
             project = Path(tmp)
             topic_dir = self.write_valid_project(project)
             (topic_dir / "requirements.md").write_text("# Requirements\n\nUses [REQ-DEMO-001].\n", encoding="utf-8")
+            (topic_dir / "plan.md").write_text(
+                (topic_dir / "plan.md")
+                .read_text(encoding="utf-8")
+                .replace(
+                    "#### Validation\n- [ ] **P1.V1** Run final manual check.\n",
+                    "#### Validation\n- [ ] **P1.V1** Run final manual check. Testing Strategy Trace: covers REQ-DEMO-001; layer E2E; command `python -m unittest tests.test_demo`; concrete artifact tests/test_demo.py.\n",
+                )
+                + "\n## Requirement Test Coverage Matrix\n\n| Requirement / Scenario | Validation |\n| --- | --- |\n| REQ-DEMO-001 | P1.V1 |\n",
+                encoding="utf-8",
+            )
             (topic_dir / "design.md").write_text(
-                "# Design\n\n## Decision One\n\nSatisfies [REQ-DEMO-001].\n", encoding="utf-8"
+                "# Design\n\n## Decision One\n\nSatisfies [REQ-DEMO-001].\n\n## Testing Strategy\n\nLanguage: Python. App type: CLI. Existing test tools: unittest. Docs consulted: Python unittest docs. Unit strategy: focused functions. Integration strategy: temp filesystem command boundaries. E2E strategy: run one CLI smoke. Related ADR notes: none found. Requirement/scenario coverage: REQ-DEMO-001 maps to P1.V1.\n",
+                encoding="utf-8",
             )
             (topic_dir / "interview.md").write_text("# Interview\n\n## Decision One\n\nAccepted.\n", encoding="utf-8")
             (topic_dir / "requirements.nodes.jsonl").write_text(
@@ -516,6 +537,102 @@ Finish the feature.
             result = self.run_validator(project)
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("not earlier in the plan", result.stdout)
+
+    def test_testing_strategy_contract_failures(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            topic_dir = self.write_valid_project(project)
+            (topic_dir / "requirements.md").write_text("# Requirements\n\nUses [REQ-DEMO-001] and [SCN-DEMO-001].\n", encoding="utf-8")
+            (topic_dir / "requirements.nodes.jsonl").write_text(
+                json.dumps(
+                    {
+                        "id": "REQ-DEMO-001",
+                        "type": "requirement",
+                        "title": "Demo requirement",
+                        "statement": "The system MUST validate testing strategy coverage.",
+                        "change_type": "ADDED",
+                        "domain": "demo",
+                        "priority": "must",
+                        "status": "accepted",
+                        "scenario_refs": ["SCN-DEMO-001"],
+                        "fact_refs": ["F001"],
+                    }
+                )
+                + "\n"
+                + json.dumps(
+                    {"id": "SCN-DEMO-001", "type": "scenario", "title": "Happy path", "requirement_id": "REQ-DEMO-001"}
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (topic_dir / "requirements.edges.jsonl").write_text(
+                json.dumps({"from": "REQ-DEMO-001", "to": "F001", "type": "supported_by"}) + "\n",
+                encoding="utf-8",
+            )
+            (topic_dir / "design.md").write_text("# Design\n\n## Decision\n\nSatisfies [REQ-DEMO-001].\n", encoding="utf-8")
+
+            result = self.run_validator(project)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("must include a Testing Strategy", result.stdout)
+
+            (topic_dir / "design.md").write_text(
+                "# Design\n\n## Decision\n\nSatisfies [REQ-DEMO-001].\n\n## Testing Strategy\n\nLanguage: Python. App type: CLI. Existing test tools: unittest. Docs consulted: Python unittest docs. Unit strategy: functions. Integration strategy: temp filesystem. E2E strategy: CLI smoke. Related ADR notes: none. Requirement/scenario coverage: REQ-DEMO-001 and SCN-DEMO-001.\n",
+                encoding="utf-8",
+            )
+            result = self.run_validator(project)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("lacks validation coverage for requirement/scenario REQ-DEMO-001", result.stdout)
+            self.assertIn("lacks validation coverage for requirement/scenario SCN-DEMO-001", result.stdout)
+
+            plan_text = (topic_dir / "plan.md").read_text(encoding="utf-8")
+            (topic_dir / "plan.md").write_text(
+                plan_text.replace("- [ ] **P1.V1** Run final manual check.", "- [ ] **P1.V1** Run tests.")
+                + "\n## Requirement Test Coverage Matrix\n\nREQ-DEMO-001 and SCN-DEMO-001 are covered by P1.V1. Testing Strategy Trace: layer E2E.\n",
+                encoding="utf-8",
+            )
+            result = self.run_validator(project)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("generic-only", result.stdout)
+
+            (topic_dir / "plan.md").write_text(
+                plan_text.replace(
+                    "- [ ] **P1.V1** Run final manual check.",
+                    "- [ ] **P1.V1** Testing Strategy Trace: covers REQ-DEMO-001 and SCN-DEMO-001; layer E2E.",
+                )
+                + "\n## Requirement Test Coverage Matrix\n\nREQ-DEMO-001 and SCN-DEMO-001 are covered by P1.V1. Testing Strategy Trace: layer E2E.\n",
+                encoding="utf-8",
+            )
+            result = self.run_validator(project)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("lacks concrete test artifacts", result.stdout)
+
+            (topic_dir / "plan.md").write_text(
+                plan_text.replace(
+                    "- [ ] **P1.V1** Run final manual check.",
+                    "- [ ] **P1.V1** Testing Strategy Trace: covers REQ-DEMO-001 and SCN-DEMO-001; command `python -m unittest tests.test_demo`; concrete artifact tests/test_demo.py.",
+                )
+                + "\n## Requirement Test Coverage Matrix\n\nREQ-DEMO-001 and SCN-DEMO-001 are covered by P1.V1.\n",
+                encoding="utf-8",
+            )
+            result = self.run_validator(project)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("at least one E2E validation", result.stdout)
+
+            (topic_dir / "design.md").write_text(
+                "# Design\n\n## Decision\n\nSatisfies [REQ-DEMO-001].\n\n## Testing Strategy\n\nLanguage: Python. App type: CLI. Existing test tools: unittest. Docs consulted: Python unittest docs. Integration strategy: temp filesystem. E2E strategy: CLI smoke. Related ADR notes: none. Requirement/scenario coverage: REQ-DEMO-001 and SCN-DEMO-001.\n",
+                encoding="utf-8",
+            )
+            result = self.run_validator(project)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("lacks unit strategy", result.stdout)
+
+            (topic_dir / "design.md").write_text(
+                "# Design\n\n## Decision\n\nSatisfies [REQ-DEMO-001].\n\n## Testing Strategy\n\nLanguage: Python. App type: CLI. Existing test tools: unittest. Docs consulted: Python unittest docs. Unit strategy: functions. Integration strategy: temp filesystem. E2E strategy: CLI smoke. Jest to Vitest migration is accepted. Requirement/scenario coverage: REQ-DEMO-001 and SCN-DEMO-001.\n",
+                encoding="utf-8",
+            )
+            result = self.run_validator(project)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("Major testing-toolchain change lacks ADR", result.stdout)
 
     def test_missing_plan_graph_node_fails(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

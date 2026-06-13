@@ -220,7 +220,7 @@ Do not describe ADR generation as out of scope; carry `adr_required` and ADR-tri
 
 ### Phase P3 — Deterministic validator checks
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P1, P2
 - **Unlocks:** P4
 - **Primary references:** `skills/plan/scripts/validate_planning_graph.py`, `tests/test_validate_planning_graph.py`, `.plan/testing-strategy/design.md`, `.plan/testing-strategy/requirements.md`, [F004]
@@ -238,18 +238,18 @@ Add deterministic checks that catch missing testing-strategy evidence and generi
 
 #### Checklist
 
-- [ ] **P3.T1** Add design-artifact checks that detect missing `Testing Strategy` section for behavior-changing topics with design/requirements artifacts.
-- [ ] **P3.T2** Add design strategy field checks for language/app type, existing tools, docs/sources, unit/integration/E2E strategy, at-least-one E2E validation, related ADR notes, and unresolved-decision/escalation notes.
-- [ ] **P3.T3** Add plan checks that flag behavior-changing phases whose validation items are generic-only, lack concrete test artifacts/scenarios/commands/manual evidence, omit requirement/scenario coverage, or omit an at-least-once E2E validation for applicable topics.
-- [ ] **P3.T4** Add requirement/scenario coverage checks that ensure every topic-generated `REQ-*` and `SCN-*` is covered by planned validation or has an explicit justified non-test/manual evidence exception.
-- [ ] **P3.T5** Add ADR-trigger detection for accepted or required major testing-toolchain changes when plan/design prose treats them as implementation prerequisites.
-- [ ] **P3.T6** Add unit tests in `tests/test_validate_planning_graph.py` using temp project roots for passing and failing design/plan strategy cases, including an uncovered requirement failure.
+- [x] **P3.T1** Add design-artifact checks that detect missing `Testing Strategy` section for behavior-changing topics with design/requirements artifacts.
+- [x] **P3.T2** Add design strategy field checks for language/app type, existing tools, docs/sources, unit/integration/E2E strategy, at-least-one E2E validation, related ADR notes, and unresolved-decision/escalation notes.
+- [x] **P3.T3** Add plan checks that flag behavior-changing phases whose validation items are generic-only, lack concrete test artifacts/scenarios/commands/manual evidence, omit requirement/scenario coverage, or omit an at-least-once E2E validation for applicable topics.
+- [x] **P3.T4** Add requirement/scenario coverage checks that ensure every topic-generated `REQ-*` and `SCN-*` is covered by planned validation or has an explicit justified non-test/manual evidence exception.
+- [x] **P3.T5** Add ADR-trigger detection for accepted or required major testing-toolchain changes when plan/design prose treats them as implementation prerequisites.
+- [x] **P3.T6** Add unit tests in `tests/test_validate_planning_graph.py` using temp project roots for passing and failing design/plan strategy cases, including an uncovered requirement failure.
 
 #### Validation
 
-- [ ] **P3.V1** Run `python -m unittest tests.test_validate_planning_graph.PlanningGraphValidatorTests` and verify new temp-root tests pass. Testing Strategy Trace: design `DES-TEST-004`; layer unit/integration for validator behavior.
-- [ ] **P3.V2** Run `python skills/plan/scripts/validate_planning_graph.py --root "$PWD" --topic testing-strategy --json` and verify the real topic passes after the validator change. Testing Strategy Trace: design `DES-TEST-004`; layer integration against this topic's artifacts.
-- [ ] **P3.V3** Run `npm run check:scripts` and verify Python/TypeScript scripts still parse. Testing Strategy Trace: design `DES-TEST-004`; layer static.
+- [x] **P3.V1** Run `python -m unittest tests.test_validate_planning_graph.PlanningGraphValidatorTests` and verify new temp-root tests pass. Testing Strategy Trace: design `DES-TEST-004`; layer unit/integration for validator behavior.
+- [x] **P3.V2** Run `python skills/plan/scripts/validate_planning_graph.py --root "$PWD" --topic testing-strategy --json` and verify the real topic passes after the validator change. Testing Strategy Trace: design `DES-TEST-004`; layer integration against this topic's artifacts.
+- [x] **P3.V3** Run `npm run check:scripts` and verify Python/TypeScript scripts still parse. Testing Strategy Trace: design `DES-TEST-004`; layer static.
 
 #### Exit Criteria
 

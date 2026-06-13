@@ -550,6 +550,79 @@ def validate_requirement_citations(topic_dir: Path, requirement_ids: set[str], e
                 errors.append(f"{name} cites missing requirement/scenario [{requirement_id}]")
 
 
+def normalized_words(text: str) -> str:
+    return re.sub(r"\s+", " ", text.lower())
+
+
+def validate_testing_strategy_contract(topic_dir: Path, requirement_ids: set[str], errors: list[str]) -> None:
+    design_path = topic_dir / "design.md"
+    plan_path = topic_dir / "plan.md"
+    if not requirement_ids or not design_path.exists():
+        return
+
+    design_text = design_path.read_text(encoding="utf-8")
+    design_lower = normalized_words(design_text)
+    if "testing strategy" not in design_lower:
+        errors.append("design.md must include a Testing Strategy section when topic requirements/scenarios exist")
+        return
+
+    required_terms = {
+        "language/app type": ("language", "app"),
+        "existing test tools": ("existing", "test"),
+        "source-backed docs": ("docs",),
+        "unit strategy": ("unit strategy",),
+        "integration strategy": ("integration strategy",),
+        "E2E strategy": ("e2e strategy",),
+        "related ADR notes": ("adr",),
+        "requirement coverage": ("req-",),
+    }
+    if any(requirement_id.startswith("SCN-") for requirement_id in requirement_ids):
+        required_terms["scenario coverage"] = ("scn-",)
+    for label, terms in required_terms.items():
+        if not all(term in design_lower for term in terms):
+            errors.append(f"Testing Strategy in design.md lacks {label}")
+
+    plan_text = plan_path.read_text(encoding="utf-8") if plan_path.exists() else ""
+    plan_lower = normalized_words(plan_text)
+    if "testing strategy trace" not in plan_lower and "coverage matrix" not in plan_lower:
+        errors.append("plan.md must include Testing Strategy Trace metadata or a requirement/scenario coverage matrix")
+    plan_lines = plan_text.splitlines()
+    coverage_line_pattern = re.compile(r"P\d+\.V\d+|exception|manual evidence|static evidence", re.IGNORECASE)
+    for requirement_id in sorted(requirement_ids):
+        if not requirement_id.startswith(("REQ-", "SCN-")):
+            continue
+        if not any(requirement_id in line and coverage_line_pattern.search(line) for line in plan_lines):
+            errors.append(f"plan.md lacks validation coverage for requirement/scenario {requirement_id}")
+    if "e2e" not in plan_lower:
+        errors.append("plan.md must include at least one E2E validation for requirement-backed behavior changes")
+
+    validation_line_pattern = re.compile(r"^- \[[ xX]\] \*\*(P\d+\.V\d+)\*\*\s*(.+)$", re.MULTILINE)
+    concrete_pattern = re.compile(
+        r"(`[^`]+`|\bcommand\b|\bartifact\b|\bfixture\b|\bscenario\b|\bmanual evidence\b|\bstatic evidence\b|tests?/[^\s`;,]+|[^\s`;,]+\.(?:py|ts|tsx|js|jsx|spec|test)\b)",
+        re.IGNORECASE,
+    )
+    for validation_id, validation_text in validation_line_pattern.findall(plan_text):
+        validation_lower = validation_text.lower()
+        strategy_related = (
+            "testing strategy trace" in validation_lower
+            or any(requirement_id in validation_text for requirement_id in requirement_ids)
+            or re.match(r"(?:run\s+)?(?:the\s+)?(?:tests|checks)\b", validation_lower)
+        )
+        if strategy_related and not concrete_pattern.search(validation_text):
+            errors.append(
+                f"Validation {validation_id} lacks concrete test artifacts/scenarios/commands or manual/static evidence"
+            )
+        if re.match(r"(?:run\s+)?(?:the\s+)?(?:tests|checks)\b", validation_lower) and not concrete_pattern.search(
+            validation_text
+        ):
+            errors.append(f"Validation {validation_id} is generic-only and lacks concrete test artifacts/scenarios/commands")
+
+    pivot_terms = ["jest to vitest", "cypress to playwright", "replace pytest", "standardize playwright"]
+    combined = normalized_words(design_text + "\n" + plan_text)
+    if any(term in combined for term in pivot_terms) and "adr" not in combined:
+        errors.append("Major testing-toolchain change lacks ADR evaluation/generation trigger")
+
+
 def warn_missing_workflow_state(
     plan_nodes: list[dict[str, Any]],
     receipts: list[dict[str, Any]],
@@ -907,6 +980,7 @@ def main() -> int:
                 errors.append(f"Proposal cites missing fact [{fact_id}]")
 
     validate_requirement_citations(topic_dir, requirement_ids, errors)
+    validate_testing_strategy_contract(topic_dir, requirement_ids, errors)
     validate_plan(topic_dir / "plan.md", fact_ids, allowed_ids, plan_ids, db_path, errors)
 
     report = {
