@@ -1,0 +1,155 @@
+{
+  "schema_version": 1,
+  "topic": "skills-cleanup",
+  "source_status": "hashes-valid",
+  "source_refs": {
+    "plan_md": {
+      "path": ".plan/skills-cleanup/plan.md",
+      "sha256": "sha256:b9f6852b9a66e6ed92195bad7c4b39333364d0b4f5ad9f8f93f9e55740624793"
+    },
+    "plan_nodes": {
+      "path": ".plan/skills-cleanup/plan.nodes.jsonl",
+      "sha256": "sha256:770aa3798c9e73fce93262fca9b5174d91d994b7a00d23071adb2e57dee93eaf"
+    },
+    "plan_edges": {
+      "path": ".plan/skills-cleanup/plan.edges.jsonl",
+      "sha256": "sha256:65666c8f274bffbeb283a440f440bdec6359ccd80da577e311aeb8099f4c9d9f"
+    },
+    "receipts": {
+      "path": ".plan/skills-cleanup/receipts.jsonl",
+      "sha256": "sha256:eaa5dad7a2daab09ce1891b4395c08d3949bb496068a7b437260fce3becf2ab3"
+    },
+    "context_packs": {
+      "path": ".plan/skills-cleanup/context-packs.jsonl",
+      "sha256": "sha256:cc525f5de1dffd5b9083d6950d9d3399033b5398f90d71a727105aceb8770e8d"
+    }
+  },
+  "current_phase_id": "P3",
+  "active_task_ids": [],
+  "active_validation_ids": [],
+  "next_action": {
+    "id": "P5.T1",
+    "kind": "implementation-task",
+    "phase_id": "P5",
+    "task_id": "P5.T1",
+    "summary": "Run final skill-language checker and targeted rg checks for stale direct-write/delegation patterns.",
+    "files_to_inspect": [
+      "skills/proposal/SKILL.md",
+      "skills/plan/SKILL.md",
+      "skills/interview/SKILL.md",
+      "skills/implement/SKILL.md",
+      "skills/design/SKILL.md",
+      ".pi/agents/cartographer-*.md",
+      "AGENTS.md"
+    ]
+  },
+  "working_set": {
+    "write_allowed": [
+      {
+        "path": ".plan/skills-cleanup/plan.md",
+        "reason": "P5 status/checklist updates"
+      },
+      {
+        "path": ".plan/skills-cleanup/plan.nodes.jsonl",
+        "reason": "P5 status/checklist updates"
+      },
+      {
+        "path": ".plan/skills-cleanup/receipts.jsonl",
+        "reason": "P5 validation receipts"
+      },
+      {
+        "path": ".plan/skills-cleanup/context-packs.jsonl",
+        "reason": "P5 final context pack"
+      }
+    ],
+    "read_only": [
+      {
+        "path": ".plan/skills-cleanup/plan.edges.jsonl",
+        "reason": "dependency graph reference"
+      },
+      {
+        "path": "skills/proposal/SKILL.md",
+        "reason": "P5 final skill-language check target"
+      },
+      {
+        "path": "skills/plan/SKILL.md",
+        "reason": "P5 final skill-language check target"
+      },
+      {
+        "path": "skills/interview/SKILL.md",
+        "reason": "P5 final skill-language check target"
+      },
+      {
+        "path": "skills/implement/SKILL.md",
+        "reason": "P5 final skill-language check target"
+      },
+      {
+        "path": "skills/design/SKILL.md",
+        "reason": "P5 final skill-language check target"
+      },
+      {
+        "path": ".pi/agents/cartographer-*.md",
+        "reason": "P5 final skill-language check target"
+      },
+      {
+        "path": "AGENTS.md",
+        "reason": "P5 final skill-language check target"
+      }
+    ],
+    "forbidden": [
+      {
+        "path": ".plan/_private/**",
+        "reason": "raw private inputs are off-limits"
+      },
+      {
+        "path": ".plan/_index/**",
+        "reason": "generated index/cache artifacts"
+      }
+    ]
+  },
+  "known_failures": [],
+  "last_validation_receipt_ids": [
+    "receipt:P0:validation:2026-06-13T03:16:09+00:00",
+    "receipt:P0:validation:2026-06-13T03:16:15+00:00",
+    "receipt:P0:validation:2026-06-13T03:17:09+00:00",
+    "receipt:P0:validation:2026-06-13T03:17:14+00:00",
+    "receipt:skills-cleanup:audit:2026-06-13T03:18:49Z",
+    "receipt:P0:validation:2026-06-13T03:19:28+00:00",
+    "receipt:P0:validation:2026-06-13T03:19:33+00:00",
+    "receipt:P1:validation:2026-06-13T03:25:31+00:00",
+    "receipt:P1:validation:2026-06-13T03:25:36+00:00",
+    "receipt:P1:validation:2026-06-13T03:25:40+00:00",
+    "receipt:P1:validation:2026-06-13T03:26:21+00:00",
+    "receipt:P1:validation:2026-06-13T03:26:27+00:00",
+    "receipt:skills-cleanup:audit:2026-06-13T03:28:02Z",
+    "receipt:P1:validation:2026-06-13T03:29:18+00:00",
+    "receipt:P1:validation:2026-06-13T03:29:21+00:00",
+    "receipt:P2:validation:2026-06-13T03:38:01+00:00",
+    "receipt:P2:validation:2026-06-13T03:38:07+00:00",
+    "receipt:P2:validation:2026-06-13T03:38:17+00:00",
+    "receipt:skills-cleanup:audit:2026-06-13T03:41:21Z",
+    "receipt:P2:validation:2026-06-13T03:41:29+00:00",
+    "receipt:P2:validation:2026-06-13T03:41:33+00:00",
+    "receipt:P5:validation:2026-06-13T04:40:24+00:00",
+    "receipt:P5:validation:2026-06-13T03:58:54+00:00",
+    "receipt:P5:validation:2026-06-13T04:50:59+00:00"
+  ],
+  "journal_refs": ["journal:20260613T031944Z:compact", "journal:20260613T032018Z:compact"],
+  "resume": {
+    "template_id": "cartographer.single_writer.resume.v1",
+    "resume_order": [
+      ".cartographer/skills-cleanup/state.json",
+      ".cartographer/skills-cleanup/journal.jsonl",
+      ".plan/skills-cleanup/plan.md",
+      ".plan/skills-cleanup/receipts.jsonl"
+    ],
+    "expected_first_response": ["current_phase", "next_action", "files_to_inspect"],
+    "must_ignore": ["prior chat speculation", "stale generated snippets"]
+  },
+  "updated_at": "2026-06-13T05:15:30Z",
+  "stale_reason": "P5 sync complete: plan.md, plan.nodes.jsonl, receipts updated during continuation session",
+  "compaction": {
+    "trigger": "phase-end-P5-sync",
+    "compacted_at": "2026-06-13T05:15:30Z"
+  }
+}

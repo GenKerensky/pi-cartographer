@@ -192,7 +192,7 @@ If indexing fails, report the error and ask whether to continue with manual disc
    - files to inspect.
 5. Choose the first incomplete phase whose dependencies are complete.
 6. Verify dependencies are acyclic and completed phases have commits or documented no-op completions.
-7. Mark the selected phase `in-progress` in `.plan/{topic}/plan.md` and in `plan.nodes.jsonl` when present.
+7. Mark the selected phase `in-progress` with `cartographer_plan_status({"action":"set","root":"$PWD","topic":"{topic}","id":"P?","status":"in-progress"})`, or the equivalent `plan-status-set` CLI fallback.
 8. Set a singular `next_action` and initial `working_set` through state commands when available.
 
 ### 6. Create a retrieval plan and gather focused phase context
@@ -229,8 +229,8 @@ For each small unit of work inside the selected phase:
 | Narrow    | Update `working_set` before editing: write-allowed, read-only, and forbidden paths.                                                                                                               |
 | Inspect   | Re-open active files from disk; never rely on code read many turns ago.                                                                                                                           |
 | Act       | Apply a small parent-owned patch.                                                                                                                                                                 |
-| Validate  | Run the narrowest useful check and append a deterministic validation receipt when appropriate.                                                                                                    |
-| Record    | Update state cursor/receipt refs; append a journal record only for important durable lessons.                                                                                                     |
+| Validate  | Run the narrowest useful check and record a deterministic validation receipt through `cartographer_validation` or `cartographer_receipt` when appropriate.                                        |
+| Record    | Update state cursor/receipt refs; append important durable lessons through `cartographer_state journal-append`.                                                                                   |
 | Compact   | On milestone triggers, run `compact-generate`/`cartographer_implement compact` for a state snapshot, then call `cartographer_compact_context` when available for actual Pi transcript compaction. |
 | Continue  | Re-orient from artifacts and ignore stale chat assumptions.                                                                                                                                       |
 
@@ -242,7 +242,7 @@ Compaction triggers include phase start/end, diagnosed test failure, decision ma
   - verify the expected output exists;
   - verify relevant code/tests/docs changed as needed;
   - change `- [ ] **P?.T?**` to `- [x] **P?.T?**` only when complete.
-- Mirror completed task status in `plan.nodes.jsonl` by setting matching `task:P?.T?` nodes to `status: complete` when present.
+- Mirror completed task status with `cartographer_plan_status({"action":"set","root":"$PWD","topic":"{topic}","id":"P?.T?","status":"complete"})`, or the equivalent `plan-status-set` CLI fallback.
 - Do not check off validation items until the command or auditor evidence proves the item passed.
 
 ### 9. Run quality tools until green
@@ -273,7 +273,7 @@ Examples:
 
 If a command is unavailable, record it as unavailable rather than failed. If a command fails, capture a compact failure summary, apply a scoped fix, rerun the failed command and dependent checks, and record receipts.
 
-Limit routine repair loops to 3 scoped fix attempts per distinct failing command. If the same command still fails, write timeout/fallback receipts, call `cartographer-compass`, and stop to ask the user unless the next step is clearly safe and in scope.
+Limit routine repair loops to 3 scoped fix attempts per distinct failing command. If the same command still fails, record timeout/fallback receipts through `cartographer_handoff fallback` or `cartographer_receipt`, call `cartographer-compass`, and stop to ask the user unless the next step is clearly safe and in scope.
 
 ### 10. Audit and validate the phase
 
@@ -349,7 +349,7 @@ The ADR must cite sanitized evidence docs or validation receipt IDs, not raw `.p
 
 ## Receipt Discipline
 
-After each significant command, specialist handoff, timeout, fallback substitution, phase decision, compaction, or validation gate, append a compact `.plan/{topic}/receipts.jsonl` record through `cartographer_validation`, `cartographer_handoff`, `cartographer_transition`, `cartographer_implement record`, or `cartographer_receipt`/`receipt-append` instead of relying on transcript continuity.
+After each significant command, specialist handoff, timeout, fallback substitution, phase decision, compaction, or validation gate, record a compact receipt through `cartographer_validation`, `cartographer_handoff`, `cartographer_transition`, `cartographer_implement record`, or `cartographer_receipt`/`receipt-append` instead of relying on transcript continuity.
 
 Validation receipts should include:
 

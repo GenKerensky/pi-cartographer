@@ -50,7 +50,15 @@ describe("cartographer workflow contracts", () => {
 	it("defines lifecycle gates, receipt kinds, and prerequisites", () => {
 		expect(LIFECYCLE_STATES).toContain("proposal-draft");
 		expect(LIFECYCLE_STATES).toContain("implemented");
-		expect(HUMAN_APPROVAL_GATES).toEqual(["proposal", "interview", "requirements", "design", "plan", "phase", "implementation"]);
+		expect(HUMAN_APPROVAL_GATES).toEqual([
+			"proposal",
+			"interview",
+			"requirements",
+			"design",
+			"plan",
+			"phase",
+			"implementation",
+		]);
 		expect(RECEIPT_KINDS).toContain("approval");
 		expect(RECEIPT_KINDS).toContain("output-capture");
 		expect(GATE_PREREQUISITES.plan.map((item) => item.id)).toContain("plan-validate-graph");
