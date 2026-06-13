@@ -82,14 +82,22 @@ export const GATE_PREREQUISITES: Record<TransitionGate, GatePrerequisite[]> = {
 		{ id: "proposal-auditor-pass", description: "Proposal auditor PASS or approved fallback exists", required: true },
 	],
 	interview: [
-		{ id: "interview-decision", description: "Interview ran or was explicitly skipped after research exhaustion", required: true },
+		{
+			id: "interview-decision",
+			description: "Interview ran or was explicitly skipped after research exhaustion",
+			required: true,
+		},
 		{ id: "interview-context-pack", description: "Interview context pack exists", required: true },
 		{ id: "interview-auditor-pass", description: "Interview auditor PASS or approved fallback exists", required: true },
 	],
 	requirements: [
 		{ id: "requirements-validate-topic", description: "Requirements graph validation passed", required: true },
 		{ id: "requirements-context-pack", description: "Requirements context pack exists", required: true },
-		{ id: "requirements-auditor-pass", description: "Requirements auditor PASS or approved fallback exists", required: true },
+		{
+			id: "requirements-auditor-pass",
+			description: "Requirements auditor PASS or approved fallback exists",
+			required: true,
+		},
 	],
 	design: [
 		{ id: "design-validate-topic", description: "Design graph validation passed", required: true },
@@ -101,7 +109,11 @@ export const GATE_PREREQUISITES: Record<TransitionGate, GatePrerequisite[]> = {
 		{ id: "plan-validate-graph", description: "Planning graph validation passed", required: true },
 		{ id: "plan-context-pack", description: "Plan context pack exists", required: true },
 		{ id: "plan-auditor-pass", description: "Plan auditor PASS or approved fallback exists", required: true },
-		{ id: "plan-scope-gates", description: "Required interview, requirements, and design gates are resolved", required: true },
+		{
+			id: "plan-scope-gates",
+			description: "Required interview, requirements, and design gates are resolved",
+			required: true,
+		},
 	],
 	phase: [
 		{ id: "phase-validation-receipts", description: "Phase validation receipts exist", required: true },
@@ -1172,7 +1184,9 @@ function hasSkippedInterviewDecision(receipts: Record<string, unknown>[]): boole
 		return (
 			receipt.phase_id === "interview" &&
 			["decision", "no-op", "transition", "approval"].includes(optionalString(receipt.kind)) &&
-			(status.includes("skip") || summary.includes("no unresolved user-owned decision") || summary.includes("interview skipped"))
+			(status.includes("skip") ||
+				summary.includes("no unresolved user-owned decision") ||
+				summary.includes("interview skipped"))
 		);
 	});
 }
@@ -1195,8 +1209,8 @@ function assertScopedPrePlanGates(root: string, topic: string): Record<string, u
 		);
 	}
 	const receipts = readJsonlRecords(receiptsPath(root, topic));
-	const interviewArtifactsPresent = ["interview.md", "interview.nodes.jsonl", "interview.edges.jsonl"].some((relative) =>
-		artifactHasContent(path.join(dir, relative)),
+	const interviewArtifactsPresent = ["interview.md", "interview.nodes.jsonl", "interview.edges.jsonl"].some(
+		(relative) => artifactHasContent(path.join(dir, relative)),
 	);
 	if (!interviewArtifactsPresent && !hasSkippedInterviewDecision(receipts)) {
 		throw new Error(
@@ -1214,7 +1228,9 @@ function assertScopedPrePlanGates(root: string, topic: string): Record<string, u
 	if (interviewArtifactsPresent) findAuditorPassReceipt(root, topic, "interview");
 	return {
 		requirements_required: true,
-		checked_gates: interviewArtifactsPresent ? ["interview", "requirements", "design"] : ["interview-skip", "requirements", "design"],
+		checked_gates: interviewArtifactsPresent
+			? ["interview", "requirements", "design"]
+			: ["interview-skip", "requirements", "design"],
 	};
 }
 
