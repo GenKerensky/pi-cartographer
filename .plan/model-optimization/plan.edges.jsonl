@@ -83,3 +83,15 @@
 {"from":"validation:P5.V3","to":"phase:P5","type":"validates"}
 {"from":"phase:P5","to":"validation:P5.V4","type":"contains"}
 {"from":"validation:P5.V4","to":"phase:P5","type":"validates"}
+{"from":"plan:model-optimization","to":"phase:P6","type":"contains"}
+{"from":"phase:P6","to":"phase:P5","type":"depends_on"}
+{"from":"phase:P6","to":"task:P6.T1","type":"contains"}
+{"from":"phase:P6","to":"task:P6.T2","type":"contains"}
+{"from":"phase:P6","to":"task:P6.T3","type":"contains"}
+{"from":"phase:P6","to":"task:P6.T4","type":"contains"}
+{"from":"phase:P6","to":"validation:P6.V1","type":"contains"}
+{"from":"validation:P6.V1","to":"phase:P6","type":"validates"}
+{"from":"phase:P6","to":"validation:P6.V2","type":"contains"}
+{"from":"validation:P6.V2","to":"phase:P6","type":"validates"}
+{"from":"phase:P6","to":"validation:P6.V3","type":"contains"}
+{"from":"validation:P6.V3","to":"phase:P6","type":"validates"}

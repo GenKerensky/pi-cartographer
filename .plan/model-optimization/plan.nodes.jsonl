@@ -8,7 +8,7 @@
 {"id":"phase:P1","type":"phase","phase_id":"P1","title":"Deterministic Model Config Script","status":"complete","depends_on":["P0"],"source":"plan.md"}
 {"id":"task:P1.T1","type":"task","task_id":"P1.T1","phase_id":"P1","title":"P1.T1","status":"complete","source":"plan.md"}
 {"id":"task:P1.T2","type":"task","task_id":"P1.T2","phase_id":"P1","title":"P1.T2","status":"complete","source":"plan.md"}
-{"id":"task:P1.T3","type":"task","task_id":"P1.T3","phase_id":"P1","title":"P1.T3","status":"pending","source":"plan.md"}
+{"id":"task:P1.T3","type":"task","task_id":"P1.T3","phase_id":"P1","title":"P1.T3","status":"complete","source":"plan.md"}
 {"id":"task:P1.T4","type":"task","task_id":"P1.T4","phase_id":"P1","title":"P1.T4","status":"complete","source":"plan.md"}
 {"id":"task:P1.T5","type":"task","task_id":"P1.T5","phase_id":"P1","title":"P1.T5","status":"complete","source":"plan.md"}
 {"id":"task:P1.T6","type":"task","task_id":"P1.T6","phase_id":"P1","title":"P1.T6","status":"complete","source":"plan.md"}
@@ -22,17 +22,17 @@
 {"id":"task:P2.T4","type":"task","task_id":"P2.T4","phase_id":"P2","title":"P2.T4","status":"complete","source":"plan.md"}
 {"id":"task:P2.T5","type":"task","task_id":"P2.T5","phase_id":"P2","title":"P2.T5","status":"complete","source":"plan.md"}
 {"id":"task:P2.T6","type":"task","task_id":"P2.T6","phase_id":"P2","title":"P2.T6","status":"complete","source":"plan.md"}
-{"id":"validation:P2.V1","type":"validation","validation_id":"P2.V1","phase_id":"P2","title":"P2.V1","status":"pending","source":"plan.md"}
+{"id":"validation:P2.V1","type":"validation","validation_id":"P2.V1","phase_id":"P2","title":"P2.V1","status":"complete","source":"plan.md"}
 {"id":"validation:P2.V2","type":"validation","validation_id":"P2.V2","phase_id":"P2","title":"P2.V2","status":"complete","source":"plan.md"}
 {"id":"phase:P3","type":"phase","phase_id":"P3","title":"Fallback Runtime Integration","status":"complete","depends_on":["P1"],"source":"plan.md"}
-{"id":"task:P3.T1","type":"task","task_id":"P3.T1","phase_id":"P3","title":"P3.T1","status":"pending","source":"plan.md"}
+{"id":"task:P3.T1","type":"task","task_id":"P3.T1","phase_id":"P3","title":"P3.T1","status":"complete","source":"plan.md"}
 {"id":"task:P3.T2","type":"task","task_id":"P3.T2","phase_id":"P3","title":"P3.T2","status":"complete","source":"plan.md"}
 {"id":"task:P3.T3","type":"task","task_id":"P3.T3","phase_id":"P3","title":"P3.T3","status":"complete","source":"plan.md"}
 {"id":"task:P3.T4","type":"task","task_id":"P3.T4","phase_id":"P3","title":"P3.T4","status":"complete","source":"plan.md"}
 {"id":"task:P3.T5","type":"task","task_id":"P3.T5","phase_id":"P3","title":"P3.T5","status":"complete","source":"plan.md"}
-{"id":"task:P3.T6","type":"task","task_id":"P3.T6","phase_id":"P3","title":"P3.T6","status":"pending","source":"plan.md"}
+{"id":"task:P3.T6","type":"task","task_id":"P3.T6","phase_id":"P3","title":"P3.T6","status":"complete","source":"plan.md"}
 {"id":"validation:P3.V1","type":"validation","validation_id":"P3.V1","phase_id":"P3","title":"P3.V1","status":"complete","source":"plan.md"}
-{"id":"validation:P3.V2","type":"validation","validation_id":"P3.V2","phase_id":"P3","title":"P3.V2","status":"pending","source":"plan.md"}
+{"id":"validation:P3.V2","type":"validation","validation_id":"P3.V2","phase_id":"P3","title":"P3.V2","status":"complete","source":"plan.md"}
 {"id":"validation:P3.V3","type":"validation","validation_id":"P3.V3","phase_id":"P3","title":"P3.V3","status":"complete","source":"plan.md"}
 {"id":"phase:P4","type":"phase","phase_id":"P4","title":"Documentation and Examples","status":"complete","depends_on":["P2","P3"],"source":"plan.md"}
 {"id":"task:P4.T1","type":"task","task_id":"P4.T1","phase_id":"P4","title":"P4.T1","status":"complete","source":"plan.md"}
@@ -47,7 +47,7 @@
 {"id":"task:P5.T2","type":"task","task_id":"P5.T2","phase_id":"P5","title":"P5.T2","status":"complete","source":"plan.md"}
 {"id":"task:P5.T3","type":"task","task_id":"P5.T3","phase_id":"P5","title":"P5.T3","status":"complete","source":"plan.md"}
 {"id":"task:P5.T4","type":"task","task_id":"P5.T4","phase_id":"P5","title":"P5.T4","status":"complete","source":"plan.md"}
-{"id":"task:P5.T5","type":"task","task_id":"P5.T5","phase_id":"P5","title":"P5.T5","status":"pending","source":"plan.md"}
+{"id":"task:P5.T5","type":"task","task_id":"P5.T5","phase_id":"P5","title":"P5.T5","status":"complete","source":"plan.md"}
 {"id":"task:P5.T6","type":"task","task_id":"P5.T6","phase_id":"P5","title":"P5.T6","status":"complete","source":"plan.md"}
 {"id":"task:P5.T7","type":"task","task_id":"P5.T7","phase_id":"P5","title":"P5.T7","status":"complete","source":"plan.md"}
 {"id":"task:P5.T8","type":"task","task_id":"P5.T8","phase_id":"P5","title":"P5.T8","status":"complete","source":"plan.md"}
@@ -56,3 +56,11 @@
 {"id":"validation:P5.V2","type":"validation","validation_id":"P5.V2","phase_id":"P5","title":"P5.V2","status":"complete","source":"plan.md"}
 {"id":"validation:P5.V3","type":"validation","validation_id":"P5.V3","phase_id":"P5","title":"P5.V3","status":"complete","source":"plan.md"}
 {"id":"validation:P5.V4","type":"validation","validation_id":"P5.V4","phase_id":"P5","title":"P5.V4","status":"complete","source":"plan.md"}
+{"id":"phase:P6","type":"phase","phase_id":"P6","title":"Post-Rebase Mainline Alignment","status":"complete","depends_on":["P5"],"source":"plan.md"}
+{"id":"task:P6.T1","type":"task","task_id":"P6.T1","phase_id":"P6","title":"P6.T1","status":"complete","source":"plan.md"}
+{"id":"task:P6.T2","type":"task","task_id":"P6.T2","phase_id":"P6","title":"P6.T2","status":"complete","source":"plan.md"}
+{"id":"task:P6.T3","type":"task","task_id":"P6.T3","phase_id":"P6","title":"P6.T3","status":"complete","source":"plan.md"}
+{"id":"task:P6.T4","type":"task","task_id":"P6.T4","phase_id":"P6","title":"P6.T4","status":"complete","source":"plan.md"}
+{"id":"validation:P6.V1","type":"validation","validation_id":"P6.V1","phase_id":"P6","title":"P6.V1","status":"complete","source":"plan.md"}
+{"id":"validation:P6.V2","type":"validation","validation_id":"P6.V2","phase_id":"P6","title":"P6.V2","status":"complete","source":"plan.md"}
+{"id":"validation:P6.V3","type":"validation","validation_id":"P6.V3","phase_id":"P6","title":"P6.V3","status":"complete","source":"plan.md"}

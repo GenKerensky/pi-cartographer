@@ -62,10 +62,14 @@ function tempProjectWithTopic(): string {
 
 type MockContext = {
 	cwd?: string;
-	compact?: (options?: { customInstructions?: string; onComplete?: () => void }) => void;
+	compact?: (options?: {
+		customInstructions?: string;
+		onComplete?: (result: unknown) => void;
+		onError?: (error: Error) => void;
+	}) => void;
 	getContextUsage?: () => { tokens: number | null; contextWindow: number; percent: number | null } | undefined;
 	sendUserMessage?: (content: string, options?: { deliverAs?: "steer" | "followUp" }) => void;
-	ui?: { notify?: (message: string, level?: string) => void };
+	ui?: { notify?: (message: string, level?: "info" | "warning" | "error") => void };
 };
 
 type RegisteredTool = {
@@ -88,7 +92,9 @@ type RegisteredRuntime = {
 function registeredRuntime(): RegisteredRuntime {
 	const runtime: RegisteredRuntime = { tools: [], handlers: {} };
 	cartographerTools({
-		registerTool: (tool: RegisteredTool) => runtime.tools.push(tool),
+		registerTool: (tool: RegisteredTool) => {
+			runtime.tools.push(tool);
+		},
 		on: (event: string, handler: (event: unknown, ctx: MockContext) => Promise<void> | void) => {
 			runtime.handlers[event] = handler;
 		},
@@ -261,7 +267,7 @@ describe("cartographer tool registration", () => {
 		const compactTool = registeredTools().find((tool) => tool.name === "cartographer_compact_context");
 		if (!compactTool) throw new Error("cartographer_compact_context was not registered");
 
-		let onCompleteCallback: (() => void) | undefined;
+		let onCompleteCallback: ((result: unknown) => void) | undefined;
 		let continuationMessage = "";
 		let deliverAsOption: string | undefined;
 
@@ -295,9 +301,10 @@ describe("cartographer tool registration", () => {
 
 		expect(payload.status).toBe("queued");
 		expect(onCompleteCallback).toBeDefined();
+		if (!onCompleteCallback) throw new Error("Expected compaction onComplete callback");
 
 		// Simulate Pi calling the onComplete callback after compaction finishes
-		onCompleteCallback!();
+		onCompleteCallback({ status: "complete" });
 
 		// Verify sendUserMessage was called with continuation prompt
 		expect(continuationMessage).toContain("Context compaction completed");

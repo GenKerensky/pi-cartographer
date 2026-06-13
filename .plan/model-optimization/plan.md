@@ -356,6 +356,49 @@ Run full validation, verify requirements/design/ADR coverage, and prepare the to
 
 Use parent-owned validation receipts. Do not let child agents fabricate canonical validation evidence.
 
+### Phase P6 — Post-Rebase Mainline Alignment
+
+- **Status:** complete
+- **Depends on:** P5
+- **Unlocks:** merge-ready
+- **Primary references:** `package.json`, `skills/plan/scripts/check_skill_language.py`, `tests/cartographer_tools.test.ts`, `extensions/cartographer-tools.ts`, `ADR-0010`
+
+#### Objective
+
+Bring the rebased model-optimization branch in line with new `main` validation and compaction changes without weakening the accepted model-routing policy.
+
+#### Scope
+
+- Preserve `main`'s new skill-language validation in `npm run check:scripts` while also keeping `skills/plan/scripts/model_config.ts` syntax validation.
+- Verify the new skill-language checker accepts `skills/model-config/SKILL.md` under wrapper-first skill conventions.
+- Repair post-rebase TypeScript test typing drift caused by the updated compaction callback API in `extensions/cartographer-tools.ts`.
+- Confirm no new `main` changes contradict ADR-0010's requirements for deterministic settings writes, user settings canonicality, no `xhigh` defaults, and explicit cross-provider approval.
+
+#### Checklist
+
+- [x] **P6.T1** Resolve the `package.json` rebase conflict by keeping both `check_skill_language.py` and `model_config.ts` in `check:scripts`.
+- [x] **P6.T2** Run strict skill-language validation and verify `skills/model-config/SKILL.md` has no findings.
+- [x] **P6.T3** Update `tests/cartographer_tools.test.ts` mock compaction callback typing to match the updated extension API.
+- [x] **P6.T4** Validate focused model-optimization and compaction tests after the rebase.
+
+#### Validation
+
+- [x] **P6.V1** Run `npm run check:scripts` and expect pass with both `check_skill_language.py` and `model_config.ts` checks active.
+- [x] **P6.V2** Run `python skills/plan/scripts/check_skill_language.py --root "$PWD" --strict --json` and expect no findings.
+- [x] **P6.V3** Run `npm run typecheck`, targeted ESLint for changed TypeScript files, and targeted Vitest suites for `tests/model_config.test.ts` and `tests/cartographer_tools.test.ts`.
+
+#### Exit Criteria
+
+- Branch is rebased onto `main`.
+- New `main` validation changes are preserved.
+- Model-optimization requirements and ADR-0010 remain intact.
+- Rebased branch passes focused validation for changed files and affected `main` integration points.
+
+#### Risks and Mitigations
+
+- **Risk:** New `main` validation conventions could reject the model-config setup skill. **Mitigation:** Run strict skill-language validation and keep all settings writes delegated to the deterministic script.
+- **Risk:** Compaction API typing drift could mask runtime behavior changes. **Mitigation:** Align the test mock with `CompactOptions.onComplete(result)` and keep the continuation assertion intact.
+
 ## Testing Strategy
 
 Testing must prove three behaviors without touching real user settings or burning live subscription quota by default: configuration is written correctly, Cartographer reads the config for orchestrated calls, and subagents/fallback retries use the intended models.
