@@ -193,7 +193,7 @@ Do not change lifecycle semantics while rewriting language. If a wording change 
 
 ### Phase P3 — Delegation Boundary Review
 
-- **Status:** in-progress
+- **Status:** complete
 - **Depends on:** P2
 - **Unlocks:** P4
 - **Primary references:** `file:skills/proposal/SKILL.md`, `file:skills/plan/SKILL.md`, `file:skills/implement/SKILL.md`, `file:.pi/agents/cartographer-pathfinder.md`, `doc:docs/adr/0004-use-single-writer-cartographer-implementation-state.md#decision`, [F002]
@@ -235,7 +235,7 @@ If a delegated agent definition conflicts with this plan, prefer updating the pr
 
 ### Phase P4 — Wrapper Gap Resolution
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P3
 - **Unlocks:** P5
 - **Primary references:** `file:skills/plan/scripts/cartographer_workflow.ts`, `file:skills/plan/scripts/manage_jsonl.ts`, `file:extensions/cartographer-tools.ts`, [F001], [F008], [F010]
@@ -252,16 +252,16 @@ Resolve remaining places where skill wording needs a tool-owned mutation but no 
 
 #### Checklist
 
-- [ ] **P4.T1** Decide whether interview artifact writes need a narrow wrapper/script or explicit temporary fallback language.
-- [ ] **P4.T2** Implement any narrow wrapper/script and extension exposure needed for current skill wording.
-- [ ] **P4.T3** Add tests for new wrapper/script behavior using temp/mock roots only.
-- [ ] **P4.T4** Update skill text to reference the new wrapper/script or approved fallback exactly.
+- [x] **P4.T1** Decide whether interview artifact writes need a narrow wrapper/script or explicit temporary fallback language.
+- [x] **P4.T2** Implement any narrow wrapper/script and extension exposure needed for current skill wording.
+- [x] **P4.T3** Add tests for new wrapper/script behavior using temp/mock roots only.
+- [x] **P4.T4** Update skill text to reference the new wrapper/script or approved fallback exactly.
 
 #### Validation
 
-- [ ] **P4.V1** Run `npm run check:scripts`; expected result passes.
-- [ ] **P4.V2** Run targeted tests for any new wrapper/script; expected result passes.
-- [ ] **P4.V3** Run `node --experimental-strip-types --check extensions/cartographer-tools.ts` if extension tooling changes; expected result passes.
+- [x] **P4.V1** Run `npm run check:scripts`; expected result passes.
+- [x] **P4.V2** Run targeted tests for any new wrapper/script; expected result passes.
+- [x] **P4.V3** Run `node --experimental-strip-types --check extensions/cartographer-tools.ts` if extension tooling changes; expected result passes.
 
 #### Exit Criteria
 
