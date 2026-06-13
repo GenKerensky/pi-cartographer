@@ -152,22 +152,23 @@ describe.skipIf(!hasBuiltAssets)("dashboard Start browser smoke", () => {
 			await page.getByRole("heading", { name: "Planning Dashboard" }).waitFor();
 			await page.getByRole("heading", { name: "Demo Proposal" }).first().waitFor();
 			await page.locator("[data-nav-item='graph']").click();
+			await page.locator("[data-topic-graph-panel]").waitFor({ timeout: 10_000 });
 			await expect
-				.poll(async () =>
-					page
-						.locator("[role='tab'][data-state='active']")
-						.evaluateAll((tabs) => tabs.map((tab) => tab.textContent ?? "")),
-				)
-				.toContain("Graph");
+				.poll(() => new URL(page.url()).pathname, { timeout: 10_000 })
+				.toBe(`/topics/${fixture.topic}/graph`);
 			await page.locator("[data-graph-explorer]").waitFor();
 			await page.locator("[data-nav-item='documents']").click();
+			await page.locator("[data-topic-document-panel]").waitFor({ timeout: 10_000 });
+			await expect
+				.poll(() => new URL(page.url()).pathname, { timeout: 10_000 })
+				.toBe(`/topics/${fixture.topic}/documents/proposal`);
 			await expect
 				.poll(async () =>
 					page
 						.locator("[role='tab'][data-state='active']")
 						.evaluateAll((tabs) => tabs.map((tab) => tab.textContent ?? "")),
 				)
-				.toContain("Proposal");
+				.toContain("Preview");
 			await expect
 				.poll(async () => page.locator("a[data-reference='F002']").first().getAttribute("href"))
 				.toContain("https://reactflow.dev/examples/overview");
@@ -176,6 +177,12 @@ describe.skipIf(!hasBuiltAssets)("dashboard Start browser smoke", () => {
 			await expect
 				.poll(async () => page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth))
 				.toBeLessThanOrEqual(4);
+			await expect
+				.poll(() => new URL(page.url()).pathname, { timeout: 10_000 })
+				.toBe("/");
+
+			await page.goto(`${started.topicUrl}/documents/proposal`);
+			await page.locator("[data-topic-document-panel]").waitFor({ timeout: 10_000 });
 
 			const proposalPath = path.join(fixture.root, ".plan", fixture.topic, "proposal.md");
 			fs.writeFileSync(proposalPath, "# Demo Proposal Reloaded\n\nUpdated by smoke test for live reload.\n");

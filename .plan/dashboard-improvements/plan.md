@@ -133,7 +133,7 @@ Keep this phase small enough to review independently. Do not start Mermaid or po
 
 ### Phase P1 — Topic Section Pages
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P0
 - **Unlocks:** P4
 - **Primary references:** `file:dashboard/src/features/review-workflow.tsx`, `symbol:dashboard/src/features/review-workflow.tsx#TopicWorkspace:132`, `file:dashboard/src/features/document-viewer.tsx`, `file:dashboard/src/features/graph-explorer.tsx`, `file:dashboard/src/lib/dashboard-db.ts`, `file:dashboard/src/lib/api.ts`, `file:dashboard/src/shared/models.ts`, `file:tests/dashboard/topic-pages.test.tsx`, `file:tests/dashboard/graph-explorer.test.tsx`, `REQ-DASH-TOPIC-SECTIONS`, `REQ-DASH-STATE`, `REQ-DASH-SAFETY`, `DD-ROUTE-IA`, `DD-ROUTE-STATE`, [F002], [F004], [F005], [F006], [F012]
@@ -153,17 +153,17 @@ Replace the local topic workspace tab model with addressable topic section pages
 
 #### Checklist
 
-- [ ] **P1.T1** Extract topic page frame/context helpers from `TopicWorkspace` without changing artifact loading semantics.
-- [ ] **P1.T2** Add `/topics/$topic/documents/$kind` route handling proposal, requirements, design, plan, missing documents, and safe document viewer behavior.
-- [ ] **P1.T3** Add `/topics/$topic/facts`, `/evidence`, `/receipts`, and `/health` pages reusing existing record/health panels.
-- [ ] **P1.T4** Add `/topics/$topic/graph` page reusing `GraphExplorer` and preserving static fallback behavior.
-- [ ] **P1.T5** Update topic links, topic list actions, and document/reference route targets so they navigate through browser history.
+- [x] **P1.T1** Extract topic page frame/context helpers from `TopicWorkspace` without changing artifact loading semantics.
+- [x] **P1.T2** Add `/topics/$topic/documents/$kind` route handling proposal, requirements, design, plan, missing documents, and safe document viewer behavior.
+- [x] **P1.T3** Add `/topics/$topic/facts`, `/evidence`, `/receipts`, and `/health` pages reusing existing record/health panels.
+- [x] **P1.T4** Add `/topics/$topic/graph` page reusing `GraphExplorer` and preserving static fallback behavior.
+- [x] **P1.T5** Update topic links, topic list actions, and document/reference route targets so they navigate through browser history.
 
 #### Validation
 
-- [ ] **P1.V1** Run `npx vitest run tests/dashboard/topic-pages.test.tsx tests/dashboard/graph-explorer.test.tsx`; expect routed topic surfaces and graph integration to pass.
-- [ ] **P1.V2** Run `npm run test:browser -- tests/dashboard/client-shell.test.tsx`; expect deep links, refresh-safe topic pages, and active route state to pass.
-- [ ] **P1.V3** Run `npx vitest run tests/dashboard/privacy-regressions.test.tsx`; expect route params and document routes to preserve safety checks.
+- [x] **P1.V1** Run `npx vitest run tests/dashboard/topic-pages.test.tsx tests/dashboard/graph-explorer.test.tsx`; expect routed topic surfaces and graph integration to pass.
+- [x] **P1.V2** Run `npm run test:browser -- tests/dashboard/client-shell.test.tsx`; expect deep links, refresh-safe topic pages, and active route state to pass.
+- [x] **P1.V3** Run `npx vitest run tests/dashboard/privacy-regressions.test.tsx`; expect route params and document routes to preserve safety checks.
 
 #### Exit Criteria
 

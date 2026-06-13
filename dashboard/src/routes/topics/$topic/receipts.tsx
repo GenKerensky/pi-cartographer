@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { DashboardShell } from "../../../App.js";
+import { TopicMissingArtifactsPanel, TopicPage } from "@/features/review-workflow";
 
 export const Route = createFileRoute("/topics/$topic/receipts")({
 	component: DashboardTopicReceiptsRoute,
@@ -16,6 +17,9 @@ function DashboardTopicReceiptsRoute(): React.JSX.Element {
 			onTopicNavigate={(nextTopic) => {
 				void navigate({ to: "/topics/$topic", params: { topic: nextTopic } });
 			}}
+			renderContent={({ selectedTopic }) =>
+				selectedTopic ? <TopicPage artifacts={selectedTopic} page="receipts" /> : <TopicMissingArtifactsPanel topicName={topic} missing={["receipts"]} />
+			}
 		/>
 	);
 }

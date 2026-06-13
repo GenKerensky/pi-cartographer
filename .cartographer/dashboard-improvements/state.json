@@ -5,11 +5,11 @@
   "source_refs": {
     "plan_md": {
       "path": ".plan/dashboard-improvements/plan.md",
-      "sha256": "sha256:dd60dbee01631cb987f01e89fbb676fa3f88b5bf0731c6e1d2a76311f890fa12"
+      "sha256": "sha256:4783488cca3392e373d8c1aefb62390218928681bc7d4dd979fa0be7582ba5c7"
     },
     "plan_nodes": {
       "path": ".plan/dashboard-improvements/plan.nodes.jsonl",
-      "sha256": "sha256:2edbe160321afa28a2c4e6a75d524c26b68fcaef4546ddf69176e84f595bba5d"
+      "sha256": "sha256:0742cb214e68f2e29cb3ac03c4b51fb4965bc6b78bd565a92eaa0d30d504af65"
     },
     "plan_edges": {
       "path": ".plan/dashboard-improvements/plan.edges.jsonl",
@@ -17,84 +17,97 @@
     },
     "receipts": {
       "path": ".plan/dashboard-improvements/receipts.jsonl",
-      "sha256": "sha256:7670eb9184d3d18a69d7ec65e23470622867002cb0768edb5326e0d492a3b520"
+      "sha256": "sha256:816ba0c837270c2cff9f65a30145fff3c26127389d1c459e8756ffc4e55bbe61"
     },
     "context_packs": {
       "path": ".plan/dashboard-improvements/context-packs.jsonl",
-      "sha256": "sha256:70455b887dab3f115108f3f342b9f48a5a1f25d66d7aa60d47bfc10bd18a5524"
+      "sha256": "sha256:6c3901ddb9c8fc413be2c558eda030a52f8d3fc04f15be761430b62e6dbb5dd5"
     }
   },
-  "current_phase_id": "P0",
+  "current_phase_id": "P1",
   "active_task_ids": [],
   "active_validation_ids": [],
   "next_action": {
-    "id": "P0.audit-corrections",
+    "id": "P1.T1",
     "kind": "implementation-task",
-    "summary": "Apply P0 auditor corrections for route descriptor coverage, route-semantic navigation, and real router browser tests.",
-    "phase_id": "P0",
-    "task_id": "P0.T1",
+    "summary": "Extract topic page frame/context helpers from TopicWorkspace without changing artifact loading semantics.",
+    "phase_id": "P1",
+    "task_id": "P1.T1",
     "files_to_inspect": [
-      ".plan/dashboard-improvements/P0-auditor-report.md",
-      "dashboard/src/App.tsx",
+      ".plan/dashboard-improvements/plan.md",
       "dashboard/src/features/review-workflow.tsx",
-      "dashboard/src/routes/index.tsx",
-      "dashboard/src/routes/topics/index.tsx",
+      "dashboard/src/features/document-viewer.tsx",
+      "dashboard/src/features/graph-explorer.tsx",
+      "dashboard/src/lib/dashboard-routes.ts",
       "dashboard/src/routes/topics/$topic.tsx",
-      "dashboard/src/router.tsx",
-      "dashboard/src/routeTree.gen.ts",
-      "tests/dashboard/client-shell.test.tsx",
-      "tests/dashboard/topic-pages.test.tsx"
+      "dashboard/src/routes/topics/$topic/documents/$kind.tsx",
+      "dashboard/src/routes/topics/$topic/facts.tsx",
+      "dashboard/src/routes/topics/$topic/evidence.tsx",
+      "dashboard/src/routes/topics/$topic/receipts.tsx",
+      "dashboard/src/routes/topics/$topic/health.tsx",
+      "dashboard/src/routes/topics/$topic/graph.tsx",
+      "tests/dashboard/topic-pages.test.tsx",
+      "tests/dashboard/graph-explorer.test.tsx",
+      "tests/dashboard/privacy-regressions.test.tsx"
     ]
   },
   "working_set": {
     "write_allowed": [
       {
-        "path": "dashboard/src/App.tsx",
-        "reason": "P0 route/nav descriptors and navigation link semantics"
-      },
-      {
         "path": "dashboard/src/features/review-workflow.tsx",
-        "reason": "P0 descriptor/page-id coverage for topic surfaces"
+        "reason": "P1 extract reusable topic page frame/context and route focused panels"
       },
       {
-        "path": "dashboard/src/routes/**",
-        "reason": "P0 route-owned shell pages and optional child route targets"
+        "path": "dashboard/src/features/document-viewer.tsx",
+        "reason": "P1 document route behavior and missing document states if needed"
       },
       {
-        "path": "dashboard/src/router.tsx",
-        "reason": "P0 testable router history injection if needed"
+        "path": "dashboard/src/features/graph-explorer.tsx",
+        "reason": "P1 graph page reuse/static fallback if needed"
+      },
+      {
+        "path": "dashboard/src/lib/dashboard-routes.ts",
+        "reason": "P1 topic section route/link descriptors"
+      },
+      {
+        "path": "dashboard/src/routes/topics/**",
+        "reason": "P1 topic section route pages"
       },
       {
         "path": "dashboard/src/routeTree.gen.ts",
-        "reason": "P0 generated route tree must include real route files"
-      },
-      {
-        "path": "dashboard/vitest.browser.config.ts",
-        "reason": "P0 browser test dependency pre-bundling for real router integration test stability"
-      },
-      {
-        "path": "tests/dashboard/client-shell.test.tsx",
-        "reason": "P0 browser integration tests for real router / and /topics navigation"
+        "reason": "P1 generated route tree after route changes"
       },
       {
         "path": "tests/dashboard/topic-pages.test.tsx",
-        "reason": "P0 route-focused section assertions if needed"
+        "reason": "P1 routed topic surface tests"
+      },
+      {
+        "path": "tests/dashboard/graph-explorer.test.tsx",
+        "reason": "P1 graph route integration tests if needed"
+      },
+      {
+        "path": "tests/dashboard/client-shell.test.tsx",
+        "reason": "P1 deep link/active route browser tests"
+      },
+      {
+        "path": "tests/dashboard/privacy-regressions.test.tsx",
+        "reason": "P1 route safety regression coverage"
       },
       {
         "path": ".plan/dashboard-improvements/plan.md",
-        "reason": "P0 status/checklist corrections if evidence changes"
+        "reason": "P1 plan status/checklist updates"
       },
       {
         "path": ".plan/dashboard-improvements/plan.nodes.jsonl",
-        "reason": "P0 graph status corrections if evidence changes"
+        "reason": "P1 plan graph status updates"
       },
       {
         "path": ".plan/dashboard-improvements/receipts.jsonl",
-        "reason": "P0 validation/audit receipts"
+        "reason": "P1 validation/audit receipts"
       },
       {
         "path": ".plan/dashboard-improvements/context-packs.jsonl",
-        "reason": "P0 context pack update"
+        "reason": "P1 context pack"
       }
     ],
     "read_only": [
@@ -115,6 +128,18 @@
         "reason": "fact traceability"
       },
       {
+        "path": "dashboard/src/lib/dashboard-db.ts",
+        "reason": "P1 must preserve existing read-only data contracts unless plan requires changes"
+      },
+      {
+        "path": "dashboard/src/lib/api.ts",
+        "reason": "P1 must preserve existing shared API contracts unless unavoidable"
+      },
+      {
+        "path": "dashboard/src/shared/models.ts",
+        "reason": "P1 should not invent new server models without need"
+      },
+      {
         "path": "package-lock.json",
         "reason": "pre-existing user change preserved; avoid until Mermaid dependency phase"
       }
@@ -130,7 +155,7 @@
       },
       {
         "path": "package-lock.json",
-        "reason": "pre-existing user change; do not edit in P0"
+        "reason": "pre-existing user change; do not edit in P1"
       }
     ]
   },
@@ -144,11 +169,18 @@
     "receipt:P0:validation:2026-06-13T03:30:45+00:00",
     "receipt:dashboard-improvements:audit:2026-06-13T03:32:42Z",
     "receipt:P0:validation:2026-06-13T03:33:42+00:00",
-    "receipt:P0:validation:2026-06-13T03:33:46+00:00"
+    "receipt:P0:validation:2026-06-13T03:33:46+00:00",
+    "receipt:P1:validation:2026-06-13T04:19:46+00:00",
+    "receipt:P1:validation:2026-06-13T04:19:44+00:00",
+    "receipt:P1:validation:2026-06-13T04:19:45+00:00",
+    "receipt:P1:validation:2026-06-13T04:20:01+00:00",
+    "receipt:P1:validation:2026-06-13T04:20:27+00:00",
+    "receipt:P1:validation:2026-06-13T04:20:43+00:00"
   ],
   "journal_refs": [
     "journal:20260613T033357Z:compact",
-    "journal:20260613T033428Z:compact"
+    "journal:20260613T033428Z:compact",
+    "journal:20260613T042546Z:compact"
   ],
   "resume": {
     "template_id": "cartographer.single_writer.resume.v1",
@@ -168,10 +200,10 @@
       "stale generated snippets"
     ]
   },
-  "updated_at": "2026-06-13T03:34:28Z",
+  "updated_at": "2026-06-13T04:25:46Z",
   "stale_reason": "Implementation compact requested after artifact updates.",
   "compaction": {
-    "trigger": "phase-end-P0",
-    "compacted_at": "2026-06-13T03:34:28Z"
+    "trigger": "phase-end-P1",
+    "compacted_at": "2026-06-13T04:25:46Z"
   }
 }

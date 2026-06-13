@@ -78,6 +78,16 @@ export type DashboardShellProps = {
 	useRouterLinks?: boolean;
 	navigationHref?: (page: DashboardPageId, topicId?: string, documentKind?: DashboardTopicDocumentKind) => string;
 	onTopicNavigate?: (topicId: string) => void;
+	renderContent?: (context: DashboardShellContentContext) => React.ReactNode;
+};
+
+export type DashboardShellContentContext = {
+	overview: DashboardOverview | undefined;
+	selectedTopic: TopicArtifacts | undefined;
+	selectedTopicId: string | undefined;
+	adrs: AdrCollection | undefined;
+	activePage: DashboardPageId;
+	activeDocumentKind: DashboardTopicDocumentKind;
 };
 
 export function DashboardShell({
@@ -92,6 +102,7 @@ export function DashboardShell({
 	useRouterLinks = false,
 	navigationHref = defaultDashboardNavHref,
 	onTopicNavigate,
+	renderContent,
 }: DashboardShellProps): React.JSX.Element {
 	const activeSection = activePage ?? (routeTopicId ? "topic" : "overview");
 	const live = useLiveConnection(liveStateOverride === undefined);
@@ -238,16 +249,27 @@ export function DashboardShell({
 						>
 							<section className="min-w-0 space-y-5">
 								{overview ? (
-									<DashboardReviewWorkflow
-										overview={overview}
-										selectedTopic={selectedTopic}
-										selectedTopicId={effectiveTopicId}
-										adrs={adrs}
-										activeSection={activeSection}
-										activeTopicTab={activeTopicTab}
-										visibleSection={activeSection}
-										onTopicSelect={handleTopicSelect}
-									/>
+									renderContent ? (
+										renderContent({
+											overview,
+											selectedTopic,
+											selectedTopicId: effectiveTopicId,
+											adrs,
+											activePage: activeSection,
+											activeDocumentKind,
+										})
+									) : (
+										<DashboardReviewWorkflow
+											overview={overview}
+											selectedTopic={selectedTopic}
+											selectedTopicId={effectiveTopicId}
+											adrs={adrs}
+											activeSection={activeSection}
+											activeTopicTab={activeTopicTab}
+											visibleSection={activeSection}
+											onTopicSelect={handleTopicSelect}
+										/>
+									)
 								) : (
 									<div className="grid gap-4 md:grid-cols-3">
 										{metrics.map((metric) => (

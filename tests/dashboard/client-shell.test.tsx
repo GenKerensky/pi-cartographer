@@ -243,6 +243,51 @@ describe("dashboard React shell", () => {
 		});
 	});
 
+	it("uses renderContent to render a focused topic page instead of the giant review workflow", async () => {
+		document.documentElement.classList.add("dark");
+		const overview = overviewFixture();
+		const topic = topicFixture();
+		const container = render(
+			<DashboardShell
+				liveStateOverride="connected"
+				initialOverview={overview}
+				initialTopic={topic}
+				disableDataFetch
+				activePage="graph"
+				routeTopicId={topic.topic.id}
+				renderContent={({ selectedTopic, activePage }) =>
+					selectedTopic ? (
+						<div data-render-content data-active-page={activePage}>
+							facts
+						</div>
+					) : null
+				}
+			/>,
+		);
+		await nextFrame();
+
+		expect(container.querySelector("[data-render-content]")).toBeTruthy();
+		expect(container.querySelector('[data-active-page="graph"]')).toBeTruthy();
+		expect(container.querySelector("[data-review-workflow]")).toBeFalsy();
+	});
+
+	it("falls back to the giant review workflow when renderContent is not provided", async () => {
+		document.documentElement.classList.add("dark");
+		const container = render(
+			<DashboardShell
+				liveStateOverride="connected"
+				initialOverview={overviewFixture()}
+				initialTopic={topicFixture()}
+				disableDataFetch
+				activePage="topics"
+			/>,
+		);
+		await nextFrame();
+
+		expect(container.querySelector("[data-review-workflow]")).toBeTruthy();
+		expect(container.querySelector("[data-topics-list]")).toBeTruthy();
+	});
+
 	it("exposes Tailwind/shadcn tokens, focus styles, and reduced-motion classes", async () => {
 		document.documentElement.classList.add("dark");
 		const container = render(
