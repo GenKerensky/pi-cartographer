@@ -20,6 +20,29 @@ type OutputShapeParams = {
 	raw?: boolean;
 };
 
+type ContextUsage = {
+	tokens: number | null;
+	contextWindow: number;
+	percent: number | null;
+};
+
+type CompactOptions = {
+	customInstructions?: string;
+	onComplete?: (result: unknown) => void;
+	onError?: (error: Error) => void;
+};
+
+type ExtensionContextLike = {
+	cwd?: string;
+	compact?: (options?: CompactOptions) => void;
+	getContextUsage?: () => ContextUsage | undefined;
+	ui?: {
+		notify?: (message: string, level?: "info" | "warning" | "error") => void;
+	};
+};
+
+type ExtensionEventHandler = (event: unknown, ctx: ExtensionContextLike) => void | Promise<void>;
+
 type CartographerIndexParams = OutputShapeParams & {
 	action: "ensure" | "query" | "context" | "repo-map" | "search" | "read" | "slice-jsonl" | "status" | "log-miss";
 	root?: string;
@@ -126,6 +149,18 @@ type CartographerStateParams = OutputShapeParams & {
 	gitBranch?: string;
 	lastSeenCommit?: string;
 	maxJournal?: number;
+};
+
+type CartographerCompactContextParams = OutputShapeParams & {
+	topic?: string;
+	root?: string;
+	trigger?: string;
+	phaseId?: string;
+	summary?: string;
+	force?: boolean;
+	includeStateResume?: boolean;
+	thresholdPercent?: number;
+	cooldownMs?: number;
 };
 
 type CartographerValidationParams = OutputShapeParams & {
@@ -312,11 +347,18 @@ type ToolRegistration = {
 	promptSnippet?: string;
 	promptGuidelines?: string[];
 	parameters: unknown;
-	execute: (toolCallId: string, params: Record<string, unknown>, signal?: AbortSignal) => Promise<ToolResult>;
+	execute: (
+		toolCallId: string,
+		params: Record<string, unknown>,
+		signal?: AbortSignal,
+		onUpdate?: unknown,
+		ctx?: ExtensionContextLike,
+	) => Promise<ToolResult>;
 };
 
 type PiApi = {
 	registerTool(tool: ToolRegistration): void;
+	on?: (event: "turn_end" | "session_compact", handler: ExtensionEventHandler) => void;
 };
 
 const execFileAsync = promisify(execFile);
@@ -330,6 +372,13 @@ const evidenceScript = path.join(packageRoot, "skills", "plan", "scripts", "priv
 const sessionScript = path.join(packageRoot, "skills", "plan", "scripts", "analyze_session.py");
 const validationRunnerScript = path.join(packageRoot, "skills", "plan", "scripts", "validation_runner.py");
 const adrScript = path.join(packageRoot, "skills", "plan", "scripts", "adr_records.py");
+const DEFAULT_COMPACT_THRESHOLD_PERCENT = 60;
+const DEFAULT_COMPACT_COOLDOWN_MS = 5 * 60 * 1000;
+const MAX_COMPACTION_INSTRUCTION_CHARS = 8000;
+const MAX_STATE_RESUME_CONTEXT_CHARS = 5000;
+
+let lastContextCompactionRequest: { topic: string; trigger: string; requestedAt: number } | undefined;
+let previousContextPercent: number | null | undefined;
 
 function isExecFileException(error: unknown): error is ExecFileException & {
 	stdout?: string;
@@ -481,6 +530,148 @@ async function runCommand(
 	}
 }
 
+function readBooleanEnv(name: string, fallback: boolean): boolean {
+	const value = process.env[name];
+	if (value === undefined) return fallback;
+	return !["0", "false", "no", "off"].includes(value.toLowerCase());
+}
+
+function readNumberEnv(name: string, fallback: number): number {
+	const value = process.env[name];
+	if (value === undefined || value.trim() === "") return fallback;
+	const parsed = Number(value);
+	return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function truncateText(text: string, maxChars: number): string {
+	if (text.length <= maxChars) return text;
+	return `${text.slice(0, maxChars)}\n[...truncated ${text.length - maxChars} character(s)...]`;
+}
+
+function activeTopicFromCurrent(root: string): string | undefined {
+	const currentPath = path.join(root, ".cartographer", "current.json");
+	if (!fs.existsSync(currentPath)) return undefined;
+	try {
+		const current = JSON.parse(fs.readFileSync(currentPath, "utf8")) as Record<string, unknown>;
+		const topic = typeof current.active_topic === "string" ? current.active_topic : undefined;
+		if (!topic) return undefined;
+		const statePath =
+			typeof current.state_path === "string"
+				? path.resolve(root, current.state_path)
+				: path.join(root, ".cartographer", topic, "state.json");
+		if (!fs.existsSync(statePath)) return undefined;
+		return topic;
+	} catch {
+		return undefined;
+	}
+}
+
+async function loadStateResumeContext(root: string, topic: string, signal?: AbortSignal): Promise<string | undefined> {
+	try {
+		const result = await execFileAsync(
+			"node",
+			["--experimental-strip-types", stateScript, "state-resume", "--root", root, "--topic", topic, "--json"],
+			{ cwd: process.cwd(), signal, maxBuffer: 2 * 1024 * 1024 },
+		);
+		const payload = JSON.parse(result.stdout) as Record<string, unknown>;
+		return typeof payload.context === "string"
+			? truncateText(payload.context, MAX_STATE_RESUME_CONTEXT_CHARS)
+			: undefined;
+	} catch {
+		return undefined;
+	}
+}
+
+function contextUsageSummary(usage: ContextUsage | undefined): string {
+	if (!usage) return "Context usage: unavailable";
+	const percent = usage.percent === null ? "unknown" : `${usage.percent.toFixed(1)}%`;
+	const tokens = usage.tokens === null ? "unknown" : String(usage.tokens);
+	return `Context usage: ${percent}; tokens=${tokens}; contextWindow=${usage.contextWindow}`;
+}
+
+function renderCompactionInstructions(params: {
+	topic: string;
+	trigger: string;
+	phaseId?: string;
+	summary?: string;
+	usage?: ContextUsage;
+	stateResumeContext?: string;
+}): string {
+	const lines = [
+		'<CARTOGRAPHER_COMPACTION_INSTRUCTIONS version="1">',
+		"Use Pi's normal compaction behavior, but preserve the following Cartographer implementation resume facts.",
+		`Topic: ${params.topic}`,
+		`Trigger: ${params.trigger}`,
+		params.phaseId ? `Phase: ${params.phaseId}` : undefined,
+		params.summary ? `Checkpoint summary: ${params.summary}` : undefined,
+		contextUsageSummary(params.usage),
+		"After compaction, continue with the Cartographer implement skill.",
+		"On the first post-compaction assistant response, reload .plan/<topic>/plan.md and .cartographer/<topic>/state.json/state-resume, then report current phase, next action, and files to inspect before editing.",
+		"Trust plan/state/receipts on disk over stale transcript memory. Do not treat cartographer_state compact-generate as Pi transcript compaction; it is only the resume snapshot that should precede this actual Pi compaction request.",
+		params.stateResumeContext ? "\nBounded state-resume context:\n" + params.stateResumeContext : undefined,
+		"</CARTOGRAPHER_COMPACTION_INSTRUCTIONS>",
+	].filter((line): line is string => Boolean(line));
+	return truncateText(lines.join("\n"), MAX_COMPACTION_INSTRUCTION_CHARS);
+}
+
+function recentCompactionRequest(topic: string, cooldownMs: number): boolean {
+	return Boolean(
+		lastContextCompactionRequest &&
+		lastContextCompactionRequest.topic === topic &&
+		Date.now() - lastContextCompactionRequest.requestedAt < cooldownMs,
+	);
+}
+
+async function requestContextCompaction(
+	ctx: ExtensionContextLike | undefined,
+	params: CartographerCompactContextParams,
+	signal?: AbortSignal,
+): Promise<Record<string, unknown>> {
+	const root = params.root || ctx?.cwd || process.cwd();
+	const topic = params.topic || activeTopicFromCurrent(root);
+	const trigger = params.trigger || "manual";
+	const cooldownMs = optionalNumber(
+		params.cooldownMs,
+		readNumberEnv("CARTOGRAPHER_CONTEXT_COMPACT_COOLDOWN_MS", DEFAULT_COMPACT_COOLDOWN_MS),
+	);
+	if (!topic) return { ok: true, status: "skipped", reason: "missing-topic", trigger };
+	if (!ctx || typeof ctx.compact !== "function") {
+		return { ok: true, status: "unavailable", reason: "ctx.compact unavailable", topic, trigger };
+	}
+	if (!params.force && recentCompactionRequest(topic, cooldownMs)) {
+		return { ok: true, status: "skipped", reason: "cooldown", topic, trigger, cooldownMs };
+	}
+	const usage = ctx.getContextUsage?.();
+	const stateResumeContext =
+		params.includeStateResume === false ? undefined : await loadStateResumeContext(root, topic, signal);
+	const customInstructions = renderCompactionInstructions({
+		topic,
+		trigger,
+		phaseId: params.phaseId,
+		summary: params.summary,
+		usage,
+		stateResumeContext,
+	});
+	lastContextCompactionRequest = { topic, trigger, requestedAt: Date.now() };
+	ctx.compact({
+		customInstructions,
+		onComplete: () => ctx.ui?.notify?.(`Cartographer context compaction completed for ${topic}`, "info"),
+		onError: (error) => ctx.ui?.notify?.(`Cartographer context compaction failed: ${error.message}`, "error"),
+	});
+	return {
+		ok: true,
+		status: "queued",
+		topic,
+		trigger,
+		phaseId: params.phaseId,
+		usage,
+		cooldownMs,
+		stateResumeIncluded: Boolean(stateResumeContext),
+		customInstructionChars: customInstructions.length,
+		customInstructionPreview: truncateText(customInstructions, 1200),
+	};
+}
+
 function addRoot(args: string[], root?: string): void {
 	args.push("--root", root || process.cwd());
 }
@@ -492,6 +683,40 @@ function requireString(value: unknown, message: string): string {
 
 function optionalNumber(value: unknown, fallback: number): number {
 	return typeof value === "number" && Number.isFinite(value) ? value : fallback;
+}
+
+function registerContextCompactionHooks(pi: PiApi): void {
+	if (!pi.on) return;
+	pi.on("turn_end", async (_event, ctx) => {
+		if (!readBooleanEnv("CARTOGRAPHER_CONTEXT_COMPACTION", true)) return;
+		const usage = ctx.getContextUsage?.();
+		const currentPercent = usage?.percent ?? null;
+		if (currentPercent === null) return;
+		const thresholdPercent = readNumberEnv(
+			"CARTOGRAPHER_CONTEXT_COMPACT_THRESHOLD_PERCENT",
+			DEFAULT_COMPACT_THRESHOLD_PERCENT,
+		);
+		const crossedThreshold =
+			previousContextPercent === undefined ||
+			previousContextPercent === null ||
+			previousContextPercent < thresholdPercent;
+		previousContextPercent = currentPercent;
+		if (currentPercent < thresholdPercent || !crossedThreshold) return;
+		const root = ctx.cwd || process.cwd();
+		const topic = activeTopicFromCurrent(root);
+		if (!topic) return;
+		const result = await requestContextCompaction(ctx, {
+			root,
+			topic,
+			trigger: `context-threshold-${thresholdPercent}`,
+			summary: `Context usage ${currentPercent.toFixed(1)}% crossed Cartographer threshold ${thresholdPercent}%.`,
+			thresholdPercent,
+		});
+		if (result.status === "queued") ctx.ui?.notify?.(`Cartographer queued context compaction for ${topic}`, "info");
+	});
+	pi.on("session_compact", () => {
+		previousContextPercent = null;
+	});
 }
 
 function addAdrCommonArgs(args: string[], params: CartographerAdrParams): void {
@@ -583,6 +808,8 @@ function buildAdrArgs(params: CartographerAdrParams): string[] {
 }
 
 export default function cartographerTools(pi: PiApi): void {
+	registerContextCompactionHooks(pi);
+
 	pi.registerTool({
 		name: "cartographer_index",
 		label: "Cartographer Index",
@@ -1059,6 +1286,59 @@ export default function cartographerTools(pi: PiApi): void {
 					"Ask the parent for mutable cartographer_jsonl access only when an approved phase requires writes.",
 				],
 			});
+		},
+	});
+
+	pi.registerTool({
+		name: "cartographer_compact_context",
+		label: "Cartographer Compact Context",
+		description:
+			"Trigger actual Pi context compaction with Cartographer state/resume custom instructions after implementation milestones or threshold crossings.",
+		promptSnippet: "Trigger real Pi context compaction after Cartographer state snapshots",
+		promptGuidelines: [
+			"Use cartographer_compact_context after Cartographer phase-end state snapshots when actual Pi transcript compaction is needed.",
+			"cartographer_compact_context calls Pi ctx.compact with additive customInstructions; it does not replace Pi's summarizer or edit session JSONL directly.",
+			"Include topic, trigger, phaseId, and a compact summary so the post-compaction assistant can continue with the implement skill from state-resume.",
+			"Do not confuse cartographer_state compact-generate with actual Pi context compaction; compact-generate only writes resume state.",
+		],
+		parameters: Type.Object({
+			topic: Type.Optional(Type.String({ description: "Cartographer topic under .plan/ and .cartographer/." })),
+			root: Type.Optional(Type.String({ description: "Project root. Defaults to current working directory." })),
+			trigger: Type.Optional(
+				Type.String({ description: "Compaction trigger, such as phase-end-P1 or context-threshold-60." }),
+			),
+			phaseId: Type.Optional(Type.String({ description: "Current phase id, such as P1." })),
+			summary: Type.Optional(
+				Type.String({ description: "Compact checkpoint summary for Pi compaction instructions." }),
+			),
+			force: Type.Optional(Type.Boolean({ description: "Bypass duplicate/cooldown guard." })),
+			includeStateResume: Type.Optional(
+				Type.Boolean({ description: "Include bounded cartographer_state state-resume context. Defaults true." }),
+			),
+			thresholdPercent: Type.Optional(
+				Type.Number({ description: "Context threshold percent that caused the request." }),
+			),
+			cooldownMs: Type.Optional(Type.Number({ description: "Duplicate trigger cooldown in milliseconds." })),
+			maxOutputChars: Type.Optional(
+				Type.Number({ description: "Inline output budget before saving a full-output receipt." }),
+			),
+			outputPath: Type.Optional(Type.String({ description: "Optional full-output path for oversized output." })),
+			raw: Type.Optional(Type.Boolean({ description: "Return raw command output instead of a compact receipt." })),
+		}),
+		async execute(_toolCallId, rawParams, signal, _onUpdate, ctx) {
+			const params = rawParams as CartographerCompactContextParams;
+			const result = await requestContextCompaction(ctx, params, signal);
+			const text = JSON.stringify(result, null, 2);
+			const shaped = shapeToolOutput(text, "", {
+				maxOutputChars: params.maxOutputChars ?? 4000,
+				outputPath: params.outputPath,
+				raw: params.raw,
+				label: "cartographer-compact-context",
+			});
+			return {
+				content: [{ type: "text", text: shaped.text }],
+				details: { ...shaped.details, result },
+			};
 		},
 	});
 

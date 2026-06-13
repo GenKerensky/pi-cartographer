@@ -86,3 +86,64 @@ For UI-affecting features, the system SHOULD support an optional lightweight moc
 #### Scenarios
 
 - **SCN-INT-006**: UI ambiguity benefits from preview
+
+### REQ-PCH-001 — Phase-end Pi compaction bridge
+
+- Status: accepted
+- Change type: ADDED
+- Domain: workflow
+- Priority: must
+- Source topic: phase-compaction-hooks
+- Fold receipts: receipt:P2:validation:2026-06-12T21:48:52+00:00, receipt:P2:validation:2026-06-12T21:48:53+00:00
+
+After a Cartographer implementation phase writes its state snapshot and resume context, the workflow must be able to trigger actual Pi context compaction through the Pi harness rather than only updating .cartographer state.
+
+#### Scenarios
+
+- **SCN-PCH-001**: Phase completion queues actual compaction
+
+### REQ-PCH-002 — Proactive context threshold compaction
+
+- Status: accepted
+- Change type: ADDED
+- Domain: workflow
+- Priority: must
+- Source topic: phase-compaction-hooks
+- Fold receipts: receipt:P2:validation:2026-06-12T21:48:52+00:00, receipt:P2:validation:2026-06-12T21:48:53+00:00
+
+During active Cartographer implementation, the extension should detect context usage crossing a configurable threshold, defaulting near 60 percent, and request actual Pi compaction outside mutable tool execution.
+
+#### Scenarios
+
+- **SCN-PCH-002**: Threshold crossing queues one compaction request
+
+### REQ-PCH-003 — Additive Cartographer summary focus
+
+- Status: accepted
+- Change type: ADDED
+- Domain: workflow
+- Priority: must
+- Source topic: phase-compaction-hooks
+- Fold receipts: receipt:P2:validation:2026-06-12T21:48:52+00:00, receipt:P2:validation:2026-06-12T21:48:53+00:00
+
+The compaction bridge must preserve Pi's default summarizer by default while adding customInstructions that retain bounded Cartographer resume context and continue-with-implement-skill guidance.
+
+#### Scenarios
+
+- **SCN-PCH-003**: Compaction prompt carries bounded resume state
+
+### REQ-PCH-004 — Safe configuration and observability
+
+- Status: accepted
+- Change type: ADDED
+- Domain: workflow
+- Priority: should
+- Source topic: phase-compaction-hooks
+- Fold receipts: receipt:P2:validation:2026-06-12T21:48:52+00:00, receipt:P2:validation:2026-06-12T21:48:53+00:00
+
+The compaction bridge must be configurable or disableable, avoid compaction loops, and expose compact outcomes without storing raw transcript summaries in plan artifacts.
+
+#### Scenarios
+
+- **SCN-PCH-004**: Unavailable Pi context is reported as safe skip
+- **SCN-PCH-005**: Recent compaction request suppresses duplicate trigger

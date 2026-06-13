@@ -1,0 +1,19 @@
+{"evidence":"packages.md describes package.json pi manifest resources.","from":"F900","source":"local_pi_docs_seed","to":"S900","type":"supported_by"}
+{"evidence":"packages.md documents gallery image metadata.","from":"F901","source":"local_pi_docs_seed","to":"S900","type":"supported_by"}
+{"evidence":"skills.md describes skill structure and frontmatter.","from":"F902","source":"local_pi_docs_seed","to":"S901","type":"supported_by"}
+{"evidence":"extensions.md documents pi.registerTool.","from":"F903","source":"local_pi_docs_seed","to":"S902","type":"supported_by"}
+{"evidence":"prompt-templates.md documents packaged prompt templates.","from":"F904","source":"local_pi_docs_seed","to":"S903","type":"supported_by"}
+{"evidence":"pi-subagents guidance emphasizes concrete role-specific child tasks and parent orchestration.","from":"F905","source":"local_pi_docs_seed","to":"S904","type":"supported_by"}
+{"from":"F001","to":"S001","type":"supported_by"}
+{"from":"F002","to":"S001","type":"supported_by"}
+{"from":"F003","to":"S003","type":"supported_by"}
+{"from":"F004","to":"S002","type":"supported_by"}
+{"from":"F005","to":"S004","type":"supported_by"}
+{"from":"F006","to":"S002","type":"supported_by"}
+{"from":"F007","to":"S007","type":"supported_by"}
+{"from":"F008","to":"S007","type":"supported_by"}
+{"from":"F009","to":"S006","type":"supported_by"}
+{"from":"F010","to":"S001","type":"supported_by"}
+{"from":"F011","to":"S002","type":"supported_by"}
+{"from":"F012","to":"S002","type":"supported_by"}
+{"from":"F013","to":"S008","type":"supported_by"}
