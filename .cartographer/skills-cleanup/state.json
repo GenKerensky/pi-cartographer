@@ -17,7 +17,7 @@
     },
     "receipts": {
       "path": ".plan/skills-cleanup/receipts.jsonl",
-      "sha256": "sha256:77158803125cf5499ff9d38aee43891edf776d7c598e9d9dd81cb5d37b1f3f7e"
+      "sha256": "sha256:5dd2cf0fe72535f070d8d11ab5a571f72f74201a699b28b86eaeb68696384c2f"
     },
     "context_packs": {
       "path": ".plan/skills-cleanup/context-packs.jsonl",
@@ -131,7 +131,8 @@
     "receipt:P2:validation:2026-06-13T03:41:29+00:00",
     "receipt:P2:validation:2026-06-13T03:41:33+00:00",
     "receipt:P5:validation:2026-06-13T04:40:24+00:00",
-    "receipt:P5:validation:2026-06-13T03:58:54+00:00"
+    "receipt:P5:validation:2026-06-13T03:58:54+00:00",
+    "receipt:P5:validation:2026-06-13T04:50:59+00:00"
   ],
   "journal_refs": ["journal:20260613T031944Z:compact", "journal:20260613T032018Z:compact"],
   "resume": {
@@ -145,7 +146,7 @@
     "expected_first_response": ["current_phase", "next_action", "files_to_inspect"],
     "must_ignore": ["prior chat speculation", "stale generated snippets"]
   },
-  "updated_at": "2026-06-13T04:49:04Z",
+  "updated_at": "2026-06-13T04:51:18Z",
   "stale_reason": "Committed P4 checkpoint",
   "compaction": {
     "trigger": "phase-end-P0",
