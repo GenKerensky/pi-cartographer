@@ -8,6 +8,14 @@ export const LIFECYCLE_STATES = [
 	"proposal-draft",
 	"proposal-ready-for-human-review",
 	"proposal-approved",
+	"interview-ready-for-human-review",
+	"interview-approved",
+	"requirements-draft",
+	"requirements-ready-for-human-review",
+	"requirements-approved",
+	"design-draft",
+	"design-ready-for-human-review",
+	"design-approved",
 	"plan-draft",
 	"plan-ready-for-human-review",
 	"plan-approved",
@@ -21,10 +29,13 @@ export const LIFECYCLE_STATES = [
 ] as const;
 
 export type LifecycleState = (typeof LIFECYCLE_STATES)[number];
-export type TransitionGate = "proposal" | "plan" | "phase" | "implementation";
+export type TransitionGate = "proposal" | "interview" | "requirements" | "design" | "plan" | "phase" | "implementation";
 
 export const HUMAN_APPROVAL_GATES = [
 	"proposal",
+	"interview",
+	"requirements",
+	"design",
 	"plan",
 	"phase",
 	"implementation",
@@ -70,11 +81,27 @@ export const GATE_PREREQUISITES: Record<TransitionGate, GatePrerequisite[]> = {
 		{ id: "proposal-context-pack", description: "Proposal context pack exists", required: true },
 		{ id: "proposal-auditor-pass", description: "Proposal auditor PASS or approved fallback exists", required: true },
 	],
+	interview: [
+		{ id: "interview-decision", description: "Interview ran or was explicitly skipped after research exhaustion", required: true },
+		{ id: "interview-context-pack", description: "Interview context pack exists", required: true },
+		{ id: "interview-auditor-pass", description: "Interview auditor PASS or approved fallback exists", required: true },
+	],
+	requirements: [
+		{ id: "requirements-validate-topic", description: "Requirements graph validation passed", required: true },
+		{ id: "requirements-context-pack", description: "Requirements context pack exists", required: true },
+		{ id: "requirements-auditor-pass", description: "Requirements auditor PASS or approved fallback exists", required: true },
+	],
+	design: [
+		{ id: "design-validate-topic", description: "Design graph validation passed", required: true },
+		{ id: "design-context-pack", description: "Design context pack exists", required: true },
+		{ id: "design-auditor-pass", description: "Design auditor PASS or approved fallback exists", required: true },
+	],
 	plan: [
 		{ id: "plan-validate-topic", description: "Plan topic validation passed", required: true },
 		{ id: "plan-validate-graph", description: "Planning graph validation passed", required: true },
 		{ id: "plan-context-pack", description: "Plan context pack exists", required: true },
 		{ id: "plan-auditor-pass", description: "Plan auditor PASS or approved fallback exists", required: true },
+		{ id: "plan-scope-gates", description: "Required interview, requirements, and design gates are resolved", required: true },
 	],
 	phase: [
 		{ id: "phase-validation-receipts", description: "Phase validation receipts exist", required: true },
@@ -1120,7 +1147,79 @@ function runPlanningGraphValidation(root: string, topic: string): string {
 	});
 }
 
+function proposalRequiresRequirements(root: string, topic: string): boolean {
+	const filePath = proposalPath(root, topic);
+	if (!fs.existsSync(filePath)) return false;
+	const proposal = fs.readFileSync(filePath, "utf8");
+	const explicit = proposal.match(/`requirements_required`:\s*(true|false)/i);
+	if (explicit) return explicit[1].toLowerCase() === "true";
+	const scopeBlock = proposal.match(/^## Scope Gate\s*$([\s\S]*?)(?=^##\s|$)/m)?.[1] || "";
+	return /requirements_required\s*[:=-]\s*true/i.test(scopeBlock);
+}
+
+function artifactHasContent(filePath: string): boolean {
+	return fs.existsSync(filePath) && fs.readFileSync(filePath, "utf8").trim().length > 0;
+}
+
+function hasApprovedGate(receipts: Record<string, unknown>[], gate: TransitionGate): boolean {
+	return receipts.some((receipt) => receipt.action === "approve" && receipt.gate === gate);
+}
+
+function hasSkippedInterviewDecision(receipts: Record<string, unknown>[]): boolean {
+	return receipts.some((receipt) => {
+		const summary = optionalString(receipt.summary).toLowerCase();
+		const status = optionalString(receipt.status || receipt.result || receipt.decision).toLowerCase();
+		return (
+			receipt.phase_id === "interview" &&
+			["decision", "no-op", "transition", "approval"].includes(optionalString(receipt.kind)) &&
+			(status.includes("skip") || summary.includes("no unresolved user-owned decision") || summary.includes("interview skipped"))
+		);
+	});
+}
+
+function assertScopedPrePlanGates(root: string, topic: string): Record<string, unknown> {
+	if (!proposalRequiresRequirements(root, topic)) return { requirements_required: false, checked_gates: [] };
+	const dir = topicDir(root, topic);
+	const requiredArtifacts = [
+		"requirements.md",
+		"requirements.nodes.jsonl",
+		"requirements.edges.jsonl",
+		"design.md",
+		"design.nodes.jsonl",
+		"design.edges.jsonl",
+	];
+	const missing = requiredArtifacts.filter((relative) => !artifactHasContent(path.join(dir, relative)));
+	if (missing.length) {
+		throw new Error(
+			`Scope gate requires requirements/design artifacts before planning; missing or empty: ${missing.join(", ")}`,
+		);
+	}
+	const receipts = readJsonlRecords(receiptsPath(root, topic));
+	const interviewArtifactsPresent = ["interview.md", "interview.nodes.jsonl", "interview.edges.jsonl"].some((relative) =>
+		artifactHasContent(path.join(dir, relative)),
+	);
+	if (!interviewArtifactsPresent && !hasSkippedInterviewDecision(receipts)) {
+		throw new Error(
+			"Scope gate requires an interview decision before planning: run interview for unresolved user-owned decisions or record an explicit no-op/skip decision after research exhaustion",
+		);
+	}
+	const missingApprovals: TransitionGate[] = (["requirements", "design"] as const).filter(
+		(gate) => !hasApprovedGate(receipts, gate),
+	);
+	if (interviewArtifactsPresent && !hasApprovedGate(receipts, "interview")) missingApprovals.unshift("interview");
+	if (missingApprovals.length) {
+		throw new Error(`Missing approved pre-plan gate(s): ${missingApprovals.join(", ")}`);
+	}
+	for (const phaseId of ["requirements", "design"] as const) findAuditorPassReceipt(root, topic, phaseId);
+	if (interviewArtifactsPresent) findAuditorPassReceipt(root, topic, "interview");
+	return {
+		requirements_required: true,
+		checked_gates: interviewArtifactsPresent ? ["interview", "requirements", "design"] : ["interview-skip", "requirements", "design"],
+	};
+}
+
 export function finalizePlan(params: { root: string; topic: string; summary?: string }): Record<string, unknown> {
+	const scopedGateSummary = assertScopedPrePlanGates(params.root, params.topic);
 	const graph = generatePlanGraph({ root: params.root, topic: params.topic });
 	const topicValidation = runTopicValidation(params.root, params.topic);
 	const graphValidation = runPlanningGraphValidation(params.root, params.topic);
@@ -1129,7 +1228,7 @@ export function finalizePlan(params: { root: string; topic: string; summary?: st
 		topic: params.topic,
 		kind: "validation",
 		phaseId: "plan",
-		summary: `plan finalize checks passed: ${JSON.stringify(graph)}; validate-topic: ${topicValidation.slice(0, 160)}; validate-graph: ${graphValidation.slice(0, 160)}`,
+		summary: `plan finalize checks passed: ${JSON.stringify({ graph, scopedGateSummary })}; validate-topic: ${topicValidation.slice(0, 160)}; validate-graph: ${graphValidation.slice(0, 160)}`,
 	});
 	upsertContextPack({
 		root: params.root,

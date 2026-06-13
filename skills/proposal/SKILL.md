@@ -256,8 +256,8 @@ Use deterministic wrappers for proposal mutations whenever available. Prefer `ca
      - set `requirements_required: false` for small changes that do not impact a core user workflow and have no comparable contract/risk signal.
    - Write the decision under `## Scope Gate` with a concise reason.
    - Under `## Next Artifacts`, state either:
-     - scoped path: `proposal -> research -> interview -> requirements delta -> design -> plan -> implement -> fold accepted deltas into docs/requirements.md`, where the interview runs only after relevant project/research context is exhausted and unresolved user-owned decisions remain;
-     - scoped no-interview path: `proposal -> research -> requirements delta -> design -> plan -> implement -> fold accepted deltas into docs/requirements.md` when research leaves no unresolved user-owned decisions; or
+     - scoped path: `proposal -> research -> interview gate -> requirements gate -> design gate -> plan -> implement -> fold accepted deltas into docs/requirements.md`, where the interview runs only after relevant project/research context is exhausted and unresolved user-owned decisions remain;
+     - scoped no-interview path: `proposal -> research -> interview skip decision -> requirements gate -> design gate -> plan -> implement -> fold accepted deltas into docs/requirements.md` when research leaves no unresolved user-owned decisions; or
      - lightweight path: `proposal -> plan -> implement` with a note explaining why interview and requirements/design graph artifacts are not needed.
    - Requirements and design details are produced by downstream artifacts, not by the proposal. Topic-local requirements are deltas for the current Cartographer topic/change and later fold into durable `docs/requirements.md` when accepted. Requirements authors may re-enter interview one question at a time if new unresolved user-owned decisions appear.
 
@@ -433,7 +433,7 @@ Before finalizing, verify:
 - Every file reference in `map.nodes.jsonl` or `map.edges.jsonl` points to an existing project file, ideally with a line number.
 - Every indexed node ID cited in `map.nodes.jsonl`, `map.edges.jsonl`, or `proposal.md` exists in `.plan/_index/project-graph.sqlite`.
 - `## Scope Gate` states whether requirements/design artifacts are required, including the core user workflow or comparable risk rationale.
-- `## Next Artifacts` points to research-exhausted interview when unresolved user-owned decisions remain, then requirements delta + design for scoped changes, or records why the lightweight proposal -> plan path is enough.
+- `## Next Artifacts` points to research-exhausted interview when unresolved user-owned decisions remain, then approved requirements and design gates for scoped changes, or records why the lightweight proposal -> plan path is enough.
 - `## ADR Metadata` includes `adr_required`, `adr_reason`, `adr_options_status`, and `adr_tool_mode`.
 - Directed ADR-worthy choices include alternatives or user-provided rationale, or the proposal records that clarification is still needed.
 - A final `cartographer-auditor` `PASS` has been recorded after deterministic validation, or an approved reviewer/oracle/serial fallback receipt exists and corrections were applied.
