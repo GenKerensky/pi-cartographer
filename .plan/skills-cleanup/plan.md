@@ -103,7 +103,7 @@ Do not edit skill files during P0 except for adding inventory artifacts or recei
 
 ### Phase P1 — Skill-Language Checker
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P0
 - **Unlocks:** P2
 - **Primary references:** `file:skills/plan/scripts/validate_planning_graph.py`, `file:skills/plan/scripts/manage_jsonl.ts`, `file:package.json`, [F001], [F003], [F008], [F012]
@@ -120,16 +120,16 @@ Add deterministic checks that keep future skill edits aligned with wrapper-first
 
 #### Checklist
 
-- [ ] **P1.T1** Add a non-interactive `--json` skill-language checker with concise `--help`.
-- [ ] **P1.T2** Include checks for direct JSONL mutation phrasing, wrapper fallback wording, delegated write authority, RFC 2119 casing/usage hotspots, skill line counts, and frontmatter description presence.
-- [ ] **P1.T3** Add focused unit tests or fixture checks for allowed read-only JSONL wording versus forbidden write wording.
-- [ ] **P1.T4** Wire the checker into an appropriate package script only if it does not make routine checks noisy or brittle; otherwise document the targeted command in the skill cleanup plan/handoff.
+- [x] **P1.T1** Add a non-interactive `--json` skill-language checker with concise `--help`.
+- [x] **P1.T2** Include checks for direct JSONL mutation phrasing, wrapper fallback wording, delegated write authority, RFC 2119 casing/usage hotspots, skill line counts, and frontmatter description presence.
+- [x] **P1.T3** Add focused unit tests or fixture checks for allowed read-only JSONL wording versus forbidden write wording.
+- [x] **P1.T4** Wire the checker into an appropriate package script only if it does not make routine checks noisy or brittle; otherwise document the targeted command in the skill cleanup plan/handoff.
 
 #### Validation
 
-- [ ] **P1.V1** Run `python skills/plan/scripts/check_skill_language.py --root "$PWD" --json`; expected result is a structured report, initially allowed to flag stale skill files before P2.
-- [ ] **P1.V2** Run `npm run check:scripts`; expected result passes after the new script is syntactically valid.
-- [ ] **P1.V3** Run the relevant Python test command for the checker; expected result passes.
+- [x] **P1.V1** Run `python skills/plan/scripts/check_skill_language.py --root "$PWD" --json`; expected result is a structured report, initially allowed to flag stale skill files before P2.
+- [x] **P1.V2** Run `npm run check:scripts`; expected result passes after the new script is syntactically valid.
+- [x] **P1.V3** Run the relevant Python test command for the checker; expected result passes.
 
 #### Exit Criteria
 
