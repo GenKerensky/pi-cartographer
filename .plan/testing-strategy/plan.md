@@ -267,7 +267,7 @@ If validator scope becomes too large, add a narrow helper function with explicit
 
 ### Phase P4 — Auditor and handoff guidance
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P3
 - **Unlocks:** P5
 - **Primary references:** `.pi/agents/cartographer-auditor.md`, `skills/plan/SKILL.md`, `skills/design/SKILL.md`, `.plan/testing-strategy/design.md`
@@ -285,15 +285,15 @@ Update semantic audit/handoff guidance so auditors inspect testing-strategy qual
 
 #### Checklist
 
-- [ ] **P4.T1** Update `.pi/agents/cartographer-auditor.md` to inspect Testing Strategy evidence, requirement/scenario coverage, existing tool/ADR consideration, meaningful E2E validation, and generic-only validation gate rejection.
-- [ ] **P4.T2** Update relevant skill handoff prompts so auditor receives strategy evidence summaries, requirement coverage summaries, deterministic validation receipt IDs, context-pack IDs, and unresolved-decision notes.
-- [ ] **P4.T3** Add/update `tests/test_workflow_docs.py` assertions that auditor/handoff guidance mentions testing strategy evidence, requirement coverage, plan validation gates, E2E, and deterministic receipts.
-- [ ] **P4.T4** Confirm no auditor prompt grants write, receipt append, ADR write, or raw private access.
+- [x] **P4.T1** Update `.pi/agents/cartographer-auditor.md` to inspect Testing Strategy evidence, requirement/scenario coverage, existing tool/ADR consideration, meaningful E2E validation, and generic-only validation gate rejection.
+- [x] **P4.T2** Update relevant skill handoff prompts so auditor receives strategy evidence summaries, requirement coverage summaries, deterministic validation receipt IDs, context-pack IDs, and unresolved-decision notes.
+- [x] **P4.T3** Add/update `tests/test_workflow_docs.py` assertions that auditor/handoff guidance mentions testing strategy evidence, requirement coverage, plan validation gates, E2E, and deterministic receipts.
+- [x] **P4.T4** Confirm no auditor prompt grants write, receipt append, ADR write, or raw private access.
 
 #### Validation
 
-- [ ] **P4.V1** Run `python -m unittest tests.test_workflow_docs.WorkflowDocsTests` and verify auditor/handoff guidance assertions pass. Testing Strategy Trace: design `DES-TEST-004`; layer unit/static docs test.
-- [ ] **P4.V2** Run `rg -n "Testing Strategy|E2E|generic-only|deterministic validation" .pi/agents/cartographer-auditor.md skills/design/SKILL.md skills/plan/SKILL.md` and verify expected guidance appears in the intended files. Testing Strategy Trace: design `DES-TEST-004`; layer manual/static inspection.
+- [x] **P4.V1** Run `python -m unittest tests.test_workflow_docs.WorkflowDocsTests` and verify auditor/handoff guidance assertions pass. Testing Strategy Trace: design `DES-TEST-004`; layer unit/static docs test.
+- [x] **P4.V2** Run `rg -n "Testing Strategy|E2E|generic-only|deterministic validation" .pi/agents/cartographer-auditor.md skills/design/SKILL.md skills/plan/SKILL.md` and verify expected guidance appears in the intended files. Testing Strategy Trace: design `DES-TEST-004`; layer manual/static inspection.
 
 #### Exit Criteria
 

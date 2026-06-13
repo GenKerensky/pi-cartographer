@@ -88,6 +88,28 @@ class WorkflowDocsTests(unittest.TestCase):
         ]:
             self.assertIn(needle, plan)
 
+    def test_auditor_documents_testing_strategy_review(self) -> None:
+        auditor = (ROOT / ".pi/agents/cartographer-auditor.md").read_text(encoding="utf-8")
+        design = (ROOT / "skills/design/SKILL.md").read_text(encoding="utf-8")
+        plan = (ROOT / "skills/plan/SKILL.md").read_text(encoding="utf-8")
+
+        for needle in [
+            "Testing Strategy",
+            "existing tools/scripts",
+            "related ADRs",
+            "unit/integration/E2E",
+            "requirement/scenario",
+            "concrete test artifacts/scenarios/commands",
+            "generic-only behavior-change validation",
+        ]:
+            self.assertIn(needle, auditor)
+        self.assertIn("deterministic validation receipt IDs", design)
+        self.assertIn("requirement/scenario coverage summary", design)
+        self.assertIn("Testing Strategy evidence", plan)
+        self.assertIn("context-pack ID", plan)
+        self.assertIn("unresolved-decision notes", plan)
+        self.assertIn("deterministic receipt output path", plan)
+
     def test_deterministic_then_auditor_gates_are_documented(self) -> None:
         proposal = (ROOT / "skills/proposal/SKILL.md").read_text(encoding="utf-8")
         plan = (ROOT / "skills/plan/SKILL.md").read_text(encoding="utf-8")

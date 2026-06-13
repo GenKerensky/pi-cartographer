@@ -37,7 +37,7 @@ Use this skill after requirements are approved for a scoped Cartographer topic. 
 5. If new unresolved user-owned decisions appear, re-enter the `interview` skill one question at a time, then update requirements/design accordingly.
 6. Validate with `cartographer_jsonl validate-topic` or `manage_jsonl.ts validate-topic`.
 7. Create/update a design context pack.
-8. Run the auditor semantic gate and capture a PASS receipt for `phase_id: "design"`.
+8. Run the auditor semantic gate and capture a PASS receipt for `phase_id: "design"`. Auditor input MUST include Testing Strategy evidence, requirement/scenario coverage summary, deterministic validation receipt IDs, context-pack ID, unresolved-decision notes, and the parent receipt output path when a Testing Strategy is present.
 9. Request and approve the `design` transition gate through `cartographer_transition` before planning begins.
 
 ## Testing Strategy

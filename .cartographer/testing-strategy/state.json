@@ -5,11 +5,11 @@
   "source_refs": {
     "plan_md": {
       "path": ".plan/testing-strategy/plan.md",
-      "sha256": "sha256:d885e084d7e7dd91e53d52723b6acf217b17bf7e09c808c29521439c766fd8ab"
+      "sha256": "sha256:b079b405f34db26de008e145dd9edc94ca9edea0f273911abba988d67145cea8"
     },
     "plan_nodes": {
       "path": ".plan/testing-strategy/plan.nodes.jsonl",
-      "sha256": "sha256:32fa996ff1db54f193be555e0791b6b20870db0ff46a99ada6185379144ecaf1"
+      "sha256": "sha256:a157ab808c881cec0616f151f56fd7048bcf2e0c5d182fa378c9a993816f710f"
     },
     "plan_edges": {
       "path": ".plan/testing-strategy/plan.edges.jsonl",
@@ -17,11 +17,11 @@
     },
     "receipts": {
       "path": ".plan/testing-strategy/receipts.jsonl",
-      "sha256": "sha256:4e53a04943b7acfcf9c28cc480c5b855ed4b28108f15ac5aacde326e7cdc848c"
+      "sha256": "sha256:07a767b102b5b3ee8203498eccdf4ffd57291bdf5215a9ebcc49b891d186203b"
     },
     "context_packs": {
       "path": ".plan/testing-strategy/context-packs.jsonl",
-      "sha256": "sha256:de6831604edf035640f04114f1d18e9fe664b1586a1dd7338035278e96331e03"
+      "sha256": "sha256:5284390115195ad39d7d5a2e348817edefa6eb69715ba1a5932bd50337f98dfc"
     }
   },
   "current_phase_id": "P0",
@@ -102,13 +102,18 @@
     "receipt:P3:validation:2026-06-13T23:47:11+00:00",
     "receipt:P3:validation:2026-06-13T23:47:18+00:00",
     "receipt:P3:validation:2026-06-13T23:47:23+00:00",
-    "receipt:testing-strategy:audit:2026-06-13T23:49:09Z"
+    "receipt:testing-strategy:audit:2026-06-13T23:49:09Z",
+    "receipt:P4:validation:2026-06-13T23:53:36+00:00",
+    "receipt:P4:validation:2026-06-13T23:53:45+00:00",
+    "receipt:P4:validation:2026-06-13T23:55:39+00:00",
+    "receipt:testing-strategy:audit:2026-06-13T23:57:08Z"
   ],
   "journal_refs": [
     "journal:20260613T233209Z:compact",
     "journal:20260613T233621Z:compact",
     "journal:20260613T233949Z:compact",
-    "journal:20260613T234925Z:compact"
+    "journal:20260613T234925Z:compact",
+    "journal:20260613T235721Z:compact"
   ],
   "resume": {
     "template_id": "cartographer.single_writer.resume.v1",
@@ -128,10 +133,10 @@
       "stale generated snippets"
     ]
   },
-  "updated_at": "2026-06-13T23:49:25Z",
+  "updated_at": "2026-06-13T23:57:21Z",
   "stale_reason": "Implementation compact requested after artifact updates.",
   "compaction": {
-    "trigger": "phase-end-P3",
-    "compacted_at": "2026-06-13T23:49:25Z"
+    "trigger": "phase-end-P4",
+    "compacted_at": "2026-06-13T23:57:21Z"
   }
 }

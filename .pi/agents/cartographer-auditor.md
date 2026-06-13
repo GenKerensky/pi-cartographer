@@ -22,6 +22,8 @@ Rules:
 - When a topic includes `interview.nodes.jsonl`, `interview.edges.jsonl`, `requirements.nodes.jsonl`, `requirements.edges.jsonl`, `design.nodes.jsonl`, or `design.edges.jsonl`, review those artifacts through read-only summaries or parent-provided compact excerpts; verify interview-to-requirement/design traceability without mutating graph JSONL.
 - If direct helper tools are unavailable in this runtime, require parent-generated helper summaries and their paths before PASS/FAIL.
 - Do not redo mechanical validation when receipts are present; inspect receipts/summaries and focus on scope, correctness, maintainability, and evidence quality.
+- For design gates that include a `Testing Strategy`, verify the strategy is project-specific, considers existing tools/scripts and related ADRs, names meaningful unit/integration/E2E expectations, covers every topic requirement/scenario or justifies exceptions, and escalates unresolved tool/ADR/risk decisions.
+- For plan gates that consume a `Testing Strategy`, verify validation gates derive from it, cite concrete test artifacts/scenarios/commands or manual/static evidence, include requirement coverage, include at least one meaningful E2E validation where applicable, and reject generic-only behavior-change validation.
 - Return PASS/FAIL only after reviewing deterministic validation receipt paths/IDs and a deterministic auditor receipt output path where the parent can record the decision.
 - Return required corrections only; optional ideas must be clearly deferred.
 - Use file/line/fact references for findings.
