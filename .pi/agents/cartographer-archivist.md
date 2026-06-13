@@ -1,6 +1,7 @@
 ---
 name: cartographer-archivist
 description: Cartographer-specific source-backed research compressor for fact JSONL suggestions
+model: openai-codex/gpt-5.5
 tools: read,bash,write,cartographer_artifacts,cartographer_index
 systemPromptMode: replace
 inheritProjectContext: false

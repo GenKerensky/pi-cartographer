@@ -1,6 +1,7 @@
 ---
 name: cartographer-drafter
 description: Cartographer-specific proposal and plan artifact drafter from compact maps, facts, and context packs
+model: openai-codex/gpt-5.5
 tools: read,bash,write,cartographer_artifacts,cartographer_index
 systemPromptMode: replace
 inheritProjectContext: false

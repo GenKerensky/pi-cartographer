@@ -1,0 +1,145 @@
+{
+  "schema_version": 1,
+  "topic": "skills-cleanup",
+  "source_status": "hashes-valid",
+  "source_refs": {
+    "plan_md": {
+      "path": ".plan/skills-cleanup/plan.md",
+      "sha256": "sha256:aa338def0c520c2b747d8a1f237b93cbf5243b4bb945284615748282254cc273"
+    },
+    "plan_nodes": {
+      "path": ".plan/skills-cleanup/plan.nodes.jsonl",
+      "sha256": "sha256:c9d3b97e2d5dff8a6d8bba98a621bdfb0f5cc91b5ad52ee1b9f5810cf95f6cd1"
+    },
+    "plan_edges": {
+      "path": ".plan/skills-cleanup/plan.edges.jsonl",
+      "sha256": "sha256:65666c8f274bffbeb283a440f440bdec6359ccd80da577e311aeb8099f4c9d9f"
+    },
+    "receipts": {
+      "path": ".plan/skills-cleanup/receipts.jsonl",
+      "sha256": "sha256:0df535fd12044efbc2447dec754ee9776eb2cbbdf88484fb8c86797bc1b44396"
+    },
+    "context_packs": {
+      "path": ".plan/skills-cleanup/context-packs.jsonl",
+      "sha256": "sha256:02950e5a5b306b4984ce4a204762d84ed8ba1dda9c09c7df2b416b2f61f32b1e"
+    }
+  },
+  "current_phase_id": "P0",
+  "active_task_ids": [],
+  "active_validation_ids": [],
+  "next_action": {
+    "id": "P0.T1",
+    "kind": "implementation-task",
+    "summary": "Capture stale/direct-write language inventory with file and line references.",
+    "phase_id": "P0",
+    "task_id": "P0.T1",
+    "files_to_inspect": [
+      "skills/proposal/SKILL.md",
+      "skills/plan/SKILL.md",
+      "skills/interview/SKILL.md",
+      "skills/implement/SKILL.md",
+      "skills/index-project/SKILL.md",
+      "skills/dashboard/SKILL.md",
+      ".pi/agents/*.md",
+      "AGENTS.md"
+    ]
+  },
+  "working_set": {
+    "write_allowed": [
+      {
+        "path": ".plan/skills-cleanup/plan.md",
+        "reason": "P0 status/checklist updates"
+      },
+      {
+        "path": ".plan/skills-cleanup/plan.nodes.jsonl",
+        "reason": "P0 status/checklist updates"
+      },
+      {
+        "path": ".plan/skills-cleanup/receipts.jsonl",
+        "reason": "P0 validation and evidence receipts"
+      },
+      {
+        "path": ".plan/skills-cleanup/context-packs.jsonl",
+        "reason": "P0 context pack"
+      },
+      {
+        "path": ".plan/skills-cleanup/P0-*.md",
+        "reason": "P0 inventory artifact"
+      }
+    ],
+    "read_only": [
+      {
+        "path": "AGENTS.md",
+        "reason": "P0 baseline verification"
+      },
+      {
+        "path": "skills/*/SKILL.md",
+        "reason": "P0 skill language inventory"
+      },
+      {
+        "path": ".pi/agents/*.md",
+        "reason": "P0 delegation and agent baseline inventory"
+      },
+      {
+        "path": "docs/adr/0004-use-single-writer-cartographer-implementation-state.md",
+        "reason": "ADR-0004 delegation boundary"
+      },
+      {
+        "path": "docs/adr/0006-use-deterministic-cartographer-workflow-wrappers-for-lifecycle-gates.md",
+        "reason": "ADR-0006 wrapper boundary"
+      },
+      {
+        "path": ".plan/skills-cleanup/plan.edges.jsonl",
+        "reason": "dependency graph reference"
+      }
+    ],
+    "forbidden": [
+      {
+        "path": ".plan/_private/**",
+        "reason": "raw private inputs are off-limits"
+      },
+      {
+        "path": ".plan/_index/**",
+        "reason": "generated index/cache artifacts"
+      }
+    ]
+  },
+  "known_failures": [],
+  "last_validation_receipt_ids": [
+    "receipt:P0:validation:2026-06-13T03:16:09+00:00",
+    "receipt:P0:validation:2026-06-13T03:16:15+00:00",
+    "receipt:P0:validation:2026-06-13T03:17:09+00:00",
+    "receipt:P0:validation:2026-06-13T03:17:14+00:00",
+    "receipt:skills-cleanup:audit:2026-06-13T03:18:49Z",
+    "receipt:P0:validation:2026-06-13T03:19:28+00:00",
+    "receipt:P0:validation:2026-06-13T03:19:33+00:00"
+  ],
+  "journal_refs": [
+    "journal:20260613T031944Z:compact",
+    "journal:20260613T032018Z:compact"
+  ],
+  "resume": {
+    "template_id": "cartographer.single_writer.resume.v1",
+    "resume_order": [
+      ".cartographer/skills-cleanup/state.json",
+      ".cartographer/skills-cleanup/journal.jsonl",
+      ".plan/skills-cleanup/plan.md",
+      ".plan/skills-cleanup/receipts.jsonl"
+    ],
+    "expected_first_response": [
+      "current_phase",
+      "next_action",
+      "files_to_inspect"
+    ],
+    "must_ignore": [
+      "prior chat speculation",
+      "stale generated snippets"
+    ]
+  },
+  "updated_at": "2026-06-13T03:20:18Z",
+  "stale_reason": "Implementation compact requested after artifact updates.",
+  "compaction": {
+    "trigger": "phase-end-P0",
+    "compacted_at": "2026-06-13T03:20:18Z"
+  }
+}
