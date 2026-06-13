@@ -5,11 +5,11 @@
   "source_refs": {
     "plan_md": {
       "path": ".plan/dashboard-improvements/plan.md",
-      "sha256": "sha256:4783488cca3392e373d8c1aefb62390218928681bc7d4dd979fa0be7582ba5c7"
+      "sha256": "sha256:f9ae80653850e5c119b251430d5c38971f49551f1c16c4c851f374c09ebd6e16"
     },
     "plan_nodes": {
       "path": ".plan/dashboard-improvements/plan.nodes.jsonl",
-      "sha256": "sha256:0742cb214e68f2e29cb3ac03c4b51fb4965bc6b78bd565a92eaa0d30d504af65"
+      "sha256": "sha256:2100b1020b3e7bd19dc4e7d4496dab66bab701d11181971a65fadceb747c15c6"
     },
     "plan_edges": {
       "path": ".plan/dashboard-improvements/plan.edges.jsonl",
@@ -17,37 +17,28 @@
     },
     "receipts": {
       "path": ".plan/dashboard-improvements/receipts.jsonl",
-      "sha256": "sha256:816ba0c837270c2cff9f65a30145fff3c26127389d1c459e8756ffc4e55bbe61"
+      "sha256": "sha256:e27357acc9e0b4e5447f38de2f46962e97a417cba818ae6d7612181268969e62"
     },
     "context_packs": {
       "path": ".plan/dashboard-improvements/context-packs.jsonl",
       "sha256": "sha256:6c3901ddb9c8fc413be2c558eda030a52f8d3fc04f15be761430b62e6dbb5dd5"
     }
   },
-  "current_phase_id": "P1",
+  "current_phase_id": "P2",
   "active_task_ids": [],
   "active_validation_ids": [],
   "next_action": {
-    "id": "P1.T1",
+    "id": "P2.T1",
     "kind": "implementation-task",
-    "summary": "Extract topic page frame/context helpers from TopicWorkspace without changing artifact loading semantics.",
-    "phase_id": "P1",
-    "task_id": "P1.T1",
+    "summary": "Add ReferencePopoverLink and route reference-specific anchor rendering through it.",
+    "phase_id": "P2",
+    "task_id": "P2.T1",
     "files_to_inspect": [
       ".plan/dashboard-improvements/plan.md",
-      "dashboard/src/features/review-workflow.tsx",
-      "dashboard/src/features/document-viewer.tsx",
-      "dashboard/src/features/graph-explorer.tsx",
-      "dashboard/src/lib/dashboard-routes.ts",
-      "dashboard/src/routes/topics/$topic.tsx",
-      "dashboard/src/routes/topics/$topic/documents/$kind.tsx",
-      "dashboard/src/routes/topics/$topic/facts.tsx",
-      "dashboard/src/routes/topics/$topic/evidence.tsx",
-      "dashboard/src/routes/topics/$topic/receipts.tsx",
-      "dashboard/src/routes/topics/$topic/health.tsx",
-      "dashboard/src/routes/topics/$topic/graph.tsx",
-      "tests/dashboard/topic-pages.test.tsx",
-      "tests/dashboard/graph-explorer.test.tsx",
+      "dashboard/src/lib/markdown.tsx",
+      "dashboard/src/lib/reference-resolver.ts",
+      "dashboard/src/components/ui/tooltip.tsx",
+      "tests/dashboard/markdown-viewer.test.tsx",
       "tests/dashboard/privacy-regressions.test.tsx"
     ]
   },
@@ -175,7 +166,9 @@
     "receipt:P1:validation:2026-06-13T04:19:45+00:00",
     "receipt:P1:validation:2026-06-13T04:20:01+00:00",
     "receipt:P1:validation:2026-06-13T04:20:27+00:00",
-    "receipt:P1:validation:2026-06-13T04:20:43+00:00"
+    "receipt:P1:validation:2026-06-13T04:20:43+00:00",
+    "receipt:P2:validation:2026-06-13T04:32:40+00:00",
+    "receipt:P2:validation:2026-06-13T04:32:42+00:00"
   ],
   "journal_refs": [
     "journal:20260613T033357Z:compact",
@@ -200,7 +193,7 @@
       "stale generated snippets"
     ]
   },
-  "updated_at": "2026-06-13T04:25:46Z",
+  "updated_at": "2026-06-13T04:33:25Z",
   "stale_reason": "Implementation compact requested after artifact updates.",
   "compaction": {
     "trigger": "phase-end-P1",

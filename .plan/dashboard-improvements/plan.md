@@ -182,7 +182,7 @@ Preserve existing data contracts in `dashboard/src/shared/models.ts` and `dashbo
 
 ### Phase P2 — Markdown Reference Popovers
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P0
 - **Unlocks:** P4
 - **Primary references:** `file:dashboard/src/lib/markdown.tsx`, `symbol:dashboard/src/lib/markdown.tsx#MarkdownPreview:200`, `file:dashboard/src/lib/reference-resolver.ts`, `file:dashboard/src/features/document-viewer.tsx`, `file:dashboard/src/components/ui/tooltip.tsx`, `file:dashboard/src/styles/globals.css`, `file:tests/dashboard/markdown-viewer.test.tsx`, `REQ-MD-REF-POPOVER`, `REQ-DASH-SAFETY`, `DD-MD-REF-POPOVER`, `CMP-REFERENCE-POPOVER`, [F003], [F007], [F008], [F009], [F010]
@@ -202,17 +202,17 @@ Replace native reference `title` tooltips with themed, keyboard-accessible Markd
 
 #### Checklist
 
-- [ ] **P2.T1** Add `ReferencePopoverLink` and route reference-specific anchor rendering through it.
-- [ ] **P2.T2** Remove native `title` reference descriptions while preserving data attributes and safe href behavior.
-- [ ] **P2.T3** Add themed popover content for resolved, missing, external, and local-file reference states.
-- [ ] **P2.T4** Verify keyboard focus, hover behavior, portal/clipping behavior, and screen-reader text.
-- [ ] **P2.T5** Update Markdown/document tests for resolved/missing references, blocked paths, ordinary links, and no native reference titles.
+- [x] **P2.T1** Add `ReferencePopoverLink` and route reference-specific anchor rendering through it.
+- [x] **P2.T2** Remove native `title` reference descriptions while preserving data attributes and safe href behavior.
+- [x] **P2.T3** Add themed popover content for resolved, missing, external, and local-file reference states.
+- [x] **P2.T4** Verify keyboard focus, hover behavior, portal/clipping behavior, and screen-reader text.
+- [x] **P2.T5** Update Markdown/document tests for resolved/missing references, blocked paths, ordinary links, and no native reference titles.
 
 #### Validation
 
-- [ ] **P2.V1** Run `npx vitest run tests/dashboard/markdown-viewer.test.tsx`; expect popover/reference rendering tests to pass.
-- [ ] **P2.V2** Run `npx vitest run tests/dashboard/privacy-regressions.test.tsx`; expect reference safety regressions to remain blocked.
-- [ ] **P2.V3** Run `npm run typecheck`; expect Markdown component and popover types to pass.
+- [x] **P2.V1** Run `npx vitest run tests/dashboard/markdown-viewer.test.tsx`; expect popover/reference rendering tests to pass.
+- [x] **P2.V2** Run `npx vitest run tests/dashboard/privacy-regressions.test.tsx`; expect reference safety regressions to remain blocked.
+- [x] **P2.V3** Run `npm run typecheck`; expect Markdown component and popover types to pass.
 
 #### Exit Criteria
 
