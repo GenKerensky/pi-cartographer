@@ -50,6 +50,28 @@ class WorkflowDocsTests(unittest.TestCase):
         self.assertIn("legacy imports", readme)
         self.assertNotIn("Final concise ADR generation into `docs/` is out of scope", implement)
 
+    def test_design_skill_documents_testing_strategy_contract(self) -> None:
+        design = (ROOT / "skills/design/SKILL.md").read_text(encoding="utf-8")
+
+        for needle in [
+            "Testing Strategy",
+            "behavior-changing topics",
+            "existing test tools/scripts",
+            "related ADRs",
+            "supersession requires a new ADR",
+            "unit, integration, and E2E strategy",
+            "at least one named E2E validation",
+            "requirement/scenario coverage expectation",
+            "REQ-*",
+            "SCN-*",
+            "researcher/archivist",
+            "cartographer-compass",
+            "interview",
+            "ADR evaluation/generation triggers",
+            "validation receipt(s), context pack, auditor PASS",
+        ]:
+            self.assertIn(needle, design)
+
     def test_deterministic_then_auditor_gates_are_documented(self) -> None:
         proposal = (ROOT / "skills/proposal/SKILL.md").read_text(encoding="utf-8")
         plan = (ROOT / "skills/plan/SKILL.md").read_text(encoding="utf-8")

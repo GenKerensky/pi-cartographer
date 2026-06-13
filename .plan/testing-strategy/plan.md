@@ -130,7 +130,7 @@ Use Cartographer wrappers for status/validation receipts. Do not change `.cartog
 
 ### Phase P1 — Design skill strategy contract
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P0
 - **Unlocks:** P3
 - **Primary references:** `skills/design/SKILL.md`, `.plan/testing-strategy/design.md`, `.plan/testing-strategy/design.nodes.jsonl`, [F001], [F002], [F003], [F004]
@@ -148,15 +148,15 @@ Update the design workflow instructions so behavior-changing topics must produce
 
 #### Checklist
 
-- [ ] **P1.T1** Update `skills/design/SKILL.md` to require a `Testing Strategy` section for applicable behavior-changing topics.
-- [ ] **P1.T2** Add required strategy fields from `DES-TEST-001`, including language/app type, existing test tools, related ADRs, source-backed docs, unit/integration/E2E strategy, and E2E recurrence/evidence mode.
-- [ ] **P1.T3** Add escalation guidance from `DES-TEST-005`: researcher/archivist for missing evidence, compass/oracle for decision consistency, interview/user approval for user-owned tool/ADR/risk decisions.
-- [ ] **P1.T4** Ensure the design skill still requires validation receipt, context pack, auditor PASS, and approved design transition before planning.
+- [x] **P1.T1** Update `skills/design/SKILL.md` to require a `Testing Strategy` section for applicable behavior-changing topics.
+- [x] **P1.T2** Add required strategy fields from `DES-TEST-001`, including language/app type, existing test tools, related ADRs, source-backed docs, unit/integration/E2E strategy, and E2E recurrence/evidence mode.
+- [x] **P1.T3** Add escalation guidance from `DES-TEST-005`: researcher/archivist for missing evidence, compass/oracle for decision consistency, interview/user approval for user-owned tool/ADR/risk decisions.
+- [x] **P1.T4** Ensure the design skill still requires validation receipt, context pack, auditor PASS, and approved design transition before planning.
 
 #### Validation
 
-- [ ] **P1.V1** Add/update `tests/test_workflow_docs.py` assertions that `skills/design/SKILL.md` contains `Testing Strategy`, `researcher`, `cartographer-compass`, `interview`, `E2E`, and related ADR/supersession guidance; run `python -m unittest tests.test_workflow_docs.WorkflowDocsTests`. Testing Strategy Trace: design `DES-TEST-001`, `DES-TEST-005`; layer unit/static docs test.
-- [ ] **P1.V2** Run `python skills/plan/scripts/check_skill_language.py --root . --json` and verify the updated skill text does not introduce prohibited manual JSONL mutation guidance. Testing Strategy Trace: design `DES-TEST-004`; layer static contract check.
+- [x] **P1.V1** Add/update `tests/test_workflow_docs.py` assertions that `skills/design/SKILL.md` contains `Testing Strategy`, `researcher`, `cartographer-compass`, `interview`, `E2E`, and related ADR/supersession guidance; run `python -m unittest tests.test_workflow_docs.WorkflowDocsTests`. Testing Strategy Trace: design `DES-TEST-001`, `DES-TEST-005`; layer unit/static docs test.
+- [x] **P1.V2** Run `python skills/plan/scripts/check_skill_language.py --root . --json` and verify the updated skill text does not introduce prohibited manual JSONL mutation guidance. Testing Strategy Trace: design `DES-TEST-004`; layer static contract check.
 
 #### Exit Criteria
 
