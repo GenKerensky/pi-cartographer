@@ -50,10 +50,14 @@ describe("cartographer workflow contracts", () => {
 	it("defines lifecycle gates, receipt kinds, and prerequisites", () => {
 		expect(LIFECYCLE_STATES).toContain("proposal-draft");
 		expect(LIFECYCLE_STATES).toContain("implemented");
-		expect(HUMAN_APPROVAL_GATES).toEqual(["proposal", "plan", "phase", "implementation"]);
+		expect(HUMAN_APPROVAL_GATES).toEqual(["proposal", "interview", "requirements", "design", "plan", "phase", "implementation"]);
 		expect(RECEIPT_KINDS).toContain("approval");
 		expect(RECEIPT_KINDS).toContain("output-capture");
 		expect(GATE_PREREQUISITES.plan.map((item) => item.id)).toContain("plan-validate-graph");
+		expect(GATE_PREREQUISITES.plan.map((item) => item.id)).toContain("plan-scope-gates");
+		expect(GATE_PREREQUISITES.interview.map((item) => item.id)).toContain("interview-decision");
+		expect(GATE_PREREQUISITES.requirements.map((item) => item.id)).toContain("requirements-auditor-pass");
+		expect(GATE_PREREQUISITES.design.map((item) => item.id)).toContain("design-auditor-pass");
 		expect(GATE_PREREQUISITES.implementation.every((item) => item.required)).toBe(true);
 	});
 
@@ -327,6 +331,17 @@ describe("plan graph, status, and validation wrappers", () => {
 		expect(fs.readFileSync(path.join(root, ".plan", "demo", "plan.md"), "utf8")).toContain(
 			"- [x] **P0.V1** Fixture validation.",
 		);
+	});
+
+	it("blocks plan finalization when scoped requirements/design gates are unresolved", () => {
+		const root = tempRoot();
+		createWorkflowFixture(root, { topic: "demo", phaseIds: ["P0"] });
+		fs.writeFileSync(
+			path.join(root, ".plan", "demo", "proposal.md"),
+			"# demo Proposal\n\n## Scope Gate\n\n- `requirements_required`: true\n- `requirements_reason`: Core workflow change.\n",
+			"utf8",
+		);
+		expect(() => finalizePlan({ root, topic: "demo" })).toThrow("requires requirements/design artifacts");
 	});
 
 	it("finalizes plans through graph generation, validation, context pack, audit, and approval request", () => {
