@@ -193,7 +193,7 @@ Do not change lifecycle semantics while rewriting language. If a wording change 
 
 ### Phase P3 — Delegation Boundary Review
 
-- **Status:** pending
+- **Status:** in-progress
 - **Depends on:** P2
 - **Unlocks:** P4
 - **Primary references:** `file:skills/proposal/SKILL.md`, `file:skills/plan/SKILL.md`, `file:skills/implement/SKILL.md`, `file:.pi/agents/cartographer-pathfinder.md`, `doc:docs/adr/0004-use-single-writer-cartographer-implementation-state.md#decision`, [F002]
@@ -210,15 +210,15 @@ Ensure delegated-agent and specialist language matches ADR-0004: parent owns can
 
 #### Checklist
 
-- [ ] **P3.T1** Update delegated-role prompts so children return suggestions/drafts/reports, not canonical JSONL mutations.
-- [ ] **P3.T2** Ensure `cartographer-pathfinder` is described only as deprecated/legacy opt-in where relevant.
-- [ ] **P3.T3** Ensure auditor/compass/archivist handoffs are read-only and consume artifact summaries/receipts.
-- [ ] **P3.T4** Add least-privilege handoff language where missing.
+- [x] **P3.T1** Update delegated-role prompts so children return suggestions/drafts/reports, not canonical JSONL mutations.
+- [x] **P3.T2** Ensure `cartographer-pathfinder` is described only as deprecated/legacy opt-in where relevant.
+- [x] **P3.T3** Ensure auditor/compass/archivist handoffs are read-only and consume artifact summaries/receipts.
+- [x] **P3.T4** Add least-privilege handoff language where missing.
 
 #### Validation
 
-- [ ] **P3.V1** Run `rg -n "(planner.*create|researcher.*append|scout.*rewrite|pathfinder.*default|worker.*canonical|mutate canonical|write authority)" skills .pi/agents`; expected result is empty or explicitly documented fallback language.
-- [ ] **P3.V2** Run `python skills/plan/scripts/check_skill_language.py --root "$PWD" --json`; expected result has no blocking ADR-0004 delegation findings.
+- [x] **P3.V1** Run `rg -n "(planner.*create|researcher.*append|scout.*rewrite|pathfinder.*default|worker.*canonical|mutate canonical|write authority)" skills .pi/agents`; expected result is empty or explicitly documented fallback language.
+- [x] **P3.V2** Run `python skills/plan/scripts/check_skill_language.py --root "$PWD" --json`; expected result has no blocking ADR-0004 delegation findings.
 
 #### Exit Criteria
 
