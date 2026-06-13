@@ -1,0 +1,35 @@
+{"from":"REQ-01","to":"F001","type":"supported_by","evidence":"OpenAI Codex guidance: gpt-5.5 flagship for complex coding/agentic workflows"}
+{"from":"REQ-01","to":"F009","type":"supported_by","evidence":"Parent single-writer principle supports parent model decision"}
+{"from":"REQ-02","to":"F002","type":"supported_by","evidence":"OpenAI guidance: medium recommended, high/xhigh eval-gated"}
+{"from":"REQ-03","to":"F002","type":"supported_by","evidence":"xhigh only when evals show measurable quality gain"}
+{"from":"REQ-04","to":"F002","type":"supported_by","evidence":"Medium is recommended balanced starting point"}
+{"from":"REQ-05","to":"F003","type":"supported_by","evidence":"GPT-5.3-Codex-Spark is text-only/no-images"}
+{"from":"REQ-06","to":"F003","type":"supported_by","evidence":"Spark optimized for real-time iteration, edits, plan revision"}
+{"from":"REQ-06","to":"file:.pi/agents/cartographer-drafter.md","type":"supported_by","evidence":"Drafter is the Spark routing target"}
+{"from":"REQ-07","to":"F001","type":"supported_by","evidence":"gpt-5.5 flagship for complex reasoning"}
+{"from":"REQ-07","to":"file:.pi/agents/cartographer-auditor.md","type":"supported_by","evidence":"Auditor is the gpt-5.5 routing target"}
+{"from":"REQ-08","to":"F001","type":"supported_by","evidence":"gpt-5.5 flagship for complex reasoning"}
+{"from":"REQ-08","to":"file:.pi/agents/cartographer-compass.md","type":"supported_by","evidence":"Compass is the gpt-5.5 routing target"}
+{"from":"REQ-09","to":"F001","type":"supported_by","evidence":"gpt-5.5 flagship — privacy/safety justifies strongest model"}
+{"from":"REQ-09","to":"file:.pi/agents/cartographer-redactor.md","type":"supported_by","evidence":"Redactor is the gpt-5.5 routing target"}
+{"from":"REQ-10","to":"F001","type":"supported_by","evidence":"gpt-5.4-mini faster, lower-cost for lighter tasks"}
+{"from":"REQ-10","to":"file:.pi/agents/cartographer-archivist.md","type":"supported_by","evidence":"Archivist is the gpt-5.4-mini routing target"}
+{"from":"REQ-11","to":"F008","type":"supported_by","evidence":"pi-subagents supports agentOverrides with model/fallbackModels/thinking"}
+{"from":"REQ-11","to":"doc:pi-subagents#agent-overrides","type":"supported_by","evidence":"pi-subagents SKILL.md documents agentOverrides config"}
+{"from":"REQ-12","to":"REQ-15","type":"derived_from","evidence":"parentFallbackModels config must exist before auto-fallback can read it"}
+{"from":"REQ-12","to":"doc:pi-models#thinking-level-map","type":"supported_by","evidence":"Pi supports model selection needed for fallback chain"}
+{"from":"REQ-13","to":"REQ-14","type":"derived_from","evidence":"Fallback receipt schema needed before cross-provider receipts can be recorded"}
+{"from":"REQ-14","to":"file:docs/adr/0006-use-deterministic-cartographer-workflow-wrappers-for-lifecycle-gates.md","type":"constrains","evidence":"Existing ADR requires deterministic receipts for all lifecycle events"}
+{"from":"REQ-15","to":"F008","type":"supported_by","evidence":"pi-subagents settings pattern is the precedent for user settings config"}
+{"from":"REQ-16","to":"REQ-12","type":"derived_from","evidence":"Reset-time awareness requires the auto-fallback detector from REQ-12"}
+{"from":"REQ-17","to":"REQ-11","type":"derived_from","evidence":"Bootstrap workflow writes subagents.agentOverrides as the subagent config surface."}
+{"from":"REQ-17","to":"REQ-15","type":"derived_from","evidence":"Bootstrap workflow writes cartographer.parentFallbackModels as the parent fallback config surface."}
+{"from":"REQ-17","to":"F004","type":"supported_by","evidence":"Pi model metadata exposes thinking/reasoning capability needed for recommendations."}
+{"from":"REQ-17","to":"F008","type":"supported_by","evidence":"pi-subagents agentOverrides enables generated role model config."}
+{"from":"SCN-01","to":"REQ-12","type":"satisfies_goal","evidence":"Auto-fallback within same provider"}
+{"from":"SCN-02","to":"REQ-13","type":"satisfies_goal","evidence":"Cross-provider fallback with approval"}
+{"from":"SCN-03","to":"REQ-11","type":"satisfies_goal","evidence":"Subagent config override"}
+{"from":"SCN-04","to":"REQ-07","type":"satisfies_goal","evidence":"Auditor model assignment"}
+{"from":"SCN-05","to":"REQ-06","type":"satisfies_goal","evidence":"Drafter Spark assignment"}
+{"from":"SCN-06","to":"REQ-14","type":"satisfies_goal","evidence":"Fallback receipt schema"}
+{"from":"SCN-07","to":"REQ-16","type":"satisfies_goal","evidence":"Reset-time display"}

@@ -1,0 +1,116 @@
+{
+  "schema_version": 1,
+  "topic": "model-optimization",
+  "source_status": "hashes-valid",
+  "source_refs": {
+    "plan_md": {
+      "path": ".plan/model-optimization/plan.md",
+      "sha256": "sha256:05caa05a3428489333f415ff660aab35c581dbc60c3674d0eca3890eb9d9b2ef"
+    },
+    "plan_nodes": {
+      "path": ".plan/model-optimization/plan.nodes.jsonl",
+      "sha256": "sha256:f298c26e1761700379d806dd430a15099515425b3633a98382e1d25ad18d97a3"
+    },
+    "plan_edges": {
+      "path": ".plan/model-optimization/plan.edges.jsonl",
+      "sha256": "sha256:efef385603ab5ad8aa32d2e54712500ec1c8429105505b7f71beb879a89a1524"
+    },
+    "receipts": {
+      "path": ".plan/model-optimization/receipts.jsonl",
+      "sha256": "sha256:7ba08ebe7ffba6fea3131043089ca3db6f0861feb32dee0351f832de3daba360"
+    },
+    "context_packs": {
+      "path": ".plan/model-optimization/context-packs.jsonl",
+      "sha256": "sha256:2485a0b97537d739f0cbd2ba4ecdb16dcc86add80d3bf3a9c608dcc96738bbc8"
+    }
+  },
+  "current_phase_id": "P0",
+  "active_task_ids": [],
+  "active_validation_ids": [],
+  "next_action": {
+    "id": "P0.T1",
+    "kind": "implementation-task",
+    "summary": "Start P0 implementation.",
+    "phase_id": "P0",
+    "task_id": "P0.T1",
+    "files_to_inspect": [
+      ".plan/model-optimization/plan.md",
+      "skills/plan/scripts/cartographer_workflow.ts",
+      "extensions/cartographer-tools.ts",
+      "tests/cartographer_workflow.test.ts"
+    ]
+  },
+  "working_set": {
+    "write_allowed": [
+      {
+        "path": "skills/plan/scripts/*.ts",
+        "reason": "P0 implementation wrapper work"
+      },
+      {
+        "path": "tests/*.test.ts",
+        "reason": "P0 wrapper tests"
+      },
+      {
+        "path": "extensions/*.ts",
+        "reason": "P0 extension tool registration"
+      },
+      {
+        "path": ".plan/model-optimization/plan.md",
+        "reason": "P0 plan status updates"
+      },
+      {
+        "path": ".plan/model-optimization/plan.nodes.jsonl",
+        "reason": "P0 plan node status updates"
+      },
+      {
+        "path": ".plan/model-optimization/receipts.jsonl",
+        "reason": "P0 receipts"
+      },
+      {
+        "path": ".plan/model-optimization/context-packs.jsonl",
+        "reason": "P0 context pack"
+      }
+    ],
+    "read_only": [
+      {
+        "path": ".plan/model-optimization/plan.edges.jsonl",
+        "reason": "dependency graph reference"
+      }
+    ],
+    "forbidden": [
+      {
+        "path": ".plan/_private/**",
+        "reason": "raw private inputs are off-limits"
+      },
+      {
+        "path": ".plan/_index/**",
+        "reason": "generated index/cache artifacts"
+      }
+    ]
+  },
+  "known_failures": [],
+  "last_validation_receipt_ids": [
+    "receipt:manual:validation:2026-06-13T18:38:36+00:00",
+    "receipt:manual:validation:2026-06-13T18:38:27+00:00"
+  ],
+  "journal_refs": [],
+  "resume": {
+    "template_id": "cartographer.single_writer.resume.v1",
+    "resume_order": [
+      ".cartographer/model-optimization/state.json",
+      ".cartographer/model-optimization/journal.jsonl",
+      ".plan/model-optimization/plan.md",
+      ".plan/model-optimization/receipts.jsonl"
+    ],
+    "expected_first_response": [
+      "current_phase",
+      "next_action",
+      "files_to_inspect"
+    ],
+    "must_ignore": [
+      "prior chat speculation",
+      "stale generated snippets"
+    ]
+  },
+  "updated_at": "2026-06-13T18:40:56Z"
+}
