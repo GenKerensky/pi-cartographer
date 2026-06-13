@@ -5,11 +5,11 @@
   "source_refs": {
     "plan_md": {
       "path": ".plan/skills-cleanup/plan.md",
-      "sha256": "sha256:668b9ab3f669d5e9181225b7c806958a4d3f45ffacd7a0d66fa81e665d6e252f"
+      "sha256": "sha256:c166c8d4d0ec281c636cb1c59b8f0acf89bc7d50536ddefcec11614396c1b89a"
     },
     "plan_nodes": {
       "path": ".plan/skills-cleanup/plan.nodes.jsonl",
-      "sha256": "sha256:eb3e920075b8e40a60137474e24e32723fa7f59e2496bc38dfc30c482f05a53c"
+      "sha256": "sha256:b8d830a87e43216a0c1e19e10a751346bd78d0cfb593cb13f4d5301e47f5a450"
     },
     "plan_edges": {
       "path": ".plan/skills-cleanup/plan.edges.jsonl",
@@ -17,7 +17,7 @@
     },
     "receipts": {
       "path": ".plan/skills-cleanup/receipts.jsonl",
-      "sha256": "sha256:c771193df96c88a25f88798ed9f6fd06f5679979c032383ef142853ab84a6772"
+      "sha256": "sha256:87fb893d26e9850ceeea3292eb3f6c4641fecbd4c9eeb63648de6bc830cc71f9"
     },
     "context_packs": {
       "path": ".plan/skills-cleanup/context-packs.jsonl",
@@ -28,55 +28,38 @@
   "active_task_ids": [],
   "active_validation_ids": [],
   "next_action": {
-    "id": "P4.T1",
+    "id": "P5.T1",
     "kind": "implementation-task",
-    "phase_id": "P4",
-    "task_id": "P4.T1",
-    "summary": "Decide whether interview artifact writes need a narrow wrapper/script or explicit temporary fallback language.",
+    "phase_id": "P5",
+    "task_id": "P5.T1",
+    "summary": "Run final skill-language checker and targeted rg checks for stale direct-write/delegation patterns.",
     "files_to_inspect": [
+      "skills/proposal/SKILL.md",
+      "skills/plan/SKILL.md",
       "skills/interview/SKILL.md",
-      "skills/plan/scripts/cartographer_workflow.ts",
-      "skills/plan/scripts/manage_jsonl.ts",
-      "extensions/cartographer-tools.ts"
+      "skills/implement/SKILL.md",
+      "skills/design/SKILL.md",
+      ".pi/agents/cartographer-*.md",
+      "AGENTS.md"
     ]
   },
   "working_set": {
     "write_allowed": [
       {
-        "path": "skills/interview/SKILL.md",
-        "reason": "P4 interview JSONL write wording cleanup"
-      },
-      {
-        "path": "skills/design/SKILL.md",
-        "reason": "P4 design JSONL write wording cleanup if in scope"
-      },
-      {
-        "path": "skills/plan/scripts/*.ts",
-        "reason": "P4 narrow wrapper/script additions"
-      },
-      {
-        "path": "extensions/cartographer-tools.ts",
-        "reason": "P4 extension tool registration if needed"
-      },
-      {
-        "path": "tests/*.test.ts",
-        "reason": "P4 wrapper tests using mock roots"
-      },
-      {
         "path": ".plan/skills-cleanup/plan.md",
-        "reason": "P4 status/checklist updates"
+        "reason": "P5 status/checklist updates"
       },
       {
         "path": ".plan/skills-cleanup/plan.nodes.jsonl",
-        "reason": "P4 status/checklist updates"
+        "reason": "P5 status/checklist updates"
       },
       {
         "path": ".plan/skills-cleanup/receipts.jsonl",
-        "reason": "P4 validation receipts"
+        "reason": "P5 validation receipts"
       },
       {
         "path": ".plan/skills-cleanup/context-packs.jsonl",
-        "reason": "P4 context pack"
+        "reason": "P5 final context pack"
       }
     ],
     "read_only": [
@@ -85,8 +68,32 @@
         "reason": "dependency graph reference"
       },
       {
-        "path": "docs/adr/0006-use-deterministic-cartographer-workflow-wrappers-for-lifecycle-gates.md",
-        "reason": "wrapper rule source"
+        "path": "skills/proposal/SKILL.md",
+        "reason": "P5 final skill-language check target"
+      },
+      {
+        "path": "skills/plan/SKILL.md",
+        "reason": "P5 final skill-language check target"
+      },
+      {
+        "path": "skills/interview/SKILL.md",
+        "reason": "P5 final skill-language check target"
+      },
+      {
+        "path": "skills/implement/SKILL.md",
+        "reason": "P5 final skill-language check target"
+      },
+      {
+        "path": "skills/design/SKILL.md",
+        "reason": "P5 final skill-language check target"
+      },
+      {
+        "path": ".pi/agents/cartographer-*.md",
+        "reason": "P5 final skill-language check target"
+      },
+      {
+        "path": "AGENTS.md",
+        "reason": "P5 final skill-language check target"
       }
     ],
     "forbidden": [
@@ -124,10 +131,7 @@
     "receipt:P2:validation:2026-06-13T03:41:29+00:00",
     "receipt:P2:validation:2026-06-13T03:41:33+00:00"
   ],
-  "journal_refs": [
-    "journal:20260613T031944Z:compact",
-    "journal:20260613T032018Z:compact"
-  ],
+  "journal_refs": ["journal:20260613T031944Z:compact", "journal:20260613T032018Z:compact"],
   "resume": {
     "template_id": "cartographer.single_writer.resume.v1",
     "resume_order": [
@@ -136,18 +140,11 @@
       ".plan/skills-cleanup/plan.md",
       ".plan/skills-cleanup/receipts.jsonl"
     ],
-    "expected_first_response": [
-      "current_phase",
-      "next_action",
-      "files_to_inspect"
-    ],
-    "must_ignore": [
-      "prior chat speculation",
-      "stale generated snippets"
-    ]
+    "expected_first_response": ["current_phase", "next_action", "files_to_inspect"],
+    "must_ignore": ["prior chat speculation", "stale generated snippets"]
   },
-  "updated_at": "2026-06-13T03:55:49Z",
-  "stale_reason": "Updated P3 status to complete via plan-status-set",
+  "updated_at": "2026-06-13T03:57:56Z",
+  "stale_reason": "Committed P4 checkpoint",
   "compaction": {
     "trigger": "phase-end-P0",
     "compacted_at": "2026-06-13T03:20:18Z"

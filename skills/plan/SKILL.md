@@ -419,10 +419,10 @@ Recommended delegated-role prompts:
 Serial-mode role prompts:
 
 - Context pass: inspect the index and map JSONL yourself; verify likely changed files, constraints, scripts, tests, and generated artifacts with focused `rg`/grep and selective reads. Use scout only for complex or missing context.
-- Research pass: only if needed, append source-backed JSONL research graph records before using claims in the plan.
+- Research pass: only if needed, route source-backed JSONL research graph records through `cartographer_fact` or a validated parent-owned `cartographer_jsonl upsert` fallback before using claims in the plan.
 - Planner pass: draft phases and checklists.
 - Compass/oracle pass: challenge each phase before finalization.
-- Auditor/final validation pass: after deterministic JSONL and planning graph validation, check the full plan against all verification criteria, correct drift, and write a fallback receipt because the default `cartographer-auditor` was not used.
+- Auditor/final validation pass: after deterministic JSONL and planning graph validation, check the full plan against all verification criteria, correct drift, and record a fallback receipt through `cartographer_handoff fallback` or `cartographer_receipt` because the default `cartographer-auditor` was not used.
 
 ## Pitfalls
 

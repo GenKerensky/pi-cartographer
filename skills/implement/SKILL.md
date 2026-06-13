@@ -229,8 +229,8 @@ For each small unit of work inside the selected phase:
 | Narrow    | Update `working_set` before editing: write-allowed, read-only, and forbidden paths.                                                                                                               |
 | Inspect   | Re-open active files from disk; never rely on code read many turns ago.                                                                                                                           |
 | Act       | Apply a small parent-owned patch.                                                                                                                                                                 |
-| Validate  | Run the narrowest useful check and append a deterministic validation receipt when appropriate.                                                                                                    |
-| Record    | Update state cursor/receipt refs; append a journal record only for important durable lessons.                                                                                                     |
+| Validate  | Run the narrowest useful check and record a deterministic validation receipt through `cartographer_validation` or `cartographer_receipt` when appropriate.                                        |
+| Record    | Update state cursor/receipt refs; append important durable lessons through `cartographer_state journal-append`.                                                                                   |
 | Compact   | On milestone triggers, run `compact-generate`/`cartographer_implement compact` for a state snapshot, then call `cartographer_compact_context` when available for actual Pi transcript compaction. |
 | Continue  | Re-orient from artifacts and ignore stale chat assumptions.                                                                                                                                       |
 
@@ -273,7 +273,7 @@ Examples:
 
 If a command is unavailable, record it as unavailable rather than failed. If a command fails, capture a compact failure summary, apply a scoped fix, rerun the failed command and dependent checks, and record receipts.
 
-Limit routine repair loops to 3 scoped fix attempts per distinct failing command. If the same command still fails, write timeout/fallback receipts, call `cartographer-compass`, and stop to ask the user unless the next step is clearly safe and in scope.
+Limit routine repair loops to 3 scoped fix attempts per distinct failing command. If the same command still fails, record timeout/fallback receipts through `cartographer_handoff fallback` or `cartographer_receipt`, call `cartographer-compass`, and stop to ask the user unless the next step is clearly safe and in scope.
 
 ### 10. Audit and validate the phase
 

@@ -278,7 +278,7 @@ Use mock roots under `/tmp` for tests that create `.plan/` artifacts.
 
 ### Phase P5 — Validation and Audit
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P4
 - **Unlocks:** implementation handoff
 - **Primary references:** `file:package.json`, `file:skills/plan/scripts/validate_planning_graph.py`, `.plan/skills-cleanup/auditor-report.md`, [F012]
@@ -296,11 +296,11 @@ Prove the skill cleanup is deterministic, scoped, and ready for implementation c
 
 #### Checklist
 
-- [ ] **P5.T1** Run final skill-language checker and targeted `rg` checks for stale direct-write/delegation patterns.
-- [ ] **P5.T2** Run package checks covering touched Python/TypeScript/scripts/docs.
-- [ ] **P5.T3** Run topic JSONL validation and planning graph validation.
-- [ ] **P5.T4** Capture final `cartographer-auditor` PASS through `cartographer_handoff auditor`.
-- [ ] **P5.T5** Record ADR handling: no new ADR required unless implementation discovers a durable workflow change.
+- [x] **P5.T1** Run final skill-language checker and targeted `rg` checks for stale direct-write/delegation patterns.
+- [x] **P5.T2** Run package checks covering touched Python/TypeScript/scripts/docs.
+- [x] **P5.T3** Run topic JSONL validation and planning graph validation.
+- [x] **P5.T4** Capture final `cartographer-auditor` PASS through `cartographer_handoff auditor`.
+- [x] **P5.T5** Record ADR handling: no new ADR required unless implementation discovers a durable workflow change.
 
 #### Validation
 

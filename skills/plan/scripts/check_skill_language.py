@@ -66,6 +66,12 @@ ALLOW_HINTS = (
     "plan-generate-graph",
     "generate-graph",
     "state-",
+    "cartographer_receipt",
+    "cartographer_handoff",
+    "cartographer_validation",
+    "cartographer_fact",
+    "cartographer_jsonl",
+    "cartographer_context_pack",
 )
 
 SCAN_GLOBS = (
@@ -196,6 +202,19 @@ def scan_markdown_file(root: Path, path: Path, max_lines: int) -> list[Finding]:
                     path=relative,
                     line=line_number,
                     message="Potential direct canonical JSONL mutation wording; prefer wrapper/tool/script instructions.",
+                    text=stripped[:240],
+                    blocking=True,
+                )
+            )
+
+        if has_mutation and "receipt" in stripped.lower() and not is_allowed_context(stripped):
+            findings.append(
+                Finding(
+                    code="DIRECT_RECEIPT_MUTATION",
+                    severity="warning",
+                    path=relative,
+                    line=line_number,
+                    message="Potential direct receipt mutation wording; prefer cartographer_receipt, cartographer_handoff, or cartographer_validation.",
                     text=stripped[:240],
                     blocking=True,
                 )
