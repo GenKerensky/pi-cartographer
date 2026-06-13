@@ -5,11 +5,11 @@
   "source_refs": {
     "plan_md": {
       "path": ".plan/skills-cleanup/plan.md",
-      "sha256": "sha256:c166c8d4d0ec281c636cb1c59b8f0acf89bc7d50536ddefcec11614396c1b89a"
+      "sha256": "sha256:d556cd5458b568a17ba254c497781de4e70caf27514f56f01dd4159e505789f5"
     },
     "plan_nodes": {
       "path": ".plan/skills-cleanup/plan.nodes.jsonl",
-      "sha256": "sha256:b8d830a87e43216a0c1e19e10a751346bd78d0cfb593cb13f4d5301e47f5a450"
+      "sha256": "sha256:848c52fee700a218f3618056ed4b4ad04c6dd8ede043a18c9dc0798723b4f8e4"
     },
     "plan_edges": {
       "path": ".plan/skills-cleanup/plan.edges.jsonl",
@@ -17,11 +17,11 @@
     },
     "receipts": {
       "path": ".plan/skills-cleanup/receipts.jsonl",
-      "sha256": "sha256:87fb893d26e9850ceeea3292eb3f6c4641fecbd4c9eeb63648de6bc830cc71f9"
+      "sha256": "sha256:77158803125cf5499ff9d38aee43891edf776d7c598e9d9dd81cb5d37b1f3f7e"
     },
     "context_packs": {
       "path": ".plan/skills-cleanup/context-packs.jsonl",
-      "sha256": "sha256:2ff2f4b45d43d837da0133c9d6c3105ced1157f4aacefec4633720ae99cd8787"
+      "sha256": "sha256:cdbc5ded646878d2a8e83dd2787bc718257a169ffb36a069b850e6f45c40d087"
     }
   },
   "current_phase_id": "P3",
@@ -129,7 +129,9 @@
     "receipt:P2:validation:2026-06-13T03:38:17+00:00",
     "receipt:skills-cleanup:audit:2026-06-13T03:41:21Z",
     "receipt:P2:validation:2026-06-13T03:41:29+00:00",
-    "receipt:P2:validation:2026-06-13T03:41:33+00:00"
+    "receipt:P2:validation:2026-06-13T03:41:33+00:00",
+    "receipt:P5:validation:2026-06-13T04:40:24+00:00",
+    "receipt:P5:validation:2026-06-13T03:58:54+00:00"
   ],
   "journal_refs": ["journal:20260613T031944Z:compact", "journal:20260613T032018Z:compact"],
   "resume": {
@@ -143,7 +145,7 @@
     "expected_first_response": ["current_phase", "next_action", "files_to_inspect"],
     "must_ignore": ["prior chat speculation", "stale generated snippets"]
   },
-  "updated_at": "2026-06-13T03:57:56Z",
+  "updated_at": "2026-06-13T04:49:04Z",
   "stale_reason": "Committed P4 checkpoint",
   "compaction": {
     "trigger": "phase-end-P0",
