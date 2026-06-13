@@ -399,6 +399,47 @@ Bring the rebased model-optimization branch in line with new `main` validation a
 - **Risk:** New `main` validation conventions could reject the model-config setup skill. **Mitigation:** Run strict skill-language validation and keep all settings writes delegated to the deterministic script.
 - **Risk:** Compaction API typing drift could mask runtime behavior changes. **Mitigation:** Align the test mock with `CompactOptions.onComplete(result)` and keep the continuation assertion intact.
 
+### Phase P7 — Agent Declaration Model-Parameter Cleanup
+
+- **Status:** complete
+- **Depends on:** P6
+- **Unlocks:** merge-ready
+- **Primary references:** `.pi/agents/cartographer-*.md`, `skills/plan/scripts/check_skill_language.py`, `tests/test_check_skill_language.py`, `ADR-0010`
+
+#### Objective
+
+Remove explicit model and thinking parameters from Cartographer subagent declarations so subagent model routing is configured through global/user settings instead of checked-in agent frontmatter.
+
+#### Scope
+
+- Remove `model:` and `thinking:` frontmatter from `.pi/agents/cartographer-*.md`.
+- Update the post-`main` skill-language checker so it no longer requires agent-level model declarations.
+- Update checker tests to assert model-less agent declarations are valid under the global-settings policy.
+- Validate that the deterministic model-config script remains the owner of model-routing configuration.
+
+#### Checklist
+
+- [x] **P7.T1** Remove explicit `model:` and `thinking:` from Cartographer `.pi/agents` declarations.
+- [x] **P7.T2** Update `check_skill_language.py` to stop requiring agent frontmatter models.
+- [x] **P7.T3** Update `tests/test_check_skill_language.py` for model-less agent declarations.
+- [x] **P7.T4** Verify no Cartographer `.pi/agents` declaration still contains `model:` or `thinking:`.
+
+#### Validation
+
+- [x] **P7.V1** Run `python -m unittest discover tests -p test_check_skill_language.py`.
+- [x] **P7.V2** Run strict `check_skill_language.py` validation.
+- [x] **P7.V3** Run `npm run check:scripts`.
+
+#### Exit Criteria
+
+- Checked-in subagent declarations no longer carry model parameters.
+- Global/user settings remain the canonical place for Cartographer subagent model routing.
+- Validation passes with the updated checker semantics.
+
+#### Risks and Mitigations
+
+- **Risk:** Removing frontmatter models could leave users without configured subagent routes. **Mitigation:** ADR-0010, the `model-config` skill, and `model_config.ts` provide the deterministic setup path for global/user settings.
+
 ## Testing Strategy
 
 Testing must prove three behaviors without touching real user settings or burning live subscription quota by default: configuration is written correctly, Cartographer reads the config for orchestrated calls, and subagents/fallback retries use the intended models.

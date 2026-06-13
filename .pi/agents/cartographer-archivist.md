@@ -1,13 +1,11 @@
 ---
 name: cartographer-archivist
 description: Cartographer-specific read-only research compressor for fact JSONL suggestions
-model: openai-codex/gpt-5.5
 tools: read,bash,write,cartographer_artifacts,cartographer_index
 systemPromptMode: replace
 inheritProjectContext: false
 inheritSkills: false
 defaultContext: fresh
-thinking: medium
 output: archivist-brief.md
 ---
 

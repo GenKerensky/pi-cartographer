@@ -64,3 +64,11 @@
 {"id":"validation:P6.V1","type":"validation","validation_id":"P6.V1","phase_id":"P6","title":"P6.V1","status":"complete","source":"plan.md"}
 {"id":"validation:P6.V2","type":"validation","validation_id":"P6.V2","phase_id":"P6","title":"P6.V2","status":"complete","source":"plan.md"}
 {"id":"validation:P6.V3","type":"validation","validation_id":"P6.V3","phase_id":"P6","title":"P6.V3","status":"complete","source":"plan.md"}
+{"id":"phase:P7","type":"phase","phase_id":"P7","title":"Agent Declaration Model-Parameter Cleanup","status":"complete","depends_on":["P6"],"source":"plan.md"}
+{"id":"task:P7.T1","type":"task","task_id":"P7.T1","phase_id":"P7","title":"P7.T1","status":"complete","source":"plan.md"}
+{"id":"task:P7.T2","type":"task","task_id":"P7.T2","phase_id":"P7","title":"P7.T2","status":"complete","source":"plan.md"}
+{"id":"task:P7.T3","type":"task","task_id":"P7.T3","phase_id":"P7","title":"P7.T3","status":"complete","source":"plan.md"}
+{"id":"task:P7.T4","type":"task","task_id":"P7.T4","phase_id":"P7","title":"P7.T4","status":"complete","source":"plan.md"}
+{"id":"validation:P7.V1","type":"validation","validation_id":"P7.V1","phase_id":"P7","title":"P7.V1","status":"complete","source":"plan.md"}
+{"id":"validation:P7.V2","type":"validation","validation_id":"P7.V2","phase_id":"P7","title":"P7.V2","status":"complete","source":"plan.md"}
+{"id":"validation:P7.V3","type":"validation","validation_id":"P7.V3","phase_id":"P7","title":"P7.V3","status":"complete","source":"plan.md"}
