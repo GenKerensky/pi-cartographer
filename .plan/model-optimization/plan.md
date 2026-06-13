@@ -254,7 +254,7 @@ Be conservative: never retry a step that may have already performed canonical mu
 
 ### Phase P4 — Documentation and Examples
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P2, P3
 - **Unlocks:** P5
 - **Primary references:** `README.md`, `docs/requirements.md`, `.plan/model-optimization/design.md`, `.plan/model-optimization/requirements.md`, `[REQ-02]`, `[REQ-11]`, `[REQ-17]`, `D001`, `D002`, `D005`
@@ -279,16 +279,16 @@ Document the model optimization policy, setup workflow, routing matrix, fallback
 
 #### Checklist
 
-- [ ] **P4.T1** Update README or docs with the model setup workflow and routing/fallback policy.
-- [ ] **P4.T2** Add a safe example `~/.pi/agent/settings.json` snippet that clearly says the setup workflow/script should apply it.
-- [ ] **P4.T3** Document no-xhigh defaults and escalation approval policy.
-- [ ] **P4.T4** Document fallback behavior, reset-time awareness, and cross-provider approval.
-- [ ] **P4.T5** Document redactor fallback caveats and privacy/safety tradeoffs.
+- [x] **P4.T1** Update README or docs with the model setup workflow and routing/fallback policy.
+- [x] **P4.T2** Add a safe example `~/.pi/agent/settings.json` snippet that clearly says the setup workflow/script should apply it.
+- [x] **P4.T3** Document no-xhigh defaults and escalation approval policy.
+- [x] **P4.T4** Document fallback behavior, reset-time awareness, and cross-provider approval.
+- [x] **P4.T5** Document redactor fallback caveats and privacy/safety tradeoffs.
 
 #### Validation
 
-- [ ] **P4.V1** Run `npm run format:prettier:check` or targeted markdown formatting check if available.
-- [ ] **P4.V2** Run targeted grep checks confirming docs mention setup workflow, deterministic writer, JSON Schema validation, available-model validation, no-fallback warning, and no-xhigh default.
+- [x] **P4.V1** Run `npm run format:prettier:check` or targeted markdown formatting check if available.
+- [x] **P4.V2** Run targeted grep checks confirming docs mention setup workflow, deterministic writer, JSON Schema validation, available-model validation, no-fallback warning, and no-xhigh default.
 
 #### Exit Criteria
 

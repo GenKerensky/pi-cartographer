@@ -138,6 +138,100 @@ cartographer_artifacts({"action":"receipt-summary","root":"$PWD","topic":"<topic
 cartographer_artifacts({"action":"validate-topic-summary","root":"$PWD","topic":"<topic>"})
 ```
 
+## Model routing and fallback setup
+
+Cartographer can use user-configurable model routing for its parent/current orchestrator guidance and subagents. This is useful for subscription providers such as OpenAI Codex, where high-reasoning models should be reserved for high-value tasks and cheaper/faster models should handle drafting or routine compression.
+
+Use the `model-config` skill when Cartographer reports missing or partial model-routing config, or when you want to configure providers and fallback chains:
+
+```text
+Use the Cartographer model-config skill to set up my model routing.
+```
+
+The setup workflow is interactive. It should:
+
+1. inspect available Pi providers/models;
+2. ask which providers Cartographer may use;
+3. recommend role-specific models by cost, speed, thinking/reasoning capability, context window, modality, and privacy/safety needs;
+4. recommend a main orchestrator model and thinking level;
+5. warn when no fallback is configured;
+6. suggest subscription/free final fallback models such as `opencode/big-pickle` when available;
+7. preview the settings;
+8. ask for confirmation before writing.
+
+The workflow must not free-form edit JSON settings. Writes go through the deterministic settings writer:
+
+```bash
+node --experimental-strip-types skills/plan/scripts/model_config.ts preview \
+  --settings "$HOME/.pi/agent/settings.json" \
+  --proposal /tmp/cartographer-model-proposal.json \
+  --models /tmp/pi-models.json \
+  --json
+
+node --experimental-strip-types skills/plan/scripts/model_config.ts apply \
+  --settings "$HOME/.pi/agent/settings.json" \
+  --proposal /tmp/cartographer-model-proposal.json \
+  --models /tmp/pi-models.json \
+  --json
+```
+
+The writer validates proposed settings with JSON Schema, available model IDs, thinking levels, modality constraints, no `xhigh` defaults, and fallback chains before writing atomically. Tests and validation should use temporary settings paths; do not mutate real `~/.pi/agent/settings.json` during automated tests.
+
+Example proposal JSON for the deterministic writer:
+
+```json
+{
+  "subagents": {
+    "agentOverrides": {
+      "cartographer-drafter": {
+        "model": "openai-codex/gpt-5.3-codex-spark",
+        "thinking": "medium",
+        "fallbackModels": ["openai-codex/gpt-5.4-mini", "opencode/big-pickle"]
+      },
+      "cartographer-auditor": {
+        "model": "openai-codex/gpt-5.5",
+        "thinking": "medium",
+        "fallbackModels": ["openai-codex/gpt-5.4-mini", "opencode/big-pickle"]
+      },
+      "cartographer-compass": {
+        "model": "openai-codex/gpt-5.5",
+        "thinking": "medium",
+        "fallbackModels": ["openai-codex/gpt-5.4-mini"]
+      },
+      "cartographer-redactor": {
+        "model": "openai-codex/gpt-5.5",
+        "thinking": "medium",
+        "fallbackModels": ["openai-codex/gpt-5.4-mini"]
+      },
+      "cartographer-archivist": {
+        "model": "openai-codex/gpt-5.4-mini",
+        "thinking": "medium",
+        "fallbackModels": ["opencode/big-pickle"]
+      }
+    }
+  },
+  "cartographer": {
+    "parentFallbackModels": ["openai-codex/gpt-5.5", "openai-codex/gpt-5.4-mini", "opencode/big-pickle"],
+    "parentFallbackAllowCrossProvider": false
+  }
+}
+```
+
+Save the proposal to a temporary file and apply it through `model_config.ts`; do not paste-edit user settings by hand as the primary setup path.
+
+Recommended defaults when OpenAI Codex is selected:
+
+| Role                     | Recommended model                  | Thinking          | Notes                                                                                                       |
+| ------------------------ | ---------------------------------- | ----------------- | ----------------------------------------------------------------------------------------------------------- |
+| Main orchestrator        | `openai-codex/gpt-5.5`             | `medium`          | User selects this in Pi; Cartographer does not hot-swap Pi's active model mid-response.                     |
+| `cartographer-drafter`   | `openai-codex/gpt-5.3-codex-spark` | `medium` or `low` | Fast drafting and iteration. Text-only; do not use for image/vision tasks.                                  |
+| `cartographer-archivist` | `openai-codex/gpt-5.4-mini`        | `medium`          | Routine source compression and lower-cost research synthesis.                                               |
+| `cartographer-auditor`   | `openai-codex/gpt-5.5`             | `medium`          | High-stakes semantic gates. Escalate to `high` only with a recorded justification.                          |
+| `cartographer-compass`   | `openai-codex/gpt-5.5`             | `medium`          | Scope/dependency/repeated-failure decisions.                                                                |
+| `cartographer-redactor`  | `openai-codex/gpt-5.5`             | `medium`          | Prefer privacy/safety reliability over cost. Non-Codex fallback requires an explicit privacy/safety caveat. |
+
+Do not configure `xhigh` as a default. `xhigh` requires explicit user approval and a receipt with justification. Cross-provider fallback from a subscription model to a paid/API-key provider requires approval; same-provider fallback can be automatic when configured. If a cheap/free provider model such as `opencode/big-pickle` is available, the setup workflow may suggest it as a final fallback for suitable agents.
+
 ## Quick start
 
 Start pi from the repository you want to plan against, then run the workflow as needed:

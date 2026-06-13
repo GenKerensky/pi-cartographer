@@ -37,7 +37,13 @@ const models: AvailableModel[] = [
 		input: ["text"],
 		costTier: "subscription",
 	},
-	{ id: "opencode/big-pickle", reasoning: true, thinking: ["minimal", "low", "medium"], input: ["text"], costTier: "free" },
+	{
+		id: "opencode/big-pickle",
+		reasoning: true,
+		thinking: ["minimal", "low", "medium"],
+		input: ["text"],
+		costTier: "free",
+	},
 ];
 
 function tempSettingsPath(): string {
@@ -120,7 +126,9 @@ describe("model config validation", () => {
 	it("warns when Cartographer roles or parent fallback have no fallback enabled", () => {
 		const result = validateModelConfigProposal(
 			{
-				subagents: { agentOverrides: { "cartographer-auditor": { model: "openai-codex/gpt-5.5", thinking: "medium" } } },
+				subagents: {
+					agentOverrides: { "cartographer-auditor": { model: "openai-codex/gpt-5.5", thinking: "medium" } },
+				},
 				cartographer: { parentFallbackModels: [] },
 			},
 			models,
@@ -168,9 +176,9 @@ describe("model config validation", () => {
 			models,
 		);
 		expect(result.ok).toBe(false);
-		expect(result.errors.some((error) => error.message.includes("opencode/big-pickle does not support required inputs"))).toBe(
-			true,
-		);
+		expect(
+			result.errors.some((error) => error.message.includes("opencode/big-pickle does not support required inputs")),
+		).toBe(true);
 	});
 });
 
@@ -317,9 +325,7 @@ describe("model config settings writes", () => {
 			"openai-codex/gpt-5.4-mini",
 			"opencode/big-pickle",
 		]);
-		expect(written.subagents.agentOverrides["cartographer-drafter"].model).toBe(
-			"openai-codex/gpt-5.3-codex-spark",
-		);
+		expect(written.subagents.agentOverrides["cartographer-drafter"].model).toBe("openai-codex/gpt-5.3-codex-spark");
 	});
 
 	it("preserves unrelated settings and existing user overrides unless force is supplied", () => {

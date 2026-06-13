@@ -155,6 +155,31 @@ class WorkflowDocsTests(unittest.TestCase):
             self.assertIn("cartographer_handoff auditor", text, name)
             self.assertIn("prose-only", text, name)
 
+    def test_readme_documents_model_routing_setup_and_safety(self) -> None:
+        text = (ROOT / "README.md").read_text(encoding="utf-8")
+
+        self.assertIn("Model routing and fallback setup", text)
+        self.assertIn("model-config", text)
+        self.assertIn("ask which providers Cartographer may use", text)
+        self.assertIn("recommend role-specific models", text)
+        self.assertIn("recommend a main orchestrator model", text)
+        self.assertIn("opencode/big-pickle", text)
+        self.assertIn("Example proposal JSON", text)
+        self.assertIn('"subagents"', text)
+        self.assertIn('"agentOverrides"', text)
+        self.assertIn('"cartographer-drafter"', text)
+        self.assertIn('"cartographer-auditor"', text)
+        self.assertIn('"parentFallbackModels"', text)
+        self.assertIn('"parentFallbackAllowCrossProvider"', text)
+        self.assertIn("JSON Schema", text)
+        self.assertIn("model_config.ts preview", text)
+        self.assertIn("model_config.ts apply", text)
+        self.assertIn("do not paste-edit user settings by hand", text)
+        self.assertIn("no `xhigh` defaults", text)
+        self.assertIn("Cross-provider fallback", text)
+        self.assertIn("does not hot-swap Pi's active model", text)
+        self.assertIn("privacy/safety caveat", text)
+
     def test_model_config_skill_documents_interactive_setup_and_deterministic_writer(self) -> None:
         text = (ROOT / "skills/model-config/SKILL.md").read_text(encoding="utf-8")
 

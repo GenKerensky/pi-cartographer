@@ -52,14 +52,14 @@ Do **not** edit `~/.pi/agent/settings.json` free-form. All settings writes must 
 
 4. **Recommend role-specific models**
 
-   | Role | Recommendation criteria |
-   | --- | --- |
-   | Main orchestrator | Best available reasoning and tool reliability at balanced thinking. Recommend `openai-codex/gpt-5.5` with `medium` thinking when Codex is selected. |
-   | `cartographer-drafter` | Fastest low-cost text coding model with adequate context. Recommend `openai-codex/gpt-5.3-codex-spark` when available. |
-   | `cartographer-archivist` | Lower-cost model suitable for research compression. Recommend `openai-codex/gpt-5.4-mini` when available. |
-   | `cartographer-auditor` | Strong reasoning model. Recommend `openai-codex/gpt-5.5` with `medium`; escalate to `high` only with justification. |
-   | `cartographer-compass` | Strong reasoning model for decisions. Recommend `openai-codex/gpt-5.5` with `medium`. |
-   | `cartographer-redactor` | Prioritize privacy/safety reliability over cost. Recommend `openai-codex/gpt-5.5` with `medium`; require explicit caveat for non-Codex fallback. |
+   | Role                     | Recommendation criteria                                                                                                                             |
+   | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+   | Main orchestrator        | Best available reasoning and tool reliability at balanced thinking. Recommend `openai-codex/gpt-5.5` with `medium` thinking when Codex is selected. |
+   | `cartographer-drafter`   | Fastest low-cost text coding model with adequate context. Recommend `openai-codex/gpt-5.3-codex-spark` when available.                              |
+   | `cartographer-archivist` | Lower-cost model suitable for research compression. Recommend `openai-codex/gpt-5.4-mini` when available.                                           |
+   | `cartographer-auditor`   | Strong reasoning model. Recommend `openai-codex/gpt-5.5` with `medium`; escalate to `high` only with justification.                                 |
+   | `cartographer-compass`   | Strong reasoning model for decisions. Recommend `openai-codex/gpt-5.5` with `medium`.                                                               |
+   | `cartographer-redactor`  | Prioritize privacy/safety reliability over cost. Recommend `openai-codex/gpt-5.5` with `medium`; require explicit caveat for non-Codex fallback.    |
 
 5. **Recommend main orchestrator model**
    - Recommend a thinking-capable model for the user to select as the main Pi orchestrator.

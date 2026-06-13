@@ -108,10 +108,7 @@ function readJsonFile(filePath: string, fallback: JsonObject = {}): JsonObject {
 
 function writeJsonAtomic(filePath: string, value: JsonObject): void {
 	fs.mkdirSync(path.dirname(filePath), { recursive: true });
-	const tempPath = path.join(
-		path.dirname(filePath),
-		`.${path.basename(filePath)}.${process.pid}.${Date.now()}.tmp`,
-	);
+	const tempPath = path.join(path.dirname(filePath), `.${path.basename(filePath)}.${process.pid}.${Date.now()}.tmp`);
 	fs.writeFileSync(tempPath, `${JSON.stringify(value, null, 2)}\n`, "utf8");
 	fs.renameSync(tempPath, filePath);
 }
@@ -144,10 +141,7 @@ function isFreeOrSubscriptionFallback(model: AvailableModel): boolean {
 	return model.id === "opencode/big-pickle";
 }
 
-export function validateModelConfigProposal(
-	proposal: ModelConfigProposal,
-	models: AvailableModel[],
-): ValidationResult {
+export function validateModelConfigProposal(proposal: ModelConfigProposal, models: AvailableModel[]): ValidationResult {
 	const errors: ValidationIssue[] = [];
 	const warnings: ValidationIssue[] = [];
 	const byId = availableModelMap(models);
@@ -182,7 +176,10 @@ export function validateModelConfigProposal(
 			if (typeof override.thinking !== "string" || !THINKING_LEVELS.has(override.thinking)) {
 				errors.push({ path: `${base}.thinking`, message: "thinking must be one of off/minimal/low/medium/high/xhigh" });
 			} else if (override.model && !thinkingAllowed(byId.get(override.model), override.thinking)) {
-				errors.push({ path: `${base}.thinking`, message: `thinking ${override.thinking} is not supported by ${override.model}` });
+				errors.push({
+					path: `${base}.thinking`,
+					message: `thinking ${override.thinking} is not supported by ${override.model}`,
+				});
 			}
 			if (override.thinking === "xhigh") {
 				errors.push({ path: `${base}.thinking`, message: "xhigh must not be written as a default" });
@@ -196,7 +193,10 @@ export function validateModelConfigProposal(
 			} else {
 				for (const [index, modelId] of override.fallbackModels.entries()) {
 					if (typeof modelId !== "string" || !modelId) {
-						errors.push({ path: `${base}.fallbackModels.${index}`, message: "fallback model must be a non-empty string" });
+						errors.push({
+							path: `${base}.fallbackModels.${index}`,
+							message: "fallback model must be a non-empty string",
+						});
 					} else if (!byId.has(modelId)) {
 						errors.push({ path: `${base}.fallbackModels.${index}`, message: `unknown fallback model: ${modelId}` });
 					} else if (!supportsInputs(byId.get(modelId), override.requiredInputs)) {
@@ -230,9 +230,15 @@ export function validateModelConfigProposal(
 		} else {
 			for (const [index, modelId] of parentFallbackModels.entries()) {
 				if (typeof modelId !== "string" || !modelId) {
-					errors.push({ path: `cartographer.parentFallbackModels.${index}`, message: "fallback model must be a non-empty string" });
+					errors.push({
+						path: `cartographer.parentFallbackModels.${index}`,
+						message: "fallback model must be a non-empty string",
+					});
 				} else if (!byId.has(modelId)) {
-					errors.push({ path: `cartographer.parentFallbackModels.${index}`, message: `unknown fallback model: ${modelId}` });
+					errors.push({
+						path: `cartographer.parentFallbackModels.${index}`,
+						message: `unknown fallback model: ${modelId}`,
+					});
 				}
 			}
 		}
@@ -307,7 +313,14 @@ export function classifyModelError(error: unknown): ModelFailure {
 		lower.includes("model not supported") ||
 		lower.includes("model unavailable")
 	) {
-		return { retryable: true, failureMode: "model-unavailable", message, statusCode, resetSeconds, resetSecondarySeconds };
+		return {
+			retryable: true,
+			failureMode: "model-unavailable",
+			message,
+			statusCode,
+			resetSeconds,
+			resetSecondarySeconds,
+		};
 	}
 	if (statusCode === 503 || statusCode === 502 || statusCode === 504 || lower.includes("timeout")) {
 		return { retryable: true, failureMode: "provider-error", message, statusCode, resetSeconds, resetSecondarySeconds };
@@ -327,7 +340,11 @@ export async function executeWithModelFallback<T>(params: {
 	models: string[];
 	invoke: (model: string, attemptIndex: number) => Promise<T>;
 	allowCrossProvider?: boolean;
-	approveCrossProvider?: (event: { fromModel: string; toModel: string; failure: ModelFailure }) => Promise<boolean> | boolean;
+	approveCrossProvider?: (event: {
+		fromModel: string;
+		toModel: string;
+		failure: ModelFailure;
+	}) => Promise<boolean> | boolean;
 	onFallback?: (event: FallbackReceiptEvent) => Promise<void> | void;
 }): Promise<T> {
 	const attempts: string[] = [];
@@ -342,7 +359,11 @@ export async function executeWithModelFallback<T>(params: {
 			lastFailure = failure;
 			const nextModel = params.models[index + 1];
 			if (!failure.retryable || !nextModel) {
-				throw new ModelFallbackError(`Model call failed after ${attempts.length} attempt(s): ${failure.message}`, failure, attempts);
+				throw new ModelFallbackError(
+					`Model call failed after ${attempts.length} attempt(s): ${failure.message}`,
+					failure,
+					attempts,
+				);
 			}
 			let approvedBy: FallbackReceiptEvent["approved_by"] = "auto";
 			if (crossesProvider(model, nextModel)) {
@@ -363,11 +384,15 @@ export async function executeWithModelFallback<T>(params: {
 			});
 		}
 	}
-	throw new ModelFallbackError("Model call failed with exhausted fallback chain", lastFailure ?? {
-		retryable: false,
-		failureMode: "non-retryable",
-		message: "no models configured",
-	}, attempts);
+	throw new ModelFallbackError(
+		"Model call failed with exhausted fallback chain",
+		lastFailure ?? {
+			retryable: false,
+			failureMode: "non-retryable",
+			message: "no models configured",
+		},
+		attempts,
+	);
 }
 
 export function mergeSettings(
@@ -481,9 +506,10 @@ function main(): number {
 		result = validateModelConfigProposal(proposal, models);
 	} else if (command === "preview" || command === "apply") {
 		const settingsPath = requiredString(options, "settings");
-		result = command === "preview"
-			? previewSettingsUpdate({ settingsPath, proposal, models, force: Boolean(options.force) })
-			: applySettingsUpdate({ settingsPath, proposal, models, force: Boolean(options.force) });
+		result =
+			command === "preview"
+				? previewSettingsUpdate({ settingsPath, proposal, models, force: Boolean(options.force) })
+				: applySettingsUpdate({ settingsPath, proposal, models, force: Boolean(options.force) });
 	} else {
 		throw new Error(`Unknown command: ${command}`);
 	}
