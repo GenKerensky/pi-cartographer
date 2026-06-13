@@ -149,7 +149,7 @@ Do not directly edit `~/.pi/agent/settings.json` during implementation. All writ
 
 ### Phase P2 — Interactive Setup Skill
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P1
 - **Unlocks:** P4
 - **Primary references:** `.plan/model-optimization/design.md#component-c007-config-setup-workflow-skill`, `[REQ-17]`, `skills/*/SKILL.md`, `README.md`, `C007`, `C008`
@@ -175,17 +175,17 @@ Add a Cartographer setup skill/workflow invoked by the main agent when model-rou
 
 #### Checklist
 
-- [ ] **P2.T1** Create or update skill documentation for the interactive config setup workflow.
-- [ ] **P2.T2** Define provider menu logic and recommendation criteria for each Cartographer role.
-- [ ] **P2.T3** Define main orchestrator recommendation behavior (`gpt-5.5 medium` when Codex selected; otherwise best available reasoning/tool model with cost caveats).
-- [ ] **P2.T4** Define no-fallback warnings and final fallback recommendation behavior.
-- [ ] **P2.T5** Document how the skill calls the deterministic settings writer script for preview/apply.
-- [ ] **P2.T6** Add tests or documentation checks ensuring the skill mentions provider menu, role recommendations, orchestrator recommendation, no-fallback warnings, deterministic writer, JSON Schema validation, model validation, and confirmation gate.
+- [x] **P2.T1** Create or update skill documentation for the interactive config setup workflow.
+- [x] **P2.T2** Define provider menu logic and recommendation criteria for each Cartographer role.
+- [x] **P2.T3** Define main orchestrator recommendation behavior (`gpt-5.5 medium` when Codex selected; otherwise best available reasoning/tool model with cost caveats).
+- [x] **P2.T4** Define no-fallback warnings and final fallback recommendation behavior.
+- [x] **P2.T5** Document how the skill calls the deterministic settings writer script for preview/apply.
+- [x] **P2.T6** Add tests or documentation checks ensuring the skill mentions provider menu, role recommendations, orchestrator recommendation, no-fallback warnings, deterministic writer, JSON Schema validation, model validation, and confirmation gate.
 
 #### Validation
 
-- [ ] **P2.V1** Run `npm run check:scripts` and expect pass.
-- [ ] **P2.V2** Run targeted tests/documentation checks for the setup skill content and deterministic writer integration.
+- [x] **P2.V1** Run `npm run check:scripts` and expect pass.
+- [x] **P2.V2** Run targeted tests/documentation checks for the setup skill content and deterministic writer integration.
 
 #### Exit Criteria
 

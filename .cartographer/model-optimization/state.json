@@ -5,11 +5,11 @@
   "source_refs": {
     "plan_md": {
       "path": ".plan/model-optimization/plan.md",
-      "sha256": "sha256:9889bded43014cd011fdcfa49c11a4c60382cb8076aa653fae705182ab3b2b83"
+      "sha256": "sha256:135c3087b39cbd050cf2cc744246fd864e7c076c78523e2cb7e1b0830a0437a4"
     },
     "plan_nodes": {
       "path": ".plan/model-optimization/plan.nodes.jsonl",
-      "sha256": "sha256:125a1fa4982a12eeaa79132be09acba74f1003b98ef5e2bc1636ec1c99931499"
+      "sha256": "sha256:276cbfaf750f377af3cce649bfc373bf91aa0d9216f08dbbd2a49f317c4d6d26"
     },
     "plan_edges": {
       "path": ".plan/model-optimization/plan.edges.jsonl",
@@ -17,22 +17,22 @@
     },
     "receipts": {
       "path": ".plan/model-optimization/receipts.jsonl",
-      "sha256": "sha256:d3ef53433dd411672965604e5f3a674db0346863aa56ac9859ca4dac87bcb16b"
+      "sha256": "sha256:a3457ecf0e6f976471fba09b4808f5449e8bd5c145c004e6291fc53c8a412c52"
     },
     "context_packs": {
       "path": ".plan/model-optimization/context-packs.jsonl",
-      "sha256": "sha256:707aa0fe0ffe5323933e93b26b49d66797c7d6ee3f8eb1d45f01b32cbfde15cb"
+      "sha256": "sha256:c9a6a0ff938dea9d2c50e4e78ee45d8a0feb2c97cf3121a4e6629a768644ace2"
     }
   },
-  "current_phase_id": "P1",
+  "current_phase_id": "P2",
   "active_task_ids": [],
   "active_validation_ids": [],
   "next_action": {
-    "id": "P1.T1",
+    "id": "P2.T1",
     "kind": "implementation-task",
-    "summary": "Start P1 implementation.",
-    "phase_id": "P1",
-    "task_id": "P1.T1",
+    "summary": "Start P2 implementation.",
+    "phase_id": "P2",
+    "task_id": "P2.T1",
     "files_to_inspect": [
       ".plan/model-optimization/plan.md",
       "skills/plan/scripts/cartographer_workflow.ts",
@@ -43,38 +43,42 @@
   "working_set": {
     "write_allowed": [
       {
+        "path": "skills/model-config/**",
+        "reason": "P2 interactive setup skill implementation"
+      },
+      {
         "path": "skills/plan/scripts/*.ts",
-        "reason": "P1 implementation wrapper work"
+        "reason": "P2 deterministic writer integration/reference"
       },
       {
         "path": "tests/*.test.ts",
-        "reason": "P1 wrapper tests"
-      },
-      {
-        "path": "extensions/*.ts",
-        "reason": "P1 extension tool registration"
+        "reason": "P2 skill/docs checks"
       },
       {
         "path": ".plan/model-optimization/plan.md",
-        "reason": "P1 plan status updates"
+        "reason": "P2 plan status updates"
       },
       {
         "path": ".plan/model-optimization/plan.nodes.jsonl",
-        "reason": "P1 plan node status updates"
+        "reason": "P2 plan node status updates"
       },
       {
         "path": ".plan/model-optimization/receipts.jsonl",
-        "reason": "P1 receipts"
+        "reason": "P2 receipts"
       },
       {
         "path": ".plan/model-optimization/context-packs.jsonl",
-        "reason": "P1 context pack"
+        "reason": "P2 context pack"
       }
     ],
     "read_only": [
       {
         "path": ".plan/model-optimization/plan.edges.jsonl",
         "reason": "dependency graph reference"
+      },
+      {
+        "path": "README.md",
+        "reason": "existing docs reference"
       }
     ],
     "forbidden": [
@@ -85,6 +89,10 @@
       {
         "path": ".plan/_index/**",
         "reason": "generated index/cache artifacts"
+      },
+      {
+        "path": "~/.pi/agent/settings.json",
+        "reason": "never mutate real user settings during tests/implementation"
       }
     ]
   },
@@ -92,7 +100,8 @@
   "last_validation_receipt_ids": [
     "receipt:manual:validation:2026-06-13T18:38:36+00:00",
     "receipt:manual:validation:2026-06-13T18:38:27+00:00",
-    "receipt:manual:validation:2026-06-13T18:50:14+00:00"
+    "receipt:manual:validation:2026-06-13T18:50:14+00:00",
+    "receipt:manual:validation:2026-06-13T18:55:15+00:00"
   ],
   "journal_refs": [],
   "resume": {
@@ -113,6 +122,6 @@
       "stale generated snippets"
     ]
   },
-  "updated_at": "2026-06-13T18:51:24Z",
-  "stale_reason": "Plan status and receipts changed after completing P0 and starting P1; regenerate implementation state before P1 edits."
+  "updated_at": "2026-06-13T18:56:18Z",
+  "stale_reason": "Plan status and receipts changed after completing P1; regenerate implementation state before P2 edits."
 }
