@@ -147,7 +147,7 @@ If adding the checker changes package scripts, keep the change small and documen
 
 ### Phase P2 — Wrapper-First Rewrites
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P1
 - **Unlocks:** P3
 - **Primary references:** `file:skills/proposal/SKILL.md`, `file:skills/plan/SKILL.md`, `file:skills/interview/SKILL.md`, `file:skills/implement/SKILL.md`, `file:skills/plan/scripts/cartographer_workflow.ts`, [F001], [F009], [F010], [F011]
@@ -165,17 +165,17 @@ Rewrite skill instructions so agents read JSONL for context but route canonical 
 
 #### Checklist
 
-- [ ] **P2.T1** Replace proposal skill direct map/fact JSONL write language with `cartographer_proposal`, `cartographer_fact`, `cartographer_index slice-jsonl`, `cartographer_jsonl validate-topic`, and explicit fallback wording.
-- [ ] **P2.T2** Replace plan skill direct plan graph creation/status/checkoff language with `cartographer_plan generate-graph`, `cartographer_plan_status set`, `cartographer_validation complete-item`, and `cartographer_plan finalize`.
-- [ ] **P2.T3** Replace interview skill direct `interview.*.jsonl` upsert wording with a dedicated wrapper/script path if available, or a clearly marked temporary `cartographer_jsonl upsert` fallback plus validation/receipt requirements.
-- [ ] **P2.T4** Tighten implement skill status/checklist/receipt wording so wrappers are the default and direct edits are explicit escape hatches.
-- [ ] **P2.T5** Apply RFC 2119 language only to real agent requirements and remove verbose filler.
+- [x] **P2.T1** Replace proposal skill direct map/fact JSONL write language with `cartographer_proposal`, `cartographer_fact`, `cartographer_index slice-jsonl`, `cartographer_jsonl validate-topic`, and explicit fallback wording.
+- [x] **P2.T2** Replace plan skill direct plan graph creation/status/checkoff language with `cartographer_plan generate-graph`, `cartographer_plan_status set`, `cartographer_validation complete-item`, and `cartographer_plan finalize`.
+- [x] **P2.T3** Replace interview skill direct `interview.*.jsonl` upsert wording with a dedicated wrapper/script path if available, or a clearly marked temporary `cartographer_jsonl upsert` fallback plus validation/receipt requirements.
+- [x] **P2.T4** Tighten implement skill status/checklist/receipt wording so wrappers are the default and direct edits are explicit escape hatches.
+- [x] **P2.T5** Apply RFC 2119 language only to real agent requirements and remove verbose filler.
 
 #### Validation
 
-- [ ] **P2.V1** Run `python skills/plan/scripts/check_skill_language.py --root "$PWD" --json`; expected result has no blocking stale direct-write findings for edited skills.
-- [ ] **P2.V2** Run `rg -n "(Create or update these|Write each finding|Create .*plan\.nodes|Upsert .*interview|append .*receipts|hand-edit)" skills/*/SKILL.md`; expected result is empty or only explicitly allowed fallback examples.
-- [ ] **P2.V3** Run `npm run format:prettier:check`; expected result passes or only reports unrelated pre-existing formatting outside the touched files.
+- [x] **P2.V1** Run `python skills/plan/scripts/check_skill_language.py --root "$PWD" --json`; expected result has no blocking stale direct-write findings for edited skills.
+- [x] **P2.V2** Run `rg -n "(Create or update these|Write each finding|Create .*plan\.nodes|Upsert .*interview|append .*receipts|hand-edit)" skills/*/SKILL.md`; expected result is empty or only explicitly allowed fallback examples.
+- [x] **P2.V3** Run `npm run format:prettier:check`; expected result passes or only reports unrelated pre-existing formatting outside the touched files.
 
 #### Exit Criteria
 

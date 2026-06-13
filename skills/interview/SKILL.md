@@ -71,10 +71,11 @@ Use structured choices when possible. For complex choices, include a compact rat
 After each answer:
 
 1. Record the answer in `interview.md`.
-2. Upsert the corresponding `interview.nodes.jsonl` records.
-3. Upsert dependency/provenance edges in `interview.edges.jsonl`.
-4. Decide the next single question or stop.
-5. Do not ask a follow-up until the previous answer has been recorded.
+2. Route graph record changes through the dedicated interview wrapper/script when available.
+3. Until a dedicated wrapper exists, use a parent-owned `cartographer_jsonl({"action":"upsert", ...})` or `manage_jsonl.ts upsert` fallback for `interview.nodes.jsonl` and `interview.edges.jsonl`, then run `cartographer_jsonl({"action":"validate-topic", ...})` or `manage_jsonl.ts validate-topic`.
+4. Record the fallback and validation receipt before asking another question.
+5. Decide the next single question or stop.
+6. Do not ask a follow-up until the previous answer has been recorded.
 
 ## Pause, Resume, and Re-Entry
 

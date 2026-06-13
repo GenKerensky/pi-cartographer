@@ -14,12 +14,12 @@ Use this skill when the user asks for a project proposal, implementation proposa
 
 ## Outputs
 
-Create or update these shared project-index files:
+Wrapper-managed shared project-index outputs:
 
 - `.plan/_index/project-graph.sqlite`
 - `.plan/_index/project-graph-manifest.json`
 
-Create or update these topic-specific proposal files in the current project:
+Wrapper-managed topic proposal outputs in the current project:
 
 - `.plan/{topic}/proposal.md`
 - `.plan/{topic}/map.nodes.jsonl` — curated topic-map graph nodes derived from the shared SQLite index and verified manual additions.
@@ -28,7 +28,7 @@ Create or update these topic-specific proposal files in the current project:
 - `.plan/{topic}/facts.edges.jsonl` — append-only research graph edges connecting facts to sources, project context, goals, risks, and design steps.
 - `.plan/{topic}/evidence/` — sanitized, commit-safe analysis documents when the proposal uses private artifacts.
 
-Create or update ignored private-input files only when the user explicitly provides private artifacts:
+Wrapper-managed ignored private-input files only when the user explicitly provides private artifacts:
 
 - `.plan/_private/{topic}/` — raw private proposal inputs; never commit, index, or cite directly.
 - `.plan/_private/_inbox/<id>/` — optional temporary staging when a topic must be confirmed before final placement.
@@ -46,8 +46,8 @@ Use deterministic wrappers for proposal mutations whenever available. Prefer `ca
 1. **Derive the topic and initialize files**
    - Summarize the user's proposal topic in 3 words or less.
    - If the topic is ambiguous enough that scope cannot be inferred, ask one clarifying question before proceeding.
-   - Create `.plan/{topic}/`.
-   - Create `.plan/{topic}/proposal.md` with this skeleton:
+   - Initialize wrapper-managed topic files with `cartographer_proposal({"action":"init","root":"$PWD","topic":"{topic}","title":"{topic} Proposal"})` when available, or the equivalent `node --experimental-strip-types <plan-skill-dir>/scripts/cartographer_workflow.ts proposal-init ...` CLI/script path exposed by the project.
+   - The initialized `.plan/{topic}/proposal.md` should use this skeleton:
 
      ```markdown
      # {topic} Proposal
@@ -79,7 +79,7 @@ Use deterministic wrappers for proposal mutations whenever available. Prefer `ca
      ## Next Artifacts
      ```
 
-   - Create empty or initialized `.plan/{topic}/map.nodes.jsonl`, `.plan/{topic}/map.edges.jsonl`, `.plan/{topic}/facts.nodes.jsonl`, and `.plan/{topic}/facts.edges.jsonl`.
+   - Keep map/fact JSONL initialization parent-owned through the wrapper/script. If a wrapper is unavailable, use a narrow fallback script/tool call and immediately run `cartographer_jsonl({"action":"validate-topic", ...})` or `manage_jsonl.ts validate-topic` before continuing.
    - If the user provided private logs, errors, transcripts, screenshots, exports, or documents, create `.plan/{topic}/evidence/` and run the private-artifact intake preflight before reading or analyzing those files.
    - If any topic artifact already exists, do not blindly truncate it. Preserve useful content, continue stable ID sequences, and reconcile existing records with new indexed/researched context.
 
@@ -160,7 +160,7 @@ Use deterministic wrappers for proposal mutations whenever available. Prefer `ca
      ```
 
    - Use `cartographer_index({"action":"slice-jsonl", ...})` and `cartographer_jsonl({"action":"validate-topic", ...})` when the Cartographer tools are available.
-   - Treat the generated `.plan/{topic}/map.nodes.jsonl` and `.plan/{topic}/map.edges.jsonl` as the map source of truth. Verify high-impact files, symbols, tests, scripts, and commands with focused `rg`/grep or selective reads before citing them in proposal prose.
+   - Treat `.plan/{topic}/map.nodes.jsonl` and `.plan/{topic}/map.edges.jsonl` as wrapper/script-managed map outputs. Verify high-impact files, symbols, tests, scripts, and commands with focused `rg`/grep or selective reads before citing them in proposal prose.
    - Do **not** delegate to `scout` just to read `draft.md`, dump SQLite rows, or hand-curate JSONL that the indexer can generate.
    - Call `scout` only when one of these is true:
      - `slice-jsonl` returns no useful files/nodes for a non-trivial topic
@@ -168,11 +168,9 @@ Use deterministic wrappers for proposal mutations whenever available. Prefer `ca
      - validation finds unresolved/contradictory references that deterministic tools cannot explain
      - the user explicitly asks for a scout-style code reconnaissance handoff
    - If `scout` is used, give it a narrow task based on `cartographer_index query/read` outputs plus exact `rg`/grep targets to verify, and ask for **suggested additions only**, not a full rewrite of map JSONL.
-   - Create or refine these JSONL graph files as the source of truth for the proposal map:
-     - `.plan/{topic}/map.nodes.jsonl`
-     - `.plan/{topic}/map.edges.jsonl`
+   - For map changes, prefer `cartographer_index({"action":"slice-jsonl", ...})` / `index_project.py slice-jsonl`. If manual additions are unavoidable, keep them parent-owned through a validated `cartographer_jsonl upsert` or `manage_jsonl.ts upsert` fallback and record the fallback/validation receipt.
    - Represent hierarchy and relationships with typed graph edges such as `contains`, `part_of`, `depends_on`, `imports`, `references`, `documents`, `constrains`, or `relevant_to`.
-   - Each JSONL line must be one complete valid JSON object. Do not wrap either file in an array and do not add trailing commas.
+   - Each fallback JSONL record must be one complete valid JSON object. Do not wrap either file in an array and do not add trailing commas.
    - Each node in `map.nodes.jsonl` must include:
      - `id` — stable ID, preferably the indexed node ID such as `file:src/pages/index.astro` or `symbol:src/lib/search.ts#buildQuery:12`
      - `type` — for example `file`, `symbol`, `doc-section`, `dependency`, `route`, `config`, `data-artifact`, or `topic`
@@ -216,8 +214,9 @@ Use deterministic wrappers for proposal mutations whenever available. Prefer `ca
    - Ask `researcher`, or in approved serial mode research yourself, only for missing, stale, or genuinely external facts about tooling, documentation, similar projects, examples, prior art, and implementation constraints related to the topic.
    - Use indexed project context to narrow research questions to this repository's actual architecture and constraints. Pass concise index/query summaries and artifact paths, not full raw draft/docs content.
    - Treat research as an append-only JSONL graph, not YAML.
-   - Write each finding **one at a time before continuing search** by appending nodes to `.plan/{topic}/facts.nodes.jsonl` and edges to `.plan/{topic}/facts.edges.jsonl`.
-   - Each JSONL line must be one complete valid JSON object. Do not wrap the file in an array and do not add trailing commas.
+   - For each source-backed finding, use parent-owned `cartographer_fact({"action":"add-source"})`, `cartographer_fact({"action":"add-fact"})`, and `cartographer_fact({"action":"support-fact"})` calls before continuing search.
+   - If `cartographer_fact` is unavailable, use a narrow parent-owned `cartographer_jsonl upsert` or `manage_jsonl.ts upsert` fallback, then immediately run topic validation and record the fallback/validation receipt.
+   - Each fallback JSONL record must be one complete valid JSON object. Do not wrap the file in an array and do not add trailing commas.
    - Every source-backed claim must have:
      - a stable fact node ID such as `F001`
      - a source node ID such as `S001`
@@ -286,7 +285,7 @@ Use deterministic wrappers for proposal mutations whenever available. Prefer `ca
      - indexed nodes cited in `proposal.md`, `map.nodes.jsonl`, or `map.edges.jsonl` exist in `.plan/_index/project-graph.sqlite`
      - the proposal respects `## Goals` and `## Non-Goals`
      - `## ADR Metadata` exists, contains `adr_required`, and matches the request/proposal evidence
-   - Apply any necessary corrections to `proposal.md`, `map.nodes.jsonl`, `map.edges.jsonl`, `facts.nodes.jsonl`, or `facts.edges.jsonl`, rerun deterministic validation, and require `cartographer-auditor` `PASS` or an approved fallback receipt before final response.
+   - Apply necessary corrections through `cartographer_proposal`, `cartographer_fact`, `cartographer_index slice-jsonl`, or a validated parent-owned `cartographer_jsonl upsert` fallback, then rerun deterministic validation and require `cartographer-auditor` `PASS` or an approved fallback receipt before final response.
 
 9. **Final response**
    - Reply with the created topic and paths:
@@ -329,7 +328,7 @@ Retrieval and lifecycle contract for proposal artifacts:
 - Retrieval scopes are `code`, `plans`, and `all`, with `code` as the default. Proposal code discovery should exclude `.plan/**`; rationale retrieval should search `.plan/` only through explicit bounded probes.
 - ADR generation is no longer blanket out-of-scope: proposals must record `adr_required` intent, and implementation finalization should use `cartographer_adr` only when accepted metadata and validation receipts justify it.
 
-After choosing delegated or approved serial execution mode, use the `index-project` skill to create/update `.plan/_index/project-graph.sqlite` before scope, mapping, research, or planning passes. When this proposal skill is installed alongside `index-project`, prefer the direct sibling reference `../index-project/SKILL.md` to avoid ambiguity with another discovered skill of the same name. Pass concise query results, map JSONL paths, index artifact paths, and the index tool commands into subagent prompts. Subagents should use the index-derived graph as their starting context for proposal artifacts, then use `rg`/grep and selective file reads to verify exact code evidence or fill obvious lexical gaps.
+After choosing delegated or approved serial execution mode, use the `index-project` skill to ensure `.plan/_index/project-graph.sqlite` before scope, mapping, research, or planning passes. When this proposal skill is installed alongside `index-project`, prefer the direct sibling reference `../index-project/SKILL.md` to avoid ambiguity with another discovered skill of the same name. Pass concise query results, map JSONL paths, index artifact paths, and the index tool commands into subagent prompts. Subagents use the index-derived graph as read-only starting context, then use `rg`/grep and selective file reads to verify exact code evidence or suggest lexical gaps.
 
 Role-scoped least-privilege Cartographer helper examples for delegated agents in this workflow (`cartographer-archivist`, `cartographer-drafter`, `cartographer-compass`/fallback `oracle`, `cartographer-auditor`/fallback `reviewer`, and redactor-only private analysis):
 
@@ -392,9 +391,9 @@ Serial-mode confirmation prompt:
 Serial-mode role prompts:
 
 - Scope writer: define `## Description`, `## Problem Statement`, `## Goals`, and `## Non-Goals` from the user's intent and current context, using index-query output only as background.
-- Codebase mapper: inspect the shared SQLite index and starter map JSONL, verify relevant files with focused `rg`/grep and selective reads as needed, and write `map.nodes.jsonl` plus `map.edges.jsonl` with valid file references and resolvable graph IDs.
-- Researcher: search or inspect documentation yourself, using indexed project constraints to focus the search, and append each source-backed finding as JSONL graph records to `facts.nodes.jsonl` and `facts.edges.jsonl` before continuing.
-- Planner: evaluate the requirements/design scope gate, preserve proposal non-design sections, and write `## Scope Gate` plus `## Next Artifacts` instead of detailed proposal-owned design steps.
+- Codebase mapper: inspect the shared SQLite index and starter map JSONL, verify relevant files with focused `rg`/grep and selective reads as needed, and return concise suggested map node/edge changes for the parent to apply with `cartographer_index slice-jsonl` or a validated parent-owned fallback.
+- Researcher: search or inspect documentation yourself, using indexed project constraints to focus the search, and return concise source/fact/support-edge suggestions for the parent to apply with `cartographer_fact` before continuing.
+- Planner: evaluate the requirements/design scope gate, preserve proposal non-design sections, and return `## Scope Gate` plus `## Next Artifacts` text for the parent to apply instead of detailed proposal-owned design steps.
 - Compass/oracle checker: before each step is finalized, switch perspective and challenge the step for scope fit, fact alignment, index/file-reference validity, and hidden assumptions.
 - Final validator: perform a cartographer-auditor-style artifact validation pass after deterministic JSONL validation, correct missing dependencies, invalid references, unsupported citations, missing index citations, or scope drift, and write a fallback receipt because the default auditor was not used.
 

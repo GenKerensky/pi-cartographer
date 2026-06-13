@@ -5,11 +5,11 @@
   "source_refs": {
     "plan_md": {
       "path": ".plan/skills-cleanup/plan.md",
-      "sha256": "sha256:43c066a23ac114a7f05e3ae1cc39cc6c967afacf4c8060d8cf1eb2f6af44c9d9"
+      "sha256": "sha256:e4f789e0f0db874c897ce782cfa6aca91ffeddc8879ff5e120bc72151af06054"
     },
     "plan_nodes": {
       "path": ".plan/skills-cleanup/plan.nodes.jsonl",
-      "sha256": "sha256:d39f7a02139de91a02dfe9ab8e676bcbad21837a5f2512a04f0f19954a195f3d"
+      "sha256": "sha256:d33da266bab92478c1cef01d9cdd5674d4d86a0a001da333e2fed5a5052ce1ca"
     },
     "plan_edges": {
       "path": ".plan/skills-cleanup/plan.edges.jsonl",
@@ -17,77 +17,73 @@
     },
     "receipts": {
       "path": ".plan/skills-cleanup/receipts.jsonl",
-      "sha256": "sha256:97c227a76d493722ea4fd10a1129b5ff3888aad4194dcef4711be38123359c93"
+      "sha256": "sha256:5247069a41f79c8c483c958b5084c1c2313c5664ea27663be6f324e2b930ecbf"
     },
     "context_packs": {
       "path": ".plan/skills-cleanup/context-packs.jsonl",
-      "sha256": "sha256:e87f1e73b2d52bea6974c1e8aa393184e882296456343f7d0afda51b66c53618"
+      "sha256": "sha256:ce73817f84bf634f0a15b3e062a84897013fe10809947bee23b6f42a9655309d"
     }
   },
   "current_phase_id": "P0",
   "active_task_ids": [],
   "active_validation_ids": [],
   "next_action": {
-    "id": "P1.T1",
+    "id": "P2.T1",
     "kind": "implementation-task",
-    "summary": "Add non-interactive skill-language checker with JSON output and concise help.",
-    "phase_id": "P1",
-    "task_id": "P1.T1",
+    "phase_id": "P2",
+    "task_id": "P2.T1",
+    "summary": "Replace proposal skill direct map/fact JSONL write language with wrapper/tool/script-first wording.",
     "files_to_inspect": [
+      "skills/proposal/SKILL.md",
+      "skills/plan/scripts/check_skill_language.py",
       ".plan/skills-cleanup/P0-inventory.md",
-      "AGENTS.md",
-      "skills/*/SKILL.md",
-      ".pi/agents/*.md",
-      "package.json"
+      "docs/adr/0004-use-single-writer-cartographer-implementation-state.md",
+      "docs/adr/0006-use-deterministic-cartographer-workflow-wrappers-for-lifecycle-gates.md"
     ]
   },
   "working_set": {
     "write_allowed": [
       {
-        "path": "skills/plan/scripts/check_skill_language*.py",
-        "reason": "P1 skill-language checker"
+        "path": "skills/proposal/SKILL.md",
+        "reason": "P2 wrapper-first rewrite target"
       },
       {
-        "path": "tests/*skill_language*.py",
-        "reason": "P1 checker tests"
+        "path": "skills/plan/SKILL.md",
+        "reason": "P2 wrapper-first rewrite target"
       },
       {
-        "path": "package.json",
-        "reason": "optional P1 script wiring if low-noise"
+        "path": "skills/interview/SKILL.md",
+        "reason": "P2 wrapper-first rewrite target"
+      },
+      {
+        "path": "skills/implement/SKILL.md",
+        "reason": "P2 wrapper-first rewrite target"
       },
       {
         "path": ".plan/skills-cleanup/plan.md",
-        "reason": "P1 status/checklist updates"
+        "reason": "P2 status/checklist updates"
       },
       {
         "path": ".plan/skills-cleanup/plan.nodes.jsonl",
-        "reason": "P1 status/checklist updates"
+        "reason": "P2 status/checklist updates"
       },
       {
         "path": ".plan/skills-cleanup/receipts.jsonl",
-        "reason": "P1 validation receipts"
+        "reason": "P2 validation receipts"
       },
       {
         "path": ".plan/skills-cleanup/context-packs.jsonl",
-        "reason": "P1 context pack"
+        "reason": "P2 context pack"
       }
     ],
     "read_only": [
       {
-        "path": "AGENTS.md",
-        "reason": "skill authoring rules reference"
-      },
-      {
-        "path": "skills/*/SKILL.md",
-        "reason": "checker target/reference"
-      },
-      {
-        "path": ".pi/agents/*.md",
-        "reason": "checker target/reference"
+        "path": "skills/plan/scripts/check_skill_language.py",
+        "reason": "P2 checker target references"
       },
       {
         "path": ".plan/skills-cleanup/P0-inventory.md",
-        "reason": "P1 known stale pattern baseline"
+        "reason": "known stale pattern baseline"
       },
       {
         "path": "docs/adr/0004-use-single-writer-cartographer-implementation-state.md",
@@ -96,6 +92,14 @@
       {
         "path": "docs/adr/0006-use-deterministic-cartographer-workflow-wrappers-for-lifecycle-gates.md",
         "reason": "wrapper rule source"
+      },
+      {
+        "path": "AGENTS.md",
+        "reason": "skill-authoring guardrail reference"
+      },
+      {
+        "path": ".pi/agents/*.md",
+        "reason": "agent boundary reference only"
       }
     ],
     "forbidden": [
@@ -125,7 +129,13 @@
     "receipt:P1:validation:2026-06-13T03:26:27+00:00",
     "receipt:skills-cleanup:audit:2026-06-13T03:28:02Z",
     "receipt:P1:validation:2026-06-13T03:29:18+00:00",
-    "receipt:P1:validation:2026-06-13T03:29:21+00:00"
+    "receipt:P1:validation:2026-06-13T03:29:21+00:00",
+    "receipt:P2:validation:2026-06-13T03:38:01+00:00",
+    "receipt:P2:validation:2026-06-13T03:38:07+00:00",
+    "receipt:P2:validation:2026-06-13T03:38:17+00:00",
+    "receipt:skills-cleanup:audit:2026-06-13T03:41:21Z",
+    "receipt:P2:validation:2026-06-13T03:41:29+00:00",
+    "receipt:P2:validation:2026-06-13T03:41:33+00:00"
   ],
   "journal_refs": [
     "journal:20260613T031944Z:compact",
@@ -149,7 +159,7 @@
       "stale generated snippets"
     ]
   },
-  "updated_at": "2026-06-13T03:29:26Z",
+  "updated_at": "2026-06-13T03:41:39Z",
   "stale_reason": "Implementation compact requested after artifact updates.",
   "compaction": {
     "trigger": "phase-end-P0",

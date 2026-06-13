@@ -24,13 +24,13 @@ Do **not** implement code while using this skill. Produce the plan only, unless 
 
 ## Outputs
 
-Create or update these primary artifacts:
+Wrapper-managed primary artifacts:
 
 - `.plan/{topic}/plan.md`
 - `.plan/{topic}/plan.nodes.jsonl` — machine-readable plan graph nodes for phases, tasks, validations, and cross-phase checks.
 - `.plan/{topic}/plan.edges.jsonl` — machine-readable plan graph edges for `contains`, `depends_on`, `validates`, `unlocks`, and `blocked_by` relationships.
 
-Use or create/update these supporting artifacts when needed:
+Use existing or wrapper-managed supporting artifacts when needed:
 
 - `.plan/_index/project-graph.sqlite`
 - `.plan/_index/project-graph-manifest.json`
@@ -131,7 +131,7 @@ Use deterministic wrappers for plan mutations whenever available. Prefer `cartog
      - `.plan/{topic}/facts.nodes.jsonl`
      - `.plan/{topic}/facts.edges.jsonl`
    - If map JSONL artifacts are missing or thin, first regenerate them with `cartographer_index({"action":"slice-jsonl", ...})` or `index_project.py slice-jsonl`, then validate with `cartographer_jsonl({"action":"validate-topic", ...})`. Use focused `rg`/grep to verify high-impact files. Ask `scout` to derive/update map JSONL only when deterministic generation plus lexical verification returns no useful context or the topic spans complex architecture the index cannot summarize.
-   - If research fact graph artifacts are missing or insufficient for dependency/tool choices, ask `researcher` to append source-backed nodes/edges to `facts.nodes.jsonl` and `facts.edges.jsonl`. Every source-backed fact must have a `fact` node, a `source` node, and a `supported_by` edge.
+   - If research fact graph artifacts are missing or insufficient for dependency/tool choices, ask `researcher` for concise source/fact/support-edge suggestions. The parent applies accepted changes with `cartographer_fact` (or a validated parent-owned `cartographer_jsonl upsert` fallback) so every source-backed fact has a `fact` node, a `source` node, and a `supported_by` edge.
    - In serial mode, perform the scout/researcher roles yourself after user approval.
 
 5. **Create a bounded retrieval plan and gather plan-relevant context**
@@ -146,7 +146,7 @@ Use deterministic wrappers for plan mutations whenever available. Prefer `cartog
      - generated artifacts or scripts that must run in order
      - cross-file dependencies and import/reference relationships
    - Start from `map.nodes.jsonl`, `map.edges.jsonl`, and the shared SQLite index. Use focused lexical search/manual inspection to verify, refine, or add relevant context.
-   - Update the map graph JSONL only if necessary, preserving stable IDs and valid JSONL.
+   - If map changes are necessary, prefer `cartographer_index slice-jsonl`; otherwise use a parent-owned `cartographer_jsonl upsert` or `manage_jsonl.ts upsert` fallback, preserve stable IDs, rerun topic validation, and record the fallback/validation receipt.
 
 6. **Draft ordered phases with `planner`**
    - Ask `planner`, or in approved serial mode act as planner, to produce a phase plan from concise inputs. Pass artifact paths plus short summaries instead of inlining large map/fact/research/scout outputs; use `outputMode: "file-only"` for large planner outputs.
@@ -249,9 +249,10 @@ Use deterministic wrappers for plan mutations whenever available. Prefer `cartog
    - `## Open Questions` should be empty or explicitly list unresolved decisions.
    - `## Handoff Guidance` should explain how an execution agent should execute the phases, when to stop for review, and whether implementation finalization must run `cartographer_adr` based on `adr_required` metadata.
 
-9. **Write machine-readable plan graph artifacts**
-   - Create `.plan/{topic}/plan.nodes.jsonl` and `.plan/{topic}/plan.edges.jsonl` from the final Markdown plan.
-   - Each JSONL line must be one complete valid JSON object. Do not wrap either file in an array and do not add trailing commas.
+9. **Generate machine-readable plan graph artifacts**
+   - Run `cartographer_plan({"action":"generate-graph","root":"$PWD","topic":"{topic}"})` when available, or `node --experimental-strip-types <plan-skill-dir>/scripts/cartographer_workflow.ts plan-generate-graph --root "$PWD" --topic "{topic}" --json` as the CLI fallback.
+   - Treat `.plan/{topic}/plan.nodes.jsonl` and `.plan/{topic}/plan.edges.jsonl` as wrapper/script outputs derived from the final Markdown plan.
+   - Each fallback JSONL line must be one complete valid JSON object. Do not wrap either file in an array and do not add trailing commas.
    - Include node records for:
      - root plan node: `plan:{topic}`
      - phases: `phase:P0`, `phase:P1`, ...
@@ -296,16 +297,16 @@ Use deterministic wrappers for plan mutations whenever available. Prefer `cartog
   python <plan-skill-dir>/scripts/validate_planning_graph.py --root "$PWD" --topic "{topic}" --json
   ```
 
-- Record validation receipts for both deterministic checks in `.plan/{topic}/receipts.jsonl`, including command, result, validation IDs when known, output summary, and changed-file hash set when available.
-- If validation fails, correct `plan.md`, `plan.nodes.jsonl`, `plan.edges.jsonl`, map/fact graph files, or citations, then rerun the failed deterministic checks before finalizing.
-- If either validator cannot run, stop or ask the user before accepting the plan unless the user approves a manual fallback; write an explicit fallback receipt with the failed command/tool, error summary, manual checks performed, files reviewed, and residual risk.
+- Record validation receipts through `cartographer_validation` for both deterministic checks, including command, result, validation IDs when known, output summary, and changed-file hash set when available.
+- If validation fails, correct artifacts through `cartographer_plan`, `cartographer_plan_status`, `cartographer_index slice-jsonl`, `cartographer_fact`, or a validated parent-owned fallback, then rerun the failed deterministic checks before finalizing.
+- If either validator cannot run, stop or ask the user before accepting the plan unless the user approves a manual fallback; record an explicit `cartographer_receipt`/`receipt-append` fallback with the failed command/tool, error summary, manual checks performed, files reviewed, and residual risk.
 
 11. **Final validation with `cartographer-auditor`**
 
 - After `cartographer_jsonl validate-topic` and `validate_planning_graph.py` receipts pass, route the final semantic gate through `cartographer_handoff auditor` when available so artifact summaries, acceptance criteria, validation receipt IDs, report path, and PASS/FAIL schema are captured deterministically. If the wrapper is unavailable, launch `cartographer-auditor` directly and record an explicit fallback receipt.
 - Provide the auditor the plan path, plan graph paths, proposal/map/fact references, deterministic validation receipt IDs or compact output summaries, and require an explicit `PASS`/`FAIL` decision captured by `cartographer_handoff auditor` or an approved fallback. A plan should not be marked ready for implementation without a captured auditor `PASS` or an approved fallback receipt.
 - Use `cartographer-compass` for scope, dependency, and decision-consistency concerns, especially when phase ordering or assumptions are questionable; compass does not replace the final audit gate.
-- Built-in `reviewer`/`oracle` or a serial current-agent validation pass are fallback substitutes only when `cartographer-auditor` is unavailable, times out, or the user approves substitution. Each fallback must write an explicit fallback receipt in `.plan/{topic}/receipts.jsonl` with the attempted auditor, reason, substitute/manual reviewer used, deterministic validation receipt IDs, files reviewed, outcome, and residual risks.
+- Built-in `reviewer`/`oracle` or a serial current-agent validation pass are fallback substitutes only when `cartographer-auditor` is unavailable, times out, or the user approves substitution. Each fallback must be recorded through `cartographer_handoff fallback`, `cartographer_receipt`, or `receipt-append` with the attempted auditor, reason, substitute/manual reviewer used, deterministic validation receipt IDs, files reviewed, outcome, and residual risks.
 - Do not use `planner` for final validation unless no auditor/reviewer/oracle substitute is available and the user approves; record that as a fallback receipt.
 - The auditor/fallback validation pass must check:
   - `.plan/{topic}/plan.md` exists
@@ -345,7 +346,7 @@ Keep the current agent responsible for orchestration, artifact integrity, and fi
 Performance rules:
 
 - Follow the Clean Context Contract: normal LLM-facing outputs should stay near 8KB, expanded diagnostics near 16KB, and larger outputs should be represented by compact receipts with `summary`, `references`, `counts`, `token_estimate`, `truncated`, `full_output_path`, `verification`, and `next_actions`.
-- Write planning checkpoints to `.plan/{topic}/receipts.jsonl` and phase/scout/planner handoff context to `.plan/{topic}/context-packs.jsonl` when a planning step generates durable decisions, validation results, timeout/fallback events, fallback substitutions, large output, or implementation context.
+- Record planning checkpoints through `cartographer_validation`, `cartographer_handoff`, `cartographer_transition`, `cartographer_receipt`/`receipt-append`, and `cartographer_context_pack` when a planning step generates durable decisions, validation results, timeout/fallback events, fallback substitutions, large output, or implementation context.
 - Keep raw command/search/session output in `/tmp/pi-cartographer-runs/` by default; use ignored `.plan/_runs/` only when explicitly useful for local replay, and never cite or commit raw run logs.
 - Do not read entire large source/docs/artifact files into parent or child context when `cartographer_index context`, `repo-map`, `read`, safe `search`, focused `rg`/grep searches, or selective reads can provide targeted context.
 - Use the shared index and map JSONL as durable planning context; use `rg`/grep as the fast path for verifying concrete identifiers, filenames, scripts, tests, commands, and error strings.
@@ -410,7 +411,7 @@ Recommended delegated-role prompts:
 
 - Optional `scout`: "Start from `cartographer_index query/read` outputs plus `map.nodes.jsonl` and `map.edges.jsonl`, then use focused `rg`/grep searches to verify exact identifiers, filenames, scripts, tests, generated artifacts, commands, error strings, or contradictions. Identify only missing plan-relevant context. Do not rediscover the repo broadly or read whole large files unless indexed snippets and lexical hits are insufficient. Return concise suggested map additions as JSONL records."
 - `researcher`: "Only if research facts are missing, stale, or insufficient: propose source-backed JSONL nodes for `.plan/{topic}/facts.nodes.jsonl` and edges for `.plan/{topic}/facts.edges.jsonl`. Inspect existing facts first and reuse valid local-doc facts. You have read access to Cartographer tools; run index/query/read to ground research in current project context. Every source-backed claim needs a fact node, source node, and `supported_by` edge. Focus on dependencies/tools/validation needed for planning."
-- `planner`: "Create `.plan/{topic}/plan.md`, `.plan/{topic}/plan.nodes.jsonl`, and `.plan/{topic}/plan.edges.jsonl` with topologically ordered phases, explicit dependencies, phase statuses, checklist task IDs, validation item IDs, exit criteria, risks, and source references from concise proposal/index/map/fact summaries and artifact paths. You have read access to Cartographer tools and may run targeted reads before citing indexed context. Do not ask for or inline full raw artifacts."
+- `planner`: "Draft `.plan/{topic}/plan.md` text with topologically ordered phases, explicit dependencies, phase statuses, checklist task IDs, validation item IDs, exit criteria, risks, and source references from concise proposal/index/map/fact summaries and artifact paths. Treat `plan.nodes.jsonl` and `plan.edges.jsonl` as parent-owned `cartographer_plan generate-graph` outputs. You have read access to Cartographer tools and may run targeted reads before citing indexed context. Do not ask for or inline full raw artifacts."
 - `cartographer-compass`/fallback `oracle`: "Review this phase before finalization. Check scope fit, dependency ordering, missing prerequisites, validation adequacy, reference validity, and whether this phase leaves the project in a coherent state. Use provided `cartographer_artifacts` context/receipt/fact summaries and `cartographer_index` query/read summaries, or parent-generated summary paths if helper tools are unavailable. Return required corrections only."
 - `cartographer-auditor`: "Review the complete plan after `cartographer_jsonl validate-topic` and `validate_planning_graph.py` receipts pass. Check acyclic phase dependencies, complete checklist/validation coverage, valid references, alignment with proposal goals/non-goals, ADR metadata preservation, and readiness for handoff to an execution agent. Use provided artifact helper summaries, deterministic receipt IDs/paths, acceptance criteria, and deterministic auditor receipt path; use Cartographer tools for targeted checks only if freshness or references are uncertain. Do not manually re-parse large JSONL when a deterministic validation receipt is available. Return `PASS`/`FAIL` with required corrections."
 - Fallback `reviewer`/serial validator: "Use only when `cartographer-auditor` is unavailable or the user approved substitution. Review the same artifacts and deterministic receipts, then write or request an explicit fallback receipt with outcome and residual risk."
