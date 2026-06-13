@@ -94,7 +94,7 @@ Use Cartographer ADR tooling, not manual ad-hoc ADR edits, unless wrapper suppor
 
 ### Phase P1 — Deterministic Model Config Script
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P0
 - **Unlocks:** P2, P3
 - **Primary references:** `.plan/model-optimization/design.md#component-c008-deterministic-settings-writer`, `[REQ-11]`, `[REQ-15]`, `[REQ-17]`, `C008`, `extensions/cartographer-tools.ts`, `skills/plan/scripts/cartographer_workflow.ts`, `package.json`
@@ -119,18 +119,18 @@ Implement a deterministic script that owns reading, validating, previewing, and 
 
 #### Checklist
 
-- [ ] **P1.T1** Design script command interface for validate/preview/apply modes using structured JSON input/output.
-- [ ] **P1.T2** Implement JSON Schema validation for settings payloads and role overrides.
-- [ ] **P1.T3** Implement available-model validation using deterministic input from Pi model metadata or a model list adapter.
-- [ ] **P1.T4** Implement warning generation for missing fallbacks and recommended final fallback candidates.
-- [ ] **P1.T5** Implement atomic settings write that preserves unrelated user settings and only overwrites existing values with explicit force/approval.
-- [ ] **P1.T6** Add temp/mock filesystem tests for missing settings file, partial settings, malformed JSON, unknown model IDs, invalid thinking levels, and no-fallback warnings.
+- [x] **P1.T1** Design script command interface for validate/preview/apply modes using structured JSON input/output.
+- [x] **P1.T2** Implement JSON Schema validation for settings payloads and role overrides.
+- [x] **P1.T3** Implement available-model validation using deterministic input from Pi model metadata or a model list adapter.
+- [x] **P1.T4** Implement warning generation for missing fallbacks and recommended final fallback candidates.
+- [x] **P1.T5** Implement atomic settings write that preserves unrelated user settings and only overwrites existing values with explicit force/approval.
+- [x] **P1.T6** Add temp/mock filesystem tests for missing settings file, partial settings, malformed JSON, unknown model IDs, invalid thinking levels, and no-fallback warnings.
 
 #### Validation
 
-- [ ] **P1.V1** Run `npm run test:py` and expect pass if implemented in Python, or targeted TS tests if implemented in TypeScript.
-- [ ] **P1.V2** Run `npm run check:scripts` and expect pass.
-- [ ] **P1.V3** Run targeted script tests against temp directories only; verify no test writes to real `~/.pi/agent/settings.json` or real `.plan/`.
+- [x] **P1.V1** Run `npm run test:py` and expect pass if implemented in Python, or targeted TS tests if implemented in TypeScript.
+- [x] **P1.V2** Run `npm run check:scripts` and expect pass.
+- [x] **P1.V3** Run targeted script tests against temp directories only; verify no test writes to real `~/.pi/agent/settings.json` or real `.plan/`.
 
 #### Exit Criteria
 
