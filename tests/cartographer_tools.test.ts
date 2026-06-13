@@ -62,8 +62,9 @@ function tempProjectWithTopic(): string {
 
 type MockContext = {
 	cwd?: string;
-	compact?: (options?: { customInstructions?: string }) => void;
+	compact?: (options?: { customInstructions?: string; onComplete?: () => void }) => void;
 	getContextUsage?: () => { tokens: number | null; contextWindow: number; percent: number | null } | undefined;
+	sendUserMessage?: (content: string, options?: { deliverAs?: "steer" | "followUp" }) => void;
 	ui?: { notify?: (message: string, level?: string) => void };
 };
 
@@ -253,6 +254,58 @@ describe("cartographer tool registration", () => {
 		expect(compactInstructions).toContain("continue with the Cartographer implement skill");
 		expect(compactInstructions).toContain("phase-end-P0");
 		expect(compactInstructions).toContain("compact-generate as Pi transcript compaction");
+	});
+
+	it("reprompts model to continue after compaction completes", async () => {
+		const project = tempProjectWithTopic();
+		const compactTool = registeredTools().find((tool) => tool.name === "cartographer_compact_context");
+		if (!compactTool) throw new Error("cartographer_compact_context was not registered");
+
+		let onCompleteCallback: (() => void) | undefined;
+		let continuationMessage = "";
+		let deliverAsOption: string | undefined;
+
+		const result = await compactTool.execute(
+			"tool-call",
+			{
+				action: "run",
+				root: project,
+				topic: "demo",
+				trigger: "phase-end-P0",
+				phaseId: "P0",
+				summary: "P0 complete",
+				includeStateResume: false,
+				force: true,
+			},
+			undefined,
+			undefined,
+			{
+				cwd: project,
+				compact: (options) => {
+					onCompleteCallback = options?.onComplete;
+				},
+				getContextUsage: () => ({ tokens: 60_000, contextWindow: 100_000, percent: 60 }),
+				sendUserMessage: (content, options) => {
+					continuationMessage = content;
+					deliverAsOption = options?.deliverAs;
+				},
+			},
+		);
+		const payload = JSON.parse(result.content[0].text);
+
+		expect(payload.status).toBe("queued");
+		expect(onCompleteCallback).toBeDefined();
+
+		// Simulate Pi calling the onComplete callback after compaction finishes
+		onCompleteCallback!();
+
+		// Verify sendUserMessage was called with continuation prompt
+		expect(continuationMessage).toContain("Context compaction completed");
+		expect(continuationMessage).toContain("demo");
+		expect(continuationMessage).toContain("P0");
+		expect(continuationMessage).toContain("Resume implementation immediately");
+		expect(continuationMessage).toContain("state-resume");
+		expect(deliverAsOption).toBe("followUp");
 	});
 
 	it("reports unavailable when Pi compact context is missing", async () => {

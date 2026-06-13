@@ -36,6 +36,7 @@ type ExtensionContextLike = {
 	cwd?: string;
 	compact?: (options?: CompactOptions) => void;
 	getContextUsage?: () => ContextUsage | undefined;
+	sendUserMessage?: (content: string, options?: { deliverAs?: "steer" | "followUp" }) => void;
 	ui?: {
 		notify?: (message: string, level?: "info" | "warning" | "error") => void;
 	};
@@ -622,6 +623,18 @@ function recentCompactionRequest(topic: string, cooldownMs: number): boolean {
 	);
 }
 
+function compactionContinuationMessage(topic: string, phaseId?: string): string {
+	const phaseHint = phaseId ? ` (phase ${phaseId})` : "";
+	return (
+		`[Cartographer] Context compaction completed for topic "${topic}"${phaseHint}. ` +
+		"Resume implementation immediately:\n" +
+		"1. Read .plan/<topic>/plan.md and .cartographer/<topic>/state.json\n" +
+		"2. Run cartographer_state state-resume to load bounded resume context\n" +
+		"3. Report the current phase, next action, and files to inspect\n" +
+		"4. Continue the current phase without waiting for further instructions"
+	);
+}
+
 async function requestContextCompaction(
 	ctx: ExtensionContextLike | undefined,
 	params: CartographerCompactContextParams,
@@ -652,10 +665,17 @@ async function requestContextCompaction(
 		usage,
 		stateResumeContext,
 	});
+	const phaseId = params.phaseId;
 	lastContextCompactionRequest = { topic, trigger, requestedAt: Date.now() };
 	ctx.compact({
 		customInstructions,
-		onComplete: () => ctx.ui?.notify?.(`Cartographer context compaction completed for ${topic}`, "info"),
+		onComplete: () => {
+			ctx.ui?.notify?.(`Cartographer context compaction completed for ${topic}`, "info");
+			// Reprompt the model to continue Cartographer work after compaction.
+			// Without this, the model halts after compaction because there is no
+			// new user message to trigger a turn.
+			ctx.sendUserMessage?.(compactionContinuationMessage(topic, phaseId), { deliverAs: "followUp" });
+		},
 		onError: (error) => ctx.ui?.notify?.(`Cartographer context compaction failed: ${error.message}`, "error"),
 	});
 	return {
