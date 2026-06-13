@@ -1,0 +1,179 @@
+{
+  "schema_version": 1,
+  "topic": "interview-process",
+  "source_status": "hashes-valid",
+  "source_refs": {
+    "plan_md": {
+      "path": ".plan/interview-process/plan.md",
+      "sha256": "sha256:d1f1ad7e623930228e48376328f4345612846a2f98736af4e48ca61842a96452"
+    },
+    "plan_nodes": {
+      "path": ".plan/interview-process/plan.nodes.jsonl",
+      "sha256": "sha256:e3e8caf357d3ebe735bb912214a0a66dd4c9b259a06e609559085371c6c56ba4"
+    },
+    "plan_edges": {
+      "path": ".plan/interview-process/plan.edges.jsonl",
+      "sha256": "sha256:6b9c1b9b141d517fc53c6241ec03649062e2d7ea8fdf8845dda106400882cfb4"
+    },
+    "receipts": {
+      "path": ".plan/interview-process/receipts.jsonl",
+      "sha256": "sha256:e1d641335727edf657ef4ba67ff3ade4d0182fe30f72b60dc3517af1d7fcc6d1"
+    },
+    "context_packs": {
+      "path": ".plan/interview-process/context-packs.jsonl",
+      "sha256": "sha256:a5e80291be90edae88bf9046be505cbc021814ea3d6a5cfa172e12370d7c03f8"
+    }
+  },
+  "current_phase_id": "P0",
+  "active_task_ids": [],
+  "active_validation_ids": [],
+  "next_action": {
+    "id": "P2.T1",
+    "kind": "implementation-task",
+    "summary": "Create skills/interview/SKILL.md with trigger conditions, artifacts, procedure, pitfalls, and verification checklist.",
+    "phase_id": "P2",
+    "task_id": "P2.T1",
+    "files_to_inspect": [
+      "skills/proposal/SKILL.md",
+      "skills/plan/SKILL.md",
+      "skills/implement/SKILL.md",
+      ".pi/agents/cartographer-drafter.md",
+      ".pi/agents/cartographer-compass.md",
+      ".pi/agents/cartographer-auditor.md",
+      "tests/test_workflow_docs.py",
+      ".plan/interview-process/requirements.md",
+      ".plan/interview-process/design.md"
+    ]
+  },
+  "working_set": {
+    "write_allowed": [
+      {
+        "path": "skills/interview/**",
+        "reason": "P2 dedicated interview skill"
+      },
+      {
+        "path": "tests/test_workflow_docs.py",
+        "reason": "P2 documentation tests"
+      },
+      {
+        "path": ".pi/agents/cartographer-drafter.md",
+        "reason": "P2 read-only interview summary guidance"
+      },
+      {
+        "path": ".pi/agents/cartographer-compass.md",
+        "reason": "P2 read-only interview summary guidance"
+      },
+      {
+        "path": ".pi/agents/cartographer-auditor.md",
+        "reason": "P2 read-only interview summary guidance"
+      },
+      {
+        "path": ".plan/interview-process/plan.md",
+        "reason": "P2 status updates"
+      },
+      {
+        "path": ".plan/interview-process/plan.nodes.jsonl",
+        "reason": "P2 status updates"
+      },
+      {
+        "path": ".plan/interview-process/receipts.jsonl",
+        "reason": "P2 receipts"
+      },
+      {
+        "path": ".plan/interview-process/context-packs.jsonl",
+        "reason": "P2 context pack"
+      }
+    ],
+    "read_only": [
+      {
+        "path": "skills/proposal/SKILL.md",
+        "reason": "workflow context"
+      },
+      {
+        "path": "skills/plan/SKILL.md",
+        "reason": "workflow context"
+      },
+      {
+        "path": "skills/implement/SKILL.md",
+        "reason": "workflow context"
+      },
+      {
+        "path": ".plan/interview-process/requirements.md",
+        "reason": "requirements reference"
+      },
+      {
+        "path": ".plan/interview-process/design.md",
+        "reason": "design reference"
+      }
+    ],
+    "forbidden": [
+      {
+        "path": ".plan/_private/**",
+        "reason": "raw private inputs off-limits"
+      },
+      {
+        "path": ".plan/_index/**",
+        "reason": "generated index/cache"
+      }
+    ]
+  },
+  "known_failures": [],
+  "last_validation_receipt_ids": [
+    "receipt:P0:validation:2026-06-12T21:43:51+00:00",
+    "receipt:P0:validation:2026-06-12T21:44:02+00:00",
+    "receipt:P0:validation:2026-06-12T21:44:48+00:00",
+    "receipt:interview-process:audit:2026-06-12T21:48:03Z",
+    "receipt:P1:validation:2026-06-12T21:55:08+00:00",
+    "receipt:P1:validation:2026-06-12T21:55:13+00:00",
+    "receipt:P1:validation:2026-06-12T21:55:22+00:00",
+    "receipt:P1:validation:2026-06-12T21:55:34+00:00",
+    "receipt:P1:validation:2026-06-12T21:55:48+00:00",
+    "receipt:P1:validation:2026-06-12T22:05:59+00:00",
+    "receipt:interview-process:audit:2026-06-12T22:05:51Z",
+    "receipt:P2:validation:2026-06-12T22:08:28+00:00",
+    "receipt:P2:validation:2026-06-12T22:08:32+00:00",
+    "receipt:P2:validation:2026-06-12T22:11:20+00:00",
+    "receipt:interview-process:audit:2026-06-12T22:11:08Z",
+    "receipt:P3:validation:2026-06-12T22:12:11+00:00",
+    "receipt:P3:validation:2026-06-12T22:12:23+00:00",
+    "receipt:P3:validation:2026-06-12T22:12:45+00:00",
+    "receipt:P3:validation:2026-06-12T22:13:48+00:00",
+    "receipt:interview-process:audit:2026-06-12T22:13:38Z",
+    "receipt:P4:validation:2026-06-12T22:14:46+00:00",
+    "receipt:P4:validation:2026-06-12T22:14:51+00:00",
+    "receipt:P4:validation:2026-06-12T22:15:00+00:00",
+    "receipt:P4:validation:2026-06-12T22:16:16+00:00",
+    "receipt:interview-process:audit:2026-06-12T22:16:06Z",
+    "receipt:P5:validation:2026-06-12T22:18:06+00:00",
+    "receipt:P5:validation:2026-06-12T22:18:11+00:00",
+    "receipt:P5:validation:2026-06-12T22:18:20+00:00",
+    "receipt:P5:validation:2026-06-12T22:18:44+00:00",
+    "receipt:P5:validation:2026-06-12T22:19:08+00:00",
+    "receipt:P5:validation:2026-06-12T22:20:31+00:00",
+    "receipt:interview-process:audit:2026-06-12T22:20:19Z"
+  ],
+  "journal_refs": [
+    "journal:20260612T214817Z:compact",
+    "journal:20260612T220610Z:compact",
+    "journal:20260612T221130Z:compact",
+    "journal:20260612T221358Z:compact",
+    "journal:20260612T221630Z:compact"
+  ],
+  "resume": {
+    "template_id": "cartographer.single_writer.resume.v1",
+    "resume_order": [
+      ".cartographer/interview-process/state.json",
+      ".cartographer/interview-process/journal.jsonl",
+      ".plan/interview-process/plan.md",
+      ".plan/interview-process/receipts.jsonl"
+    ],
+    "expected_first_response": ["current_phase", "next_action", "files_to_inspect"],
+    "must_ignore": ["prior chat speculation", "stale generated snippets"]
+  },
+  "updated_at": "2026-06-12T22:20:38Z",
+  "stale_reason": "Implementation compact requested after artifact updates.",
+  "compaction": {
+    "trigger": "phase P4 complete",
+    "compacted_at": "2026-06-12T22:16:30Z"
+  }
+}

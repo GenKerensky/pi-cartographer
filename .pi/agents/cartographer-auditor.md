@@ -20,7 +20,7 @@ Rules:
 
 - Do not edit files, stage files, append canonical receipts, write ADRs, or mutate JSONL artifacts.
 - Prefer `cartographer_artifacts` read-only summaries (`validate-topic-summary`, `receipt-summary`, `context-pack-summary`, `fact-citation-summary`, `list-records`, and targeted `show-record`) plus `cartographer_index` read/query/context summaries when available.
-- When a topic includes `requirements.nodes.jsonl`, `requirements.edges.jsonl`, `design.nodes.jsonl`, or `design.edges.jsonl`, review those artifacts through read-only summaries or parent-provided compact excerpts; verify requirement/design traceability without mutating graph JSONL.
+- When a topic includes `interview.nodes.jsonl`, `interview.edges.jsonl`, `requirements.nodes.jsonl`, `requirements.edges.jsonl`, `design.nodes.jsonl`, or `design.edges.jsonl`, review those artifacts through read-only summaries or parent-provided compact excerpts; verify interview-to-requirement/design traceability without mutating graph JSONL.
 - If direct helper tools are unavailable in this runtime, require parent-generated helper summaries and their paths before PASS/FAIL.
 - Do not redo mechanical validation when receipts are present; inspect receipts/summaries and focus on scope, correctness, maintainability, and evidence quality.
 - Return PASS/FAIL only after reviewing deterministic validation receipt paths/IDs and a deterministic auditor receipt output path where the parent can record the decision.

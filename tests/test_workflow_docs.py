@@ -172,7 +172,16 @@ class WorkflowDocsTests(unittest.TestCase):
 
         combined = "\n".join([readme, proposal, plan, implement])
 
-        self.assertIn("proposal → requirements delta → design → plan → implement", readme)
+        self.assertIn("proposal → research → interview → requirements delta → design → plan → implement", readme)
+        self.assertIn("research-exhausted interview", proposal)
+        self.assertIn("exhausted research", proposal)
+        self.assertIn("re-enter interview one question at a time", proposal)
+        self.assertIn("interview.nodes.jsonl", readme)
+        self.assertIn("interview.edges.jsonl", readme)
+        self.assertIn("interview.nodes.jsonl", plan)
+        self.assertIn("interview.edges.jsonl", plan)
+        self.assertIn("interview.nodes.jsonl", implement)
+        self.assertIn("interview.edges.jsonl", implement)
         self.assertIn("core user workflow", combined)
         self.assertIn("docs/requirements.md", combined)
         self.assertIn("requirements_records.py init", combined)
@@ -196,6 +205,45 @@ class WorkflowDocsTests(unittest.TestCase):
         self.assertIn("design.nodes.jsonl", implement)
         self.assertIn("design.edges.jsonl", implement)
         self.assertNotIn("## Design\n", proposal)
+
+    def test_interview_skill_documents_post_research_workflow(self) -> None:
+        interview = (ROOT / "skills/interview/SKILL.md").read_text(encoding="utf-8")
+        agents = "\n".join(
+            [
+                (ROOT / ".pi/agents/cartographer-auditor.md").read_text(encoding="utf-8"),
+                (ROOT / ".pi/agents/cartographer-compass.md").read_text(encoding="utf-8"),
+                (ROOT / ".pi/agents/cartographer-drafter.md").read_text(encoding="utf-8"),
+            ]
+        )
+
+        for needle in [
+            "after relevant research is exhausted",
+            "one question at a time",
+            "recommended answer first",
+            "pause",
+            "re-enter interview one question at a time",
+            "Approval Summary",
+            "A mockup is warranted",
+            "single-file HTML mockup",
+            "preview_export",
+            "temporary run directory",
+            "non-visual fallback",
+            "persistent mockup editor",
+            "interview.md",
+            "interview.nodes.jsonl",
+            "interview.edges.jsonl",
+            "candidate-question",
+            "researched-answer",
+            "recommendation",
+            "user-answer",
+            "accepted-decision",
+            "deferred-choice",
+            "unresolved-blocker",
+        ]:
+            self.assertIn(needle, interview)
+        self.assertIn("read-only summaries", interview)
+        self.assertIn("interview.nodes.jsonl", agents)
+        self.assertIn("interview.edges.jsonl", agents)
 
     def test_specialist_prompts_use_requirement_design_summaries(self) -> None:
         auditor = (ROOT / ".pi/agents/cartographer-auditor.md").read_text(encoding="utf-8")

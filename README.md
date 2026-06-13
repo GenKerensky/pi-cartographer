@@ -143,8 +143,11 @@ Start pi from the repository you want to plan against, then run the workflow as 
 flowchart TD
   A[User request] --> B[proposal]
   B --> C[.plan/topic/proposal.md]
-  C --> D{Core user workflow or durable behavior change?}
-  D -->|yes| E[requirements delta]
+  C --> R[exhaust relevant research]
+  R --> D{Core user workflow or durable behavior change?}
+  D -->|yes + unresolved user-owned decisions| Q[interview]
+  Q --> E[requirements delta]
+  D -->|yes + no unresolved decisions| E
   E --> F[design]
   F --> G[plan]
   D -->|small non-core change| G
@@ -154,7 +157,7 @@ flowchart TD
   J --> K[Validated phase commits]
 ```
 
-For scoped changes, a Cartographer `topic` is the local change folder: proposal → requirements delta → design → plan → implement → fold accepted requirements into `docs/requirements.md`. Small changes that do not impact a core user workflow do not need requirements/design graph artifacts by default; use the same kind of scope/risk judgment as ADRs.
+For scoped changes, a Cartographer `topic` is the local change folder: proposal → research → interview → requirements delta → design → plan → implement → fold accepted requirements into `docs/requirements.md`. The interview step is used after relevant project/research context is exhausted and unresolved user-owned decisions remain; requirements authoring may re-enter interview one question at a time when new ambiguity appears. Small changes that do not impact a core user workflow do not need interview or requirements/design graph artifacts by default; use the same kind of scope/risk judgment as ADRs.
 
 ### Create a proposal
 
@@ -247,6 +250,7 @@ Dashboard behavior and safety boundaries:
 Cartographer writes planning artifacts under `.plan/` in your project. Depending on which skills have run, a topic can contain:
 
 - `proposal.md`: human-readable context and assumptions, preserving Description, Problem Statement, Goals, Non-Goals, Background, Viability, risks, and ADR metadata.
+- `interview.md`, `interview.nodes.jsonl`, and `interview.edges.jsonl`: optional post-research clarification records for user-owned decisions, recommendations, answers, deferrals, blockers, and accepted decisions that feed requirements/design.
 - `requirements.md`, `requirements.nodes.jsonl`, and `requirements.edges.jsonl`: scope-gated topic/change requirements deltas for core user workflow or durable behavior changes.
 - `design.md`, `design.nodes.jsonl`, and `design.edges.jsonl`: scope-gated design narrative plus Decision + Alternative design graph.
 - `map.nodes.jsonl` and `map.edges.jsonl`: durable map graph.

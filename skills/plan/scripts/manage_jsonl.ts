@@ -541,6 +541,107 @@ function validateRequirementEdges(records: JsonRecord[], label: string, allowed:
 	}
 }
 
+const INTERVIEW_NODE_TYPES = new Set([
+	"candidate-question",
+	"researched-answer",
+	"recommendation",
+	"user-answer",
+	"accepted-decision",
+	"deferred-choice",
+	"unresolved-blocker",
+]);
+const INTERVIEW_STATUSES = new Set(["draft", "asked", "answered", "accepted", "deferred", "blocked", "superseded"]);
+const INTERVIEW_EDGE_TYPES = new Set([
+	"depends_on",
+	"answered_by",
+	"recommended_by",
+	"decides",
+	"deferred_by",
+	"blocks",
+	"supersedes",
+	"cites",
+	"feeds_requirement",
+	"feeds_design",
+	"related_to",
+]);
+
+function validateInterviewSource(dir: string, source: unknown, label: string, index: number, errors: string[]): void {
+	if (source === undefined) return;
+	if (typeof source !== "string" || !source.trim()) {
+		errors.push(`Interview source in ${label} record ${index} must be a non-empty string using interview.md#heading`);
+		return;
+	}
+	const match = /^interview\.md#([A-Za-z0-9_.-]+)$/.exec(source);
+	if (!match) {
+		errors.push(`Interview source ${JSON.stringify(source)} in ${label} record ${index} must use interview.md#heading`);
+		return;
+	}
+	const interviewPath = path.join(dir, "interview.md");
+	if (!fs.existsSync(interviewPath)) {
+		errors.push(
+			`Interview source ${JSON.stringify(source)} in ${label} record ${index} references missing interview.md`,
+		);
+		return;
+	}
+	if (!markdownAnchors(fs.readFileSync(interviewPath, "utf8")).has(match[1].toLowerCase()))
+		errors.push(`Interview source ${JSON.stringify(source)} in ${label} record ${index} references missing heading`);
+}
+
+function validateInterviewRecords(
+	dir: string,
+	records: JsonRecord[],
+	label: string,
+	requirementIds: Set<string>,
+	designIds: Set<string>,
+	factIds: Set<string>,
+	errors: string[],
+): void {
+	for (const [index, record] of records.entries()) {
+		const row = index + 1;
+		const id = String(record.id || "");
+		const type = String(record.type || "");
+		if (!id) errors.push(`Missing id in ${label} record ${row}`);
+		if (!INTERVIEW_NODE_TYPES.has(type))
+			errors.push(`Invalid interview node type ${JSON.stringify(record.type)} in ${label} record ${row}`);
+		for (const field of ["title", "summary"])
+			if (!record[field]) errors.push(`Missing ${field} in ${label} record ${row}`);
+		if (record.status && !INTERVIEW_STATUSES.has(String(record.status)))
+			errors.push(`Invalid interview status ${JSON.stringify(record.status)} in ${label} record ${row}`);
+		for (const field of ["requirement_refs", "design_refs", "fact_refs", "decision_refs", "depends_on"])
+			if (record[field] !== undefined && !Array.isArray(record[field]))
+				errors.push(`${field} must be an array in ${label} record ${row}`);
+		for (const ref of Array.isArray(record.requirement_refs) ? record.requirement_refs : [])
+			if (!requirementIds.has(String(ref)))
+				errors.push(`Interview node ${id} references missing requirement ${JSON.stringify(ref)}`);
+		for (const ref of Array.isArray(record.design_refs) ? record.design_refs : [])
+			if (!designIds.has(String(ref)))
+				errors.push(`Interview node ${id} references missing design ${JSON.stringify(ref)}`);
+		for (const ref of Array.isArray(record.fact_refs) ? record.fact_refs : [])
+			if (!factIds.has(String(ref))) errors.push(`Interview node ${id} references missing fact ${JSON.stringify(ref)}`);
+		validateInterviewSource(dir, record.source, label, row, errors);
+	}
+}
+
+function validateInterviewEdges(records: JsonRecord[], label: string, allowed: Set<string>, errors: string[]): void {
+	for (const [index, record] of records.entries()) {
+		if (!record.from || !record.to || !record.type) {
+			errors.push(`Interview edge in ${label} record ${index + 1} must include from, to, and type`);
+			continue;
+		}
+		if (!INTERVIEW_EDGE_TYPES.has(String(record.type)))
+			errors.push(`Invalid interview edge type ${JSON.stringify(record.type)} in ${label} record ${index + 1}`);
+		for (const [endpointName, endpoint] of [
+			["from", record.from],
+			["to", record.to],
+		] as const) {
+			const value = String(endpoint);
+			if (allowed.has(value)) continue;
+			if (/^(file|doc|symbol|dependency):/.test(value)) continue;
+			errors.push(`Unresolved ${endpointName} endpoint ${JSON.stringify(value)} in ${label} record ${index + 1}`);
+		}
+	}
+}
+
 const DESIGN_NODE_TYPES = new Set(["design-decision", "design-alternative", "design-component", "design-risk"]);
 const DESIGN_STATUSES = new Set(["proposed", "accepted", "rejected", "superseded", "implemented"]);
 const DESIGN_EDGE_TYPES = new Set([
@@ -702,6 +803,8 @@ function validateTopic(options: Record<string, string | boolean | string[]>): Va
 	const requirementEdges = read("requirements.edges.jsonl");
 	const designNodes = read("design.nodes.jsonl");
 	const designEdges = read("design.edges.jsonl");
+	const interviewNodes = read("interview.nodes.jsonl");
+	const interviewEdges = read("interview.edges.jsonl");
 	const receiptResult = readJsonl(path.join(dir, "receipts.jsonl"));
 	errors.push(...receiptResult.errors);
 	const contextPackResult = readJsonl(path.join(dir, "context-packs.jsonl"));
@@ -720,7 +823,8 @@ function validateTopic(options: Record<string, string | boolean | string[]>): Va
 	const planIds = validateUnique(planNodes, "plan.nodes.jsonl", errors);
 	const requirementIds = validateUnique(requirementNodes, "requirements.nodes.jsonl", errors);
 	const designIds = validateUnique(designNodes, "design.nodes.jsonl", errors);
-	const allowed = new Set([...mapIds, ...factIdsAll, ...planIds, ...requirementIds, ...designIds]);
+	const interviewIds = validateUnique(interviewNodes, "interview.nodes.jsonl", errors);
+	const allowed = new Set([...mapIds, ...factIdsAll, ...planIds, ...requirementIds, ...designIds, ...interviewIds]);
 	validateEdges(mapEdges, "map.edges.jsonl", allowed, errors);
 	validateEdges(factEdges, "facts.edges.jsonl", allowed, errors);
 	validateEdges(planEdges, "plan.edges.jsonl", allowed, errors);
@@ -742,6 +846,16 @@ function validateTopic(options: Record<string, string | boolean | string[]>): Va
 		errors,
 	);
 	validateDesignEdges(designEdges, "design.edges.jsonl", allowed, errors);
+	validateInterviewRecords(
+		dir,
+		interviewNodes,
+		"interview.nodes.jsonl",
+		requirementIds,
+		designIds,
+		factIdsForRequirements,
+		errors,
+	);
+	validateInterviewEdges(interviewEdges, "interview.edges.jsonl", allowed, errors);
 	validateFileRefs(
 		root,
 		[
@@ -755,6 +869,8 @@ function validateTopic(options: Record<string, string | boolean | string[]>): Va
 			...requirementEdges,
 			...designNodes,
 			...designEdges,
+			...interviewNodes,
+			...interviewEdges,
 		],
 		errors,
 	);
@@ -768,6 +884,8 @@ function validateTopic(options: Record<string, string | boolean | string[]>): Va
 	validateLifecycleAndRetrievalMetadata(requirementEdges, "requirements.edges.jsonl", errors, warnings);
 	validateLifecycleAndRetrievalMetadata(designNodes, "design.nodes.jsonl", errors, warnings);
 	validateLifecycleAndRetrievalMetadata(designEdges, "design.edges.jsonl", errors, warnings);
+	validateLifecycleAndRetrievalMetadata(interviewNodes, "interview.nodes.jsonl", errors, warnings);
+	validateLifecycleAndRetrievalMetadata(interviewEdges, "interview.edges.jsonl", errors, warnings);
 	validateNoPrivateArtifactRefs(mapNodes, "map.nodes.jsonl", errors);
 	validateNoPrivateArtifactRefs(mapEdges, "map.edges.jsonl", errors);
 	validateNoPrivateArtifactRefs(factNodes, "facts.nodes.jsonl", errors);
@@ -778,6 +896,8 @@ function validateTopic(options: Record<string, string | boolean | string[]>): Va
 	validateNoPrivateArtifactRefs(requirementEdges, "requirements.edges.jsonl", errors);
 	validateNoPrivateArtifactRefs(designNodes, "design.nodes.jsonl", errors);
 	validateNoPrivateArtifactRefs(designEdges, "design.edges.jsonl", errors);
+	validateNoPrivateArtifactRefs(interviewNodes, "interview.nodes.jsonl", errors);
+	validateNoPrivateArtifactRefs(interviewEdges, "interview.edges.jsonl", errors);
 	validateNoPrivateArtifactRefs(receiptResult.records, "receipts.jsonl", errors);
 	validateNoPrivateArtifactRefs(contextPackResult.records, "context-packs.jsonl", errors);
 	validateReceiptRecords(receiptResult.records, "receipts.jsonl", errors);
@@ -819,6 +939,8 @@ function validateTopic(options: Record<string, string | boolean | string[]>): Va
 			requirement_edges: requirementEdges.length,
 			design_nodes: designNodes.length,
 			design_edges: designEdges.length,
+			interview_nodes: interviewNodes.length,
+			interview_edges: interviewEdges.length,
 			receipts: receiptResult.records.length,
 			context_packs: contextPackResult.records.length,
 			evidence_files: evidenceFileCount,
@@ -882,6 +1004,8 @@ const READ_ONLY_ARTIFACT_FILES: Record<string, string> = {
 	"requirements.edges": "requirements.edges.jsonl",
 	"design.nodes": "design.nodes.jsonl",
 	"design.edges": "design.edges.jsonl",
+	"interview.nodes": "interview.nodes.jsonl",
+	"interview.edges": "interview.edges.jsonl",
 	receipts: "receipts.jsonl",
 	"context-packs": "context-packs.jsonl",
 	"evidence-manifest": path.join("evidence", "manifest.jsonl"),

@@ -84,6 +84,12 @@ type CartographerArtifactsParams = OutputShapeParams & {
 		| "facts.edges"
 		| "plan.nodes"
 		| "plan.edges"
+		| "requirements.nodes"
+		| "requirements.edges"
+		| "design.nodes"
+		| "design.edges"
+		| "interview.nodes"
+		| "interview.edges"
 		| "receipts"
 		| "context-packs"
 		| "evidence-manifest";
@@ -1003,6 +1009,12 @@ export default function cartographerTools(pi: PiApi): void {
 						Type.Literal("facts.edges"),
 						Type.Literal("plan.nodes"),
 						Type.Literal("plan.edges"),
+						Type.Literal("requirements.nodes"),
+						Type.Literal("requirements.edges"),
+						Type.Literal("design.nodes"),
+						Type.Literal("design.edges"),
+						Type.Literal("interview.nodes"),
+						Type.Literal("interview.edges"),
 						Type.Literal("receipts"),
 						Type.Literal("context-packs"),
 						Type.Literal("evidence-manifest"),

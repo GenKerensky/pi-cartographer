@@ -333,6 +333,103 @@ def validate_requirement_edges(
             errors.append(f"Unresolved {endpoint_name} endpoint {endpoint!r} in {label} record {index}")
 
 
+INTERVIEW_NODE_TYPES = {
+    "candidate-question",
+    "researched-answer",
+    "recommendation",
+    "user-answer",
+    "accepted-decision",
+    "deferred-choice",
+    "unresolved-blocker",
+}
+INTERVIEW_STATUSES = {"draft", "asked", "answered", "accepted", "deferred", "blocked", "superseded"}
+INTERVIEW_EDGE_TYPES = {
+    "depends_on",
+    "answered_by",
+    "recommended_by",
+    "decides",
+    "deferred_by",
+    "blocks",
+    "supersedes",
+    "cites",
+    "feeds_requirement",
+    "feeds_design",
+    "related_to",
+}
+
+
+def validate_interview_source(topic_dir: Path, source: Any, label: str, index: int, errors: list[str]) -> None:
+    if source is None:
+        return
+    if not isinstance(source, str) or not source.strip():
+        errors.append(
+            f"Interview source in {label} record {index} must be a non-empty string using interview.md#heading"
+        )
+        return
+    match = re.match(r"^interview\.md#([A-Za-z0-9_.-]+)$", source)
+    if not match:
+        errors.append(f"Interview source {source!r} in {label} record {index} must use interview.md#heading")
+        return
+    interview_path = topic_dir / "interview.md"
+    if not interview_path.exists():
+        errors.append(f"Interview source {source!r} in {label} record {index} references missing interview.md")
+        return
+    if match.group(1).lower() not in markdown_anchors(interview_path.read_text(encoding="utf-8")):
+        errors.append(f"Interview source {source!r} in {label} record {index} references missing heading")
+
+
+def validate_interview_records(
+    topic_dir: Path,
+    records: list[dict[str, Any]],
+    label: str,
+    requirement_ids: set[str],
+    design_ids: set[str],
+    fact_ids: set[str],
+    errors: list[str],
+) -> None:
+    for index, record in enumerate(records, start=1):
+        record_id = str(record.get("id") or "")
+        record_type = record.get("type")
+        if not record_id:
+            errors.append(f"Missing id in {label} record {index}")
+        if record_type not in INTERVIEW_NODE_TYPES:
+            errors.append(f"Invalid interview node type {record_type!r} in {label} record {index}")
+        for field in ["title", "summary"]:
+            if not record.get(field):
+                errors.append(f"Missing {field} in {label} record {index}")
+        if record.get("status") and record.get("status") not in INTERVIEW_STATUSES:
+            errors.append(f"Invalid interview status {record.get('status')!r} in {label} record {index}")
+        for field in ["requirement_refs", "design_refs", "fact_refs", "decision_refs", "depends_on"]:
+            if field in record and not isinstance(record.get(field), list):
+                errors.append(f"{field} must be an array in {label} record {index}")
+        for ref in record.get("requirement_refs", []) if isinstance(record.get("requirement_refs"), list) else []:
+            if str(ref) not in requirement_ids:
+                errors.append(f"Interview node {record_id} references missing requirement {ref!r}")
+        for ref in record.get("design_refs", []) if isinstance(record.get("design_refs"), list) else []:
+            if str(ref) not in design_ids:
+                errors.append(f"Interview node {record_id} references missing design {ref!r}")
+        for ref in record.get("fact_refs", []) if isinstance(record.get("fact_refs"), list) else []:
+            if str(ref) not in fact_ids:
+                errors.append(f"Interview node {record_id} references missing fact {ref!r}")
+        validate_interview_source(topic_dir, record.get("source"), label, index, errors)
+
+
+def validate_interview_edges(
+    records: list[dict[str, Any]], label: str, allowed_ids: set[str], errors: list[str]
+) -> None:
+    for index, record in enumerate(records, start=1):
+        if not record.get("from") or not record.get("to") or not record.get("type"):
+            errors.append(f"Interview edge in {label} record {index} must include from, to, and type")
+            continue
+        if record.get("type") not in INTERVIEW_EDGE_TYPES:
+            errors.append(f"Invalid interview edge type {record.get('type')!r} in {label} record {index}")
+        for endpoint_name in ["from", "to"]:
+            endpoint = str(record.get(endpoint_name))
+            if endpoint in allowed_ids or endpoint.startswith(("file:", "doc:", "symbol:", "dependency:")):
+                continue
+            errors.append(f"Unresolved {endpoint_name} endpoint {endpoint!r} in {label} record {index}")
+
+
 DESIGN_NODE_TYPES = {"design-decision", "design-alternative", "design-component", "design-risk"}
 DESIGN_STATUSES = {"proposed", "accepted", "rejected", "superseded", "implemented"}
 DESIGN_EDGE_TYPES = {
@@ -696,6 +793,8 @@ def main() -> int:
     requirement_edges = read_jsonl(topic_dir / "requirements.edges.jsonl", errors)
     design_nodes = read_jsonl(topic_dir / "design.nodes.jsonl", errors)
     design_edges = read_jsonl(topic_dir / "design.edges.jsonl", errors)
+    interview_nodes = read_jsonl(topic_dir / "interview.nodes.jsonl", errors)
+    interview_edges = read_jsonl(topic_dir / "interview.edges.jsonl", errors)
     receipts = read_jsonl(topic_dir / "receipts.jsonl", errors)
     context_packs = read_jsonl(topic_dir / "context-packs.jsonl", errors)
     retrieval_misses = read_jsonl(root / ".plan/_retrieval/misses.jsonl", errors)
@@ -712,8 +811,9 @@ def main() -> int:
     plan_ids = validate_unique_ids(plan_nodes, topic_dir / "plan.nodes.jsonl", errors)
     requirement_ids = validate_unique_ids(requirement_nodes, topic_dir / "requirements.nodes.jsonl", errors)
     design_ids = validate_unique_ids(design_nodes, topic_dir / "design.nodes.jsonl", errors)
+    interview_ids = validate_unique_ids(interview_nodes, topic_dir / "interview.nodes.jsonl", errors)
     graph_ids = {str(node.get("id")) for node in graph.get("nodes", []) if isinstance(node, dict) and node.get("id")}
-    allowed_ids = map_ids | fact_ids_all | plan_ids | requirement_ids | design_ids | graph_ids
+    allowed_ids = map_ids | fact_ids_all | plan_ids | requirement_ids | design_ids | interview_ids | graph_ids
 
     validate_edges(map_edges, topic_dir / "map.edges.jsonl", allowed_ids, db_path, errors)
     validate_edges(fact_edges, topic_dir / "facts.edges.jsonl", allowed_ids, db_path, errors)
@@ -726,6 +826,16 @@ def main() -> int:
         topic_dir, design_nodes, design_edges, "design.nodes.jsonl", requirement_ids, fact_ids_for_requirements, errors
     )
     validate_design_edges(design_edges, "design.edges.jsonl", allowed_ids, db_path, errors)
+    validate_interview_records(
+        topic_dir,
+        interview_nodes,
+        "interview.nodes.jsonl",
+        requirement_ids,
+        design_ids,
+        fact_ids_for_requirements,
+        errors,
+    )
+    validate_interview_edges(interview_edges, "interview.edges.jsonl", allowed_ids, errors)
     validate_file_references(
         root,
         [
@@ -739,6 +849,8 @@ def main() -> int:
             *requirement_edges,
             *design_nodes,
             *design_edges,
+            *interview_nodes,
+            *interview_edges,
         ],
         topic_dir,
         errors,
@@ -753,6 +865,8 @@ def main() -> int:
     validate_lifecycle_and_retrieval_metadata(requirement_edges, "requirements.edges.jsonl", errors, warnings)
     validate_lifecycle_and_retrieval_metadata(design_nodes, "design.nodes.jsonl", errors, warnings)
     validate_lifecycle_and_retrieval_metadata(design_edges, "design.edges.jsonl", errors, warnings)
+    validate_lifecycle_and_retrieval_metadata(interview_nodes, "interview.nodes.jsonl", errors, warnings)
+    validate_lifecycle_and_retrieval_metadata(interview_edges, "interview.edges.jsonl", errors, warnings)
     validate_no_private_artifact_refs(map_nodes, "map.nodes.jsonl", errors)
     validate_no_private_artifact_refs(map_edges, "map.edges.jsonl", errors)
     validate_no_private_artifact_refs(fact_nodes, "facts.nodes.jsonl", errors)
@@ -763,6 +877,8 @@ def main() -> int:
     validate_no_private_artifact_refs(requirement_edges, "requirements.edges.jsonl", errors)
     validate_no_private_artifact_refs(design_nodes, "design.nodes.jsonl", errors)
     validate_no_private_artifact_refs(design_edges, "design.edges.jsonl", errors)
+    validate_no_private_artifact_refs(interview_nodes, "interview.nodes.jsonl", errors)
+    validate_no_private_artifact_refs(interview_edges, "interview.edges.jsonl", errors)
     validate_no_private_artifact_refs(receipts, "receipts.jsonl", errors)
     validate_no_private_artifact_refs(context_packs, "context-packs.jsonl", errors)
     validate_receipt_records(receipts, "receipts.jsonl", errors)
@@ -809,6 +925,8 @@ def main() -> int:
             "requirement_edges": len(requirement_edges),
             "design_nodes": len(design_nodes),
             "design_edges": len(design_edges),
+            "interview_nodes": len(interview_nodes),
+            "interview_edges": len(interview_edges),
             "receipts": len(receipts),
             "context_packs": len(context_packs),
             "evidence_files": evidence_file_count,
