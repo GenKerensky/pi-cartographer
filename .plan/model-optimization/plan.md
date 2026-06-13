@@ -305,7 +305,7 @@ Keep docs concise and user-facing; leave deep implementation details in the ADR/
 
 ### Phase P5 — Validation and Finalization
 
-- **Status:** pending
+- **Status:** blocked
 - **Depends on:** P4
 - **Unlocks:** implementation-ready
 - **Primary references:** `package.json`, `skills/plan/scripts/validate_planning_graph.py`, `.plan/model-optimization/requirements.nodes.jsonl`, `.plan/model-optimization/design.nodes.jsonl`, `[REQ-01]` through `[REQ-17]`
