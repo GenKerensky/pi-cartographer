@@ -36,6 +36,7 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>): React.JS
 			<body>
 				<nav className="sr-only" aria-label="Dashboard routes">
 					<Link to="/">Overview</Link>
+					<Link to="/topics">Topics</Link>
 					<Link to="/topics/$topic" params={{ topic: "demo" }}>
 						Demo topic
 					</Link>

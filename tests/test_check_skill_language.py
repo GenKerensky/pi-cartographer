@@ -33,12 +33,11 @@ class CheckSkillLanguageTests(unittest.TestCase):
         )
         return path
 
-    def write_agent(self, root: Path, name: str, *, model: bool = True) -> Path:
+    def write_agent(self, root: Path, name: str) -> Path:
         path = root / ".pi" / "agents" / f"{name}.md"
         path.parent.mkdir(parents=True, exist_ok=True)
-        model_line = "model: openai-codex/gpt-5.5\n" if model else ""
         path.write_text(
-            f"---\nname: {name}\ndescription: Test agent\n{model_line}tools: read,bash\n---\n\nRead-only test agent.\n",
+            f"---\nname: {name}\ndescription: Test agent\ntools: read,bash\n---\n\nRead-only test agent.\n",
             encoding="utf-8",
         )
         return path
@@ -74,17 +73,17 @@ class CheckSkillLanguageTests(unittest.TestCase):
             payload = json.loads(result.stdout)
             self.assertEqual(payload["counts"]["blocking_findings"], 1)
 
-    def test_agent_requires_explicit_model(self) -> None:
+    def test_agent_models_are_configured_outside_agent_declarations(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             self.write_skill(root, "dashboard", "Run deterministic commands only.\n")
-            self.write_agent(root, "cartographer-compass", model=False)
+            self.write_agent(root, "cartographer-compass")
 
-            result = self.run_checker(root)
+            result = self.run_checker(root, "--strict")
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             payload = json.loads(result.stdout)
-            self.assertFalse(payload["ok"])
-            self.assertEqual(payload["findings"][0]["code"], "MISSING_AGENT_MODEL")
+            self.assertTrue(payload["ok"])
+            self.assertEqual(payload["counts"]["blocking_findings"], 0)
 
     def test_clean_fixture_has_no_blocking_findings(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

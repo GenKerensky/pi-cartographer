@@ -175,19 +175,6 @@ def scan_markdown_file(root: Path, path: Path, max_lines: int) -> list[Finding]:
                 )
             )
 
-    if relative.startswith(".pi/agents/") and not frontmatter.get("model"):
-        findings.append(
-            Finding(
-                code="MISSING_AGENT_MODEL",
-                severity="error",
-                path=relative,
-                line=1,
-                message="Agent frontmatter must declare an explicit model.",
-                text="",
-                blocking=True,
-            )
-        )
-
     for line_number, line in enumerate(lines, start=1):
         stripped = line.strip()
         if not stripped or stripped.startswith("#"):

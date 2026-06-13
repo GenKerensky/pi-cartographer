@@ -3,6 +3,7 @@ import Markdown from "react-markdown";
 import type { Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { codeToHtml } from "shiki";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { ReferenceIndex, ResolvedReference } from "./reference-resolver.js";
 import { extractReferenceTokens, referenceDomId, resolveReference } from "./reference-resolver.js";
 
@@ -89,9 +90,26 @@ function safeMarkdownHref(href: string | undefined): { href?: string; external?:
 	return { href: localFileHref(href), external: false };
 }
 
+function blockedLocalFileReference(href: string): ResolvedReference | undefined {
+	if (!isBlockedLocalPath(href)) return undefined;
+	const message = href.includes(".plan/_private")
+		? "Private planning inputs are blocked"
+		: "Outside-root files are blocked";
+	return {
+		input: href,
+		kind: "file",
+		status: "blocked",
+		path: href,
+		message,
+	};
+}
+
 function markdownUrlTransform(url: string): string {
 	if (url.startsWith("cartographer-ref:")) return url;
-	return safeMarkdownHref(url).href ?? "#blocked-link";
+	const safe = safeMarkdownHref(url);
+	if (safe.href) return safe.href;
+	if (isBlockedLocalPath(url)) return url;
+	return "#blocked-link";
 }
 
 function referenceTitle(reference: ResolvedReference): string {
@@ -103,6 +121,130 @@ function referenceTitle(reference: ResolvedReference): string {
 		.filter(Boolean)
 		.join(" · ");
 	return parts || reference.message || reference.input;
+}
+
+function referenceStatusLabel(status: ResolvedReference["status"]): string {
+	switch (status) {
+		case "resolved":
+			return "Resolved reference";
+		case "missing":
+			return "Missing reference";
+		case "ambiguous":
+			return "Ambiguous reference";
+		case "blocked":
+			return "Blocked reference";
+		default:
+			return "Reference";
+	}
+}
+
+function referenceStatusVariant(status: ResolvedReference["status"]): string {
+	switch (status) {
+		case "resolved":
+			return "success";
+		case "missing":
+			return "warning";
+		case "ambiguous":
+			return "warning";
+		case "blocked":
+			return "destructive";
+		default:
+			return "outline";
+	}
+}
+
+function ReferencePopoverBody({ reference }: { reference: ResolvedReference }): React.JSX.Element {
+	const status = referenceStatusLabel(reference.status);
+	const variant = referenceStatusVariant(reference.status);
+	return (
+		<div className="space-y-1" data-reference-popover-body data-reference-status={reference.status}>
+			<p className="text-[10px] font-semibold uppercase tracking-wider" data-reference-popover-status>
+				{status}
+			</p>
+			<p className="text-sm font-medium" data-reference-popover-label>
+				{reference.label ?? reference.input}
+			</p>
+			{reference.kind ? (
+				<p className="text-[10px] uppercase tracking-wider text-muted-foreground" data-reference-popover-kind>
+					{reference.kind}
+				</p>
+			) : null}
+			{reference.sourceLabel ? (
+				<p className="text-xs text-muted-foreground" data-reference-popover-source>
+					Source: {reference.sourceLabel}
+				</p>
+			) : null}
+			{reference.path ? (
+				<p className="break-all text-xs text-muted-foreground" data-reference-popover-path>
+					{reference.path}
+				</p>
+			) : null}
+			{reference.href ? (
+				<p className="break-all text-[10px] text-muted-foreground" data-reference-popover-href>
+					{reference.href}
+				</p>
+			) : null}
+			{reference.candidates && reference.candidates.length > 0 ? (
+				<p className="text-xs" data-reference-popover-candidates>
+					Candidates: {reference.candidates.join(", ")}
+				</p>
+			) : null}
+			{reference.message ? (
+				<p className="text-xs" data-reference-popover-message data-reference-variant={variant}>
+					{reference.message}
+				</p>
+			) : null}
+		</div>
+	);
+}
+
+export function ReferencePopoverLink({
+	href,
+	external,
+	reference,
+	children,
+}: {
+	href?: string;
+	external?: boolean;
+	reference: ResolvedReference;
+	children: React.ReactNode;
+}): React.JSX.Element {
+	const ariaLabel = referenceTitle(reference);
+	return (
+		<TooltipProvider delayDuration={150} skipDelayDuration={300}>
+			<Tooltip>
+				<TooltipTrigger asChild>
+					<a
+						href={href}
+						target={external ? "_blank" : undefined}
+						rel={external ? "noreferrer" : undefined}
+						className="font-medium text-primary underline decoration-primary/40 underline-offset-4 hover:decoration-primary"
+						data-reference={reference.input}
+						data-reference-status={reference.status}
+						data-reference-kind={reference.kind}
+						data-reference-popover
+						aria-label={ariaLabel}
+					>
+						{children}
+						{reference.sourceLabel ? (
+							<span className="sr-only"> source {reference.sourceLabel}</span>
+						) : null}
+					</a>
+				</TooltipTrigger>
+				<TooltipContent
+					className="max-w-xs"
+					data-reference-popover-content
+					data-reference-status={reference.status}
+				>
+					<ReferencePopoverBody reference={reference} />
+				</TooltipContent>
+			</Tooltip>
+		</TooltipProvider>
+	);
+}
+
+export function isReferenceResolvedForPopover(reference: ResolvedReference | undefined): reference is ResolvedReference {
+	return Boolean(reference);
 }
 
 function referenceLinkProps(
@@ -208,7 +350,14 @@ export function MarkdownPreview({
 		() => ({
 			a({ href, children, ...props }) {
 				const link = referenceLinkProps(href, referenceIndex);
-				const reference = link.reference;
+				const reference = link.reference ?? (href ? blockedLocalFileReference(href) : undefined);
+				if (reference) {
+					return (
+						<ReferencePopoverLink href={link.href} external={link.external} reference={reference}>
+							{children}
+						</ReferencePopoverLink>
+					);
+				}
 				return (
 					<a
 						{...props}
@@ -216,13 +365,8 @@ export function MarkdownPreview({
 						target={link.external ? "_blank" : undefined}
 						rel={link.external ? "noreferrer" : undefined}
 						className="font-medium text-primary underline decoration-primary/40 underline-offset-4 hover:decoration-primary"
-						data-reference={reference?.input}
-						data-reference-status={reference?.status}
-						data-reference-kind={reference?.kind}
-						title={reference ? referenceTitle(reference) : undefined}
 					>
 						{children}
-						{reference?.sourceLabel ? <span className="sr-only"> source {reference.sourceLabel}</span> : null}
 					</a>
 				);
 			},

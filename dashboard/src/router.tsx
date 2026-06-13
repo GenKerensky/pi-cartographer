@@ -1,10 +1,11 @@
-import { createRouter } from "@tanstack/react-router";
+import { createRouter, type RouterHistory } from "@tanstack/react-router";
 import { routeTree } from "./routeTree.gen.js";
 
-export function getRouter() {
+export function getRouter(options: { history?: RouterHistory } = {}) {
 	return createRouter({
 		routeTree,
 		scrollRestoration: true,
+		...options,
 	});
 }
 

@@ -1,7 +1,16 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { flushSync } from "react-dom";
 import { createRoot, type Root } from "react-dom/client";
+import { createMemoryHistory, RouterProvider } from "@tanstack/react-router";
 import { DashboardShell } from "../../dashboard/src/App.js";
+import { dashboardRouteDescriptors, defaultDashboardNavHref } from "../../dashboard/src/lib/dashboard-routes.js";
+import {
+	dashboardAdrsQueryKey,
+	dashboardLiveStatusQueryKey,
+	dashboardOverviewQueryKey,
+	dashboardQueryClient,
+} from "../../dashboard/src/lib/dashboard-db.js";
+import { getRouter } from "../../dashboard/src/router.js";
 import type { DashboardOverview, TopicArtifacts } from "../../dashboard/src/shared/models.js";
 import { Button } from "../../dashboard/src/components/ui/button.js";
 import { Card, CardContent, CardHeader, CardTitle } from "../../dashboard/src/components/ui/card.js";
@@ -99,9 +108,55 @@ function topicFixture(): TopicArtifacts {
 	};
 }
 
+function installDashboardFetchMock(): void {
+	const overview = overviewFixture();
+	const topic = topicFixture();
+	dashboardQueryClient.setQueryData(dashboardOverviewQueryKey, [overview]);
+	dashboardQueryClient.setQueryData(dashboardAdrsQueryKey, []);
+	dashboardQueryClient.setQueryData(dashboardLiveStatusQueryKey, [{ state: "manual-refresh", enabled: false }]);
+	vi.stubGlobal(
+		"fetch",
+		vi.fn(async (input: RequestInfo | URL) => {
+			const url = typeof input === "string" ? new URL(input, "http://localhost") : new URL(input instanceof URL ? input : input.url);
+			const payload =
+				url.pathname === "/api/overview"
+					? overview
+					: url.pathname === "/api/topics"
+						? { topics: overview.topics, issues: [] }
+						: url.pathname === "/api/topics/demo"
+							? topic
+							: url.pathname === "/api/adrs"
+								? { adrs: [], graph: { nodes: [], edges: [], warnings: [] }, warnings: [] }
+								: url.pathname === "/api/events/status"
+									? { state: "manual-refresh", enabled: false }
+									: overview.health;
+			return new Response(JSON.stringify({ ok: true, data: payload }), {
+				headers: { "content-type": "application/json" },
+			});
+		}),
+	);
+}
+
+async function waitFor(assertion: () => void, timeoutMs = 1000): Promise<void> {
+	const start = performance.now();
+	let lastError: unknown;
+	while (performance.now() - start < timeoutMs) {
+		try {
+			assertion();
+			return;
+		} catch (error) {
+			lastError = error;
+			await new Promise((resolve) => setTimeout(resolve, 20));
+		}
+	}
+	throw lastError;
+}
+
 afterEach(() => {
 	for (const root of roots.splice(0)) root.unmount();
 	for (const container of containers.splice(0)) container.remove();
+	dashboardQueryClient.clear();
+	vi.unstubAllGlobals();
 	document.documentElement.className = "";
 });
 
@@ -118,7 +173,28 @@ describe("dashboard React shell", () => {
 		expect(container.querySelector("[data-live-state='connected']")?.textContent).toContain("Live: connected");
 	});
 
-	it("activates left navigation and switches document/graph tabs", async () => {
+	it("defines route targets for primary and topic review surfaces", () => {
+		expect(dashboardRouteDescriptors.map((descriptor) => descriptor.id)).toEqual([
+			"overview",
+			"topics",
+			"topic",
+			"documents",
+			"facts",
+			"evidence",
+			"receipts",
+			"health",
+			"graph",
+		]);
+		expect(defaultDashboardNavHref("topic", "demo")).toBe("/topics/demo");
+		expect(defaultDashboardNavHref("documents", "demo", "requirements")).toBe("/topics/demo/documents/requirements");
+		expect(defaultDashboardNavHref("facts", "demo")).toBe("/topics/demo/facts");
+		expect(defaultDashboardNavHref("evidence", "demo")).toBe("/topics/demo/evidence");
+		expect(defaultDashboardNavHref("receipts", "demo")).toBe("/topics/demo/receipts");
+		expect(defaultDashboardNavHref("health", "demo")).toBe("/topics/demo/health");
+		expect(defaultDashboardNavHref("graph", "demo")).toBe("/topics/demo/graph");
+	});
+
+	it("exposes route-owned navigation links and active state", async () => {
 		document.documentElement.classList.add("dark");
 		const container = render(
 			<DashboardShell
@@ -126,18 +202,90 @@ describe("dashboard React shell", () => {
 				initialOverview={overviewFixture()}
 				initialTopic={topicFixture()}
 				disableDataFetch
+				activePage="topics"
 			/>,
 		);
 		await nextFrame();
 
-		const graphNav = container.querySelector<HTMLButtonElement>('[data-nav-item="graph"]');
+		const topicsNav = container.querySelector<HTMLAnchorElement>('a[data-nav-item="topics"]');
+		const graphNav = container.querySelector<HTMLAnchorElement>('a[data-nav-item="graph"]');
+		expect(topicsNav).toBeTruthy();
 		expect(graphNav).toBeTruthy();
-		graphNav?.click();
+		expect(topicsNav?.getAttribute("href")).toBe("/topics");
+		expect(topicsNav?.getAttribute("aria-current")).toBe("page");
+		expect(topicsNav?.getAttribute("data-nav-active")).toBe("true");
+		expect(graphNav?.getAttribute("href")).toBe("/topics/demo/graph");
+		expect(container.querySelector("[data-review-workflow]")?.getAttribute("data-visible-section")).toBe("topics");
+		expect(container.querySelector("[data-topics-list]")).toBeTruthy();
+		expect(container.querySelector("[data-topic-workspace]")).toBeFalsy();
+	});
+
+	it("mounts the generated TanStack route tree for overview and topics navigation", async () => {
+		document.documentElement.classList.add("dark");
+		installDashboardFetchMock();
+		const history = createMemoryHistory({ initialEntries: ["/"] });
+		const router = getRouter({ history });
+		const container = render(<RouterProvider router={router} />);
+
+		await waitFor(() => {
+			expect(container.querySelector('[data-nav-item="overview"]')?.getAttribute("aria-current")).toBe("page");
+			expect(router.state.location.pathname).toBe("/");
+		});
+
+		const topicsNav = container.querySelector<HTMLAnchorElement>('[data-nav-item="topics"]');
+		expect(topicsNav?.getAttribute("href")).toBe("/topics");
+		topicsNav?.click();
+
+		await waitFor(() => {
+			expect(router.state.location.pathname).toBe("/topics");
+			expect(container.querySelector("[data-dashboard-shell]")).toBeTruthy();
+			expect(container.querySelector('[data-nav-item="topics"]')?.getAttribute("aria-current")).toBe("page");
+		});
+	});
+
+	it("uses renderContent to render a focused topic page instead of the giant review workflow", async () => {
+		document.documentElement.classList.add("dark");
+		const overview = overviewFixture();
+		const topic = topicFixture();
+		const container = render(
+			<DashboardShell
+				liveStateOverride="connected"
+				initialOverview={overview}
+				initialTopic={topic}
+				disableDataFetch
+				activePage="graph"
+				routeTopicId={topic.topic.id}
+				renderContent={({ selectedTopic, activePage }) =>
+					selectedTopic ? (
+						<div data-render-content data-active-page={activePage}>
+							facts
+						</div>
+					) : null
+				}
+			/>,
+		);
 		await nextFrame();
 
-		expect(graphNav?.getAttribute("data-nav-active")).toBe("true");
-		const activeTab = container.querySelector('[role="tab"][data-state="active"]');
-		expect(activeTab?.textContent).toContain("Graph");
+		expect(container.querySelector("[data-render-content]")).toBeTruthy();
+		expect(container.querySelector('[data-active-page="graph"]')).toBeTruthy();
+		expect(container.querySelector("[data-review-workflow]")).toBeFalsy();
+	});
+
+	it("falls back to the giant review workflow when renderContent is not provided", async () => {
+		document.documentElement.classList.add("dark");
+		const container = render(
+			<DashboardShell
+				liveStateOverride="connected"
+				initialOverview={overviewFixture()}
+				initialTopic={topicFixture()}
+				disableDataFetch
+				activePage="topics"
+			/>,
+		);
+		await nextFrame();
+
+		expect(container.querySelector("[data-review-workflow]")).toBeTruthy();
+		expect(container.querySelector("[data-topics-list]")).toBeTruthy();
 	});
 
 	it("exposes Tailwind/shadcn tokens, focus styles, and reduced-motion classes", async () => {

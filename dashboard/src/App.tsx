@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
+import { Link } from "@tanstack/react-router";
 import { Activity, Boxes, FileText, GitBranch, Radar, ShieldCheck, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,7 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
-import { DashboardReviewWorkflow, type DashboardSectionId } from "@/features/review-workflow";
+import { DashboardReviewWorkflow } from "@/features/review-workflow";
 import {
 	dashboardQueryClient,
 	useAdrs,
@@ -21,13 +22,28 @@ import {
 } from "@/lib/dashboard-db";
 import { useLiveConnection, type LiveConnectionState } from "@/lib/events";
 import { invalidateCollectionsForLiveReloadEvent } from "@/lib/live-refetch";
+import {
+	dashboardRouteLinkTarget,
+	defaultDashboardNavHref,
+	routeDescriptor,
+	topicTabForPage,
+	type DashboardPageId,
+	type DashboardRouteDescriptor,
+	type DashboardTopicDocumentKind,
+} from "@/lib/dashboard-routes";
+import { cn } from "@/lib/utils";
 import type { AdrCollection, DashboardOverview, TopicArtifacts } from "./shared/models.js";
 
-const navigation: { id: DashboardSectionId; label: string; icon: typeof Activity; status: "ready" }[] = [
-	{ id: "overview", label: "Overview", icon: Activity, status: "ready" },
-	{ id: "topics", label: "Topics", icon: Boxes, status: "ready" },
-	{ id: "documents", label: "Documents", icon: FileText, status: "ready" },
-	{ id: "graph", label: "Graph", icon: GitBranch, status: "ready" },
+type DashboardNavItem = DashboardRouteDescriptor & {
+	icon: typeof Activity;
+	status: "ready";
+};
+
+export const dashboardNavigation: DashboardNavItem[] = [
+	{ ...routeDescriptor("overview"), icon: Activity, status: "ready" },
+	{ ...routeDescriptor("topics"), icon: Boxes, status: "ready" },
+	{ ...routeDescriptor("documents"), icon: FileText, status: "ready" },
+	{ ...routeDescriptor("graph"), icon: GitBranch, status: "ready" },
 ];
 
 const metrics = [
@@ -57,7 +73,21 @@ export type DashboardShellProps = {
 	initialAdrs?: AdrCollection;
 	disableDataFetch?: boolean;
 	routeTopicId?: string;
+	activePage?: DashboardPageId;
+	activeDocumentKind?: DashboardTopicDocumentKind;
+	useRouterLinks?: boolean;
+	navigationHref?: (page: DashboardPageId, topicId?: string, documentKind?: DashboardTopicDocumentKind) => string;
 	onTopicNavigate?: (topicId: string) => void;
+	renderContent?: (context: DashboardShellContentContext) => React.ReactNode;
+};
+
+export type DashboardShellContentContext = {
+	overview: DashboardOverview | undefined;
+	selectedTopic: TopicArtifacts | undefined;
+	selectedTopicId: string | undefined;
+	adrs: AdrCollection | undefined;
+	activePage: DashboardPageId;
+	activeDocumentKind: DashboardTopicDocumentKind;
 };
 
 export function DashboardShell({
@@ -67,8 +97,14 @@ export function DashboardShell({
 	initialAdrs,
 	disableDataFetch = false,
 	routeTopicId,
+	activePage,
+	activeDocumentKind = "proposal",
+	useRouterLinks = false,
+	navigationHref = defaultDashboardNavHref,
 	onTopicNavigate,
+	renderContent,
 }: DashboardShellProps): React.JSX.Element {
+	const activeSection = activePage ?? (routeTopicId ? "topic" : "overview");
 	const live = useLiveConnection(liveStateOverride === undefined);
 	const liveStatusSnapshot = useLiveStatus(!disableDataFetch);
 	const liveEventSnapshot = useLatestLiveReloadEvent(!disableDataFetch);
@@ -79,12 +115,15 @@ export function DashboardShell({
 	const liveState = liveStateOverride ?? collectionLiveState ?? live.state;
 	const overviewSnapshot = useDashboardOverview(!disableDataFetch);
 	const adrsSnapshot = useAdrs(!disableDataFetch);
-	const [selectedTopicId, setSelectedTopicId] = useState<string | undefined>(routeTopicId ?? initialTopic?.topic.id);
-	const [activeSection, setActiveSection] = useState<DashboardSectionId>(routeTopicId ? "documents" : "overview");
 	const overview = disableDataFetch ? initialOverview : (overviewSnapshot.overview ?? initialOverview);
-	const effectiveTopicId = routeTopicId ?? selectedTopicId ?? initialTopic?.topic.id ?? overview?.topics[0]?.id;
-	const selectedTopicSnapshot = useTopicArtifacts(effectiveTopicId, !disableDataFetch);
-	const selectedTopic = disableDataFetch ? initialTopic : (selectedTopicSnapshot.artifacts ?? initialTopic);
+	const routeRequiresTopic = routeDescriptor(activeSection).requiresTopic === true;
+	const effectiveTopicId = routeTopicId ?? initialTopic?.topic.id ?? (routeRequiresTopic ? overview?.topics[0]?.id : undefined);
+	const selectedTopicSnapshot = useTopicArtifacts(effectiveTopicId, !disableDataFetch && routeRequiresTopic);
+	const selectedTopic = routeRequiresTopic
+		? disableDataFetch
+			? initialTopic
+			: (selectedTopicSnapshot.artifacts ?? initialTopic)
+		: undefined;
 	const adrs = useMemo<AdrCollection | undefined>(() => {
 		if (disableDataFetch) return initialAdrs;
 		return {
@@ -93,22 +132,8 @@ export function DashboardShell({
 			warnings: initialAdrs?.warnings ?? [],
 		};
 	}, [adrsSnapshot.rows, disableDataFetch, initialAdrs]);
-	const loadError = [overviewSnapshot, selectedTopicSnapshot, adrsSnapshot].some((snapshot) => snapshot.isError)
-		? "Dashboard collection load failed"
-		: undefined;
-
-	useEffect(() => {
-		if (routeTopicId) {
-			setSelectedTopicId(routeTopicId);
-			setActiveSection("documents");
-		}
-	}, [routeTopicId]);
-
-	useEffect(() => {
-		if (!selectedTopicId && overview?.topics[0]?.id) {
-			setSelectedTopicId(overview.topics[0].id);
-		}
-	}, [overview, selectedTopicId]);
+	const snapshots = routeRequiresTopic ? [overviewSnapshot, selectedTopicSnapshot, adrsSnapshot] : [overviewSnapshot, adrsSnapshot];
+	const loadError = snapshots.some((snapshot) => snapshot.isError) ? "Dashboard collection load failed" : undefined;
 
 	useEffect(() => {
 		if (disableDataFetch || !live.lastEvent) return;
@@ -117,23 +142,10 @@ export function DashboardShell({
 		}).catch(() => undefined);
 	}, [disableDataFetch, effectiveTopicId, live.lastEvent]);
 
-	useEffect(() => {
-		const id = activeSection === "graph" ? "dashboard-section-graph" : `dashboard-section-${activeSection}`;
-		const timeout = window.setTimeout(() => {
-			document.getElementById(id)?.scrollIntoView({ block: "start", behavior: "smooth" });
-		}, 0);
-		return () => window.clearTimeout(timeout);
-	}, [activeSection, selectedTopic?.topic.id]);
-
 	const handleTopicSelect = (topicId: string): void => {
-		setSelectedTopicId(topicId);
-		setActiveSection("documents");
 		onTopicNavigate?.(topicId);
 	};
-
-	const handleSectionNav = (section: DashboardSectionId): void => {
-		setActiveSection(section);
-	};
+	const activeTopicTab = topicTabForPage(activeSection, activeDocumentKind);
 
 	return (
 		<TooltipProvider>
@@ -157,23 +169,44 @@ export function DashboardShell({
 						</div>
 						<Separator />
 						<nav className="flex gap-2 overflow-x-auto p-3 lg:grid lg:overflow-visible" aria-label="Dashboard sections">
-							{navigation.map((item) => (
-								<Button
-									key={item.label}
-									type="button"
-									variant={activeSection === item.id ? "secondary" : "ghost"}
-									className="shrink-0 justify-start gap-3 rounded-lg px-3 lg:w-full"
-									data-nav-item={item.id}
-									data-nav-active={activeSection === item.id}
-									onClick={() => handleSectionNav(item.id)}
-								>
-									<item.icon className="size-4" />
-									<span>{item.label}</span>
-									<Badge variant="success" className="ml-auto hidden sm:inline-flex">
-										{item.status}
-									</Badge>
-								</Button>
-							))}
+							{dashboardNavigation.map((item) => {
+								const href = navigationHref(item.id, effectiveTopicId, activeDocumentKind);
+								const target = dashboardRouteLinkTarget(item.id, effectiveTopicId, activeDocumentKind);
+								const active = activeSection === item.id || (item.id === "documents" && activeSection === "topic");
+								const unavailable = item.requiresTopic && !effectiveTopicId;
+								const className = cn(
+									"inline-flex h-9 shrink-0 items-center justify-start gap-3 rounded-lg px-3 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none lg:w-full",
+									active
+										? "bg-secondary text-secondary-foreground"
+										: "text-foreground hover:bg-muted/60 hover:text-foreground",
+									unavailable ? "pointer-events-none opacity-60" : undefined,
+								);
+								const content = (
+									<>
+										<item.icon className="size-4" />
+										<span>{item.label}</span>
+										<Badge variant="success" className="ml-auto hidden sm:inline-flex">
+											{item.status}
+										</Badge>
+									</>
+								);
+								const commonProps = {
+									"aria-current": active ? ("page" as const) : undefined,
+									"aria-disabled": unavailable ? true : undefined,
+									className,
+									"data-nav-item": item.id,
+									"data-nav-active": active,
+								};
+								return useRouterLinks && !unavailable ? (
+									<Link key={item.label} to={target.to as never} params={target.params as never} {...commonProps}>
+										{content}
+									</Link>
+								) : (
+									<a key={item.label} href={href} {...commonProps}>
+										{content}
+									</a>
+								);
+							})}
 						</nav>
 					</aside>
 
@@ -216,15 +249,27 @@ export function DashboardShell({
 						>
 							<section className="min-w-0 space-y-5">
 								{overview ? (
-									<DashboardReviewWorkflow
-										overview={overview}
-										selectedTopic={selectedTopic}
-										selectedTopicId={effectiveTopicId}
-										adrs={adrs}
-										activeSection={activeSection}
-										onSectionChange={setActiveSection}
-										onTopicSelect={handleTopicSelect}
-									/>
+									renderContent ? (
+										renderContent({
+											overview,
+											selectedTopic,
+											selectedTopicId: effectiveTopicId,
+											adrs,
+											activePage: activeSection,
+											activeDocumentKind,
+										})
+									) : (
+										<DashboardReviewWorkflow
+											overview={overview}
+											selectedTopic={selectedTopic}
+											selectedTopicId={effectiveTopicId}
+											adrs={adrs}
+											activeSection={activeSection}
+											activeTopicTab={activeTopicTab}
+											visibleSection={activeSection}
+											onTopicSelect={handleTopicSelect}
+										/>
+									)
 								) : (
 									<div className="grid gap-4 md:grid-cols-3">
 										{metrics.map((metric) => (

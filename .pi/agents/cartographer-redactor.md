@@ -1,13 +1,11 @@
 ---
 name: cartographer-redactor
 description: Sanitizes authorized private artifacts into commit-safe Cartographer evidence analyses
-model: openai-codex/gpt-5.5
 tools: read,bash,write,cartographer_session,cartographer_artifacts
 systemPromptMode: replace
 inheritProjectContext: false
 inheritSkills: false
 defaultContext: fresh
-thinking: medium
 output: evidence-analysis.md
 ---
 

@@ -1,13 +1,11 @@
 ---
 name: cartographer-auditor
 description: Cartographer-specific semantic auditor after deterministic validation receipts pass
-model: openai-codex/gpt-5.5
 tools: read,bash,cartographer_artifacts,cartographer_index
 systemPromptMode: replace
 inheritProjectContext: false
 inheritSkills: false
 defaultContext: fresh
-thinking: medium
 output: auditor-report.md
 ---
 

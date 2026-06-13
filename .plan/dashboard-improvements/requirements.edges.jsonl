@@ -1,0 +1,47 @@
+{"from":"REQ-DASH-NAV","to":"SCN-DASH-DEEPLINK","type":"has_scenario","evidence":"Requirement includes this scenario."}
+{"from":"REQ-DASH-NAV","to":"SCN-DASH-HISTORY","type":"has_scenario","evidence":"Requirement includes this scenario."}
+{"from":"REQ-DASH-NAV","to":"F001","type":"supported_by","evidence":"Requirement is grounded in the cited proposal fact."}
+{"from":"REQ-DASH-NAV","to":"F002","type":"supported_by","evidence":"Requirement is grounded in the cited proposal fact."}
+{"from":"REQ-DASH-NAV","to":"F005","type":"supported_by","evidence":"Requirement is grounded in the cited proposal fact."}
+{"from":"REQ-DASH-NAV","to":"F006","type":"supported_by","evidence":"Requirement is grounded in the cited proposal fact."}
+{"from":"REQ-DASH-NAV","to":"docs/requirements.md#REQ-DASH-NAV","type":"folds_into","evidence":"Topic delta should fold into durable requirements after accepted implementation."}
+{"from":"REQ-DASH-STATE","to":"SCN-DASH-HISTORY","type":"has_scenario","evidence":"Requirement includes this scenario."}
+{"from":"REQ-DASH-STATE","to":"F001","type":"supported_by","evidence":"Requirement is grounded in the cited proposal fact."}
+{"from":"REQ-DASH-STATE","to":"F002","type":"supported_by","evidence":"Requirement is grounded in the cited proposal fact."}
+{"from":"REQ-DASH-STATE","to":"F005","type":"supported_by","evidence":"Requirement is grounded in the cited proposal fact."}
+{"from":"REQ-DASH-STATE","to":"F006","type":"supported_by","evidence":"Requirement is grounded in the cited proposal fact."}
+{"from":"REQ-DASH-STATE","to":"docs/requirements.md#REQ-DASH-STATE","type":"folds_into","evidence":"Topic delta should fold into durable requirements after accepted implementation."}
+{"from":"REQ-DASH-TOPIC-SECTIONS","to":"SCN-DASH-DEEPLINK","type":"has_scenario","evidence":"Requirement includes this scenario."}
+{"from":"REQ-DASH-TOPIC-SECTIONS","to":"F002","type":"supported_by","evidence":"Requirement is grounded in the cited proposal fact."}
+{"from":"REQ-DASH-TOPIC-SECTIONS","to":"F012","type":"supported_by","evidence":"Requirement is grounded in the cited proposal fact."}
+{"from":"REQ-DASH-TOPIC-SECTIONS","to":"docs/requirements.md#REQ-DASH-TOPIC-SECTIONS","type":"folds_into","evidence":"Topic delta should fold into durable requirements after accepted implementation."}
+{"from":"REQ-MD-REF-POPOVER","to":"SCN-MD-REFERENCE","type":"has_scenario","evidence":"Requirement includes this scenario."}
+{"from":"REQ-MD-REF-POPOVER","to":"F003","type":"supported_by","evidence":"Requirement is grounded in the cited proposal fact."}
+{"from":"REQ-MD-REF-POPOVER","to":"F007","type":"supported_by","evidence":"Requirement is grounded in the cited proposal fact."}
+{"from":"REQ-MD-REF-POPOVER","to":"F008","type":"supported_by","evidence":"Requirement is grounded in the cited proposal fact."}
+{"from":"REQ-MD-REF-POPOVER","to":"F009","type":"supported_by","evidence":"Requirement is grounded in the cited proposal fact."}
+{"from":"REQ-MD-REF-POPOVER","to":"F010","type":"supported_by","evidence":"Requirement is grounded in the cited proposal fact."}
+{"from":"REQ-MD-REF-POPOVER","to":"docs/requirements.md#REQ-MD-REF-POPOVER","type":"folds_into","evidence":"Topic delta should fold into durable requirements after accepted implementation."}
+{"from":"REQ-MD-MERMAID","to":"SCN-MD-MERMAID","type":"has_scenario","evidence":"Requirement includes this scenario."}
+{"from":"REQ-MD-MERMAID","to":"F013","type":"supported_by","evidence":"Requirement is grounded in the cited proposal fact."}
+{"from":"REQ-MD-MERMAID","to":"F014","type":"supported_by","evidence":"Requirement is grounded in the cited proposal fact."}
+{"from":"REQ-MD-MERMAID","to":"F015","type":"supported_by","evidence":"Requirement is grounded in the cited proposal fact."}
+{"from":"REQ-MD-MERMAID","to":"docs/requirements.md#REQ-MD-MERMAID","type":"folds_into","evidence":"Topic delta should fold into durable requirements after accepted implementation."}
+{"from":"REQ-DASH-SAFETY","to":"SCN-MD-REFERENCE","type":"has_scenario","evidence":"Requirement includes this scenario."}
+{"from":"REQ-DASH-SAFETY","to":"SCN-MD-MERMAID","type":"has_scenario","evidence":"Requirement includes this scenario."}
+{"from":"REQ-DASH-SAFETY","to":"F011","type":"supported_by","evidence":"Requirement is grounded in the cited proposal fact."}
+{"from":"REQ-DASH-SAFETY","to":"F012","type":"supported_by","evidence":"Requirement is grounded in the cited proposal fact."}
+{"from":"REQ-DASH-SAFETY","to":"F015","type":"supported_by","evidence":"Requirement is grounded in the cited proposal fact."}
+{"from":"REQ-DASH-SAFETY","to":"docs/requirements.md#REQ-DASH-SAFETY","type":"folds_into","evidence":"Topic delta should fold into durable requirements after accepted implementation."}
+{"from":"REQ-DASH-VALIDATION","to":"SCN-DASH-DEEPLINK","type":"has_scenario","evidence":"Requirement includes this scenario."}
+{"from":"REQ-DASH-VALIDATION","to":"SCN-DASH-HISTORY","type":"has_scenario","evidence":"Requirement includes this scenario."}
+{"from":"REQ-DASH-VALIDATION","to":"SCN-MD-REFERENCE","type":"has_scenario","evidence":"Requirement includes this scenario."}
+{"from":"REQ-DASH-VALIDATION","to":"SCN-MD-MERMAID","type":"has_scenario","evidence":"Requirement includes this scenario."}
+{"from":"REQ-DASH-VALIDATION","to":"F010","type":"supported_by","evidence":"Requirement is grounded in the cited proposal fact."}
+{"from":"REQ-DASH-VALIDATION","to":"F013","type":"supported_by","evidence":"Requirement is grounded in the cited proposal fact."}
+{"from":"REQ-DASH-VALIDATION","to":"docs/requirements.md#REQ-DASH-VALIDATION","type":"folds_into","evidence":"Topic delta should fold into durable requirements after accepted implementation."}
+{"from":"REQ-DASH-NAV","to":"AC-DASH-NAV-ROUTES","type":"accepts","evidence":"Acceptance check validates the requirement."}
+{"from":"REQ-DASH-STATE","to":"AC-DASH-HISTORY","type":"accepts","evidence":"Acceptance check validates the requirement."}
+{"from":"REQ-MD-REF-POPOVER","to":"AC-MD-REF-POPOVER","type":"accepts","evidence":"Acceptance check validates the requirement."}
+{"from":"REQ-MD-MERMAID","to":"AC-MD-MERMAID-REGISTRY","type":"accepts","evidence":"Acceptance check validates the requirement."}
+{"from":"REQ-DASH-SAFETY","to":"AC-DASH-SAFETY","type":"accepts","evidence":"Acceptance check validates the requirement."}

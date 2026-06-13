@@ -1,13 +1,11 @@
 ---
 name: cartographer-compass
 description: Cartographer-specific scope, dependency, and repeated-failure decision advisor
-model: openai-codex/gpt-5.5
 tools: read,bash,cartographer_artifacts,cartographer_index
 systemPromptMode: replace
 inheritProjectContext: false
 inheritSkills: false
 defaultContext: fresh
-thinking: medium
 output: compass-decision.md
 ---
 

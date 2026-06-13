@@ -1,0 +1,55 @@
+{"from":"D001","to":"REQ-11","type":"satisfies","evidence":"Defines user-scope subagent override config surface."}
+{"from":"D001","to":"REQ-15","type":"satisfies","evidence":"Defines cartographer.parentFallbackModels in user settings."}
+{"from":"D001","to":"F008","type":"supported_by","evidence":"pi-subagents supports user settings agentOverrides."}
+{"from":"D002","to":"REQ-01","type":"satisfies","evidence":"Parent orchestrator default set to gpt-5.5 medium."}
+{"from":"D002","to":"REQ-06","type":"satisfies","evidence":"Drafter set to Spark."}
+{"from":"D002","to":"REQ-07","type":"satisfies","evidence":"Auditor set to gpt-5.5 medium."}
+{"from":"D002","to":"REQ-08","type":"satisfies","evidence":"Compass set to gpt-5.5 medium."}
+{"from":"D002","to":"REQ-09","type":"satisfies","evidence":"Redactor set to gpt-5.5 medium."}
+{"from":"D002","to":"REQ-10","type":"satisfies","evidence":"Archivist set to gpt-5.4-mini medium."}
+{"from":"D002","to":"F001","type":"supported_by","evidence":"OpenAI guidance for gpt-5.5 and gpt-5.4-mini."}
+{"from":"D002","to":"F003","type":"supported_by","evidence":"Spark optimized for real-time iteration."}
+{"from":"D003","to":"REQ-12","type":"satisfies","evidence":"Wrapper detects usage limits and retries fallback chain."}
+{"from":"D003","to":"REQ-14","type":"satisfies","evidence":"Wrapper records fallback receipts."}
+{"from":"D003","to":"REQ-16","type":"satisfies","evidence":"Wrapper parses and surfaces reset metadata."}
+{"from":"D004","to":"REQ-13","type":"satisfies","evidence":"Approval gate enforces cross-provider approval."}
+{"from":"D004","to":"REQ-14","type":"satisfies","evidence":"Approval outcome recorded in receipt."}
+{"from":"D004","to":"REQ-16","type":"satisfies","evidence":"Prompt includes reset-time awareness."}
+{"from":"D005","to":"REQ-02","type":"satisfies","evidence":"No xhigh defaults."}
+{"from":"D005","to":"REQ-03","type":"satisfies","evidence":"xhigh needs human approval receipt."}
+{"from":"D005","to":"REQ-04","type":"satisfies","evidence":"high escalation requires justification."}
+{"from":"D005","to":"REQ-05","type":"satisfies","evidence":"Spark not used for vision/image tasks."}
+{"from":"A001","to":"D001","type":"alternative_to","evidence":"Project settings primary alternative rejected."}
+{"from":"A002","to":"D001","type":"alternative_to","evidence":"Frontmatter pins alternative rejected."}
+{"from":"A003","to":"D003","type":"alternative_to","evidence":"Pi core fallback alternative rejected."}
+{"from":"A004","to":"D003","type":"alternative_to","evidence":"No automatic fallback rejected."}
+{"from":"C001","to":"D001","type":"related_to","evidence":"Settings reader implements user-scope config decision."}
+{"from":"C002","to":"D003","type":"related_to","evidence":"Failure classifier supports fallback wrapper."}
+{"from":"C003","to":"D003","type":"related_to","evidence":"Fallback executor implements retry loop."}
+{"from":"C004","to":"D004","type":"related_to","evidence":"Approval gate implements cross-provider decision."}
+{"from":"C005","to":"D003","type":"related_to","evidence":"Receipt writer supports fallback wrapper."}
+{"from":"C006","to":"D005","type":"related_to","evidence":"Validation checks enforce reasoning escalation policy."}
+{"from":"C006","to":"D002","type":"related_to","evidence":"Validation checks enforce routing matrix."}
+{"from":"C006","to":"C007","type":"related_to","evidence":"Validation checks cover interactive config setup behavior."}
+{"from":"C007","to":"D001","type":"related_to","evidence":"Config setup workflow initializes the user-scope settings chosen by D001."}
+{"from":"C007","to":"REQ-11","type":"satisfies","evidence":"Setup workflow creates missing subagents.agentOverrides entries without overwriting user values."}
+{"from":"C007","to":"REQ-15","type":"satisfies","evidence":"Setup workflow creates missing cartographer.parentFallbackModels config."}
+{"from":"C007","to":"REQ-17","type":"satisfies","evidence":"Setup workflow presents provider menu, role recommendations, orchestrator recommendation, preview, and confirmation."}
+{"from":"C007","to":"F004","type":"supported_by","evidence":"Pi model metadata includes thinking/reasoning details needed for recommendations."}
+{"from":"C007","to":"F008","type":"supported_by","evidence":"pi-subagents agentOverrides can receive generated subagent model/fallback config."}
+{"from":"C007","to":"C008","type":"related_to","evidence":"Setup workflow delegates all settings writes to deterministic writer script."}
+{"from":"C008","to":"REQ-11","type":"satisfies","evidence":"Writer validates and writes subagents.agentOverrides config."}
+{"from":"C008","to":"REQ-15","type":"satisfies","evidence":"Writer validates and writes cartographer.parentFallbackModels config."}
+{"from":"C008","to":"REQ-17","type":"satisfies","evidence":"Writer provides JSON Schema and available-model validation for setup workflow outputs."}
+{"from":"C008","to":"F004","type":"supported_by","evidence":"Available Pi model metadata supports model/thinking validation."}
+{"from":"C008","to":"F008","type":"supported_by","evidence":"pi-subagents agentOverrides schema is the target config surface."}
+{"from":"R001","to":"C001","type":"risk_of","evidence":"Settings schema drift affects settings reader."}
+{"from":"C001","to":"R001","type":"mitigates","evidence":"Settings reader validates malformed config."}
+{"from":"R002","to":"D004","type":"risk_of","evidence":"Cross-provider fallback can surprise users with API cost."}
+{"from":"C004","to":"R002","type":"mitigates","evidence":"Approval gate mitigates surprise cost."}
+{"from":"R003","to":"D002","type":"risk_of","evidence":"Redactor fallback could weaken privacy review."}
+{"from":"D004","to":"R003","type":"mitigates","evidence":"Explicit approval protects redactor cross-provider fallback."}
+{"from":"R004","to":"D003","type":"risk_of","evidence":"Fallback wrapper could loop if unbounded."}
+{"from":"C003","to":"R004","type":"mitigates","evidence":"Fallback executor bounds retries by chain length."}
+{"from":"R005","to":"D003","type":"risk_of","evidence":"Workflow wrapper scope may be misunderstood."}
+{"from":"C006","to":"R005","type":"mitigates","evidence":"Docs/tests clarify wrapper scope."}

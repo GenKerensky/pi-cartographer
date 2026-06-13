@@ -12,6 +12,9 @@ export default defineConfig({
 			"@": srcDir,
 		},
 	},
+	optimizeDeps: {
+		include: ["@tanstack/react-router"],
+	},
 	test: {
 		browser: {
 			enabled: true,

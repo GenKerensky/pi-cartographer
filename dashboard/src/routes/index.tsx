@@ -9,6 +9,8 @@ function DashboardStartRoute(): React.JSX.Element {
 	const navigate = useNavigate();
 	return (
 		<DashboardShell
+			activePage="overview"
+			useRouterLinks
 			onTopicNavigate={(topic) => {
 				void navigate({ to: "/topics/$topic", params: { topic } });
 			}}

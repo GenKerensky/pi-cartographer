@@ -1,13 +1,11 @@
 ---
 name: cartographer-pathfinder
 description: Deprecated legacy Cartographer single-phase implementation worker; not used by the default implement workflow
-model: openai-codex/gpt-5.5
 tools: read,bash,edit,write,cartographer_artifacts,cartographer_index
 systemPromptMode: replace
 inheritProjectContext: false
 inheritSkills: false
 defaultContext: fresh
-thinking: medium
 output: pathfinder-receipt.md
 ---
 

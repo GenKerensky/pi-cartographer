@@ -1,0 +1,64 @@
+{"from":"DD-ROUTE-IA","to":"REQ-DASH-NAV","type":"satisfies","evidence":"Design node addresses this requirement."}
+{"from":"DD-ROUTE-IA","to":"REQ-DASH-TOPIC-SECTIONS","type":"satisfies","evidence":"Design node addresses this requirement."}
+{"from":"DD-ROUTE-IA","to":"F001","type":"supported_by","evidence":"Design node is grounded in this fact."}
+{"from":"DD-ROUTE-IA","to":"F002","type":"supported_by","evidence":"Design node is grounded in this fact."}
+{"from":"DD-ROUTE-IA","to":"F005","type":"supported_by","evidence":"Design node is grounded in this fact."}
+{"from":"DD-ROUTE-IA","to":"F006","type":"supported_by","evidence":"Design node is grounded in this fact."}
+{"from":"DD-ROUTE-IA","to":"F011","type":"supported_by","evidence":"Design node is grounded in this fact."}
+{"from":"DD-ROUTE-IA","to":"F012","type":"supported_by","evidence":"Design node is grounded in this fact."}
+{"from":"DD-ROUTE-STATE","to":"REQ-DASH-STATE","type":"satisfies","evidence":"Design node addresses this requirement."}
+{"from":"DD-ROUTE-STATE","to":"F001","type":"supported_by","evidence":"Design node is grounded in this fact."}
+{"from":"DD-ROUTE-STATE","to":"F002","type":"supported_by","evidence":"Design node is grounded in this fact."}
+{"from":"DD-ROUTE-STATE","to":"F005","type":"supported_by","evidence":"Design node is grounded in this fact."}
+{"from":"DD-ROUTE-STATE","to":"F006","type":"supported_by","evidence":"Design node is grounded in this fact."}
+{"from":"DD-MD-REF-POPOVER","to":"REQ-MD-REF-POPOVER","type":"satisfies","evidence":"Design node addresses this requirement."}
+{"from":"DD-MD-REF-POPOVER","to":"REQ-DASH-SAFETY","type":"satisfies","evidence":"Design node addresses this requirement."}
+{"from":"DD-MD-REF-POPOVER","to":"F003","type":"supported_by","evidence":"Design node is grounded in this fact."}
+{"from":"DD-MD-REF-POPOVER","to":"F007","type":"supported_by","evidence":"Design node is grounded in this fact."}
+{"from":"DD-MD-REF-POPOVER","to":"F008","type":"supported_by","evidence":"Design node is grounded in this fact."}
+{"from":"DD-MD-REF-POPOVER","to":"F009","type":"supported_by","evidence":"Design node is grounded in this fact."}
+{"from":"DD-MD-REF-POPOVER","to":"F010","type":"supported_by","evidence":"Design node is grounded in this fact."}
+{"from":"DD-MERMAID-OFFICIAL","to":"REQ-MD-MERMAID","type":"satisfies","evidence":"Design node addresses this requirement."}
+{"from":"DD-MERMAID-OFFICIAL","to":"REQ-DASH-SAFETY","type":"satisfies","evidence":"Design node addresses this requirement."}
+{"from":"DD-MERMAID-OFFICIAL","to":"F013","type":"supported_by","evidence":"Design node is grounded in this fact."}
+{"from":"DD-MERMAID-OFFICIAL","to":"F014","type":"supported_by","evidence":"Design node is grounded in this fact."}
+{"from":"DD-MERMAID-OFFICIAL","to":"F015","type":"supported_by","evidence":"Design node is grounded in this fact."}
+{"from":"DD-VALIDATION-GATES","to":"REQ-DASH-VALIDATION","type":"satisfies","evidence":"Design node addresses this requirement."}
+{"from":"DD-VALIDATION-GATES","to":"F010","type":"supported_by","evidence":"Design node is grounded in this fact."}
+{"from":"DD-VALIDATION-GATES","to":"F013","type":"supported_by","evidence":"Design node is grounded in this fact."}
+{"from":"DD-VALIDATION-GATES","to":"F015","type":"supported_by","evidence":"Design node is grounded in this fact."}
+{"from":"CMP-ROUTES","to":"REQ-DASH-NAV","type":"satisfies","evidence":"Design node addresses this requirement."}
+{"from":"CMP-ROUTES","to":"REQ-DASH-TOPIC-SECTIONS","type":"satisfies","evidence":"Design node addresses this requirement."}
+{"from":"CMP-ROUTES","to":"F005","type":"supported_by","evidence":"Design node is grounded in this fact."}
+{"from":"CMP-ROUTES","to":"F006","type":"supported_by","evidence":"Design node is grounded in this fact."}
+{"from":"CMP-ROUTES","to":"F012","type":"supported_by","evidence":"Design node is grounded in this fact."}
+{"from":"CMP-SHELL","to":"REQ-DASH-STATE","type":"satisfies","evidence":"Design node addresses this requirement."}
+{"from":"CMP-SHELL","to":"F001","type":"supported_by","evidence":"Design node is grounded in this fact."}
+{"from":"CMP-SHELL","to":"F005","type":"supported_by","evidence":"Design node is grounded in this fact."}
+{"from":"CMP-REFERENCE-POPOVER","to":"REQ-MD-REF-POPOVER","type":"satisfies","evidence":"Design node addresses this requirement."}
+{"from":"CMP-REFERENCE-POPOVER","to":"F003","type":"supported_by","evidence":"Design node is grounded in this fact."}
+{"from":"CMP-REFERENCE-POPOVER","to":"F007","type":"supported_by","evidence":"Design node is grounded in this fact."}
+{"from":"CMP-REFERENCE-POPOVER","to":"F008","type":"supported_by","evidence":"Design node is grounded in this fact."}
+{"from":"CMP-REFERENCE-POPOVER","to":"F009","type":"supported_by","evidence":"Design node is grounded in this fact."}
+{"from":"CMP-MERMAID-DIAGRAM","to":"REQ-MD-MERMAID","type":"satisfies","evidence":"Design node addresses this requirement."}
+{"from":"CMP-MERMAID-DIAGRAM","to":"F013","type":"supported_by","evidence":"Design node is grounded in this fact."}
+{"from":"CMP-MERMAID-DIAGRAM","to":"F014","type":"supported_by","evidence":"Design node is grounded in this fact."}
+{"from":"CMP-MERMAID-DIAGRAM","to":"F015","type":"supported_by","evidence":"Design node is grounded in this fact."}
+{"from":"CMP-TEST-CORPUS","to":"REQ-DASH-VALIDATION","type":"satisfies","evidence":"Design node addresses this requirement."}
+{"from":"CMP-TEST-CORPUS","to":"F010","type":"supported_by","evidence":"Design node is grounded in this fact."}
+{"from":"CMP-TEST-CORPUS","to":"F013","type":"supported_by","evidence":"Design node is grounded in this fact."}
+{"from":"ALT-KEEP-SCROLL","to":"F001","type":"supported_by","evidence":"Design node is grounded in this fact."}
+{"from":"ALT-KEEP-SCROLL","to":"F002","type":"supported_by","evidence":"Design node is grounded in this fact."}
+{"from":"ALT-PARTIAL-MERMAID","to":"F013","type":"supported_by","evidence":"Design node is grounded in this fact."}
+{"from":"ALT-MERMAID-CALLBACKS-IN-APP","to":"F015","type":"supported_by","evidence":"Design node is grounded in this fact."}
+{"from":"RISK-ROUTE-CHURN","to":"F012","type":"supported_by","evidence":"Design node is grounded in this fact."}
+{"from":"RISK-MERMAID-SECURITY","to":"F015","type":"supported_by","evidence":"Design node is grounded in this fact."}
+{"from":"ALT-KEEP-SCROLL","to":"DD-ROUTE-IA","type":"alternative_to","evidence":"Rejected alternative to route-owned information architecture."}
+{"from":"ALT-PARTIAL-MERMAID","to":"DD-MERMAID-OFFICIAL","type":"alternative_to","evidence":"Rejected alternative to official Mermaid renderer coverage."}
+{"from":"ALT-MERMAID-CALLBACKS-IN-APP","to":"DD-MERMAID-OFFICIAL","type":"alternative_to","evidence":"Rejected unsafe callback execution while retaining Mermaid feature support through safer rendering."}
+{"from":"DD-ROUTE-IA","to":"RISK-ROUTE-CHURN","type":"risk_of","evidence":"More routes can create duplicated loading logic."}
+{"from":"CMP-ROUTES","to":"RISK-ROUTE-CHURN","type":"mitigates","evidence":"Shared route descriptors reduce route duplication."}
+{"from":"DD-MERMAID-OFFICIAL","to":"RISK-MERMAID-SECURITY","type":"risk_of","evidence":"Complete feature support requires explicit security decisions."}
+{"from":"CMP-MERMAID-DIAGRAM","to":"RISK-MERMAID-SECURITY","type":"mitigates","evidence":"Dedicated renderer component can isolate Mermaid configuration and safe output handling."}
+{"from":"DD-ROUTE-IA","to":"doc:docs/adr/0005-use-tanstack-start-and-tanstack-db-for-the-cartographer-dashboard.md","type":"constrained_by","evidence":"Dashboard changes must target TanStack Start routes and read-only projections."}
+{"from":"DD-MERMAID-OFFICIAL","to":"dependency:npm:mermaid","type":"constrained_by","evidence":"Official Mermaid renderer is the chosen dependency candidate for complete diagram support."}
