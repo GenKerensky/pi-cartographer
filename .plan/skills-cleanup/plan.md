@@ -304,10 +304,10 @@ Prove the skill cleanup is deterministic, scoped, and ready for implementation c
 
 #### Validation
 
-- [ ] **P5.V1** Run `python skills/plan/scripts/check_skill_language.py --root "$PWD" --json`; expected result passes with no blocking findings.
-- [ ] **P5.V2** Run `npm run check`; expected result passes or any unrelated failure has explicit user-approved residual risk.
-- [ ] **P5.V3** Run `node --experimental-strip-types skills/plan/scripts/manage_jsonl.ts validate-topic --root "$PWD" --topic skills-cleanup --json`; expected result passes.
-- [ ] **P5.V4** Run `python skills/plan/scripts/validate_planning_graph.py --root "$PWD" --topic skills-cleanup --json`; expected result passes.
+- [x] **P5.V1** Run `python skills/plan/scripts/check_skill_language.py --root "$PWD" --json`; expected result passes with no blocking findings.
+- [x] **P5.V2** Run `npm run check`; expected result passes or any unrelated failure has explicit user-approved residual risk.
+- [x] **P5.V3** Run `node --experimental-strip-types skills/plan/scripts/manage_jsonl.ts validate-topic --root "$PWD" --topic skills-cleanup --json`; expected result passes.
+- [x] **P5.V4** Run `python skills/plan/scripts/validate_planning_graph.py --root "$PWD" --topic skills-cleanup --json`; expected result passes.
 
 #### Exit Criteria
 

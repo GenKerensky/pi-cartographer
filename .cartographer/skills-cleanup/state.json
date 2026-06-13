@@ -5,11 +5,11 @@
   "source_refs": {
     "plan_md": {
       "path": ".plan/skills-cleanup/plan.md",
-      "sha256": "sha256:d556cd5458b568a17ba254c497781de4e70caf27514f56f01dd4159e505789f5"
+      "sha256": "sha256:b9f6852b9a66e6ed92195bad7c4b39333364d0b4f5ad9f8f93f9e55740624793"
     },
     "plan_nodes": {
       "path": ".plan/skills-cleanup/plan.nodes.jsonl",
-      "sha256": "sha256:848c52fee700a218f3618056ed4b4ad04c6dd8ede043a18c9dc0798723b4f8e4"
+      "sha256": "sha256:770aa3798c9e73fce93262fca9b5174d91d994b7a00d23071adb2e57dee93eaf"
     },
     "plan_edges": {
       "path": ".plan/skills-cleanup/plan.edges.jsonl",
@@ -17,11 +17,11 @@
     },
     "receipts": {
       "path": ".plan/skills-cleanup/receipts.jsonl",
-      "sha256": "sha256:5dd2cf0fe72535f070d8d11ab5a571f72f74201a699b28b86eaeb68696384c2f"
+      "sha256": "sha256:eaa5dad7a2daab09ce1891b4395c08d3949bb496068a7b437260fce3becf2ab3"
     },
     "context_packs": {
       "path": ".plan/skills-cleanup/context-packs.jsonl",
-      "sha256": "sha256:cdbc5ded646878d2a8e83dd2787bc718257a169ffb36a069b850e6f45c40d087"
+      "sha256": "sha256:cc525f5de1dffd5b9083d6950d9d3399033b5398f90d71a727105aceb8770e8d"
     }
   },
   "current_phase_id": "P3",
@@ -146,10 +146,10 @@
     "expected_first_response": ["current_phase", "next_action", "files_to_inspect"],
     "must_ignore": ["prior chat speculation", "stale generated snippets"]
   },
-  "updated_at": "2026-06-13T04:51:18Z",
-  "stale_reason": "Committed P4 checkpoint",
+  "updated_at": "2026-06-13T05:15:30Z",
+  "stale_reason": "P5 sync complete: plan.md, plan.nodes.jsonl, receipts updated during continuation session",
   "compaction": {
-    "trigger": "phase-end-P0",
-    "compacted_at": "2026-06-13T03:20:18Z"
+    "trigger": "phase-end-P5-sync",
+    "compacted_at": "2026-06-13T05:15:30Z"
   }
 }
