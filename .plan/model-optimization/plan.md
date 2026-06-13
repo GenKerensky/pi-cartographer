@@ -305,7 +305,7 @@ Keep docs concise and user-facing; leave deep implementation details in the ADR/
 
 ### Phase P5 — Validation and Finalization
 
-- **Status:** blocked
+- **Status:** complete
 - **Depends on:** P4
 - **Unlocks:** implementation-ready
 - **Primary references:** `package.json`, `skills/plan/scripts/validate_planning_graph.py`, `.plan/model-optimization/requirements.nodes.jsonl`, `.plan/model-optimization/design.nodes.jsonl`, `[REQ-01]` through `[REQ-17]`
@@ -325,22 +325,22 @@ Run full validation, verify requirements/design/ADR coverage, and prepare the to
 
 #### Checklist
 
-- [ ] **P5.T1** Run targeted test suites for the deterministic settings writer, setup skill checks, and fallback runtime wrapper.
-- [ ] **P5.T2** Run `npm run check:scripts`.
-- [ ] **P5.T3** Run `npm run typecheck` if TS files changed.
-- [ ] **P5.T4** Run `npm run lint:ts` if TS files changed.
-- [ ] **P5.T5** Run `npm run test:py` / `npm run test:ts` as appropriate to touched languages.
-- [ ] **P5.T6** Run final `node --experimental-strip-types skills/plan/scripts/manage_jsonl.ts validate-topic --root "$PWD" --topic model-optimization --json`.
-- [ ] **P5.T7** Run final `python skills/plan/scripts/validate_planning_graph.py --root "$PWD" --topic model-optimization --json`.
-- [ ] **P5.T8** Run required live smoke test using a cheap/free model path, preferably `opencode/big-pickle` if available, validating at least one real model selection path and one fallback/error handling path.
-- [ ] **P5.T9** Run final auditor gate and capture PASS receipt.
+- [x] **P5.T1** Run targeted test suites for the deterministic settings writer, setup skill checks, and fallback runtime wrapper.
+- [x] **P5.T2** Run `npm run check:scripts`.
+- [x] **P5.T3** Run `npm run typecheck` if TS files changed.
+- [x] **P5.T4** Run `npm run lint:ts` if TS files changed.
+- [x] **P5.T5** Run `npm run test:py` / `npm run test:ts` as appropriate to touched languages.
+- [x] **P5.T6** Run final `node --experimental-strip-types skills/plan/scripts/manage_jsonl.ts validate-topic --root "$PWD" --topic model-optimization --json`.
+- [x] **P5.T7** Run final `python skills/plan/scripts/validate_planning_graph.py --root "$PWD" --topic model-optimization --json`.
+- [x] **P5.T8** Run required live smoke test using a cheap/free model path, preferably `opencode/big-pickle` if available, validating at least one real model selection path and one fallback/error handling path.
+- [x] **P5.T9** Run final auditor gate and capture PASS receipt.
 
 #### Validation
 
-- [ ] **P5.V1** All deterministic validation commands selected above pass or have explicit documented fallback receipts.
-- [ ] **P5.V2** Required cheap/free live smoke test passed and has a validation receipt, or the user explicitly approved a paid/live alternative or blocked validation.
-- [ ] **P5.V3** `cartographer-auditor` PASS or approved fallback reviewer receipt exists.
-- [ ] **P5.V4** `cartographer_adr` metadata confirms ADR-required topic is handled.
+- [x] **P5.V1** All deterministic validation commands selected above pass or have explicit documented fallback receipts.
+- [x] **P5.V2** Required cheap/free live smoke test passed and has a validation receipt, or the user explicitly approved a paid/live alternative or blocked validation.
+- [x] **P5.V3** `cartographer-auditor` PASS or approved fallback reviewer receipt exists.
+- [x] **P5.V4** `cartographer_adr` metadata confirms ADR-required topic is handled.
 
 #### Exit Criteria
 

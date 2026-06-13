@@ -1,6 +1,5 @@
 #!/usr/bin/env node --experimental-strip-types
 import fs from "node:fs";
-import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -406,7 +405,8 @@ export function mergeSettings(
 	if (!isObject(subagents.agentOverrides)) subagents.agentOverrides = {};
 	const existingOverrides = subagents.agentOverrides as JsonObject;
 	for (const [agent, override] of Object.entries(proposal.subagents?.agentOverrides ?? {})) {
-		const current = isObject(existingOverrides[agent]) ? (existingOverrides[agent] as JsonObject) : {};
+		const existingOverride = existingOverrides[agent];
+		const current = isObject(existingOverride) ? existingOverride : {};
 		existingOverrides[agent] = options.force ? { ...current, ...override } : { ...override, ...current };
 	}
 	if (!isObject(merged.cartographer)) merged.cartographer = {};
@@ -483,7 +483,7 @@ function requiredString(options: Record<string, string | boolean>, name: string)
 }
 
 function loadProposal(filePath: string): ModelConfigProposal {
-	return readJsonFile(filePath, {}) as ModelConfigProposal;
+	return readJsonFile(filePath, {});
 }
 
 function loadModels(filePath: string): AvailableModel[] {

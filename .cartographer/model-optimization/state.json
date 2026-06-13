@@ -5,11 +5,11 @@
   "source_refs": {
     "plan_md": {
       "path": ".plan/model-optimization/plan.md",
-      "sha256": "sha256:e1e2fd33eac6d80f0a36cfb416eac30093891420d774e669f7c18f8bb9cbfc4f"
+      "sha256": "sha256:6f6660d89202375d5eb36c0fa4ce060ef88ecbb44b6cb8a3b08ba0ef893e7aa4"
     },
     "plan_nodes": {
       "path": ".plan/model-optimization/plan.nodes.jsonl",
-      "sha256": "sha256:efb1430e41889f29f6849d8d7a65873e1efb9d15ddcb0390c11fc7be4bfb53c7"
+      "sha256": "sha256:0d2e7f481959e30a656e3a9b7eb432e7183a198bfaf91b066fa97184a5b8fc55"
     },
     "plan_edges": {
       "path": ".plan/model-optimization/plan.edges.jsonl",
@@ -17,11 +17,11 @@
     },
     "receipts": {
       "path": ".plan/model-optimization/receipts.jsonl",
-      "sha256": "sha256:8b5daa2989de75b7842635c28fd15c64a553e675639fc149781a605ebd33092e"
+      "sha256": "sha256:fd9acf317d657516eea1675b5b3ca29eed7930de78623780efa644dbb796f86d"
     },
     "context_packs": {
       "path": ".plan/model-optimization/context-packs.jsonl",
-      "sha256": "sha256:6aaebcdeef8a267f550a9e9c07c67db13567997c5b081c460b1c22fb560cef06"
+      "sha256": "sha256:f09b58353f4d3a09fea341077ea2f3b35f3cc57288666feb35a5ab523887fedc"
     }
   },
   "current_phase_id": "P5",
@@ -95,7 +95,10 @@
     "receipt:manual:validation:2026-06-13T18:50:14+00:00",
     "receipt:manual:validation:2026-06-13T18:55:15+00:00",
     "receipt:manual:validation:2026-06-13T19:00:37+00:00",
-    "receipt:manual:validation:2026-06-13T19:08:11+00:00"
+    "receipt:manual:validation:2026-06-13T19:08:11+00:00",
+    "receipt:manual:validation:2026-06-13T19:34:47+00:00",
+    "receipt:model-optimization:validation:2026-06-13T19:29:28Z",
+    "receipt:model-optimization:audit:2026-06-13T19:37:01Z"
   ],
   "journal_refs": [],
   "resume": {
@@ -116,6 +119,6 @@
       "stale generated snippets"
     ]
   },
-  "updated_at": "2026-06-13T19:10:05Z",
+  "updated_at": "2026-06-13T19:37:18Z",
   "stale_reason": "Plan status and receipts changed after completing P4; regenerate implementation state before P5 final validation."
 }

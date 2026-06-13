@@ -4,7 +4,6 @@ import os from "node:os";
 import path from "node:path";
 import {
 	CrossProviderApprovalRequiredError,
-	ModelFallbackError,
 	applySettingsUpdate,
 	classifyModelError,
 	executeWithModelFallback,
@@ -14,6 +13,11 @@ import {
 	type AvailableModel,
 	type ModelConfigProposal,
 } from "../skills/plan/scripts/model_config.ts";
+
+function providerError(value: Record<string, unknown>): Error {
+	const message = typeof value.message === "string" ? value.message : "provider error";
+	return Object.assign(new Error(message), value);
+}
 
 const models: AvailableModel[] = [
 	{
@@ -219,11 +223,15 @@ describe("model fallback runtime helpers", () => {
 		const result = await executeWithModelFallback({
 			models: ["openai-codex/gpt-5.5", "openai-codex/gpt-5.4-mini"],
 			invoke: async (model) => {
+				await Promise.resolve();
 				attempts.push(model);
-				if (model === "openai-codex/gpt-5.5") throw { status_code: 429, error: { type: "usage_limit_reached" } };
+				if (model === "openai-codex/gpt-5.5")
+					throw providerError({ status_code: 429, error: { type: "usage_limit_reached" } });
 				return "ok";
 			},
-			onFallback: (event) => events.push(event),
+			onFallback: (event) => {
+				events.push(event);
+			},
 		});
 		expect(result).toBe("ok");
 		expect(attempts).toEqual(["openai-codex/gpt-5.5", "openai-codex/gpt-5.4-mini"]);
@@ -244,11 +252,15 @@ describe("model fallback runtime helpers", () => {
 		const result = await executeWithModelFallback({
 			models: ["openai-codex/gpt-5.5", "opencode/big-pickle"],
 			invoke: async (model) => {
-				if (model === "openai-codex/gpt-5.5") throw { status_code: 429, error: { type: "usage_limit_reached" } };
+				await Promise.resolve();
+				if (model === "openai-codex/gpt-5.5")
+					throw providerError({ status_code: 429, error: { type: "usage_limit_reached" } });
 				return model;
 			},
 			approveCrossProvider: () => true,
-			onFallback: (event) => events.push(event),
+			onFallback: (event) => {
+				events.push(event);
+			},
 		});
 		expect(result).toBe("opencode/big-pickle");
 		expect(events).toMatchObject([{ approved_by: "user", to_model: "opencode/big-pickle" }]);
@@ -261,14 +273,18 @@ describe("model fallback runtime helpers", () => {
 			models: ["openai-codex/gpt-5.5", "opencode/big-pickle"],
 			allowCrossProvider: true,
 			invoke: async (model) => {
-				if (model === "openai-codex/gpt-5.5") throw { status_code: 429, error: { type: "usage_limit_reached" } };
+				await Promise.resolve();
+				if (model === "openai-codex/gpt-5.5")
+					throw providerError({ status_code: 429, error: { type: "usage_limit_reached" } });
 				return model;
 			},
 			approveCrossProvider: () => {
 				approvalCalls += 1;
 				return false;
 			},
-			onFallback: (event) => events.push(event),
+			onFallback: (event) => {
+				events.push(event);
+			},
 		});
 		expect(result).toBe("opencode/big-pickle");
 		expect(approvalCalls).toBe(0);
@@ -280,7 +296,8 @@ describe("model fallback runtime helpers", () => {
 			executeWithModelFallback({
 				models: ["openai-codex/gpt-5.5", "opencode/big-pickle"],
 				invoke: async () => {
-					throw { status_code: 429, error: { type: "usage_limit_reached" } };
+					await Promise.resolve();
+					throw providerError({ status_code: 429, error: { type: "usage_limit_reached" } });
 				},
 				approveCrossProvider: () => false,
 			}),
@@ -292,7 +309,8 @@ describe("model fallback runtime helpers", () => {
 			executeWithModelFallback({
 				models: ["openai-codex/gpt-5.5", "openai-codex/gpt-5.4-mini"],
 				invoke: async () => {
-					throw { status_code: 503, message: "provider timeout" };
+					await Promise.resolve();
+					throw providerError({ status_code: 503, message: "provider timeout" });
 				},
 			}),
 		).rejects.toMatchObject({ attempts: ["openai-codex/gpt-5.5", "openai-codex/gpt-5.4-mini"] });
@@ -304,6 +322,7 @@ describe("model fallback runtime helpers", () => {
 			executeWithModelFallback({
 				models: ["openai-codex/gpt-5.5", "openai-codex/gpt-5.4-mini"],
 				invoke: async (model) => {
+					await Promise.resolve();
 					attempts.push(model);
 					throw new Error("bad request");
 				},
