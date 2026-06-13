@@ -60,19 +60,43 @@ function tempProjectWithTopic(): string {
 	return root;
 }
 
+type MockContext = {
+	cwd?: string;
+	compact?: (options?: { customInstructions?: string }) => void;
+	getContextUsage?: () => { tokens: number | null; contextWindow: number; percent: number | null } | undefined;
+	ui?: { notify?: (message: string, level?: string) => void };
+};
+
 type RegisteredTool = {
 	name: string;
 	promptGuidelines?: string[];
 	execute: (
 		toolCallId: string,
 		params: Record<string, unknown>,
-	) => Promise<{ content: { text: string }[]; isError?: boolean }>;
+		signal?: AbortSignal,
+		onUpdate?: unknown,
+		ctx?: MockContext,
+	) => Promise<{ content: { text: string }[]; details?: Record<string, unknown>; isError?: boolean }>;
 };
 
+type RegisteredRuntime = {
+	tools: RegisteredTool[];
+	handlers: Record<string, (event: unknown, ctx: MockContext) => Promise<void> | void>;
+};
+
+function registeredRuntime(): RegisteredRuntime {
+	const runtime: RegisteredRuntime = { tools: [], handlers: {} };
+	cartographerTools({
+		registerTool: (tool: RegisteredTool) => runtime.tools.push(tool),
+		on: (event: string, handler: (event: unknown, ctx: MockContext) => Promise<void> | void) => {
+			runtime.handlers[event] = handler;
+		},
+	});
+	return runtime;
+}
+
 function registeredTools(): RegisteredTool[] {
-	const tools: RegisteredTool[] = [];
-	cartographerTools({ registerTool: (tool: RegisteredTool) => tools.push(tool) });
-	return tools;
+	return registeredRuntime().tools;
 }
 
 describe("cartographer tool registration", () => {
@@ -192,6 +216,159 @@ describe("cartographer tool registration", () => {
 		expect(resume.isError).toBeUndefined();
 		expect(resumePayload.context).toContain("CARTOGRAPHER_RESUME_CONTEXT");
 		expect(resumePayload.read_only).toBe(true);
+	});
+
+	it("queues actual Pi compaction with Cartographer instructions", async () => {
+		const project = tempProjectWithTopic();
+		const compactTool = registeredTools().find((tool) => tool.name === "cartographer_compact_context");
+		if (!compactTool) throw new Error("cartographer_compact_context was not registered");
+
+		let compactInstructions = "";
+		const result = await compactTool.execute(
+			"tool-call",
+			{
+				action: "run",
+				root: project,
+				topic: "demo",
+				trigger: "phase-end-P0",
+				phaseId: "P0",
+				summary: "P0 complete",
+				includeStateResume: false,
+				force: true,
+			},
+			undefined,
+			undefined,
+			{
+				cwd: project,
+				compact: (options) => {
+					compactInstructions = options?.customInstructions ?? "";
+				},
+				getContextUsage: () => ({ tokens: 60_000, contextWindow: 100_000, percent: 60 }),
+			},
+		);
+		const payload = JSON.parse(result.content[0].text);
+
+		expect(payload.status).toBe("queued");
+		expect(payload.topic).toBe("demo");
+		expect(compactInstructions).toContain("continue with the Cartographer implement skill");
+		expect(compactInstructions).toContain("phase-end-P0");
+		expect(compactInstructions).toContain("compact-generate as Pi transcript compaction");
+	});
+
+	it("reports unavailable when Pi compact context is missing", async () => {
+		const compactTool = registeredTools().find((tool) => tool.name === "cartographer_compact_context");
+		if (!compactTool) throw new Error("cartographer_compact_context was not registered");
+
+		const result = await compactTool.execute("tool-call", { topic: "demo", trigger: "phase-end-P0" });
+		const payload = JSON.parse(result.content[0].text);
+
+		expect(payload.status).toBe("unavailable");
+		expect(payload.reason).toContain("ctx.compact");
+	});
+
+	it("queues threshold compaction only for active Cartographer state", async () => {
+		const project = tempProjectWithTopic();
+		const stateDir = path.join(project, ".cartographer", "threshold-demo");
+		fs.mkdirSync(stateDir, { recursive: true });
+		fs.writeFileSync(path.join(stateDir, "state.json"), "{}", "utf8");
+		fs.writeFileSync(
+			path.join(project, ".cartographer", "current.json"),
+			JSON.stringify({ active_topic: "threshold-demo", state_path: ".cartographer/threshold-demo/state.json" }),
+			"utf8",
+		);
+		const runtime = registeredRuntime();
+		const turnEnd = runtime.handlers.turn_end;
+		if (!turnEnd) throw new Error("turn_end handler was not registered");
+		await runtime.handlers.session_compact?.({}, {});
+
+		let compactions = 0;
+		await turnEnd(
+			{},
+			{
+				cwd: project,
+				compact: () => {
+					compactions += 1;
+				},
+				getContextUsage: () => ({ tokens: 61_000, contextWindow: 100_000, percent: 61 }),
+			},
+		);
+
+		expect(compactions).toBe(1);
+	});
+
+	it("skips threshold compaction without active Cartographer state", async () => {
+		const project = tempProjectWithTopic();
+		const runtime = registeredRuntime();
+		const turnEnd = runtime.handlers.turn_end;
+		if (!turnEnd) throw new Error("turn_end handler was not registered");
+		await runtime.handlers.session_compact?.({}, {});
+
+		let compactions = 0;
+		await turnEnd(
+			{},
+			{
+				cwd: project,
+				compact: () => {
+					compactions += 1;
+				},
+				getContextUsage: () => ({ tokens: 61_000, contextWindow: 100_000, percent: 61 }),
+			},
+		);
+
+		expect(compactions).toBe(0);
+	});
+
+	it("suppresses duplicate threshold compaction after crossing", async () => {
+		const project = tempProjectWithTopic();
+		const stateDir = path.join(project, ".cartographer", "duplicate-demo");
+		fs.mkdirSync(stateDir, { recursive: true });
+		fs.writeFileSync(path.join(stateDir, "state.json"), "{}", "utf8");
+		fs.writeFileSync(
+			path.join(project, ".cartographer", "current.json"),
+			JSON.stringify({ active_topic: "duplicate-demo", state_path: ".cartographer/duplicate-demo/state.json" }),
+			"utf8",
+		);
+		const runtime = registeredRuntime();
+		const turnEnd = runtime.handlers.turn_end;
+		if (!turnEnd) throw new Error("turn_end handler was not registered");
+		await runtime.handlers.session_compact?.({}, {});
+
+		let percent = 61;
+		let compactions = 0;
+		const ctx = {
+			cwd: project,
+			compact: () => {
+				compactions += 1;
+			},
+			getContextUsage: () => ({ tokens: percent * 1000, contextWindow: 100_000, percent }),
+		};
+		await turnEnd({}, ctx);
+		percent = 62;
+		await turnEnd({}, ctx);
+
+		expect(compactions).toBe(1);
+	});
+
+	it("skips threshold compaction below threshold", async () => {
+		const project = tempProjectWithTopic();
+		const runtime = registeredRuntime();
+		const turnEnd = runtime.handlers.turn_end;
+		if (!turnEnd) throw new Error("turn_end handler was not registered");
+		await runtime.handlers.session_compact?.({}, {});
+
+		let compactions = 0;
+		await turnEnd(
+			{},
+			{
+				cwd: project,
+				compact: () => {
+					compactions += 1;
+				},
+				getContextUsage: () => ({ tokens: 40_000, contextWindow: 100_000, percent: 40 }),
+			},
+		);
+
+		expect(compactions).toBe(0);
 	});
 
 	it("runs validation wrapper and writes compatible receipts in a temp project", async () => {

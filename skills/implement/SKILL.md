@@ -79,7 +79,8 @@ If the plan is missing, ask the user whether to generate it first with the `plan
 
 - Use `cartographer_implement start`/`implement-start` to initialize or resume implementation state, set the active phase, and enforce plan approval prerequisites.
 - Use `cartographer_implement step`/`implement-step` to select the next executable phase and keep the working set narrow.
-- Use `cartographer_implement record`/`implement-record` to record validation refs and phase evidence, `cartographer_implement compact`/`implement-compact` for milestone compaction, and `cartographer_implement finalize`/`implement-finalize` for final prerequisite checks.
+- Use `cartographer_implement record`/`implement-record` to record validation refs and phase evidence, `cartographer_implement compact`/`implement-compact` for milestone state/resume snapshots, and `cartographer_implement finalize`/`implement-finalize` for final prerequisite checks.
+- When the Pi extension tool is available, call `cartographer_compact_context` after phase-end or final `cartographer_implement compact`/`cartographer_state compact-generate` snapshots to trigger actual Pi transcript compaction through `ctx.compact()` with bounded `state-resume` and continue-with-implement-skill custom instructions.
 - Use `cartographer_transition` for proposal/plan/final implementation approval gates and for explicitly human-gated phases; approval gates require a human approver label in non-interactive/CI contexts.
 - Automatic phase advancement is the default after validation receipts, `cartographer_handoff auditor` PASS capture, plan/checklist status updates, and commit complete the current phase. Stop for user approval only when the plan or transition metadata marks a human-gated phase, a scope/product decision is unresolved, or a fallback receipt says approval is required.
 - Do not manually append lifecycle receipts, manually cross approval gates, or manually advance phase state as a prose-only step unless the wrapper is unavailable and an explicit fallback receipt documents the substitute checks.
@@ -221,19 +222,19 @@ Use `scout` only when this deterministic and lexical context is missing, contrad
 
 For each small unit of work inside the selected phase:
 
-| Loop step | Required behavior                                                                                 |
-| --------- | ------------------------------------------------------------------------------------------------- |
-| Orient    | Reload current state, selected journal records, phase text, receipts, and active files from disk. |
-| Select    | Choose exactly one next action.                                                                   |
-| Narrow    | Update `working_set` before editing: write-allowed, read-only, and forbidden paths.               |
-| Inspect   | Re-open active files from disk; never rely on code read many turns ago.                           |
-| Act       | Apply a small parent-owned patch.                                                                 |
-| Validate  | Run the narrowest useful check and append a deterministic validation receipt when appropriate.    |
-| Record    | Update state cursor/receipt refs; append a journal record only for important durable lessons.     |
-| Compact   | On milestone triggers, run `compact-generate`.                                                    |
-| Continue  | Re-orient from artifacts and ignore stale chat assumptions.                                       |
+| Loop step | Required behavior                                                                                                                                                                                 |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Orient    | Reload current state, selected journal records, phase text, receipts, and active files from disk.                                                                                                 |
+| Select    | Choose exactly one next action.                                                                                                                                                                   |
+| Narrow    | Update `working_set` before editing: write-allowed, read-only, and forbidden paths.                                                                                                               |
+| Inspect   | Re-open active files from disk; never rely on code read many turns ago.                                                                                                                           |
+| Act       | Apply a small parent-owned patch.                                                                                                                                                                 |
+| Validate  | Run the narrowest useful check and append a deterministic validation receipt when appropriate.                                                                                                    |
+| Record    | Update state cursor/receipt refs; append a journal record only for important durable lessons.                                                                                                     |
+| Compact   | On milestone triggers, run `compact-generate`/`cartographer_implement compact` for a state snapshot, then call `cartographer_compact_context` when available for actual Pi transcript compaction. |
+| Continue  | Re-orient from artifacts and ignore stale chat assumptions.                                                                                                                                       |
 
-Compaction triggers include phase start/end, diagnosed test failure, decision made, file-set change, before switching areas, before risky refactor, before handoff, and a configurable context-usage threshold.
+Compaction triggers include phase start/end, diagnosed test failure, decision made, file-set change, before switching areas, before risky refactor, before handoff, and a configurable context-usage threshold. `compact-generate` is the durable Cartographer resume snapshot; `cartographer_compact_context` is the optional Pi harness bridge that calls `ctx.compact()` with additive custom instructions so the next assistant continues with the implement skill from `state-resume`.
 
 ### 8. Verify checklist items and update the plan
 
@@ -318,7 +319,7 @@ Stop after a phase commit only when one of these conditions is true:
 - repository safety checks find unrelated user changes or ambiguous intended files;
 - the user explicitly asked for only one phase or asked to stop after the phase.
 
-When continuing automatically, still create/update the phase context pack, compact/resume state through `cartographer_implement compact`/`cartographer_state`, set the next action/working set, and avoid carrying stale transcript assumptions across the phase boundary.
+When continuing automatically, still create/update the phase context pack, compact/resume state through `cartographer_implement compact`/`cartographer_state`, call `cartographer_compact_context` when available for actual Pi transcript compaction, set the next action/working set, and avoid carrying stale transcript assumptions across the phase boundary.
 
 If the phase is a true no-op, mark it complete through `cartographer_plan_status` with an explanatory note, avoid an empty commit, then apply the same automatic-continuation rules.
 
@@ -428,6 +429,7 @@ allowed files, stop rules, evidence requirements, and require no commits/staging
 - Do not append routine events or raw logs to `journal.jsonl`.
 - Do not add `plan.json` or generated Markdown state views.
 - Do not continue from stale transcript memory after compaction; reload from state/journal/plan artifacts.
+- Do not confuse `compact-generate` with actual Pi transcript compaction; use `cartographer_compact_context` when available to request `ctx.compact()` after state snapshots.
 - Do not mark checklist or validation items complete without evidence.
 - Do not silently skip ADR handling when `adr_required` metadata exists.
 - Do not use `cartographer-compass` as a substitute for the auditor semantic gate.

@@ -1,0 +1,400 @@
+{
+  "bytes": 5900812,
+  "compactions": [
+    {
+      "line": 370,
+      "role": "unknown",
+      "tool": null
+    },
+    {
+      "line": 858,
+      "role": "unknown",
+      "tool": null
+    },
+    {
+      "line": 1479,
+      "role": "unknown",
+      "tool": null
+    }
+  ],
+  "cost_totals": {
+    "cost": 31.02386200000001
+  },
+  "entries": 1479,
+  "input_basename": "behave-specs-session.jsonl",
+  "invalid_lines": 0,
+  "largest_outputs": [
+    {
+      "chars": 102324,
+      "line": 26,
+      "role": "toolResult",
+      "tool": "bash"
+    },
+    {
+      "chars": 102315,
+      "line": 186,
+      "role": "toolResult",
+      "tool": "bash"
+    },
+    {
+      "chars": 84444,
+      "line": 742,
+      "role": "toolResult",
+      "tool": "cartographer_validation"
+    },
+    {
+      "chars": 63304,
+      "line": 1037,
+      "role": "toolResult",
+      "tool": "subagent"
+    },
+    {
+      "chars": 50902,
+      "line": 24,
+      "role": "toolResult",
+      "tool": "bash"
+    },
+    {
+      "chars": 46973,
+      "line": 143,
+      "role": "toolResult",
+      "tool": "bash"
+    },
+    {
+      "chars": 44199,
+      "line": 6,
+      "role": "toolResult",
+      "tool": "read"
+    },
+    {
+      "chars": 41675,
+      "line": 840,
+      "role": "toolResult",
+      "tool": "bash"
+    },
+    {
+      "chars": 40950,
+      "line": 846,
+      "role": "toolResult",
+      "tool": "bash"
+    },
+    {
+      "chars": 35672,
+      "line": 706,
+      "role": "toolResult",
+      "tool": "bash"
+    }
+  ],
+  "longest_turns": [
+    {
+      "duration_ms": 143759,
+      "line": 748,
+      "role": "toolResult",
+      "tool": "subagent"
+    },
+    {
+      "duration_ms": 132923,
+      "line": 1037,
+      "role": "toolResult",
+      "tool": "subagent"
+    },
+    {
+      "duration_ms": 98540,
+      "line": 718,
+      "role": "toolResult",
+      "tool": "subagent"
+    },
+    {
+      "duration_ms": 87619,
+      "line": 42,
+      "role": "toolResult",
+      "tool": "subagent"
+    },
+    {
+      "duration_ms": 87551,
+      "line": 476,
+      "role": "toolResult",
+      "tool": "subagent"
+    },
+    {
+      "duration_ms": 85047,
+      "line": 565,
+      "role": "toolResult",
+      "tool": "subagent"
+    },
+    {
+      "duration_ms": 83254,
+      "line": 282,
+      "role": "toolResult",
+      "tool": "subagent"
+    },
+    {
+      "duration_ms": 81794,
+      "line": 458,
+      "role": "toolResult",
+      "tool": "subagent"
+    },
+    {
+      "duration_ms": 80143,
+      "line": 500,
+      "role": "toolResult",
+      "tool": "subagent"
+    },
+    {
+      "duration_ms": 76551,
+      "line": 613,
+      "role": "toolResult",
+      "tool": "subagent"
+    }
+  ],
+  "max_output_chars": 4000,
+  "repeated_commands": [
+    {
+      "command_chars": 241,
+      "command_id": "command-001",
+      "count": 18
+    },
+    {
+      "command_chars": 133,
+      "command_id": "command-002",
+      "count": 11
+    },
+    {
+      "command_chars": 37,
+      "command_id": "command-003",
+      "count": 9
+    },
+    {
+      "command_chars": 13,
+      "command_id": "command-004",
+      "count": 6
+    },
+    {
+      "command_chars": 239,
+      "command_id": "command-005",
+      "count": 6
+    },
+    {
+      "command_chars": 27,
+      "command_id": "command-006",
+      "count": 5
+    },
+    {
+      "command_chars": 177,
+      "command_id": "command-007",
+      "count": 4
+    },
+    {
+      "command_chars": 18,
+      "command_id": "command-008",
+      "count": 3
+    },
+    {
+      "command_chars": 48,
+      "command_id": "command-009",
+      "count": 3
+    },
+    {
+      "command_chars": 45,
+      "command_id": "command-010",
+      "count": 3
+    }
+  ],
+  "roles": {
+    "assistant": 687,
+    "toolResult": 759,
+    "unknown": 6,
+    "user": 27
+  },
+  "subagent_agent_stats": {
+    "cartographer-auditor": {
+      "calls": 50,
+      "errors": 5,
+      "longest_duration_ms": 143759,
+      "timeouts": 0
+    },
+    "cartographer-drafter": {
+      "calls": 4,
+      "errors": 1,
+      "longest_duration_ms": 87619,
+      "timeouts": 0
+    },
+    "reviewer": {
+      "calls": 4,
+      "errors": 0,
+      "longest_duration_ms": 42856,
+      "timeouts": 0
+    },
+    "scout": {
+      "calls": 3,
+      "errors": 0,
+      "longest_duration_ms": 132923,
+      "timeouts": 0
+    },
+    "unknown": {
+      "calls": 17,
+      "errors": 0,
+      "longest_duration_ms": 0,
+      "timeouts": 0
+    }
+  },
+  "subagent_field_usage": {
+    "acceptance": 32,
+    "control": 30,
+    "timeout": 34
+  },
+  "subagent_longest": [
+    {
+      "agent": "cartographer-auditor",
+      "duration_ms": 143759,
+      "line": 748,
+      "tool": "subagent"
+    },
+    {
+      "agent": "scout",
+      "duration_ms": 132923,
+      "line": 1037,
+      "tool": "subagent"
+    },
+    {
+      "agent": "cartographer-auditor",
+      "duration_ms": 98540,
+      "line": 718,
+      "tool": "subagent"
+    },
+    {
+      "agent": "cartographer-drafter",
+      "duration_ms": 87619,
+      "line": 42,
+      "tool": "subagent"
+    },
+    {
+      "agent": "cartographer-auditor",
+      "duration_ms": 87551,
+      "line": 476,
+      "tool": "subagent"
+    },
+    {
+      "agent": "cartographer-auditor",
+      "duration_ms": 85047,
+      "line": 565,
+      "tool": "subagent"
+    },
+    {
+      "agent": "cartographer-auditor",
+      "duration_ms": 83254,
+      "line": 282,
+      "tool": "subagent"
+    },
+    {
+      "agent": "cartographer-auditor",
+      "duration_ms": 81794,
+      "line": 458,
+      "tool": "subagent"
+    },
+    {
+      "agent": "cartographer-auditor",
+      "duration_ms": 80143,
+      "line": 500,
+      "tool": "subagent"
+    },
+    {
+      "agent": "cartographer-auditor",
+      "duration_ms": 76551,
+      "line": 613,
+      "tool": "subagent"
+    }
+  ],
+  "subagent_timeouts": [],
+  "timeout_mentions": [
+    {
+      "line": 6,
+      "role": "toolResult",
+      "tool": "read"
+    },
+    {
+      "line": 24,
+      "role": "toolResult",
+      "tool": "bash"
+    },
+    {
+      "line": 30,
+      "role": "toolResult",
+      "tool": "bash"
+    },
+    {
+      "line": 38,
+      "role": "toolResult",
+      "tool": "bash"
+    },
+    {
+      "line": 141,
+      "role": "toolResult",
+      "tool": "bash"
+    },
+    {
+      "line": 143,
+      "role": "toolResult",
+      "tool": "bash"
+    },
+    {
+      "line": 171,
+      "role": "user",
+      "tool": null
+    },
+    {
+      "line": 175,
+      "role": "user",
+      "tool": null
+    },
+    {
+      "line": 186,
+      "role": "toolResult",
+      "tool": "bash"
+    },
+    {
+      "line": 192,
+      "role": "toolResult",
+      "tool": "cartographer_validation"
+    }
+  ],
+  "token_totals": {},
+  "tool_errors": {
+    "bash": 10,
+    "cartographer_jsonl": 2,
+    "cartographer_plan": 3,
+    "cartographer_plan_status": 2,
+    "cartographer_receipt": 2,
+    "cartographer_state": 6,
+    "cartographer_validation": 17,
+    "edit": 3,
+    "read": 1,
+    "subagent": 6
+  },
+  "tooling_friction": {
+    "cartographer-cli/tool-usage": 767,
+    "command-not-found": 1,
+    "custom-script-creation": 34,
+    "exact-edit-failure": 5,
+    "schema/tool-validation": 61
+  },
+  "tools": {
+    "bash": 393,
+    "cartographer_adr": 5,
+    "cartographer_artifacts": 15,
+    "cartographer_context_pack": 30,
+    "cartographer_fact": 40,
+    "cartographer_index": 25,
+    "cartographer_jsonl": 25,
+    "cartographer_plan": 10,
+    "cartographer_plan_status": 101,
+    "cartographer_proposal": 4,
+    "cartographer_receipt": 18,
+    "cartographer_state": 115,
+    "cartographer_validation": 161,
+    "edit": 162,
+    "read": 190,
+    "subagent": 78,
+    "write": 42
+  }
+}
