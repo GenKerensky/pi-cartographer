@@ -1,0 +1,177 @@
+{
+  "schema_version": 1,
+  "topic": "dashboard-improvements",
+  "source_status": "hashes-valid",
+  "source_refs": {
+    "plan_md": {
+      "path": ".plan/dashboard-improvements/plan.md",
+      "sha256": "sha256:dd60dbee01631cb987f01e89fbb676fa3f88b5bf0731c6e1d2a76311f890fa12"
+    },
+    "plan_nodes": {
+      "path": ".plan/dashboard-improvements/plan.nodes.jsonl",
+      "sha256": "sha256:2edbe160321afa28a2c4e6a75d524c26b68fcaef4546ddf69176e84f595bba5d"
+    },
+    "plan_edges": {
+      "path": ".plan/dashboard-improvements/plan.edges.jsonl",
+      "sha256": "sha256:470dc0c1e63847a4e67e7594a91f9cd6ebb48e38d815676925dbbf6300a63cf3"
+    },
+    "receipts": {
+      "path": ".plan/dashboard-improvements/receipts.jsonl",
+      "sha256": "sha256:7670eb9184d3d18a69d7ec65e23470622867002cb0768edb5326e0d492a3b520"
+    },
+    "context_packs": {
+      "path": ".plan/dashboard-improvements/context-packs.jsonl",
+      "sha256": "sha256:70455b887dab3f115108f3f342b9f48a5a1f25d66d7aa60d47bfc10bd18a5524"
+    }
+  },
+  "current_phase_id": "P0",
+  "active_task_ids": [],
+  "active_validation_ids": [],
+  "next_action": {
+    "id": "P0.audit-corrections",
+    "kind": "implementation-task",
+    "summary": "Apply P0 auditor corrections for route descriptor coverage, route-semantic navigation, and real router browser tests.",
+    "phase_id": "P0",
+    "task_id": "P0.T1",
+    "files_to_inspect": [
+      ".plan/dashboard-improvements/P0-auditor-report.md",
+      "dashboard/src/App.tsx",
+      "dashboard/src/features/review-workflow.tsx",
+      "dashboard/src/routes/index.tsx",
+      "dashboard/src/routes/topics/index.tsx",
+      "dashboard/src/routes/topics/$topic.tsx",
+      "dashboard/src/router.tsx",
+      "dashboard/src/routeTree.gen.ts",
+      "tests/dashboard/client-shell.test.tsx",
+      "tests/dashboard/topic-pages.test.tsx"
+    ]
+  },
+  "working_set": {
+    "write_allowed": [
+      {
+        "path": "dashboard/src/App.tsx",
+        "reason": "P0 route/nav descriptors and navigation link semantics"
+      },
+      {
+        "path": "dashboard/src/features/review-workflow.tsx",
+        "reason": "P0 descriptor/page-id coverage for topic surfaces"
+      },
+      {
+        "path": "dashboard/src/routes/**",
+        "reason": "P0 route-owned shell pages and optional child route targets"
+      },
+      {
+        "path": "dashboard/src/router.tsx",
+        "reason": "P0 testable router history injection if needed"
+      },
+      {
+        "path": "dashboard/src/routeTree.gen.ts",
+        "reason": "P0 generated route tree must include real route files"
+      },
+      {
+        "path": "dashboard/vitest.browser.config.ts",
+        "reason": "P0 browser test dependency pre-bundling for real router integration test stability"
+      },
+      {
+        "path": "tests/dashboard/client-shell.test.tsx",
+        "reason": "P0 browser integration tests for real router / and /topics navigation"
+      },
+      {
+        "path": "tests/dashboard/topic-pages.test.tsx",
+        "reason": "P0 route-focused section assertions if needed"
+      },
+      {
+        "path": ".plan/dashboard-improvements/plan.md",
+        "reason": "P0 status/checklist corrections if evidence changes"
+      },
+      {
+        "path": ".plan/dashboard-improvements/plan.nodes.jsonl",
+        "reason": "P0 graph status corrections if evidence changes"
+      },
+      {
+        "path": ".plan/dashboard-improvements/receipts.jsonl",
+        "reason": "P0 validation/audit receipts"
+      },
+      {
+        "path": ".plan/dashboard-improvements/context-packs.jsonl",
+        "reason": "P0 context pack update"
+      }
+    ],
+    "read_only": [
+      {
+        "path": ".plan/dashboard-improvements/plan.edges.jsonl",
+        "reason": "dependency graph reference"
+      },
+      {
+        "path": ".plan/dashboard-improvements/requirements*.jsonl",
+        "reason": "requirements traceability"
+      },
+      {
+        "path": ".plan/dashboard-improvements/design*.jsonl",
+        "reason": "design traceability"
+      },
+      {
+        "path": ".plan/dashboard-improvements/facts*.jsonl",
+        "reason": "fact traceability"
+      },
+      {
+        "path": "package-lock.json",
+        "reason": "pre-existing user change preserved; avoid until Mermaid dependency phase"
+      }
+    ],
+    "forbidden": [
+      {
+        "path": ".plan/_private/**",
+        "reason": "raw private inputs are off-limits"
+      },
+      {
+        "path": ".plan/_index/**",
+        "reason": "generated index/cache artifacts"
+      },
+      {
+        "path": "package-lock.json",
+        "reason": "pre-existing user change; do not edit in P0"
+      }
+    ]
+  },
+  "known_failures": [],
+  "last_validation_receipt_ids": [
+    "receipt:P0:validation:2026-06-13T03:29:52+00:00",
+    "receipt:P0:validation:2026-06-13T03:29:59+00:00",
+    "receipt:P0:validation:2026-06-13T03:30:04+00:00",
+    "receipt:P0:validation:2026-06-13T03:30:36+00:00",
+    "receipt:P0:validation:2026-06-13T03:30:41+00:00",
+    "receipt:P0:validation:2026-06-13T03:30:45+00:00",
+    "receipt:dashboard-improvements:audit:2026-06-13T03:32:42Z",
+    "receipt:P0:validation:2026-06-13T03:33:42+00:00",
+    "receipt:P0:validation:2026-06-13T03:33:46+00:00"
+  ],
+  "journal_refs": [
+    "journal:20260613T033357Z:compact",
+    "journal:20260613T033428Z:compact"
+  ],
+  "resume": {
+    "template_id": "cartographer.single_writer.resume.v1",
+    "resume_order": [
+      ".cartographer/dashboard-improvements/state.json",
+      ".cartographer/dashboard-improvements/journal.jsonl",
+      ".plan/dashboard-improvements/plan.md",
+      ".plan/dashboard-improvements/receipts.jsonl"
+    ],
+    "expected_first_response": [
+      "current_phase",
+      "next_action",
+      "files_to_inspect"
+    ],
+    "must_ignore": [
+      "prior chat speculation",
+      "stale generated snippets"
+    ]
+  },
+  "updated_at": "2026-06-13T03:34:28Z",
+  "stale_reason": "Implementation compact requested after artifact updates.",
+  "compaction": {
+    "trigger": "phase-end-P0",
+    "compacted_at": "2026-06-13T03:34:28Z"
+  }
+}

@@ -9,7 +9,18 @@ import { DocumentViewer } from "@/features/document-viewer";
 import { GraphExplorer } from "@/features/graph-explorer";
 import { createReferenceIndex, referenceDomId } from "@/lib/reference-resolver";
 
-export type DashboardSectionId = "overview" | "topics" | "documents" | "graph";
+export type DashboardSectionId =
+	| "overview"
+	| "topics"
+	| "topic"
+	| "documents"
+	| "facts"
+	| "evidence"
+	| "receipts"
+	| "health"
+	| "graph";
+
+export type TopicWorkspaceTabId = "proposal" | "requirements" | "design" | "plan" | "facts" | "evidence" | "receipts" | "health" | "graph";
 
 export type DashboardReviewWorkflowProps = {
 	overview: DashboardOverview;
@@ -17,6 +28,8 @@ export type DashboardReviewWorkflowProps = {
 	selectedTopicId?: string;
 	adrs?: AdrCollection;
 	activeSection?: DashboardSectionId;
+	activeTopicTab?: TopicWorkspaceTabId;
+	visibleSection?: DashboardSectionId | "all";
 	onSectionChange?: (section: DashboardSectionId) => void;
 	onTopicSelect?: (topicId: string) => void;
 };
@@ -123,49 +136,70 @@ export function TopicsList({
 	);
 }
 
-function tabForSection(section?: DashboardSectionId): string | undefined {
-	if (section === "graph") return "graph";
-	if (section === "documents") return "proposal";
+function tabForSection(section?: DashboardSectionId): TopicWorkspaceTabId | undefined {
+	if (section === "topic" || section === "documents") return "proposal";
+	if (section === "facts" || section === "evidence" || section === "receipts" || section === "health" || section === "graph") {
+		return section;
+	}
 	return undefined;
+}
+
+function sectionForTab(tab: string): DashboardSectionId {
+	if (tab === "facts" || tab === "evidence" || tab === "receipts" || tab === "health" || tab === "graph") return tab;
+	return "documents";
+}
+
+function documentByKind(artifacts: TopicArtifacts, kind: "proposal" | "requirements" | "design" | "plan") {
+	return artifacts.documents.find((document) => document.kind === kind);
+}
+
+function isTopicWorkspaceSection(section: DashboardSectionId | "all"): boolean {
+	return section === "topic" || section === "documents" || section === "facts" || section === "evidence" || section === "receipts" || section === "health" || section === "graph";
 }
 
 export function TopicWorkspace({
 	artifacts,
 	adrs,
 	activeSection,
+	activeTab,
 	onSectionChange,
 }: {
 	artifacts: TopicArtifacts;
 	adrs?: AdrCollection;
 	activeSection?: DashboardSectionId;
+	activeTab?: TopicWorkspaceTabId;
 	onSectionChange?: (section: DashboardSectionId) => void;
 }): React.JSX.Element {
 	const referenceIndex = createReferenceIndex(artifacts, adrs);
-	const proposal = artifacts.documents.find((document) => document.kind === "proposal");
-	const plan = artifacts.documents.find((document) => document.kind === "plan");
-	const [selectedTab, setSelectedTab] = useState(tabForSection(activeSection) ?? "proposal");
+	const proposal = documentByKind(artifacts, "proposal");
+	const requirements = documentByKind(artifacts, "requirements");
+	const design = documentByKind(artifacts, "design");
+	const plan = documentByKind(artifacts, "plan");
+	const [selectedTab, setSelectedTab] = useState(activeTab ?? tabForSection(activeSection) ?? "proposal");
 	useEffect(() => {
-		const nextTab = tabForSection(activeSection);
+		const nextTab = activeTab ?? tabForSection(activeSection);
 		if (nextTab) setSelectedTab(nextTab);
-	}, [activeSection]);
+	}, [activeSection, activeTab]);
 	return (
 		<Card id="dashboard-section-documents" className="min-w-0 max-w-full scroll-mt-24" data-topic-workspace>
 			<CardHeader>
 				<CardTitle className="break-words">{artifacts.topic.name}</CardTitle>
 				<CardDescription>
-					Proposal, plan, facts, evidence, receipts, health, graph, and file entry points.
+					Proposal, requirements, design, plan, facts, evidence, receipts, health, graph, and file entry points.
 				</CardDescription>
 			</CardHeader>
 			<CardContent className="min-w-0">
 				<Tabs
 					value={selectedTab}
 					onValueChange={(value) => {
-						setSelectedTab(value);
-						onSectionChange?.(value === "graph" ? "graph" : "documents");
+						setSelectedTab(value as TopicWorkspaceTabId);
+						onSectionChange?.(sectionForTab(value));
 					}}
 				>
 					<TabsList className="max-w-full justify-start overflow-x-auto">
 						<TabsTrigger value="proposal">Proposal</TabsTrigger>
+						<TabsTrigger value="requirements">Requirements</TabsTrigger>
+						<TabsTrigger value="design">Design</TabsTrigger>
 						<TabsTrigger value="plan">Plan</TabsTrigger>
 						<TabsTrigger value="facts">Facts</TabsTrigger>
 						<TabsTrigger value="evidence">Evidence</TabsTrigger>
@@ -175,6 +209,12 @@ export function TopicWorkspace({
 					</TabsList>
 					<TabsContent value="proposal" className="pt-4">
 						<DocumentViewer document={proposal} referenceIndex={referenceIndex} />
+					</TabsContent>
+					<TabsContent value="requirements" className="pt-4">
+						<DocumentViewer document={requirements} referenceIndex={referenceIndex} />
+					</TabsContent>
+					<TabsContent value="design" className="pt-4">
+						<DocumentViewer document={design} referenceIndex={referenceIndex} />
 					</TabsContent>
 					<TabsContent value="plan" className="pt-4">
 						<DocumentViewer document={plan} referenceIndex={referenceIndex} />
@@ -271,18 +311,26 @@ export function DashboardReviewWorkflow({
 	selectedTopicId,
 	adrs,
 	activeSection,
+	activeTopicTab,
+	visibleSection = "all",
 	onSectionChange,
 	onTopicSelect,
 }: DashboardReviewWorkflowProps): React.JSX.Element {
+	const showOverview = visibleSection === "all" || visibleSection === "overview";
+	const showTopics = visibleSection === "all" || visibleSection === "topics";
+	const showTopicWorkspace = Boolean(selectedTopic) && (visibleSection === "all" || isTopicWorkspaceSection(visibleSection));
 	return (
-		<div className="min-w-0 space-y-5" data-review-workflow>
-			<OverviewMetrics overview={overview} />
-			<TopicsList topics={overview.topics} selectedTopicId={selectedTopicId} onTopicSelect={onTopicSelect} />
-			{selectedTopic ? (
+		<div className="min-w-0 space-y-5" data-review-workflow data-visible-section={visibleSection}>
+			{showOverview ? <OverviewMetrics overview={overview} /> : null}
+			{showTopics ? (
+				<TopicsList topics={overview.topics} selectedTopicId={selectedTopicId} onTopicSelect={onTopicSelect} />
+			) : null}
+			{showTopicWorkspace && selectedTopic ? (
 				<TopicWorkspace
 					artifacts={selectedTopic}
 					adrs={adrs}
 					activeSection={activeSection}
+					activeTab={activeTopicTab}
 					onSectionChange={onSectionChange}
 				/>
 			) : null}

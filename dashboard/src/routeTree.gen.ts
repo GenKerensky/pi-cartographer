@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as TopicsIndexRouteImport } from './routes/topics/index'
 import { Route as TopicsTopicRouteImport } from './routes/topics/$topic'
 import { Route as ApiTopicsRouteImport } from './routes/api/topics'
 import { Route as ApiOverviewRouteImport } from './routes/api/overview'
@@ -18,9 +19,15 @@ import { Route as ApiFilesRouteImport } from './routes/api/files'
 import { Route as ApiEventsRouteImport } from './routes/api/events'
 import { Route as ApiAdrsRouteImport } from './routes/api/adrs'
 import { Route as ApiIndexIndexRouteImport } from './routes/api/index/index'
+import { Route as TopicsTopicReceiptsRouteImport } from './routes/topics/$topic/receipts'
+import { Route as TopicsTopicHealthRouteImport } from './routes/topics/$topic/health'
+import { Route as TopicsTopicGraphRouteImport } from './routes/topics/$topic/graph'
+import { Route as TopicsTopicFactsRouteImport } from './routes/topics/$topic/facts'
+import { Route as TopicsTopicEvidenceRouteImport } from './routes/topics/$topic/evidence'
 import { Route as ApiTopicsTopicRouteImport } from './routes/api/topics/$topic'
 import { Route as ApiEventsStatusRouteImport } from './routes/api/events/status'
 import { Route as ApiAdrsIdRouteImport } from './routes/api/adrs/$id'
+import { Route as TopicsTopicDocumentsKindRouteImport } from './routes/topics/$topic/documents/$kind'
 import { Route as ApiTopicsTopicGraphRouteImport } from './routes/api/topics/$topic/graph'
 import { Route as ApiTopicsTopicEvidenceRouteImport } from './routes/api/topics/$topic/evidence'
 import { Route as ApiTopicsTopicDocsRouteImport } from './routes/api/topics/$topic/docs'
@@ -29,6 +36,11 @@ import { Route as ApiTopicsTopicDocsKindRouteImport } from './routes/api/topics/
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TopicsIndexRoute = TopicsIndexRouteImport.update({
+  id: '/topics/',
+  path: '/topics/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TopicsTopicRoute = TopicsTopicRouteImport.update({
@@ -71,6 +83,31 @@ const ApiIndexIndexRoute = ApiIndexIndexRouteImport.update({
   path: '/api/index/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TopicsTopicReceiptsRoute = TopicsTopicReceiptsRouteImport.update({
+  id: '/receipts',
+  path: '/receipts',
+  getParentRoute: () => TopicsTopicRoute,
+} as any)
+const TopicsTopicHealthRoute = TopicsTopicHealthRouteImport.update({
+  id: '/health',
+  path: '/health',
+  getParentRoute: () => TopicsTopicRoute,
+} as any)
+const TopicsTopicGraphRoute = TopicsTopicGraphRouteImport.update({
+  id: '/graph',
+  path: '/graph',
+  getParentRoute: () => TopicsTopicRoute,
+} as any)
+const TopicsTopicFactsRoute = TopicsTopicFactsRouteImport.update({
+  id: '/facts',
+  path: '/facts',
+  getParentRoute: () => TopicsTopicRoute,
+} as any)
+const TopicsTopicEvidenceRoute = TopicsTopicEvidenceRouteImport.update({
+  id: '/evidence',
+  path: '/evidence',
+  getParentRoute: () => TopicsTopicRoute,
+} as any)
 const ApiTopicsTopicRoute = ApiTopicsTopicRouteImport.update({
   id: '/$topic',
   path: '/$topic',
@@ -86,6 +123,12 @@ const ApiAdrsIdRoute = ApiAdrsIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => ApiAdrsRoute,
 } as any)
+const TopicsTopicDocumentsKindRoute =
+  TopicsTopicDocumentsKindRouteImport.update({
+    id: '/documents/$kind',
+    path: '/documents/$kind',
+    getParentRoute: () => TopicsTopicRoute,
+  } as any)
 const ApiTopicsTopicGraphRoute = ApiTopicsTopicGraphRouteImport.update({
   id: '/graph',
   path: '/graph',
@@ -115,14 +158,21 @@ export interface FileRoutesByFullPath {
   '/api/health': typeof ApiHealthRoute
   '/api/overview': typeof ApiOverviewRoute
   '/api/topics': typeof ApiTopicsRouteWithChildren
-  '/topics/$topic': typeof TopicsTopicRoute
+  '/topics/$topic': typeof TopicsTopicRouteWithChildren
+  '/topics/': typeof TopicsIndexRoute
   '/api/adrs/$id': typeof ApiAdrsIdRoute
   '/api/events/status': typeof ApiEventsStatusRoute
   '/api/topics/$topic': typeof ApiTopicsTopicRouteWithChildren
+  '/topics/$topic/evidence': typeof TopicsTopicEvidenceRoute
+  '/topics/$topic/facts': typeof TopicsTopicFactsRoute
+  '/topics/$topic/graph': typeof TopicsTopicGraphRoute
+  '/topics/$topic/health': typeof TopicsTopicHealthRoute
+  '/topics/$topic/receipts': typeof TopicsTopicReceiptsRoute
   '/api/index/': typeof ApiIndexIndexRoute
   '/api/topics/$topic/docs': typeof ApiTopicsTopicDocsRouteWithChildren
   '/api/topics/$topic/evidence': typeof ApiTopicsTopicEvidenceRoute
   '/api/topics/$topic/graph': typeof ApiTopicsTopicGraphRoute
+  '/topics/$topic/documents/$kind': typeof TopicsTopicDocumentsKindRoute
   '/api/topics/$topic/docs/$kind': typeof ApiTopicsTopicDocsKindRoute
 }
 export interface FileRoutesByTo {
@@ -133,14 +183,21 @@ export interface FileRoutesByTo {
   '/api/health': typeof ApiHealthRoute
   '/api/overview': typeof ApiOverviewRoute
   '/api/topics': typeof ApiTopicsRouteWithChildren
-  '/topics/$topic': typeof TopicsTopicRoute
+  '/topics/$topic': typeof TopicsTopicRouteWithChildren
+  '/topics': typeof TopicsIndexRoute
   '/api/adrs/$id': typeof ApiAdrsIdRoute
   '/api/events/status': typeof ApiEventsStatusRoute
   '/api/topics/$topic': typeof ApiTopicsTopicRouteWithChildren
+  '/topics/$topic/evidence': typeof TopicsTopicEvidenceRoute
+  '/topics/$topic/facts': typeof TopicsTopicFactsRoute
+  '/topics/$topic/graph': typeof TopicsTopicGraphRoute
+  '/topics/$topic/health': typeof TopicsTopicHealthRoute
+  '/topics/$topic/receipts': typeof TopicsTopicReceiptsRoute
   '/api/index': typeof ApiIndexIndexRoute
   '/api/topics/$topic/docs': typeof ApiTopicsTopicDocsRouteWithChildren
   '/api/topics/$topic/evidence': typeof ApiTopicsTopicEvidenceRoute
   '/api/topics/$topic/graph': typeof ApiTopicsTopicGraphRoute
+  '/topics/$topic/documents/$kind': typeof TopicsTopicDocumentsKindRoute
   '/api/topics/$topic/docs/$kind': typeof ApiTopicsTopicDocsKindRoute
 }
 export interface FileRoutesById {
@@ -152,14 +209,21 @@ export interface FileRoutesById {
   '/api/health': typeof ApiHealthRoute
   '/api/overview': typeof ApiOverviewRoute
   '/api/topics': typeof ApiTopicsRouteWithChildren
-  '/topics/$topic': typeof TopicsTopicRoute
+  '/topics/$topic': typeof TopicsTopicRouteWithChildren
+  '/topics/': typeof TopicsIndexRoute
   '/api/adrs/$id': typeof ApiAdrsIdRoute
   '/api/events/status': typeof ApiEventsStatusRoute
   '/api/topics/$topic': typeof ApiTopicsTopicRouteWithChildren
+  '/topics/$topic/evidence': typeof TopicsTopicEvidenceRoute
+  '/topics/$topic/facts': typeof TopicsTopicFactsRoute
+  '/topics/$topic/graph': typeof TopicsTopicGraphRoute
+  '/topics/$topic/health': typeof TopicsTopicHealthRoute
+  '/topics/$topic/receipts': typeof TopicsTopicReceiptsRoute
   '/api/index/': typeof ApiIndexIndexRoute
   '/api/topics/$topic/docs': typeof ApiTopicsTopicDocsRouteWithChildren
   '/api/topics/$topic/evidence': typeof ApiTopicsTopicEvidenceRoute
   '/api/topics/$topic/graph': typeof ApiTopicsTopicGraphRoute
+  '/topics/$topic/documents/$kind': typeof TopicsTopicDocumentsKindRoute
   '/api/topics/$topic/docs/$kind': typeof ApiTopicsTopicDocsKindRoute
 }
 export interface FileRouteTypes {
@@ -173,13 +237,20 @@ export interface FileRouteTypes {
     | '/api/overview'
     | '/api/topics'
     | '/topics/$topic'
+    | '/topics/'
     | '/api/adrs/$id'
     | '/api/events/status'
     | '/api/topics/$topic'
+    | '/topics/$topic/evidence'
+    | '/topics/$topic/facts'
+    | '/topics/$topic/graph'
+    | '/topics/$topic/health'
+    | '/topics/$topic/receipts'
     | '/api/index/'
     | '/api/topics/$topic/docs'
     | '/api/topics/$topic/evidence'
     | '/api/topics/$topic/graph'
+    | '/topics/$topic/documents/$kind'
     | '/api/topics/$topic/docs/$kind'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -191,13 +262,20 @@ export interface FileRouteTypes {
     | '/api/overview'
     | '/api/topics'
     | '/topics/$topic'
+    | '/topics'
     | '/api/adrs/$id'
     | '/api/events/status'
     | '/api/topics/$topic'
+    | '/topics/$topic/evidence'
+    | '/topics/$topic/facts'
+    | '/topics/$topic/graph'
+    | '/topics/$topic/health'
+    | '/topics/$topic/receipts'
     | '/api/index'
     | '/api/topics/$topic/docs'
     | '/api/topics/$topic/evidence'
     | '/api/topics/$topic/graph'
+    | '/topics/$topic/documents/$kind'
     | '/api/topics/$topic/docs/$kind'
   id:
     | '__root__'
@@ -209,13 +287,20 @@ export interface FileRouteTypes {
     | '/api/overview'
     | '/api/topics'
     | '/topics/$topic'
+    | '/topics/'
     | '/api/adrs/$id'
     | '/api/events/status'
     | '/api/topics/$topic'
+    | '/topics/$topic/evidence'
+    | '/topics/$topic/facts'
+    | '/topics/$topic/graph'
+    | '/topics/$topic/health'
+    | '/topics/$topic/receipts'
     | '/api/index/'
     | '/api/topics/$topic/docs'
     | '/api/topics/$topic/evidence'
     | '/api/topics/$topic/graph'
+    | '/topics/$topic/documents/$kind'
     | '/api/topics/$topic/docs/$kind'
   fileRoutesById: FileRoutesById
 }
@@ -227,7 +312,8 @@ export interface RootRouteChildren {
   ApiHealthRoute: typeof ApiHealthRoute
   ApiOverviewRoute: typeof ApiOverviewRoute
   ApiTopicsRoute: typeof ApiTopicsRouteWithChildren
-  TopicsTopicRoute: typeof TopicsTopicRoute
+  TopicsTopicRoute: typeof TopicsTopicRouteWithChildren
+  TopicsIndexRoute: typeof TopicsIndexRoute
   ApiIndexIndexRoute: typeof ApiIndexIndexRoute
 }
 
@@ -238,6 +324,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/topics/': {
+      id: '/topics/'
+      path: '/topics'
+      fullPath: '/topics/'
+      preLoaderRoute: typeof TopicsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/topics/$topic': {
@@ -296,6 +389,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiIndexIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/topics/$topic/receipts': {
+      id: '/topics/$topic/receipts'
+      path: '/receipts'
+      fullPath: '/topics/$topic/receipts'
+      preLoaderRoute: typeof TopicsTopicReceiptsRouteImport
+      parentRoute: typeof TopicsTopicRoute
+    }
+    '/topics/$topic/health': {
+      id: '/topics/$topic/health'
+      path: '/health'
+      fullPath: '/topics/$topic/health'
+      preLoaderRoute: typeof TopicsTopicHealthRouteImport
+      parentRoute: typeof TopicsTopicRoute
+    }
+    '/topics/$topic/graph': {
+      id: '/topics/$topic/graph'
+      path: '/graph'
+      fullPath: '/topics/$topic/graph'
+      preLoaderRoute: typeof TopicsTopicGraphRouteImport
+      parentRoute: typeof TopicsTopicRoute
+    }
+    '/topics/$topic/facts': {
+      id: '/topics/$topic/facts'
+      path: '/facts'
+      fullPath: '/topics/$topic/facts'
+      preLoaderRoute: typeof TopicsTopicFactsRouteImport
+      parentRoute: typeof TopicsTopicRoute
+    }
+    '/topics/$topic/evidence': {
+      id: '/topics/$topic/evidence'
+      path: '/evidence'
+      fullPath: '/topics/$topic/evidence'
+      preLoaderRoute: typeof TopicsTopicEvidenceRouteImport
+      parentRoute: typeof TopicsTopicRoute
+    }
     '/api/topics/$topic': {
       id: '/api/topics/$topic'
       path: '/$topic'
@@ -316,6 +444,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/adrs/$id'
       preLoaderRoute: typeof ApiAdrsIdRouteImport
       parentRoute: typeof ApiAdrsRoute
+    }
+    '/topics/$topic/documents/$kind': {
+      id: '/topics/$topic/documents/$kind'
+      path: '/documents/$kind'
+      fullPath: '/topics/$topic/documents/$kind'
+      preLoaderRoute: typeof TopicsTopicDocumentsKindRouteImport
+      parentRoute: typeof TopicsTopicRoute
     }
     '/api/topics/$topic/graph': {
       id: '/api/topics/$topic/graph'
@@ -410,6 +545,28 @@ const ApiTopicsRouteWithChildren = ApiTopicsRoute._addFileChildren(
   ApiTopicsRouteChildren,
 )
 
+interface TopicsTopicRouteChildren {
+  TopicsTopicEvidenceRoute: typeof TopicsTopicEvidenceRoute
+  TopicsTopicFactsRoute: typeof TopicsTopicFactsRoute
+  TopicsTopicGraphRoute: typeof TopicsTopicGraphRoute
+  TopicsTopicHealthRoute: typeof TopicsTopicHealthRoute
+  TopicsTopicReceiptsRoute: typeof TopicsTopicReceiptsRoute
+  TopicsTopicDocumentsKindRoute: typeof TopicsTopicDocumentsKindRoute
+}
+
+const TopicsTopicRouteChildren: TopicsTopicRouteChildren = {
+  TopicsTopicEvidenceRoute: TopicsTopicEvidenceRoute,
+  TopicsTopicFactsRoute: TopicsTopicFactsRoute,
+  TopicsTopicGraphRoute: TopicsTopicGraphRoute,
+  TopicsTopicHealthRoute: TopicsTopicHealthRoute,
+  TopicsTopicReceiptsRoute: TopicsTopicReceiptsRoute,
+  TopicsTopicDocumentsKindRoute: TopicsTopicDocumentsKindRoute,
+}
+
+const TopicsTopicRouteWithChildren = TopicsTopicRoute._addFileChildren(
+  TopicsTopicRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ApiAdrsRoute: ApiAdrsRouteWithChildren,
@@ -418,7 +575,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiHealthRoute: ApiHealthRoute,
   ApiOverviewRoute: ApiOverviewRoute,
   ApiTopicsRoute: ApiTopicsRouteWithChildren,
-  TopicsTopicRoute: TopicsTopicRoute,
+  TopicsTopicRoute: TopicsTopicRouteWithChildren,
+  TopicsIndexRoute: TopicsIndexRoute,
   ApiIndexIndexRoute: ApiIndexIndexRoute,
 }
 export const routeTree = rootRouteImport

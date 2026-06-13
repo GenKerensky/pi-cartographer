@@ -1,0 +1,27 @@
+{"evidence":"App.tsx lines around selectedTopicId/activeSection state and scrollIntoView support the claim.","from":"F001","to":"S001","type":"supported_by"}
+{"evidence":"review-workflow.tsx defines the stacked workflow and local selectedTab/Tabs topic workspace.","from":"F002","to":"S002","type":"supported_by"}
+{"evidence":"markdown.tsx anchor renderer sets the native title attribute from referenceTitle.","from":"F003","to":"S003","type":"supported_by"}
+{"evidence":"document-viewer.tsx defines preview/source Tabs state and MarkdownPreview/source rendering.","from":"F004","to":"S004","type":"supported_by"}
+{"evidence":"Route files and router.tsx define typed routes and scrollRestoration.","from":"F005","to":"S005","type":"supported_by"}
+{"evidence":"TanStack Router docs show Link params and search props for typed route navigation.","from":"F006","to":"S007","type":"supported_by"}
+{"evidence":"react-markdown docs describe the components option and custom anchor renderers.","from":"F007","to":"S008","type":"supported_by"}
+{"evidence":"Radix docs show Tooltip asChild anchors, accessible tooltip behavior, and Hover Card rich hover content.","from":"F008","to":"S009","type":"supported_by"}
+{"evidence":"tooltip.tsx and globals.css define the local themed popover styling foundation.","from":"F009","to":"S010","type":"supported_by"}
+{"evidence":"Existing dashboard tests assert stateful nav/tab behavior and Markdown reference output.","from":"F010","to":"S011","type":"supported_by"}
+{"evidence":"ADR-0005 decision and usage sections constrain the dashboard stack and read-only model.","from":"F011","to":"S006","type":"supported_by"}
+{"evidence":"Shared models and API wrappers already expose topic artifacts and document/graph/file surfaces.","from":"F012","to":"S012","type":"supported_by"}
+{"evidence":"Navigation refactor centers on DashboardShell state and scroll behavior.","from":"F001","to":"file:dashboard/src/App.tsx","type":"applies_to"}
+{"evidence":"Page split should preserve but route-own the current review workflow panels.","from":"F002","to":"file:dashboard/src/features/review-workflow.tsx","type":"applies_to"}
+{"evidence":"Evidence hover popover implementation belongs in MarkdownPreview/reference link rendering.","from":"F003","to":"file:dashboard/src/lib/markdown.tsx","type":"applies_to"}
+{"evidence":"Document mode and reference summary behavior should be reviewed during navigation improvements.","from":"F004","to":"file:dashboard/src/features/document-viewer.tsx","type":"applies_to"}
+{"evidence":"Existing router should own navigation state and scroll restoration.","from":"F005","to":"file:dashboard/src/router.tsx","type":"applies_to"}
+{"evidence":"Existing themed tooltip can be reused or extended.","from":"F009","to":"file:dashboard/src/components/ui/tooltip.tsx","type":"applies_to"}
+{"evidence":"Client navigation tests need updating.","from":"F010","to":"file:tests/dashboard/client-shell.test.tsx","type":"applies_to"}
+{"evidence":"Markdown popover/reference tests need updating.","from":"F010","to":"file:tests/dashboard/markdown-viewer.test.tsx","type":"applies_to"}
+{"evidence":"Proposal and implementation should align with accepted dashboard ADR.","from":"F011","to":"doc:docs/adr/0005-use-tanstack-start-and-tanstack-db-for-the-cartographer-dashboard.md","type":"applies_to"}
+{"evidence":"Mermaid diagram registry imports and registers all supported diagram detectors.","from":"F013","to":"S013","type":"supported_by"}
+{"evidence":"Mermaid examples initialize config and call mermaid.render to generate SVG.","from":"F014","to":"S014","type":"supported_by"}
+{"evidence":"Mermaid config docs define strict, antiscript, loose, and sandbox security levels and their feature/security tradeoffs.","from":"F015","to":"S015","type":"supported_by"}
+{"evidence":"Mermaid code-fence rendering belongs in or near MarkdownPreview's code renderer.","from":"F013","to":"file:dashboard/src/lib/markdown.tsx","type":"applies_to"}
+{"evidence":"Markdown renderer should detect mermaid fences and invoke official Mermaid render APIs.","from":"F014","to":"file:dashboard/src/lib/markdown.tsx","type":"applies_to"}
+{"evidence":"Mermaid renderer design must explicitly choose security settings that preserve feature support and dashboard safety.","from":"F015","to":"file:dashboard/src/lib/markdown.tsx","type":"applies_to"}

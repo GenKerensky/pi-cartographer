@@ -1,17 +1,16 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { DashboardShell } from "../../App.js";
+import { DashboardShell } from "../../../App.js";
 
-export const Route = createFileRoute("/topics/$topic")({
-	loader: () => ({}),
-	component: DashboardTopicRoute,
+export const Route = createFileRoute("/topics/$topic/health")({
+	component: DashboardTopicHealthRoute,
 });
 
-function DashboardTopicRoute(): React.JSX.Element {
+function DashboardTopicHealthRoute(): React.JSX.Element {
 	const { topic } = Route.useParams();
 	const navigate = useNavigate();
 	return (
 		<DashboardShell
-			activePage="topic"
+			activePage="health"
 			routeTopicId={topic}
 			useRouterLinks
 			onTopicNavigate={(nextTopic) => {
