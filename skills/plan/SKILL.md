@@ -57,6 +57,23 @@ For scoped changes that affect a core user workflow or comparable durable behavi
 - When a project needs the durable requirements container before any deltas have been folded, plan an explicit `python skills/plan/scripts/requirements_records.py init --root "$PWD" --json` step. This initializes `docs/requirements.md` only when absent, preserves existing files, and does not invent product requirements.
 - When planning the fold/archive step, include validation that implemented topics with requirement deltas produce a `requirements-fold` receipt or an approved `requirements-fold-skip` receipt, preserving stable requirement/scenario IDs, supersession/removal metadata, source topic, and validation/audit receipt references.
 
+### Testing Strategy Trace
+
+When accepted `design.md` contains a `Testing Strategy`, plans for behavior-changing work MUST consume it before drafting phases. Plan validation items MUST derive from that strategy and name concrete test artifacts/scenarios/commands or manual/static evidence.
+
+For each behavior-changing phase, include `Testing Strategy Trace` metadata in validation items or phase notes covering:
+
+- accepted design/testing-strategy decision IDs or section references;
+- covered `REQ-*` requirement IDs and `SCN-*` scenario IDs;
+- layer: static, unit, integration, E2E, contract/golden, or manual-assisted;
+- concrete test files, fixtures, scenario names, commands, or explicit new artifact names;
+- whether the item contributes to the required at-least-one `E2E` validation;
+- justified non-applicability for skipped layers.
+
+Plans MUST include a requirement/scenario coverage matrix or equivalent trace showing every topic-generated `REQ-*` and `SCN-*` has validation coverage, or an explicit justified non-test/manual evidence exception. Broad commands such as `npm run check` are safety nets after focused tests; they do not replace concrete strategy-derived validation. Generic-only validation for behavior-changing work is not acceptable.
+
+Major testing-tool additions, removals, replacements, or project-wide standards are ADR-trigger language: preserve `adr_required` metadata for the current proposal and add ADR evaluation/generation tasks before dependent implementation phases when a toolchain pivot is accepted.
+
 `{topic}` is a concise summary of the user's requested topic in **3 words or less**. Prefer filesystem-safe lowercase kebab-case for paths.
 
 ## Procedure
@@ -316,6 +333,10 @@ Use deterministic wrappers for plan mutations whenever available. Prefer `cartog
   - checklist item IDs are unique and scoped to their phase
   - validation item IDs are unique and scoped to their phase
   - validation commands are declared and appear valid for the project, or are clearly marked as manual checks
+  - behavior-changing validation gates derive from the accepted Testing Strategy and cite concrete test artifacts/scenarios/commands
+  - every topic-generated requirement/scenario has validation coverage or an explicit justified exception
+  - at least one E2E validation exists for applicable behavior-changing topics
+  - generic-only validation gates are rejected for behavior-changing work unless explicitly justified as non-behavioral
   - referenced project files exist in the current checkout
   - referenced indexed node IDs exist in `map.nodes.jsonl`, or `.plan/_index/project-graph.sqlite`
   - referenced fact IDs exist as `fact` nodes in `facts.nodes.jsonl`

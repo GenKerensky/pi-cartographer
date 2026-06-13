@@ -72,6 +72,22 @@ class WorkflowDocsTests(unittest.TestCase):
         ]:
             self.assertIn(needle, design)
 
+    def test_plan_skill_documents_testing_strategy_trace(self) -> None:
+        plan = (ROOT / "skills/plan/SKILL.md").read_text(encoding="utf-8")
+
+        for needle in [
+            "Testing Strategy Trace",
+            "concrete test artifacts/scenarios/commands",
+            "covered `REQ-*` requirement IDs and `SCN-*` scenario IDs",
+            "requirement/scenario coverage matrix",
+            "at-least-one `E2E` validation",
+            "Broad commands such as `npm run check` are safety nets",
+            "Generic-only validation for behavior-changing work is not acceptable",
+            "ADR-trigger language",
+            "generic-only validation gates are rejected",
+        ]:
+            self.assertIn(needle, plan)
+
     def test_deterministic_then_auditor_gates_are_documented(self) -> None:
         proposal = (ROOT / "skills/proposal/SKILL.md").read_text(encoding="utf-8")
         plan = (ROOT / "skills/plan/SKILL.md").read_text(encoding="utf-8")

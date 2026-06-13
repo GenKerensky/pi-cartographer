@@ -174,7 +174,7 @@ Follow skill-authoring rules in `AGENTS.md`: terse agent-facing text, RFC 2119 k
 
 ### Phase P2 — Plan skill validation contract
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P0
 - **Unlocks:** P3
 - **Primary references:** `skills/plan/SKILL.md`, `.plan/testing-strategy/design.md`, `.plan/testing-strategy/requirements.md`, [F004]
@@ -194,15 +194,15 @@ Update the plan workflow instructions so plan validation gates are concrete, str
 
 #### Checklist
 
-- [ ] **P2.T1** Update `skills/plan/SKILL.md` to consume `design.md` Testing Strategy and design IDs when present.
-- [ ] **P2.T2** Add a compact `Testing Strategy Trace` expectation for behavior-changing validation items, covering layer, concrete artifact/scenario/command, covered requirement/scenario IDs, E2E contribution, and justified non-applicability.
-- [ ] **P2.T3** Add plan-gate evidence requirements from `DES-TEST-004`: concrete validations, requirement/scenario coverage matrix, at-least-one E2E validation, broad checks separated from focused tests, and ADR-trigger detection.
-- [ ] **P2.T4** Update final auditor prompt guidance so plan audit checks strategy-derived validations, rejects generic-only behavior-change gates, and rejects uncovered requirements/scenarios without justified exceptions.
+- [x] **P2.T1** Update `skills/plan/SKILL.md` to consume `design.md` Testing Strategy and design IDs when present.
+- [x] **P2.T2** Add a compact `Testing Strategy Trace` expectation for behavior-changing validation items, covering layer, concrete artifact/scenario/command, covered requirement/scenario IDs, E2E contribution, and justified non-applicability.
+- [x] **P2.T3** Add plan-gate evidence requirements from `DES-TEST-004`: concrete validations, requirement/scenario coverage matrix, at-least-one E2E validation, broad checks separated from focused tests, and ADR-trigger detection.
+- [x] **P2.T4** Update final auditor prompt guidance so plan audit checks strategy-derived validations, rejects generic-only behavior-change gates, and rejects uncovered requirements/scenarios without justified exceptions.
 
 #### Validation
 
-- [ ] **P2.V1** Add/update `tests/test_workflow_docs.py` assertions that `skills/plan/SKILL.md` includes `Testing Strategy Trace`, concrete test artifacts/scenarios/commands, requirement/scenario coverage, at least one `E2E` validation, generic-only validation rejection, and ADR-trigger language; run `python -m unittest tests.test_workflow_docs.WorkflowDocsTests`. Testing Strategy Trace: design `DES-TEST-002`, `DES-TEST-004`; layer unit/static docs test; covers `REQ-TEST-002`, `REQ-TEST-003`, `REQ-TEST-004`, and `SCN-TEST-004`.
-- [ ] **P2.V2** Run `python skills/plan/scripts/check_skill_language.py --root . --json` and verify the plan skill still routes canonical mutations through wrappers. Testing Strategy Trace: design `DES-TEST-004`; layer static contract check.
+- [x] **P2.V1** Add/update `tests/test_workflow_docs.py` assertions that `skills/plan/SKILL.md` includes `Testing Strategy Trace`, concrete test artifacts/scenarios/commands, requirement/scenario coverage, at least one `E2E` validation, generic-only validation rejection, and ADR-trigger language; run `python -m unittest tests.test_workflow_docs.WorkflowDocsTests`. Testing Strategy Trace: design `DES-TEST-002`, `DES-TEST-004`; layer unit/static docs test; covers `REQ-TEST-002`, `REQ-TEST-003`, `REQ-TEST-004`, and `SCN-TEST-004`.
+- [x] **P2.V2** Run `python skills/plan/scripts/check_skill_language.py --root . --json` and verify the plan skill still routes canonical mutations through wrappers. Testing Strategy Trace: design `DES-TEST-004`; layer static contract check.
 
 #### Exit Criteria
 

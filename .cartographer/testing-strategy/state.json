@@ -1,15 +1,15 @@
 {
   "schema_version": 1,
   "topic": "testing-strategy",
-  "source_status": "stale",
+  "source_status": "hashes-valid",
   "source_refs": {
     "plan_md": {
       "path": ".plan/testing-strategy/plan.md",
-      "sha256": "sha256:b8e2211438ecf26851d5561a1e3338dc0bbc8fa9eb90ee518441f8a258230526"
+      "sha256": "sha256:7ef669a89e924e74abc6f2c977960340c4a2afe3ce40d56622b22c65f1de872b"
     },
     "plan_nodes": {
       "path": ".plan/testing-strategy/plan.nodes.jsonl",
-      "sha256": "sha256:9e816fafb23684fba1ab1599105ef3c376bfd48c607137bd36da90979474abe2"
+      "sha256": "sha256:618b8bbbc8d387061aa336efd9e32ef37db530f7ed6aa86b18119419e8198351"
     },
     "plan_edges": {
       "path": ".plan/testing-strategy/plan.edges.jsonl",
@@ -17,27 +17,27 @@
     },
     "receipts": {
       "path": ".plan/testing-strategy/receipts.jsonl",
-      "sha256": "sha256:5f31a3ccd917c8d247041f8914a38752dd4f5bf2706ba354745e74f5ac89f52e"
+      "sha256": "sha256:9d831c6baa7a8857147420fe7da28b973f34956dcee7d8a0d8a683fc0cf16433"
     },
     "context_packs": {
       "path": ".plan/testing-strategy/context-packs.jsonl",
-      "sha256": "sha256:395afce95dc174e244e52cd3a56de76d03dd948b316bda69470dc20eb5d4701f"
+      "sha256": "sha256:bb9c641e204a4c78870f9d5775a9a5bd44118701e68e0693433f700a756b0f6d"
     }
   },
   "current_phase_id": "P0",
   "active_task_ids": [],
   "active_validation_ids": [],
   "next_action": {
-    "id": "P1.T1",
+    "id": "P2.T1",
     "kind": "implementation-task",
-    "summary": "Update design skill Testing Strategy contract and workflow docs tests.",
-    "phase_id": "P1",
-    "task_id": "P1.T1",
+    "summary": "Update plan skill to consume accepted Testing Strategy and require concrete requirement-covered validation gates.",
+    "phase_id": "P2",
+    "task_id": "P2.T1",
     "files_to_inspect": [
-      "skills/design/SKILL.md",
+      "skills/plan/SKILL.md",
       "tests/test_workflow_docs.py",
       ".plan/testing-strategy/design.md",
-      ".plan/testing-strategy/plan.md"
+      ".plan/testing-strategy/requirements.md"
     ]
   },
   "working_set": {
@@ -95,11 +95,15 @@
     "receipt:testing-strategy:audit:2026-06-13T23:31:45Z",
     "receipt:P1:validation:2026-06-13T23:33:46+00:00",
     "receipt:P1:validation:2026-06-13T23:33:50+00:00",
-    "receipt:testing-strategy:audit:2026-06-13T23:36:11Z"
+    "receipt:testing-strategy:audit:2026-06-13T23:36:11Z",
+    "receipt:P2:validation:2026-06-13T23:37:49+00:00",
+    "receipt:P2:validation:2026-06-13T23:37:53+00:00",
+    "receipt:testing-strategy:audit:2026-06-13T23:39:37Z"
   ],
   "journal_refs": [
     "journal:20260613T233209Z:compact",
-    "journal:20260613T233621Z:compact"
+    "journal:20260613T233621Z:compact",
+    "journal:20260613T233949Z:compact"
   ],
   "resume": {
     "template_id": "cartographer.single_writer.resume.v1",
@@ -119,10 +123,10 @@
       "stale generated snippets"
     ]
   },
-  "updated_at": "2026-06-13T23:36:29Z",
+  "updated_at": "2026-06-13T23:39:49Z",
   "stale_reason": "Implementation compact requested after artifact updates.",
   "compaction": {
-    "trigger": "phase-end-P1",
-    "compacted_at": "2026-06-13T23:36:21Z"
+    "trigger": "phase-end-P2",
+    "compacted_at": "2026-06-13T23:39:49Z"
   }
 }
