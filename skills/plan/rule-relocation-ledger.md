@@ -1,6 +1,6 @@
 # Plan Skill Rule Relocation Ledger
 
-This ledger records the P2 split of `skills/plan/SKILL.md` into a compact kernel plus one-level references.
+This ledger records the split of `skills/plan/SKILL.md` into a compact kernel plus one-level references.
 
 | Original area | New home | Rationale |
 |---|---|---|

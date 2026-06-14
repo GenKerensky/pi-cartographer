@@ -1,6 +1,6 @@
 # Implement Skill Rule Relocation Ledger
 
-This ledger records the P1 split of `skills/implement/SKILL.md` into a compact kernel plus one-level references.
+This ledger records the split of `skills/implement/SKILL.md` into a compact kernel plus one-level references.
 
 | Original area | New home | Rationale |
 |---|---|---|
