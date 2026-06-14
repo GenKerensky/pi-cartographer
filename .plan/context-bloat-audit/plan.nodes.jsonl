@@ -29,14 +29,14 @@
 {"id":"validation:P2.V2","type":"validation","validation_id":"P2.V2","phase_id":"P2","title":"P2.V2","status":"complete","source":"plan.md"}
 {"id":"validation:P2.V3","type":"validation","validation_id":"P2.V3","phase_id":"P2","title":"P2.V3","status":"complete","source":"plan.md"}
 {"id":"validation:P2.V4","type":"validation","validation_id":"P2.V4","phase_id":"P2","title":"P2.V4","status":"complete","source":"plan.md"}
-{"id":"phase:P3","type":"phase","phase_id":"P3","title":"Scoped AGENTS.md Cleanup","status":"pending","depends_on":["P2"],"source":"plan.md"}
-{"id":"task:P3.T1","type":"task","task_id":"P3.T1","phase_id":"P3","title":"P3.T1","status":"pending","source":"plan.md"}
-{"id":"task:P3.T2","type":"task","task_id":"P3.T2","phase_id":"P3","title":"P3.T2","status":"pending","source":"plan.md"}
-{"id":"task:P3.T3","type":"task","task_id":"P3.T3","phase_id":"P3","title":"P3.T3","status":"pending","source":"plan.md"}
-{"id":"task:P3.T4","type":"task","task_id":"P3.T4","phase_id":"P3","title":"P3.T4","status":"pending","source":"plan.md"}
-{"id":"validation:P3.V1","type":"validation","validation_id":"P3.V1","phase_id":"P3","title":"P3.V1","status":"pending","source":"plan.md"}
-{"id":"validation:P3.V2","type":"validation","validation_id":"P3.V2","phase_id":"P3","title":"P3.V2","status":"pending","source":"plan.md"}
-{"id":"validation:P3.V3","type":"validation","validation_id":"P3.V3","phase_id":"P3","title":"P3.V3","status":"pending","source":"plan.md"}
+{"id":"phase:P3","type":"phase","phase_id":"P3","title":"Scoped AGENTS.md Cleanup","status":"complete","depends_on":["P2"],"source":"plan.md"}
+{"id":"task:P3.T1","type":"task","task_id":"P3.T1","phase_id":"P3","title":"P3.T1","status":"complete","source":"plan.md"}
+{"id":"task:P3.T2","type":"task","task_id":"P3.T2","phase_id":"P3","title":"P3.T2","status":"complete","source":"plan.md"}
+{"id":"task:P3.T3","type":"task","task_id":"P3.T3","phase_id":"P3","title":"P3.T3","status":"complete","source":"plan.md"}
+{"id":"task:P3.T4","type":"task","task_id":"P3.T4","phase_id":"P3","title":"P3.T4","status":"complete","source":"plan.md"}
+{"id":"validation:P3.V1","type":"validation","validation_id":"P3.V1","phase_id":"P3","title":"P3.V1","status":"complete","source":"plan.md"}
+{"id":"validation:P3.V2","type":"validation","validation_id":"P3.V2","phase_id":"P3","title":"P3.V2","status":"complete","source":"plan.md"}
+{"id":"validation:P3.V3","type":"validation","validation_id":"P3.V3","phase_id":"P3","title":"P3.V3","status":"complete","source":"plan.md"}
 {"id":"phase:P4","type":"phase","phase_id":"P4","title":"State-Aware Resume Primer","status":"pending","depends_on":["P2"],"source":"plan.md"}
 {"id":"task:P4.T1","type":"task","task_id":"P4.T1","phase_id":"P4","title":"P4.T1","status":"pending","source":"plan.md"}
 {"id":"task:P4.T2","type":"task","task_id":"P4.T2","phase_id":"P4","title":"P4.T2","status":"pending","source":"plan.md"}

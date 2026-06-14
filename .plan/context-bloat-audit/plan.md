@@ -221,7 +221,7 @@ Avoid changing lifecycle semantics during prose splitting; any semantic change n
 
 ### Phase P3 — Scoped AGENTS.md Cleanup
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P2
 - **Unlocks:** P6
 - **Primary references:** `DES-CBA-003`, `REQ-CBA-003`, `SCN-CBA-005`, `SCN-CBA-006`, `F008`, `F010`, `AGENTS.md`, `skills/AGENTS.md`
@@ -239,16 +239,16 @@ Clean up root and child `AGENTS.md` files as scoped instruction files, not DOX f
 
 #### Checklist
 
-- [ ] **P3.T1** Audit root `AGENTS.md` for project-wide-only instructions.
-- [ ] **P3.T2** Audit `skills/AGENTS.md` for skill-specific instructions, duplicate rules, line-length warnings, and budget fit.
-- [ ] **P3.T3** Record parent/child instruction ownership boundaries in the appropriate file(s) without reintroducing DOX framework mechanics.
-- [ ] **P3.T4** Update inventory budgets and relocation ledger for instruction-file changes.
+- [x] **P3.T1** Audit root `AGENTS.md` for project-wide-only instructions.
+- [x] **P3.T2** Audit `skills/AGENTS.md` for skill-specific instructions, duplicate rules, line-length warnings, and budget fit.
+- [x] **P3.T3** Record parent/child instruction ownership boundaries in the appropriate file(s) without reintroducing DOX framework mechanics.
+- [x] **P3.T4** Update inventory budgets and relocation ledger for instruction-file changes.
 
 #### Validation
 
-- [ ] **P3.V1** Run context inventory; expected result: before/after size deltas for root and child `AGENTS.md` files are reported.
-- [ ] **P3.V2** Run markdown/prettier checks relevant to touched Markdown; expected result: line-length/readability warnings resolved or exceptions recorded.
-- [ ] **P3.V3** Review scoped-instruction behavior; expected result: non-skills work avoids skill-specific rules while `skills/` work receives `skills/AGENTS.md`.
+- [x] **P3.V1** Run context inventory; expected result: before/after size deltas for root and child `AGENTS.md` files are reported.
+- [x] **P3.V2** Run markdown/prettier checks relevant to touched Markdown; expected result: line-length/readability warnings resolved or exceptions recorded.
+- [x] **P3.V3** Review scoped-instruction behavior; expected result: non-skills work avoids skill-specific rules while `skills/` work receives `skills/AGENTS.md`.
 
 #### Testing Strategy Trace
 
