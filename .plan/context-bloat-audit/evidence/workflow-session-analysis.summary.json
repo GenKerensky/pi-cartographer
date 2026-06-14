@@ -1,0 +1,411 @@
+{
+  "bytes": 3861445,
+  "compactions": [
+    {
+      "line": 103,
+      "role": "unknown",
+      "tool": null
+    },
+    {
+      "line": 297,
+      "role": "unknown",
+      "tool": null
+    },
+    {
+      "line": 363,
+      "role": "unknown",
+      "tool": null
+    },
+    {
+      "line": 475,
+      "role": "unknown",
+      "tool": null
+    },
+    {
+      "line": 1050,
+      "role": "unknown",
+      "tool": null
+    },
+    {
+      "line": 1175,
+      "role": "unknown",
+      "tool": null
+    }
+  ],
+  "cost_totals": {
+    "cost": 10.942774
+  },
+  "entries": 1199,
+  "input_basename": "2026-06-13T18-57-04-915Z_019ec258-4393-710a-8fcf-eeae6912fb0a.jsonl",
+  "invalid_lines": 0,
+  "largest_outputs": [
+    {
+      "chars": 44627,
+      "line": 1161,
+      "role": "toolResult",
+      "tool": "bash"
+    },
+    {
+      "chars": 39007,
+      "line": 364,
+      "role": "user",
+      "tool": null
+    },
+    {
+      "chars": 36407,
+      "line": 167,
+      "role": "toolResult",
+      "tool": "bash"
+    },
+    {
+      "chars": 31951,
+      "line": 304,
+      "role": "toolResult",
+      "tool": "read"
+    },
+    {
+      "chars": 28266,
+      "line": 274,
+      "role": "toolResult",
+      "tool": "bash"
+    },
+    {
+      "chars": 28119,
+      "line": 476,
+      "role": "user",
+      "tool": null
+    },
+    {
+      "chars": 28083,
+      "line": 1051,
+      "role": "user",
+      "tool": null
+    },
+    {
+      "chars": 27835,
+      "line": 308,
+      "role": "toolResult",
+      "tool": "bash"
+    },
+    {
+      "chars": 26344,
+      "line": 399,
+      "role": "assistant",
+      "tool": "write"
+    },
+    {
+      "chars": 26261,
+      "line": 170,
+      "role": "toolResult",
+      "tool": "bash"
+    }
+  ],
+  "longest_turns": [
+    {
+      "duration_ms": 100708,
+      "line": 988,
+      "role": "toolResult",
+      "tool": "subagent"
+    },
+    {
+      "duration_ms": 91995,
+      "line": 398,
+      "role": "toolResult",
+      "tool": "subagent"
+    },
+    {
+      "duration_ms": 77682,
+      "line": 510,
+      "role": "toolResult",
+      "tool": "subagent"
+    },
+    {
+      "duration_ms": 76750,
+      "line": 842,
+      "role": "toolResult",
+      "tool": "subagent"
+    },
+    {
+      "duration_ms": 72998,
+      "line": 412,
+      "role": "toolResult",
+      "tool": "subagent"
+    },
+    {
+      "duration_ms": 70518,
+      "line": 920,
+      "role": "toolResult",
+      "tool": "subagent"
+    },
+    {
+      "duration_ms": 66795,
+      "line": 738,
+      "role": "toolResult",
+      "tool": "subagent"
+    },
+    {
+      "duration_ms": 60471,
+      "line": 848,
+      "role": "toolResult",
+      "tool": "subagent"
+    },
+    {
+      "duration_ms": 55836,
+      "line": 826,
+      "role": "toolResult",
+      "tool": "subagent"
+    },
+    {
+      "duration_ms": 54470,
+      "line": 767,
+      "role": "toolResult",
+      "tool": "subagent"
+    }
+  ],
+  "max_output_chars": 12000,
+  "repeated_commands": [
+    {
+      "command_chars": 128,
+      "command_id": "command-001",
+      "count": 15
+    },
+    {
+      "command_chars": 18,
+      "command_id": "command-002",
+      "count": 15
+    },
+    {
+      "command_chars": 99,
+      "command_id": "command-003",
+      "count": 8
+    },
+    {
+      "command_chars": 37,
+      "command_id": "command-004",
+      "count": 8
+    },
+    {
+      "command_chars": 81,
+      "command_id": "command-005",
+      "count": 7
+    },
+    {
+      "command_chars": 13,
+      "command_id": "command-006",
+      "count": 7
+    },
+    {
+      "command_chars": 61,
+      "command_id": "command-007",
+      "count": 6
+    },
+    {
+      "command_chars": 21,
+      "command_id": "command-008",
+      "count": 3
+    },
+    {
+      "command_chars": 15,
+      "command_id": "command-009",
+      "count": 3
+    },
+    {
+      "command_chars": 77,
+      "command_id": "command-010",
+      "count": 2
+    }
+  ],
+  "roles": {
+    "assistant": 559,
+    "toolResult": 607,
+    "unknown": 14,
+    "user": 19
+  },
+  "subagent_agent_stats": {
+    "cartographer-auditor": {
+      "calls": 33,
+      "errors": 1,
+      "longest_duration_ms": 100708,
+      "timeouts": 0
+    },
+    "cartographer-drafter": {
+      "calls": 2,
+      "errors": 1,
+      "longest_duration_ms": 91995,
+      "timeouts": 0
+    },
+    "unknown": {
+      "calls": 6,
+      "errors": 0,
+      "longest_duration_ms": 0,
+      "timeouts": 0
+    }
+  },
+  "subagent_field_usage": {
+    "acceptance": 19,
+    "control": 17,
+    "timeout": 17
+  },
+  "subagent_longest": [
+    {
+      "agent": "cartographer-auditor",
+      "duration_ms": 100708,
+      "line": 988,
+      "tool": "subagent"
+    },
+    {
+      "agent": "cartographer-drafter",
+      "duration_ms": 91995,
+      "line": 398,
+      "tool": "subagent"
+    },
+    {
+      "agent": "cartographer-auditor",
+      "duration_ms": 77682,
+      "line": 510,
+      "tool": "subagent"
+    },
+    {
+      "agent": "cartographer-auditor",
+      "duration_ms": 76750,
+      "line": 842,
+      "tool": "subagent"
+    },
+    {
+      "agent": "cartographer-auditor",
+      "duration_ms": 72998,
+      "line": 412,
+      "tool": "subagent"
+    },
+    {
+      "agent": "cartographer-auditor",
+      "duration_ms": 70518,
+      "line": 920,
+      "tool": "subagent"
+    },
+    {
+      "agent": "cartographer-auditor",
+      "duration_ms": 66795,
+      "line": 738,
+      "tool": "subagent"
+    },
+    {
+      "agent": "cartographer-auditor",
+      "duration_ms": 60471,
+      "line": 848,
+      "tool": "subagent"
+    },
+    {
+      "agent": "cartographer-auditor",
+      "duration_ms": 55836,
+      "line": 826,
+      "tool": "subagent"
+    },
+    {
+      "agent": "cartographer-auditor",
+      "duration_ms": 54470,
+      "line": 767,
+      "tool": "subagent"
+    }
+  ],
+  "subagent_timeouts": [],
+  "timeout_mentions": [
+    {
+      "line": 20,
+      "role": "toolResult",
+      "tool": "query-docs"
+    },
+    {
+      "line": 21,
+      "role": "assistant",
+      "tool": null
+    },
+    {
+      "line": 170,
+      "role": "toolResult",
+      "tool": "bash"
+    },
+    {
+      "line": 274,
+      "role": "toolResult",
+      "tool": "bash"
+    },
+    {
+      "line": 304,
+      "role": "toolResult",
+      "tool": "read"
+    },
+    {
+      "line": 308,
+      "role": "toolResult",
+      "tool": "bash"
+    },
+    {
+      "line": 364,
+      "role": "user",
+      "tool": null
+    },
+    {
+      "line": 382,
+      "role": "toolResult",
+      "tool": "bash"
+    },
+    {
+      "line": 396,
+      "role": "toolResult",
+      "tool": "read"
+    },
+    {
+      "line": 476,
+      "role": "user",
+      "tool": null
+    }
+  ],
+  "token_totals": {},
+  "tool_errors": {
+    "bash": 5,
+    "cartographer_context_pack": 1,
+    "cartographer_handoff": 4,
+    "cartographer_implement": 4,
+    "cartographer_plan_status": 3,
+    "cartographer_receipt": 2,
+    "cartographer_state": 1,
+    "cartographer_transition": 2,
+    "cartographer_validation": 16,
+    "edit": 4,
+    "subagent": 2
+  },
+  "tooling_friction": {
+    "cartographer-cli/tool-usage": 690,
+    "command-not-found": 3,
+    "custom-script-creation": 3,
+    "exact-edit-failure": 4,
+    "schema/tool-validation": 43
+  },
+  "tools": {
+    "ask_user_question": 2,
+    "bash": 244,
+    "cartographer_adr": 4,
+    "cartographer_artifacts": 9,
+    "cartographer_compact_context": 12,
+    "cartographer_context_pack": 38,
+    "cartographer_fact": 24,
+    "cartographer_handoff": 34,
+    "cartographer_implement": 50,
+    "cartographer_index": 14,
+    "cartographer_jsonl": 55,
+    "cartographer_plan": 6,
+    "cartographer_plan_status": 117,
+    "cartographer_proposal": 10,
+    "cartographer_receipt": 4,
+    "cartographer_state": 20,
+    "cartographer_transition": 21,
+    "cartographer_validation": 122,
+    "edit": 100,
+    "query-docs": 6,
+    "read": 186,
+    "resolve-library-id": 6,
+    "subagent": 41,
+    "write": 22
+  }
+}
