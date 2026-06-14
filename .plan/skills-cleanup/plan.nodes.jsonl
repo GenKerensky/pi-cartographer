@@ -48,3 +48,13 @@
 {"id":"validation:P5.V2","type":"validation","validation_id":"P5.V2","phase_id":"P5","title":"P5.V2","status":"complete","source":"plan.md"}
 {"id":"validation:P5.V3","type":"validation","validation_id":"P5.V3","phase_id":"P5","title":"P5.V3","status":"complete","source":"plan.md"}
 {"id":"validation:P5.V4","type":"validation","validation_id":"P5.V4","phase_id":"P5","title":"P5.V4","status":"complete","source":"plan.md"}
+{"id":"phase:P6","type":"phase","phase_id":"P6","title":"Mainline Rebase Scope Sync","status":"complete","depends_on":["P5"],"source":"plan.md"}
+{"id":"task:P6.T1","type":"task","task_id":"P6.T1","phase_id":"P6","title":"P6.T1","status":"complete","source":"plan.md"}
+{"id":"task:P6.T2","type":"task","task_id":"P6.T2","phase_id":"P6","title":"P6.T2","status":"complete","source":"plan.md"}
+{"id":"task:P6.T3","type":"task","task_id":"P6.T3","phase_id":"P6","title":"P6.T3","status":"complete","source":"plan.md"}
+{"id":"task:P6.T4","type":"task","task_id":"P6.T4","phase_id":"P6","title":"P6.T4","status":"complete","source":"plan.md"}
+{"id":"task:P6.T5","type":"task","task_id":"P6.T5","phase_id":"P6","title":"P6.T5","status":"complete","source":"plan.md"}
+{"id":"validation:P6.V1","type":"validation","validation_id":"P6.V1","phase_id":"P6","title":"P6.V1","status":"complete","source":"plan.md"}
+{"id":"validation:P6.V2","type":"validation","validation_id":"P6.V2","phase_id":"P6","title":"P6.V2","status":"complete","source":"plan.md"}
+{"id":"validation:P6.V3","type":"validation","validation_id":"P6.V3","phase_id":"P6","title":"P6.V3","status":"complete","source":"plan.md"}
+{"id":"validation:P6.V4","type":"validation","validation_id":"P6.V4","phase_id":"P6","title":"P6.V4","status":"complete","source":"plan.md"}

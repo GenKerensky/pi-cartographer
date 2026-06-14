@@ -43,6 +43,7 @@ flowchart TD
   P2 --> P3["P3 — Delegation Boundary Review"]
   P3 --> P4["P4 — Wrapper Gap Resolution"]
   P4 --> P5["P5 — Validation and Audit"]
+  P5 --> P6["P6 — Mainline Rebase Scope Sync"]
 ```
 
 ## Phase Summary
@@ -54,7 +55,8 @@ flowchart TD
 | 2 | P2 | Wrapper-First Rewrites | P1 | P3 | Proposal/plan/interview/implement skills use wrapper-first JSONL/lifecycle language. |
 | 3 | P3 | Delegation Boundary Review | P2 | P4 | Delegated writing prompts comply with ADR-0004 read-only/single-writer boundaries. |
 | 4 | P4 | Wrapper Gap Resolution | P3 | P5 | Missing wrapper/fallback gaps are either implemented narrowly or explicitly documented. |
-| 5 | P5 | Validation and Audit | P4 | implementation handoff | Targeted checks, package checks, topic validation, and auditor review pass. |
+| 5 | P5 | Validation and Audit | P4 | P6 | Targeted checks, package checks, topic validation, and auditor review pass. |
+| 6 | P6 | Mainline Rebase Scope Sync | P5 | implementation handoff | Mainline testing-strategy/model-routing/DOX changes are preserved through rebase, overlapping skill/checker changes are reconciled, and validation passes on rebased work. |
 
 ## Phases
 
@@ -324,6 +326,55 @@ Prove the skill cleanup is deterministic, scoped, and ready for implementation c
 #### Notes for Execution Agent
 
 Do not start implementation closure until deterministic receipts and semantic audit evidence are captured.
+
+### Phase P6 — Mainline Rebase Scope Sync
+
+- **Status:** complete
+- **Depends on:** P5
+- **Unlocks:** implementation handoff
+- **Primary references:** `AGENTS.md`, `skills/design/SKILL.md`, `skills/plan/SKILL.md`, `skills/proposal/SKILL.md`, `skills/requirements/SKILL.md`, `skills/plan/scripts/check_skill_language.py`, `tests/test_check_skill_language.py`, `package.json`
+
+#### Objective
+
+Rebase the completed skills cleanup onto current `main` and include mainline changes that affect the same skill-authoring and workflow scope.
+
+#### Scope
+
+- Preserve mainline DOX/AGENTS.md guidance and the testing-strategy workflow additions from `main`.
+- Reconcile the independently added `check_skill_language.py`, package script wiring, and tests from `main` with the skills-cleanup checker behavior and validation expectations.
+- Preserve mainline model-routing script/package wiring and any new skill references when resolving package or skill conflicts.
+- Re-apply wrapper-first/single-writer language only where the rebased mainline still needs it; do not regress Testing Strategy trace, ADR-trigger, or design/plan auditor requirements introduced on `main`.
+
+#### Checklist
+
+- [x] **P6.T1** Inspect `main...HEAD`/merge-base diffs and document which mainline changes are in cleanup scope.
+- [ ] **P6.T2** Rebase `skills-cleanup` onto `main` and resolve conflicts without dropping mainline testing-strategy, model-routing, or DOX guidance.
+- [x] **P6.T3** Reconcile skill-language checker behavior/tests so wrapper-first checks and mainline checker expectations both pass.
+- [x] **P6.T4** Review overlapping skill/agent files after rebase for stale direct-write/delegated-writer wording and for preservation of mainline Testing Strategy trace requirements.
+- [x] **P6.T5** Update plan/status/receipts/context pack after validation and capture final audit or approved fallback if semantic risk remains.
+
+#### Validation
+
+- [x] **P6.V1** Run `python skills/plan/scripts/check_skill_language.py --root "$PWD" --json`; expected result passes with no blocking findings.
+- [x] **P6.V2** Run `npm run check`; expected result passes or any unrelated failure has explicit user-approved residual risk.
+- [x] **P6.V3** Run `node --experimental-strip-types skills/plan/scripts/manage_jsonl.ts validate-topic --root "$PWD" --topic skills-cleanup --json`; expected result passes.
+- [x] **P6.V4** Run `python skills/plan/scripts/validate_planning_graph.py --root "$PWD" --topic skills-cleanup --json`; expected result passes.
+
+#### Exit Criteria
+
+- Branch is rebased onto current `main`.
+- Overlapping mainline changes are preserved or explicitly superseded with rationale.
+- Skill cleanup remains wrapper-first/single-writer and also satisfies mainline Testing Strategy/DOX guidance.
+- Required validation receipts exist for the rebased branch.
+
+#### Risks and Mitigations
+
+- **Risk:** Rebase conflict resolution silently drops mainline workflow requirements. **Mitigation:** Use focused post-rebase diffs against `main` and run targeted searches for Testing Strategy, model routing, and wrapper-first language.
+- **Risk:** Two checker implementations diverge. **Mitigation:** Merge behavior rather than choose wholesale when both detect distinct valid classes of issues.
+
+#### Notes for Execution Agent
+
+Keep the rebase commit focused on mainline convergence. Do not redesign the plan workflow beyond preserving already-accepted mainline changes.
 
 ## Cross-Phase Validation
 
