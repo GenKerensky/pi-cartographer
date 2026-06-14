@@ -374,7 +374,7 @@ Do not remove or hide Cartographer wrapper tools solely for token savings withou
 
 ### Phase P6 — Final Regression, Fold-In, and ADR
 
-- **Status:** in-progress
+- **Status:** complete
 - **Depends on:** P3, P4, P5
 - **Unlocks:** implementation-ready-for-human-review
 - **Primary references:** `DES-CBA-006`, `TEST-CBA-001`, `REQ-CBA-006`, `SCN-CBA-012`, all prior phase receipts
@@ -393,17 +393,17 @@ Verify the full context-reduction migration, fold durable requirements/docs, and
 
 #### Checklist
 
-- [ ] **P6.T1** Run final inventory and produce before/after comparison against P0.
-- [ ] **P6.T2** Verify relocation ledger completeness for moved/deleted/tool-owned rules.
-- [ ] **P6.T3** Fold accepted deltas into `docs/requirements.md` and relevant instruction/skill docs, or record approved fold skip.
-- [ ] **P6.T4** Use `cartographer_adr` to draft/write the required ADR after validation evidence is available.
-- [ ] **P6.T5** Prepare final auditor handoff with receipts, context packs, residual risks, and E2E/manual evidence.
+- [x] **P6.T1** Run final inventory and produce before/after comparison against P0.
+- [x] **P6.T2** Verify relocation ledger completeness for moved/deleted/tool-owned rules.
+- [x] **P6.T3** Fold accepted deltas into `docs/requirements.md` and relevant instruction/skill docs, or record approved fold skip.
+- [x] **P6.T4** Use `cartographer_adr` to draft/write the required ADR after validation evidence is available.
+- [x] **P6.T5** Prepare final auditor handoff with receipts, context packs, residual risks, and E2E/manual evidence.
 
 #### Validation
 
-- [ ] **P6.V1** Run `node --experimental-strip-types skills/plan/scripts/manage_jsonl.ts validate-topic --root "$PWD" --topic context-bloat-audit --json`; expected result: no errors.
-- [ ] **P6.V2** Run focused tests/checks from prior phases plus `npm run check:scripts`, `npm run typecheck`, lint/format checks, and targeted unit tests; expected result: all pass or documented non-blocking exceptions.
-- [ ] **P6.V3** Run aggregate `npm run check` if runtime/environment allows and save manual evidence `.plan/context-bloat-audit/evidence/final-check.md`; otherwise record explicit scoped-check rationale and residual risk in that evidence file.
+- [x] **P6.V1** Run `node --experimental-strip-types skills/plan/scripts/manage_jsonl.ts validate-topic --root "$PWD" --topic context-bloat-audit --json`; expected result: no errors.
+- [x] **P6.V2** Run focused tests/checks from prior phases plus `npm run check:scripts`, `npm run typecheck`, lint/format checks, and targeted unit tests; expected result: all pass or documented non-blocking exceptions.
+- [x] **P6.V3** Run aggregate `npm run check` if runtime/environment allows and save manual evidence `.plan/context-bloat-audit/evidence/final-check.md`; otherwise record explicit scoped-check rationale and residual risk in that evidence file.
 - [ ] **P6.V4** Auditor review confirms behavior preservation, budget results, relocation ledger completeness, requirement/scenario coverage, ADR readiness, and no raw transcript leakage.
 
 #### Testing Strategy Trace

@@ -5,11 +5,11 @@
   "source_refs": {
     "plan_md": {
       "path": ".plan/context-bloat-audit/plan.md",
-      "sha256": "sha256:e61d1cfc78f1dd99f0061576f6fc0a3bd72f9caafe456286a36a66e8da3b0361"
+      "sha256": "sha256:195a5e58378bf396b756f4a28b9296dfd32655a7f4019be09cde9f7d3b380f22"
     },
     "plan_nodes": {
       "path": ".plan/context-bloat-audit/plan.nodes.jsonl",
-      "sha256": "sha256:82f50614c4bf16fed5f85b6853e7f2be3125180c029edaaaa37e2ed6d9361507"
+      "sha256": "sha256:43f02de02f338db8420890910f2042a2cd5775cb5423e00816318bb4da8ea76d"
     },
     "plan_edges": {
       "path": ".plan/context-bloat-audit/plan.edges.jsonl",
@@ -17,26 +17,27 @@
     },
     "receipts": {
       "path": ".plan/context-bloat-audit/receipts.jsonl",
-      "sha256": "sha256:bc5f4558b503205369f7cb722965bff9c28e9d8f1b863d86265c05f341e655b9"
+      "sha256": "sha256:adfd59ebcc1284dfd9e5351bb10e71b2b575b2550e97773699c4b46bb0d20986"
     },
     "context_packs": {
       "path": ".plan/context-bloat-audit/context-packs.jsonl",
-      "sha256": "sha256:91ae058a763dcf8df84757ad79520b02232d6aaf5dcf5628afa3eaee23c3a51d"
+      "sha256": "sha256:0a816dc4c316fd87c5029dd703accdae9e0d2a1b42bbd2897b98501082cd5048"
     }
   },
   "current_phase_id": "P6",
   "active_task_ids": [],
   "active_validation_ids": [],
   "next_action": {
-    "id": "P6.T1",
-    "kind": "implementation-task",
-    "summary": "Run final context inventory and produce before/after comparison against P0.",
+    "id": "P6.T5",
+    "kind": "human-approval-gate",
+    "summary": "Implementation is ready for human review; approve implementation gate after reviewing residual risks and final evidence.",
     "phase_id": "P6",
-    "task_id": "P6.T1",
+    "task_id": "P6.T5",
     "files_to_inspect": [
-      "skills/plan/scripts/context_inventory.py",
-      ".plan/context-bloat-audit/evidence/context-inventory-p0.json",
-      ".plan/context-bloat-audit/evidence/tool-inventory.json",
+      ".plan/context-bloat-audit/evidence/P6-auditor-report.md",
+      ".plan/context-bloat-audit/evidence/final-check.md",
+      "docs/adr/0011-use-hybrid-context-reduction-for-cartographer-workflows.md",
+      "docs/requirements.md",
       ".plan/context-bloat-audit/plan.md"
     ]
   },
@@ -144,7 +145,14 @@
     "receipt:context-bloat-audit:validation:2026-06-14T16:42:25Z",
     "receipt:P5:validation:2026-06-14T16:43:25+00:00",
     "receipt:P5:validation:2026-06-14T16:45:40+00:00",
-    "receipt:context-bloat-audit:audit:2026-06-14T16:47:00Z"
+    "receipt:context-bloat-audit:audit:2026-06-14T16:47:00Z",
+    "receipt:P6:validation:2026-06-14T16:48:32+00:00",
+    "receipt:P6:validation:2026-06-14T16:49:49+00:00",
+    "receipt:P6:validation:2026-06-14T16:50:14+00:00",
+    "receipt:context-bloat-audit:validation:2026-06-14T16:50:47Z",
+    "receipt:P6:validation:2026-06-14T16:52:35+00:00",
+    "receipt:context-bloat-audit:audit:2026-06-14T17:04:26Z",
+    "receipt:P6:validation:2026-06-14T17:04:56+00:00"
   ],
   "journal_refs": [
     "journal:20260614T052134Z:compact",
@@ -172,7 +180,7 @@
       "stale generated snippets"
     ]
   },
-  "updated_at": "2026-06-14T16:48:02Z",
+  "updated_at": "2026-06-14T17:06:40Z",
   "stale_reason": "Implementation compact requested after artifact updates.",
   "compaction": {
     "trigger": "phase-end-P5",

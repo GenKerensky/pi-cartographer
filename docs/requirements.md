@@ -200,3 +200,93 @@ The system MUST build on existing project test tools by default and MUST ask the
 #### Scenarios
 
 - **SCN-TEST-003**: Tool pivot recommendation
+
+### REQ-CBA-001 — Context inventory and budgets
+
+- Status: accepted
+- Change type: ADDED
+- Domain: cartographer-context
+- Priority: must
+- Source topic: context-bloat-audit
+
+The system MUST provide repeatable context inventory for Cartographer agent sessions, including scoped `AGENTS.md` files, active skill descriptions, high-use skill kernels, compaction/resume artifacts, and active tool/schema exposure with explicit budgets and before/after deltas.
+
+#### Scenarios
+
+- **SCN-CBA-001**: Sorted top-bloat inventory
+- **SCN-CBA-002**: Before/after delta validation
+
+### REQ-CBA-002 — Compact workflow skill kernels
+
+- Status: accepted
+- Change type: ADDED
+- Domain: cartographer-context
+- Priority: must
+- Source topic: context-bloat-audit
+
+High-use Cartographer workflow skills MUST use compact `SKILL.md` kernels plus one-level on-demand references while preserving activation criteria, critical safety rules, execution loops, wrapper sequences, stop conditions, and reference pointers.
+
+#### Scenarios
+
+- **SCN-CBA-003**: Implement skill resumes from compact kernel
+- **SCN-CBA-004**: Low-frequency details load from named references
+
+### REQ-CBA-003 — AGENTS.md hierarchy budget and locality
+
+- Status: accepted
+- Change type: ADDED
+- Domain: cartographer-context
+- Priority: must
+- Source topic: context-bloat-audit
+
+Root and child `AGENTS.md` files MUST remain scoped, budgeted, readable, and ownership-oriented: root files carry project-wide rules, while subtree-specific authoring guidance belongs in child instruction files.
+
+#### Scenarios
+
+- **SCN-CBA-005**: Non-skill work receives slim root context
+- **SCN-CBA-006**: Skill work receives compact skill-specific rules
+
+### REQ-CBA-004 — State-aware compaction and resume payloads
+
+- Status: accepted
+- Change type: ADDED
+- Domain: cartographer-context
+- Priority: must
+- Source topic: context-bloat-audit
+
+Cartographer implementation resume MUST be driven by bounded state, receipt, and context-pack summaries rather than historical narrative or full skill reinjection. Resume payloads prioritize topic, current phase, next action, working set, validation refs, blockers, and critical rules.
+
+#### Scenarios
+
+- **SCN-CBA-007**: Post-compaction continuation uses state-aware primer
+- **SCN-CBA-008**: Repeated compactions stay within a fixed budget
+
+### REQ-CBA-005 — Active tool/schema context control
+
+- Status: accepted
+- Change type: ADDED
+- Domain: cartographer-context
+- Priority: must
+- Source topic: context-bloat-audit
+
+Cartographer MUST audit wrapper and extension tools for schema/prompt overhead by workflow phase and reduce active tool context only where validation, mutation, audit, state, transition, and privacy guardrails remain visible.
+
+#### Scenarios
+
+- **SCN-CBA-009**: Proposal/design/planning tool overhead is measured
+- **SCN-CBA-010**: Implementation tool overhead is measured
+
+### REQ-CBA-006 — Behavior-preserving migration and validation
+
+- Status: accepted
+- Change type: ADDED
+- Domain: cartographer-context
+- Priority: must
+- Source topic: context-bloat-audit
+
+Context-reduction work MUST proceed through measurable, behavior-preserving phases. Each moved or deleted rule must have a recorded new home or duplicate-deletion rationale, and each phase must validate that workflow safety rules, wrapper calls, validations, and human gates remain reachable.
+
+#### Scenarios
+
+- **SCN-CBA-011**: Workflow dry-runs prove moved rules remain reachable
+- **SCN-CBA-012**: Tool-owned guardrails are tested or deterministically validated
