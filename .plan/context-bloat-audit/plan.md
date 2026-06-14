@@ -169,7 +169,7 @@ Do not optimize by deleting safety rules unless they are duplicated or enforced 
 
 ### Phase P2 — Compact Plan and Proposal Skill Kernels
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P1
 - **Unlocks:** P3, P4, P5
 - **Primary references:** `DES-CBA-002`, `DES-CBA-006`, `REQ-CBA-002`, `REQ-CBA-006`, `SCN-CBA-004`, `SCN-CBA-011`, `skills/plan/SKILL.md`, `skills/proposal/SKILL.md`
@@ -186,18 +186,18 @@ Apply the compact-kernel/reference split to `plan` and `proposal` after validati
 
 #### Checklist
 
-- [ ] **P2.T1** Categorize `skills/plan/SKILL.md` and `skills/proposal/SKILL.md` into kernel/reference/tool-owned/delete buckets.
-- [ ] **P2.T2** Create `skills/plan/references/*.md` and `skills/proposal/references/*.md` as needed.
-- [ ] **P2.T3** Rewrite plan/proposal kernels to budget targets.
-- [ ] **P2.T4** Update relocation ledger for all moved/deleted rules.
-- [ ] **P2.T5** Preserve or update trigger descriptions only if routing remains precise.
+- [x] **P2.T1** Categorize `skills/plan/SKILL.md` and `skills/proposal/SKILL.md` into kernel/reference/tool-owned/delete buckets.
+- [x] **P2.T2** Create `skills/plan/references/*.md` and `skills/proposal/references/*.md` as needed.
+- [x] **P2.T3** Rewrite plan/proposal kernels to budget targets.
+- [x] **P2.T4** Update relocation ledger for all moved/deleted rules.
+- [x] **P2.T5** Preserve or update trigger descriptions only if routing remains precise.
 
 #### Validation
 
-- [ ] **P2.V1** Run context inventory; expected result: `plan` <= 10k chars and `proposal` <= 10k chars or documented exceptions.
-- [ ] **P2.V2** Run reference-link/skill-language checks; expected result: references are one level deep and required gates remain reachable.
-- [ ] **P2.V3** Run representative proposal and plan workflow dry-runs on temporary/mock topics; expected result: requirements/design gates, human approvals, validation receipts, fact support, and graph discipline are preserved.
-- [ ] **P2.V4** Run `npm run check:scripts` and targeted tests.
+- [x] **P2.V1** Run context inventory; expected result: `plan` <= 10k chars and `proposal` <= 10k chars or documented exceptions.
+- [x] **P2.V2** Run reference-link/skill-language checks; expected result: references are one level deep and required gates remain reachable.
+- [x] **P2.V3** Run representative proposal and plan workflow dry-runs on temporary/mock topics; expected result: requirements/design gates, human approvals, validation receipts, fact support, and graph discipline are preserved.
+- [x] **P2.V4** Run `npm run check:scripts` and targeted tests.
 
 #### Testing Strategy Trace
 

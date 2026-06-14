@@ -5,11 +5,11 @@
   "source_refs": {
     "plan_md": {
       "path": ".plan/context-bloat-audit/plan.md",
-      "sha256": "sha256:9e1c2fdfc0bd6889337cefcf7c6fedeca73563f900df9952207f72801a7cbb41"
+      "sha256": "sha256:858fb5395d813a38d4ad1c3ea71754760f3db735ace656a5da524977ee266195"
     },
     "plan_nodes": {
       "path": ".plan/context-bloat-audit/plan.nodes.jsonl",
-      "sha256": "sha256:71a65c7fcbcf1c99dfeb2ec5401b6c1babded219d11ba450754b18f4f392f837"
+      "sha256": "sha256:4a53610ed54977db16be3857a52ee5b50eec951ccf2b1ef3b6e99703bd134dd4"
     },
     "plan_edges": {
       "path": ".plan/context-bloat-audit/plan.edges.jsonl",
@@ -17,64 +17,102 @@
     },
     "receipts": {
       "path": ".plan/context-bloat-audit/receipts.jsonl",
-      "sha256": "sha256:5b277035bdd31ac1aadd888339fad9d56124a6e467e9d0334adad4729807aa6b"
+      "sha256": "sha256:3d964be98f63e8bfc3f1f6442aa502aa0402eda9629e7bd89fa970a314978a65"
     },
     "context_packs": {
       "path": ".plan/context-bloat-audit/context-packs.jsonl",
-      "sha256": "sha256:b4775568d5e43f9982af148fa275933598620441687585e96c11372c2bb7e4a6"
+      "sha256": "sha256:11743a35cace7efe0c8a787a0e7a544c29bdb2ce303ee673c8c126d3888351f8"
     }
   },
   "current_phase_id": "P0",
   "active_task_ids": [],
   "active_validation_ids": [],
   "next_action": {
-    "id": "P1.T1",
+    "id": "P2.T1",
     "kind": "implementation-task",
-    "summary": "Inventory and categorize current skills/implement/SKILL.md sections into kernel, reference, tooling-owned, or duplicate-delete buckets.",
-    "phase_id": "P1",
-    "task_id": "P1.T1",
+    "summary": "Categorize skills/plan/SKILL.md and skills/proposal/SKILL.md into kernel, reference, tool-owned, and duplicate-delete buckets.",
+    "phase_id": "P2",
+    "task_id": "P2.T1",
     "files_to_inspect": [
       ".plan/context-bloat-audit/plan.md",
+      "skills/plan/SKILL.md",
+      "skills/proposal/SKILL.md",
       "skills/implement/SKILL.md",
-      "skills/plan/references/context-inventory.md",
-      ".plan/context-bloat-audit/evidence/context-inventory-p0.json"
+      "skills/implement/rule-relocation-ledger.md",
+      ".plan/context-bloat-audit/evidence/context-inventory-p1.json"
     ]
   },
   "working_set": {
     "write_allowed": [
       {
-        "path": "skills/implement/SKILL.md",
-        "reason": "P1 compact implement kernel"
+        "path": "skills/plan/SKILL.md",
+        "reason": "P2 compact plan kernel"
       },
       {
-        "path": "skills/implement/references/**",
-        "reason": "P1 implement references"
+        "path": "skills/plan/references/**",
+        "reason": "P2 plan references"
       },
       {
-        "path": "skills/implement/*.md",
-        "reason": "P1 relocation ledger"
+        "path": "skills/plan/*.md",
+        "reason": "P2 plan relocation ledger"
+      },
+      {
+        "path": "skills/proposal/SKILL.md",
+        "reason": "P2 compact proposal kernel"
+      },
+      {
+        "path": "skills/proposal/references/**",
+        "reason": "P2 proposal references"
+      },
+      {
+        "path": "skills/proposal/*.md",
+        "reason": "P2 proposal relocation ledger"
       },
       {
         "path": ".plan/context-bloat-audit/plan.md",
-        "reason": "P1 status updates"
+        "reason": "P2 status updates"
       },
       {
         "path": ".plan/context-bloat-audit/plan.nodes.jsonl",
-        "reason": "P1 status updates"
+        "reason": "P2 status updates"
       },
       {
         "path": ".plan/context-bloat-audit/receipts.jsonl",
-        "reason": "P1 receipts"
+        "reason": "P2 receipts"
       },
       {
         "path": ".plan/context-bloat-audit/context-packs.jsonl",
-        "reason": "P1 context pack"
+        "reason": "P2 context pack"
+      },
+      {
+        "path": ".plan/context-bloat-audit/evidence/context-inventory-p2.*",
+        "reason": "P2 inventory evidence"
+      },
+      {
+        "path": ".plan/context-bloat-audit/evidence/*dry-run-p2.md",
+        "reason": "P2 dry-run evidence"
+      },
+      {
+        "path": ".plan/context-bloat-audit/evidence/P2-*.md",
+        "reason": "P2 auditor report"
       }
     ],
     "read_only": [
       {
-        "path": ".plan/context-bloat-audit/evidence/context-inventory-p0.json",
-        "reason": "P0 baseline"
+        "path": "skills/implement/SKILL.md",
+        "reason": "P1 compact kernel pattern"
+      },
+      {
+        "path": "skills/implement/references/**",
+        "reason": "P1 reference pattern"
+      },
+      {
+        "path": "skills/implement/rule-relocation-ledger.md",
+        "reason": "P1 ledger pattern"
+      },
+      {
+        "path": ".plan/context-bloat-audit/evidence/context-inventory-p1.json",
+        "reason": "P1 baseline for deltas"
       },
       {
         "path": ".plan/context-bloat-audit/requirements.md",
@@ -83,10 +121,6 @@
       {
         "path": ".plan/context-bloat-audit/design.md",
         "reason": "design trace"
-      },
-      {
-        "path": "skills/plan/references/context-inventory.md",
-        "reason": "reference pattern"
       }
     ],
     "forbidden": [
@@ -112,11 +146,18 @@
     "receipt:context-bloat-audit:validation:2026-06-14T05:26:28Z",
     "receipt:P1:validation:2026-06-14T05:26:34+00:00",
     "receipt:P1:validation:2026-06-14T05:26:41+00:00",
-    "receipt:context-bloat-audit:audit:2026-06-14T05:29:06Z"
+    "receipt:context-bloat-audit:audit:2026-06-14T05:29:06Z",
+    "receipt:P2:validation:2026-06-14T05:47:43+00:00",
+    "receipt:P2:validation:2026-06-14T05:47:48+00:00",
+    "receipt:context-bloat-audit:validation:2026-06-14T05:47:52Z",
+    "receipt:P2:validation:2026-06-14T05:47:57+00:00",
+    "receipt:P2:validation:2026-06-14T05:48:21+00:00",
+    "receipt:context-bloat-audit:audit:2026-06-14T05:50:19Z"
   ],
   "journal_refs": [
     "journal:20260614T052134Z:compact",
-    "journal:20260614T052929Z:compact"
+    "journal:20260614T052929Z:compact",
+    "journal:20260614T055033Z:compact"
   ],
   "resume": {
     "template_id": "cartographer.single_writer.resume.v1",
@@ -136,10 +177,10 @@
       "stale generated snippets"
     ]
   },
-  "updated_at": "2026-06-14T05:29:29Z",
+  "updated_at": "2026-06-14T05:50:33Z",
   "stale_reason": "Implementation compact requested after artifact updates.",
   "compaction": {
-    "trigger": "phase-end-P1",
-    "compacted_at": "2026-06-14T05:29:29Z"
+    "trigger": "phase-end-P2",
+    "compacted_at": "2026-06-14T05:50:33Z"
   }
 }
