@@ -5,7 +5,7 @@
   "source_refs": {
     "plan_md": {
       "path": ".plan/testing-strategy/plan.md",
-      "sha256": "sha256:3c92f7a2b29b8ed8fa4c0e535ca7f339701c2196c4191b9bb60ad8ef2ab99dde"
+      "sha256": "sha256:50a780f94498ab36b97ae912af95bc032e0bdd783166f4f9be6096ce7c1ce87b"
     },
     "plan_nodes": {
       "path": ".plan/testing-strategy/plan.nodes.jsonl",
@@ -24,57 +24,38 @@
       "sha256": "sha256:9565634dc4493d7bd3ab5a87aadfc52cef8f928c892bd6e1b14dad00652652b4"
     }
   },
-  "current_phase_id": "P0",
+  "current_phase_id": null,
   "active_task_ids": [],
   "active_validation_ids": [],
   "next_action": {
-    "id": "P2.T1",
-    "kind": "implementation-task",
-    "summary": "Update plan skill to consume accepted Testing Strategy and require concrete requirement-covered validation gates.",
-    "phase_id": "P2",
-    "task_id": "P2.T1",
+    "id": "implementation.final-approval",
+    "kind": "approval-gate",
+    "summary": "Await final human implementation approval after P0-P6 completion, final validation, and auditor PASS.",
     "files_to_inspect": [
-      "skills/plan/SKILL.md",
-      "tests/test_workflow_docs.py",
-      ".plan/testing-strategy/design.md",
-      ".plan/testing-strategy/requirements.md"
+      ".plan/testing-strategy/plan.md",
+      ".plan/testing-strategy/final-auditor.md",
+      ".plan/testing-strategy/receipts.jsonl"
     ]
   },
   "working_set": {
     "write_allowed": [
       {
-        "path": "skills/plan/scripts/*.ts",
-        "reason": "P0 implementation wrapper work"
-      },
-      {
-        "path": "tests/*.test.ts",
-        "reason": "P0 wrapper tests"
-      },
-      {
-        "path": "extensions/*.ts",
-        "reason": "P0 extension tool registration"
-      },
-      {
-        "path": ".plan/testing-strategy/plan.md",
-        "reason": "P0 plan status updates"
-      },
-      {
-        "path": ".plan/testing-strategy/plan.nodes.jsonl",
-        "reason": "P0 plan node status updates"
+        "path": ".cartographer/testing-strategy/state.json",
+        "reason": "final resume-state correction through cartographer_state"
       },
       {
         "path": ".plan/testing-strategy/receipts.jsonl",
-        "reason": "P0 receipts"
-      },
-      {
-        "path": ".plan/testing-strategy/context-packs.jsonl",
-        "reason": "P0 context pack"
+        "reason": "future final approval receipt only"
       }
     ],
     "read_only": [
       {
-        "path": ".plan/testing-strategy/plan.edges.jsonl",
-        "reason": "dependency graph reference"
+        "path": ".plan/testing-strategy/plan.md",
+        "reason": "authoritative completed plan"
+      },
+      {
+        "path": ".plan/testing-strategy/final-auditor.md",
+        "reason": "final auditor evidence"
       }
     ],
     "forbidden": [
@@ -139,7 +120,7 @@
     "expected_first_response": ["current_phase", "next_action", "files_to_inspect"],
     "must_ignore": ["prior chat speculation", "stale generated snippets"]
   },
-  "updated_at": "2026-06-14T00:13:22Z",
+  "updated_at": "2026-06-14T02:49:26Z",
   "stale_reason": "Implementation compact requested after artifact updates.",
   "compaction": {
     "trigger": "final-implementation",

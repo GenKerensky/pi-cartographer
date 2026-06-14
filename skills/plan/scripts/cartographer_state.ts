@@ -107,6 +107,7 @@ function usage(exitCode: number): never {
 	console.log(`Usage:
   ${script} state-init --root <root> --topic <topic> [--json]
   ${script} state-validate --root <root> --topic <topic> [--json]
+  ${script} state-set-current --root <root> --topic <topic> --phase-id <P?|none> [--json]
   ${script} state-set-next --root <root> --topic <topic> --next-action-json '<json>' [--json]
   ${script} state-set-working-set --root <root> --topic <topic> --working-set-json '<json>' [--json]
   ${script} state-record-validation-ref --root <root> --topic <topic> --receipt-id <id> [--receipt-id <id> ...] [--json]
@@ -535,6 +536,21 @@ function updateState(
 	return report;
 }
 
+function stateSetCurrent(root: string, topic: string, options: Record<string, unknown>): JsonRecord {
+	const rawPhase = optString(options, "phase-id");
+	const phaseId = ["none", "null", ""].includes(rawPhase.toLowerCase()) ? null : rawPhase;
+	return {
+		...updateState(root, topic, (state) => {
+			state.current_phase_id = phaseId;
+			if (phaseId === null) {
+				state.active_task_ids = [];
+				state.active_validation_ids = [];
+			}
+		}),
+		action: "state-set-current",
+	};
+}
+
 function stateSetNext(root: string, topic: string, options: Record<string, unknown>): JsonRecord {
 	const next = JSON.parse(optString(options, "next-action-json")) as unknown;
 	if (!next || typeof next !== "object" || Array.isArray(next))
@@ -704,6 +720,9 @@ function main(): number {
 				break;
 			case "state-validate":
 				result = { ...validateState(root, topic, { includeCurrent: true }), action: command };
+				break;
+			case "state-set-current":
+				result = stateSetCurrent(root, topic, options);
 				break;
 			case "state-set-next":
 				result = stateSetNext(root, topic, options);

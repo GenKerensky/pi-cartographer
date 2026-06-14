@@ -110,7 +110,7 @@ Start implementation from approved, validated design artifacts and a clean under
 
 #### Validation
 
-- [x] **P0.V1** Run `git status --short` and verify only expected planning artifacts are modified before implementation edits start. Testing Strategy Trace: design `DES-TEST-004`; layer static/manual; concrete evidence is the status output.
+- [x] **P0.V1** Run `git status --short` and verify only expected planning artifacts are modified before implementation edits start. Testing Strategy Trace: design `DES-TEST-004`; layer static/manual; command `git status --short`; manual evidence `.plan/testing-strategy/receipts.jsonl`.
 - [x] **P0.V2** Run `node --experimental-strip-types skills/plan/scripts/manage_jsonl.ts validate-topic --root "$PWD" --topic testing-strategy --json` and expect no errors. Testing Strategy Trace: design `DES-TEST-004`; layer integration; validates topic graph integrity.
 
 #### Exit Criteria
@@ -247,9 +247,9 @@ Add deterministic checks that catch missing testing-strategy evidence and generi
 
 #### Validation
 
-- [x] **P3.V1** Run `python -m unittest tests.test_validate_planning_graph.PlanningGraphValidatorTests` and verify new temp-root tests pass. Testing Strategy Trace: design `DES-TEST-004`; layer unit/integration for validator behavior.
+- [x] **P3.V1** Run `python -m unittest tests.test_validate_planning_graph.PlanningGraphValidatorTests` and verify new temp-root tests pass. Testing Strategy Trace: design `DES-TEST-004`; layer unit/integration for validator behavior; focused command selector `tests.test_validate_planning_graph.PlanningGraphValidatorTests`.
 - [x] **P3.V2** Run `python skills/plan/scripts/validate_planning_graph.py --root "$PWD" --topic testing-strategy --json` and verify the real topic passes after the validator change. Testing Strategy Trace: design `DES-TEST-004`; layer integration against this topic's artifacts.
-- [x] **P3.V3** Run `npm run check:scripts` and verify Python/TypeScript scripts still parse. Testing Strategy Trace: design `DES-TEST-004`; layer static.
+- [x] **P3.V3** Run `npm run check:scripts` and verify Python/TypeScript scripts still parse. Testing Strategy Trace: design `DES-TEST-004`; layer static; artifact `skills/plan/scripts/validate_planning_graph.py`.
 
 #### Exit Criteria
 
@@ -292,8 +292,8 @@ Update semantic audit/handoff guidance so auditors inspect testing-strategy qual
 
 #### Validation
 
-- [x] **P4.V1** Run `python -m unittest tests.test_workflow_docs.WorkflowDocsTests` and verify auditor/handoff guidance assertions pass. Testing Strategy Trace: design `DES-TEST-004`; layer unit/static docs test.
-- [x] **P4.V2** Run `rg -n "Testing Strategy|E2E|generic-only|deterministic validation" .pi/agents/cartographer-auditor.md skills/design/SKILL.md skills/plan/SKILL.md` and verify expected guidance appears in the intended files. Testing Strategy Trace: design `DES-TEST-004`; layer manual/static inspection.
+- [x] **P4.V1** Run `python -m unittest tests.test_workflow_docs.WorkflowDocsTests` and verify auditor/handoff guidance assertions pass. Testing Strategy Trace: design `DES-TEST-004`; layer unit/static docs test; focused command selector `tests.test_workflow_docs.WorkflowDocsTests`.
+- [x] **P4.V2** Run `rg -n "Testing Strategy|E2E|generic-only|deterministic validation" .pi/agents/cartographer-auditor.md skills/design/SKILL.md skills/plan/SKILL.md` and verify expected guidance appears in the intended files. Testing Strategy Trace: design `DES-TEST-004`; layer manual/static inspection; artifacts `.pi/agents/cartographer-auditor.md`, `skills/design/SKILL.md`, and `skills/plan/SKILL.md`.
 
 #### Exit Criteria
 
@@ -336,11 +336,11 @@ Run focused tests plus at least one E2E-style workflow smoke that proves the des
 
 #### Validation
 
-- [x] **P5.V1** Run `python -m unittest tests.test_validate_planning_graph.PlanningGraphValidatorTests tests.test_workflow_docs.WorkflowDocsTests` and verify focused Python tests pass. Testing Strategy Trace: design `DES-TEST-002`, `DES-TEST-004`; layer unit/integration.
+- [x] **P5.V1** Run `python -m unittest tests.test_validate_planning_graph.PlanningGraphValidatorTests tests.test_workflow_docs.WorkflowDocsTests` and verify focused Python tests pass. Testing Strategy Trace: design `DES-TEST-002`, `DES-TEST-004`; layer unit/integration; focused command selectors `tests.test_validate_planning_graph.PlanningGraphValidatorTests` and `tests.test_workflow_docs.WorkflowDocsTests`.
 - [x] **P5.V2** Run a temp-root E2E smoke: `tmpdir=$(mktemp -d); python -m unittest tests.test_validate_planning_graph.PlanningGraphValidatorTests.test_testing_strategy_valid_topic_passes` or the equivalent new targeted E2E fixture test, and verify it exercises `manage_jsonl.ts validate-topic` plus `validate_planning_graph.py` against a synthetic topic under `/tmp`. Testing Strategy Trace: design `DES-TEST-003`, `DES-TEST-004`; layer E2E smoke; contributes the required at-least-once E2E validation.
-- [x] **P5.V3** Run `npm run test:py` and verify all Python tests pass. Testing Strategy Trace: design `DES-TEST-004`; layer broad regression.
-- [x] **P5.V4** Run `npm run test:ts` and verify TypeScript tests pass. Testing Strategy Trace: design `DES-TEST-004`; layer broad regression.
-- [x] **P5.V5** Run `npm run check:scripts` and verify script syntax checks pass. Testing Strategy Trace: design `DES-TEST-004`; layer broad static.
+- [x] **P5.V3** Run `npm run test:py` and verify all Python tests pass. Testing Strategy Trace: design `DES-TEST-004`; layer broad regression after focused tests; artifact `tests/test_validate_planning_graph.py`.
+- [x] **P5.V4** Run `npm run test:ts` and verify TypeScript tests pass. Testing Strategy Trace: design `DES-TEST-004`; layer broad regression after focused checks; artifact `tests/dashboard/client-shell.test.tsx`.
+- [x] **P5.V5** Run `npm run check:scripts` and verify script syntax checks pass. Testing Strategy Trace: design `DES-TEST-004`; layer broad static after focused checks; artifact `skills/plan/scripts/validate_planning_graph.py`.
 
 #### Exit Criteria
 
@@ -386,8 +386,8 @@ Finalize implementation evidence, preserve requirement/ADR metadata, and prepare
 
 - [x] **P6.V1** Run `node --experimental-strip-types skills/plan/scripts/manage_jsonl.ts validate-topic --root "$PWD" --topic testing-strategy --json` and verify no errors. Testing Strategy Trace: design `DES-TEST-004`; layer integration.
 - [x] **P6.V2** Run `python skills/plan/scripts/validate_planning_graph.py --root "$PWD" --topic testing-strategy --json` and verify the topic plan graph passes. Testing Strategy Trace: design `DES-TEST-004`; layer integration.
-- [x] **P6.V3** Run `npm run check` if focused validations are green and local time/resources permit; otherwise record which narrower checks passed and why full check was deferred. Testing Strategy Trace: design `DES-TEST-004`; layer broad final regression.
-- [x] **P6.V4** Record final auditor PASS through `cartographer_handoff auditor` with receipts from P5/P6 and the updated context pack. Testing Strategy Trace: design `DES-TEST-004`; layer semantic audit.
+- [x] **P6.V3** Run `npm run check` if focused validations are green and local time/resources permit; otherwise record which narrower checks passed and why full check was deferred. Testing Strategy Trace: design `DES-TEST-004`; layer broad final regression after focused validations; report artifact `/tmp/pi-cartographer-runs/implementation-20260614T001211Z.log`.
+- [x] **P6.V4** Record final auditor PASS through `cartographer_handoff auditor` with receipts from P5/P6 and the updated context pack. Testing Strategy Trace: design `DES-TEST-004`; layer semantic audit; artifact `.plan/testing-strategy/final-auditor.md`.
 
 #### Exit Criteria
 

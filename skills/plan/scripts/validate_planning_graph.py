@@ -554,6 +554,76 @@ def normalized_words(text: str) -> str:
     return re.sub(r"\s+", " ", text.lower())
 
 
+def has_testing_strategy_exception(design_lower: str) -> bool:
+    return bool(
+        re.search(r"testing strategy(?: applicability)?:\s*(?:not applicable|n/a)", design_lower)
+        or re.search(r"testing strategy exception:\s*", design_lower)
+    )
+
+
+def has_focused_testing_evidence(text: str) -> bool:
+    command_matches = re.findall(r"`([^`]+)`", text)
+    for command in command_matches:
+        command_lower = command.lower().strip()
+        broad_command = command_lower in {
+            "npm run check",
+            "npm test",
+            "npm run test",
+            "pytest",
+            "python -m unittest",
+            "ruff check",
+            "tsc --noemit",
+        }
+        focused_selector = re.search(
+            r"(tests?/|tests?\.|fixtures?/|scenarios?/|\.(?:py|ts|tsx|js|jsx|md)\b|::|\s-k\s+|--testnamepattern|--grep|--run)",
+            command_lower,
+        )
+        if not broad_command and focused_selector:
+            return True
+
+    evidence_patterns = [
+        r"\btests?/[^\s`;,]+",
+        r"\bfixtures?/[^\s`;,]+",
+        r"\bscenarios?/[^\s`;,]+",
+        r"\b[^\s`;,]*(?:test|spec)[^\s`;,]*\.(?:py|ts|tsx|js|jsx)\b",
+        r"\b(?:scenario|fixture)\s+[`\"']?[A-Za-z0-9][\w./:-]*",
+        r"\b(?:artifact|file|path|report)\s+[`\"']?[\w./:-]+\.(?:md|json|jsonl|py|ts|tsx|js|jsx|html|txt|log)\b",
+        r"\b(?:manual|static) evidence\s+[`\"']?[\w./:-]+\.(?:md|json|jsonl|txt|log)\b",
+    ]
+    return any(re.search(pattern, text, re.IGNORECASE) for pattern in evidence_patterns)
+
+
+def is_positive_e2e_validation(text: str) -> bool:
+    text_lower = normalized_words(text)
+    if "e2e" not in text_lower:
+        return False
+    if re.search(
+        r"\b(?:no|without|skip|skips|skipping|not|non)\s+e2e\b|\be2e\s+(?:will\s+)?(?:not|never)\b", text_lower
+    ):
+        return False
+    if not re.search(r"\b(?:testing strategy trace|layer|validation|scenario|artifact|command)\b", text_lower):
+        return False
+    return has_focused_testing_evidence(text)
+
+
+def pivot_requires_adr(combined: str) -> bool:
+    pivot_patterns = [
+        r"\bjest\s*(?:(?:-|–|—)?to(?:-|–|—)?|->|→|=>)\s*vitest\b",
+        r"\bfrom\s+jest\s+to\s+vitest\b",
+        r"\bcypress\s*(?:(?:-|–|—)?to(?:-|–|—)?|->|→|=>)\s*playwright\b",
+        r"\bfrom\s+cypress\s+to\s+playwright\b",
+        r"\breplac(?:e|ing)\s+pytest\b",
+        r"\bstandardiz(?:e|ing)\s+playwright\b",
+    ]
+    adr_trigger = re.compile(r"\badr\b.{0,80}\b(?:evaluat|generat|trigger|required|create|draft)", re.IGNORECASE)
+    for pattern in pivot_patterns:
+        for match in re.finditer(pattern, combined, re.IGNORECASE):
+            window = combined[max(0, match.start() - 180) : match.end() + 220]
+            if not adr_trigger.search(window):
+                return True
+    return False
+
+
 def validate_testing_strategy_contract(topic_dir: Path, requirement_ids: set[str], errors: list[str]) -> None:
     design_path = topic_dir / "design.md"
     plan_path = topic_dir / "plan.md"
@@ -562,6 +632,12 @@ def validate_testing_strategy_contract(topic_dir: Path, requirement_ids: set[str
 
     design_text = design_path.read_text(encoding="utf-8")
     design_lower = normalized_words(design_text)
+    if has_testing_strategy_exception(design_lower):
+        if not re.search(
+            r"\b(?:because|reason|non-behavior|not behavior-changing|not externally visible)\b", design_lower
+        ):
+            errors.append("Testing Strategy exception in design.md must include a behavior-scope justification")
+        return
     if "testing strategy" not in design_lower:
         errors.append("design.md must include a Testing Strategy section when topic requirements/scenarios exist")
         return
@@ -570,16 +646,19 @@ def validate_testing_strategy_contract(topic_dir: Path, requirement_ids: set[str
         "language/app type": ("language", "app"),
         "existing test tools": ("existing", "test"),
         "source-backed docs": ("docs",),
-        "unit strategy": ("unit strategy",),
-        "integration strategy": ("integration strategy",),
-        "E2E strategy": ("e2e strategy",),
+        "unit strategy": r"\bunit(?:\s+strategy|:)",
+        "integration strategy": r"\bintegration(?:\s+strategy|:)",
+        "E2E strategy": r"\be2e(?:\s+strategy|:)",
         "related ADR notes": ("adr",),
         "requirement coverage": ("req-",),
     }
     if any(requirement_id.startswith("SCN-") for requirement_id in requirement_ids):
         required_terms["scenario coverage"] = ("scn-",)
     for label, terms in required_terms.items():
-        if not all(term in design_lower for term in terms):
+        if isinstance(terms, str):
+            if not re.search(terms, design_lower):
+                errors.append(f"Testing Strategy in design.md lacks {label}")
+        elif not all(term in design_lower for term in terms):
             errors.append(f"Testing Strategy in design.md lacks {label}")
 
     plan_text = plan_path.read_text(encoding="utf-8") if plan_path.exists() else ""
@@ -593,36 +672,31 @@ def validate_testing_strategy_contract(topic_dir: Path, requirement_ids: set[str
             continue
         if not any(requirement_id in line and coverage_line_pattern.search(line) for line in plan_lines):
             errors.append(f"plan.md lacks validation coverage for requirement/scenario {requirement_id}")
-    if "e2e" not in plan_lower:
-        errors.append("plan.md must include at least one E2E validation for requirement-backed behavior changes")
-
     validation_line_pattern = re.compile(r"^- \[[ xX]\] \*\*(P\d+\.V\d+)\*\*\s*(.+)$", re.MULTILINE)
-    concrete_pattern = re.compile(
-        r"(`[^`]+`|\bcommand\b|\bartifact\b|\bfixture\b|\bscenario\b|\bmanual evidence\b|\bstatic evidence\b|tests?/[^\s`;,]+|[^\s`;,]+\.(?:py|ts|tsx|js|jsx|spec|test)\b)",
-        re.IGNORECASE,
-    )
-    for validation_id, validation_text in validation_line_pattern.findall(plan_text):
+    validation_items = validation_line_pattern.findall(plan_text)
+    if not any(is_positive_e2e_validation(validation_text) for _, validation_text in validation_items):
+        errors.append("plan.md must include at least one positive E2E validation item with focused evidence")
+
+    for validation_id, validation_text in validation_items:
         validation_lower = validation_text.lower()
         strategy_related = (
             "testing strategy trace" in validation_lower
             or any(requirement_id in validation_text for requirement_id in requirement_ids)
             or re.match(r"(?:run\s+)?(?:the\s+)?(?:tests|checks)\b", validation_lower)
         )
-        if strategy_related and not concrete_pattern.search(validation_text):
+        generic_command = re.match(r"(?:run\s+)?(?:the\s+)?(?:tests|checks)\b", validation_lower) or bool(
+            re.search(r"`(?:npm run check|npm test|npm run test|pytest|python -m unittest)`", validation_lower)
+        )
+        if strategy_related and not has_focused_testing_evidence(validation_text):
+            errors.append(f"Validation {validation_id} lacks focused test artifacts/scenarios/commands or evidence")
+        if generic_command and not has_focused_testing_evidence(validation_text):
             errors.append(
-                f"Validation {validation_id} lacks concrete test artifacts/scenarios/commands or manual/static evidence"
-            )
-        if re.match(r"(?:run\s+)?(?:the\s+)?(?:tests|checks)\b", validation_lower) and not concrete_pattern.search(
-            validation_text
-        ):
-            errors.append(
-                f"Validation {validation_id} is generic-only and lacks concrete test artifacts/scenarios/commands"
+                f"Validation {validation_id} is generic-only and lacks focused test artifacts/scenarios/commands"
             )
 
-    pivot_terms = ["jest to vitest", "cypress to playwright", "replace pytest", "standardize playwright"]
-    combined = normalized_words(design_text + "\n" + plan_text)
-    if any(term in combined for term in pivot_terms) and "adr" not in combined:
-        errors.append("Major testing-toolchain change lacks ADR evaluation/generation trigger")
+    combined = design_text + "\n" + plan_text
+    if pivot_requires_adr(combined):
+        errors.append("Major testing-toolchain change lacks ADR evaluation/generation trigger near the pivot")
 
 
 def warn_missing_workflow_state(

@@ -183,8 +183,15 @@
       ".plan/dashboard-improvements/plan.md",
       ".plan/dashboard-improvements/receipts.jsonl"
     ],
-    "expected_first_response": ["current_phase", "next_action", "files_to_inspect"],
-    "must_ignore": ["prior chat speculation", "stale generated snippets"]
+    "expected_first_response": [
+      "current_phase",
+      "next_action",
+      "files_to_inspect"
+    ],
+    "must_ignore": [
+      "prior chat speculation",
+      "stale generated snippets"
+    ]
   },
   "updated_at": "2026-06-13T04:33:25Z",
   "stale_reason": "Implementation compact requested after artifact updates.",

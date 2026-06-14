@@ -109,8 +109,15 @@
       ".plan/model-optimization/plan.md",
       ".plan/model-optimization/receipts.jsonl"
     ],
-    "expected_first_response": ["current_phase", "next_action", "files_to_inspect"],
-    "must_ignore": ["prior chat speculation", "stale generated snippets"]
+    "expected_first_response": [
+      "current_phase",
+      "next_action",
+      "files_to_inspect"
+    ],
+    "must_ignore": [
+      "prior chat speculation",
+      "stale generated snippets"
+    ]
   },
   "updated_at": "2026-06-13T19:37:18Z",
   "stale_reason": "Plan status and receipts changed after completing P4; regenerate implementation state before P5 final validation."
