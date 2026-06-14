@@ -9,9 +9,8 @@
     "skipLibCheck": true,
     "allowImportingTsExtensions": true,
     "jsx": "react-jsx",
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["dashboard/src/*.ts", "dashboard/src/*.tsx"]
+      "@/*": ["./dashboard/src/*.ts", "./dashboard/src/*.tsx"]
     },
     "types": ["node", "vitest", "vite/client"]
   },
