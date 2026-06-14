@@ -5,11 +5,11 @@
   "source_refs": {
     "plan_md": {
       "path": ".plan/context-bloat-audit/plan.md",
-      "sha256": "sha256:52c09bfdde1b9819305a39ec6585662bfcfb133998bf5c58980f9f3801e0eb0f"
+      "sha256": "sha256:9e1c2fdfc0bd6889337cefcf7c6fedeca73563f900df9952207f72801a7cbb41"
     },
     "plan_nodes": {
       "path": ".plan/context-bloat-audit/plan.nodes.jsonl",
-      "sha256": "sha256:a7185d1e0385d651e4f71a9c431eb43445b6e26180424476e8703193cf979412"
+      "sha256": "sha256:71a65c7fcbcf1c99dfeb2ec5401b6c1babded219d11ba450754b18f4f392f837"
     },
     "plan_edges": {
       "path": ".plan/context-bloat-audit/plan.edges.jsonl",
@@ -17,80 +17,76 @@
     },
     "receipts": {
       "path": ".plan/context-bloat-audit/receipts.jsonl",
-      "sha256": "sha256:28527cfd246edb114b7f8e7f8a66b53c8fd62f8ddbea2ef2ba32cf00388e71a9"
+      "sha256": "sha256:5b277035bdd31ac1aadd888339fad9d56124a6e467e9d0334adad4729807aa6b"
     },
     "context_packs": {
       "path": ".plan/context-bloat-audit/context-packs.jsonl",
-      "sha256": "sha256:b4725f83d2f20c774dc22817fbd8364acd413af80edb36709d9c0022ed642a32"
+      "sha256": "sha256:b4775568d5e43f9982af148fa275933598620441687585e96c11372c2bb7e4a6"
     }
   },
   "current_phase_id": "P0",
   "active_task_ids": [],
   "active_validation_ids": [],
   "next_action": {
-    "id": "P0.T1",
+    "id": "P1.T1",
     "kind": "implementation-task",
-    "summary": "Start P0 implementation.",
-    "phase_id": "P0",
-    "task_id": "P0.T1",
+    "summary": "Inventory and categorize current skills/implement/SKILL.md sections into kernel, reference, tooling-owned, or duplicate-delete buckets.",
+    "phase_id": "P1",
+    "task_id": "P1.T1",
     "files_to_inspect": [
       ".plan/context-bloat-audit/plan.md",
-      "skills/plan/scripts/cartographer_workflow.ts",
-      "extensions/cartographer-tools.ts",
-      "tests/cartographer_workflow.test.ts"
+      "skills/implement/SKILL.md",
+      "skills/plan/references/context-inventory.md",
+      ".plan/context-bloat-audit/evidence/context-inventory-p0.json"
     ]
   },
   "working_set": {
     "write_allowed": [
       {
-        "path": "skills/plan/scripts/*.py",
-        "reason": "P0 inventory script"
+        "path": "skills/implement/SKILL.md",
+        "reason": "P1 compact implement kernel"
       },
       {
-        "path": "tests/*.py",
-        "reason": "P0 inventory tests"
+        "path": "skills/implement/references/**",
+        "reason": "P1 implement references"
+      },
+      {
+        "path": "skills/implement/*.md",
+        "reason": "P1 relocation ledger"
       },
       {
         "path": ".plan/context-bloat-audit/plan.md",
-        "reason": "P0 plan status updates"
+        "reason": "P1 status updates"
       },
       {
         "path": ".plan/context-bloat-audit/plan.nodes.jsonl",
-        "reason": "P0 plan node status updates"
+        "reason": "P1 status updates"
       },
       {
         "path": ".plan/context-bloat-audit/receipts.jsonl",
-        "reason": "P0 receipts"
+        "reason": "P1 receipts"
       },
       {
         "path": ".plan/context-bloat-audit/context-packs.jsonl",
-        "reason": "P0 context pack"
+        "reason": "P1 context pack"
       }
     ],
     "read_only": [
       {
-        "path": "skills/plan/scripts/cartographer_workflow.ts",
-        "reason": "workflow patterns reference"
+        "path": ".plan/context-bloat-audit/evidence/context-inventory-p0.json",
+        "reason": "P0 baseline"
       },
       {
-        "path": "extensions/cartographer-tools.ts",
-        "reason": "tool schema inventory reference"
+        "path": ".plan/context-bloat-audit/requirements.md",
+        "reason": "requirements trace"
       },
       {
-        "path": "package.json",
-        "reason": "script validation reference"
+        "path": ".plan/context-bloat-audit/design.md",
+        "reason": "design trace"
       },
       {
-        "path": "AGENTS.md",
-        "reason": "inventory target"
-      },
-      {
-        "path": "skills/AGENTS.md",
-        "reason": "inventory target"
-      },
-      {
-        "path": "skills/*/SKILL.md",
-        "reason": "inventory target"
+        "path": "skills/plan/references/context-inventory.md",
+        "reason": "reference pattern"
       }
     ],
     "forbidden": [
@@ -110,10 +106,17 @@
     "receipt:P0:validation:2026-06-14T05:18:41+00:00",
     "receipt:P0:validation:2026-06-14T05:18:46+00:00",
     "receipt:P0:validation:2026-06-14T05:19:35+00:00",
-    "receipt:context-bloat-audit:audit:2026-06-14T05:21:17Z"
+    "receipt:context-bloat-audit:audit:2026-06-14T05:21:17Z",
+    "receipt:P1:validation:2026-06-14T05:26:10+00:00",
+    "receipt:P1:validation:2026-06-14T05:26:23+00:00",
+    "receipt:context-bloat-audit:validation:2026-06-14T05:26:28Z",
+    "receipt:P1:validation:2026-06-14T05:26:34+00:00",
+    "receipt:P1:validation:2026-06-14T05:26:41+00:00",
+    "receipt:context-bloat-audit:audit:2026-06-14T05:29:06Z"
   ],
   "journal_refs": [
-    "journal:20260614T052134Z:compact"
+    "journal:20260614T052134Z:compact",
+    "journal:20260614T052929Z:compact"
   ],
   "resume": {
     "template_id": "cartographer.single_writer.resume.v1",
@@ -133,10 +136,10 @@
       "stale generated snippets"
     ]
   },
-  "updated_at": "2026-06-14T05:21:34Z",
+  "updated_at": "2026-06-14T05:29:29Z",
   "stale_reason": "Implementation compact requested after artifact updates.",
   "compaction": {
-    "trigger": "phase-end-P0",
-    "compacted_at": "2026-06-14T05:21:34Z"
+    "trigger": "phase-end-P1",
+    "compacted_at": "2026-06-14T05:29:29Z"
   }
 }

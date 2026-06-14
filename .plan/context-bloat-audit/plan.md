@@ -116,7 +116,7 @@ Use temporary directories for tests. Do not point fixture setup at the repositor
 
 ### Phase P1 — Compact Implement Skill Kernel
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P0
 - **Unlocks:** P2
 - **Primary references:** `DES-CBA-002`, `DES-CBA-006`, `REQ-CBA-002`, `REQ-CBA-006`, `SCN-CBA-003`, `SCN-CBA-004`, `SCN-CBA-011`, `skills/implement/SKILL.md`, `skills/implement/references/`
@@ -133,18 +133,18 @@ Reduce `skills/implement/SKILL.md` to a compact, resume-safe kernel while preser
 
 #### Checklist
 
-- [ ] **P1.T1** Inventory and categorize current `skills/implement/SKILL.md` sections into kernel, reference, tooling-owned, or duplicate-delete buckets.
-- [ ] **P1.T2** Create one-level implement reference files for validation/auditor gates, fallback handling, finalization/ADR, compaction/resume, and commit/checkpoint guidance as needed.
-- [ ] **P1.T3** Rewrite `skills/implement/SKILL.md` kernel to the approved budget target.
-- [ ] **P1.T4** Add/update a relocation ledger documenting every removed or moved rule.
-- [ ] **P1.T5** Update local skill documentation only where stable behavior changed.
+- [x] **P1.T1** Inventory and categorize current `skills/implement/SKILL.md` sections into kernel, reference, tooling-owned, or duplicate-delete buckets.
+- [x] **P1.T2** Create one-level implement reference files for validation/auditor gates, fallback handling, finalization/ADR, compaction/resume, and commit/checkpoint guidance as needed.
+- [x] **P1.T3** Rewrite `skills/implement/SKILL.md` kernel to the approved budget target.
+- [x] **P1.T4** Add/update a relocation ledger documenting every removed or moved rule.
+- [x] **P1.T5** Update local skill documentation only where stable behavior changed.
 
 #### Validation
 
-- [ ] **P1.V1** Run context inventory; expected result: `skills/implement/SKILL.md` is <= 8k chars or has a documented exception.
-- [ ] **P1.V2** Run reference-link/skill-language checks; expected result: all referenced implement files exist one level deep and hard safety rules remain reachable.
-- [ ] **P1.V3** Run a representative implement workflow dry-run on a temporary/mock topic; expected result: agent can identify wrapper sequence, validation gates, human gates, and stop conditions without reading legacy full skill text.
-- [ ] **P1.V4** Run `npm run check:scripts` and targeted tests for any touched scripts.
+- [x] **P1.V1** Run context inventory; expected result: `skills/implement/SKILL.md` is <= 8k chars or has a documented exception.
+- [x] **P1.V2** Run reference-link/skill-language checks; expected result: all referenced implement files exist one level deep and hard safety rules remain reachable.
+- [x] **P1.V3** Run a representative implement workflow dry-run on a temporary/mock topic; expected result: agent can identify wrapper sequence, validation gates, human gates, and stop conditions without reading legacy full skill text.
+- [x] **P1.V4** Run `npm run check:scripts` and targeted tests for any touched scripts.
 
 #### Testing Strategy Trace
 
