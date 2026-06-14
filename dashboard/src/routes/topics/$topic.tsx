@@ -7,20 +7,15 @@ export const Route = createFileRoute("/topics/$topic")({
 	component: DashboardTopicRoute,
 });
 
-const TOPIC_CHILD_SUFFIXES = [
-	"/graph",
-	"/facts",
-	"/evidence",
-	"/receipts",
-	"/health",
-	"/documents",
-] as const;
+const TOPIC_CHILD_SUFFIXES = ["/graph", "/facts", "/evidence", "/receipts", "/health", "/documents"] as const;
 
 function isChildTopicPath(pathname: string, topic: string): boolean {
 	const prefix = `/topics/${encodeURIComponent(topic)}`;
 	if (pathname === prefix) return false;
 	if (!pathname.startsWith(`${prefix}/`)) return false;
-	return TOPIC_CHILD_SUFFIXES.some((suffix) => pathname === `${prefix}${suffix}` || pathname.startsWith(`${prefix}${suffix}/`));
+	return TOPIC_CHILD_SUFFIXES.some(
+		(suffix) => pathname === `${prefix}${suffix}` || pathname.startsWith(`${prefix}${suffix}/`),
+	);
 }
 
 function DashboardTopicRoute(): React.JSX.Element {
@@ -40,7 +35,11 @@ function DashboardTopicRoute(): React.JSX.Element {
 				void navigate({ to: "/topics/$topic", params: { topic: nextTopic } });
 			}}
 			renderContent={({ selectedTopic }) =>
-				selectedTopic ? <TopicPage artifacts={selectedTopic} page="topic" /> : <TopicMissingArtifactsPanel topicName={topic} missing={["topic"]} />
+				selectedTopic ? (
+					<TopicPage artifacts={selectedTopic} page="topic" />
+				) : (
+					<TopicMissingArtifactsPanel topicName={topic} missing={["topic"]} />
+				)
 			}
 		/>
 	);

@@ -57,6 +57,23 @@ For scoped changes that affect a core user workflow or comparable durable behavi
 - When a project needs the durable requirements container before any deltas have been folded, plan an explicit `python skills/plan/scripts/requirements_records.py init --root "$PWD" --json` step. This initializes `docs/requirements.md` only when absent, preserves existing files, and does not invent product requirements.
 - When planning the fold/archive step, include validation that implemented topics with requirement deltas produce a `requirements-fold` receipt or an approved `requirements-fold-skip` receipt, preserving stable requirement/scenario IDs, supersession/removal metadata, source topic, and validation/audit receipt references.
 
+### Testing Strategy Trace
+
+When accepted `design.md` contains a `Testing Strategy`, plans for behavior-changing work MUST consume it before drafting phases. Plan validation items MUST derive from that strategy and name concrete test artifacts/scenarios/commands or manual/static evidence.
+
+For each behavior-changing phase, include `Testing Strategy Trace` metadata in validation items or phase notes covering:
+
+- accepted design/testing-strategy decision IDs or section references;
+- covered `REQ-*` requirement IDs and `SCN-*` scenario IDs;
+- layer: static, unit, integration, E2E, contract/golden, or manual-assisted;
+- concrete test files, fixtures, scenario names, commands, or explicit new artifact names;
+- whether the item contributes to the required at-least-one `E2E` validation;
+- justified non-applicability for skipped layers.
+
+Plans MUST include a requirement/scenario coverage matrix or equivalent trace showing every topic-generated `REQ-*` and `SCN-*` has validation coverage, or an explicit justified non-test/manual evidence exception. Broad commands such as `npm run check` are safety nets after focused tests; they do not replace concrete strategy-derived validation. Generic-only validation for behavior-changing work is not acceptable.
+
+Major testing-tool additions, removals, replacements, or project-wide standards are ADR-trigger language: preserve `adr_required` metadata for the current proposal and add ADR evaluation/generation tasks before dependent implementation phases when a toolchain pivot is accepted.
+
 `{topic}` is a concise summary of the user's requested topic in **3 words or less**. Prefer filesystem-safe lowercase kebab-case for paths.
 
 ## Procedure
@@ -304,7 +321,7 @@ Use deterministic wrappers for plan mutations whenever available. Prefer `cartog
 11. **Final validation with `cartographer-auditor`**
 
 - After `cartographer_jsonl validate-topic` and `validate_planning_graph.py` receipts pass, route the final semantic gate through `cartographer_handoff auditor` when available so artifact summaries, acceptance criteria, validation receipt IDs, report path, and PASS/FAIL schema are captured deterministically. If the wrapper is unavailable, launch `cartographer-auditor` directly and record an explicit fallback receipt.
-- Provide the auditor the plan path, plan graph paths, proposal/map/fact references, deterministic validation receipt IDs or compact output summaries, and require an explicit `PASS`/`FAIL` decision captured by `cartographer_handoff auditor` or an approved fallback. A plan should not be marked ready for implementation without a captured auditor `PASS` or an approved fallback receipt.
+- Provide the auditor the plan path, plan graph paths, proposal/map/fact references, context-pack ID, Testing Strategy evidence or plan validation trace summary when present, requirement/scenario coverage summary, unresolved-decision notes, deterministic validation receipt IDs or compact output summaries, and deterministic receipt output path. Require an explicit `PASS`/`FAIL` decision captured by `cartographer_handoff auditor` or an approved fallback. A plan should not be marked ready for implementation without a captured auditor `PASS` or an approved fallback receipt.
 - Use `cartographer-compass` for scope, dependency, and decision-consistency concerns, especially when phase ordering or assumptions are questionable; compass does not replace the final audit gate.
 - Built-in `reviewer`/`oracle` or a serial current-agent validation pass are fallback substitutes only when `cartographer-auditor` is unavailable, times out, or the user approves substitution. Each fallback must be recorded through `cartographer_handoff fallback`, `cartographer_receipt`, or `receipt-append` with the attempted auditor, reason, substitute/manual reviewer used, deterministic validation receipt IDs, files reviewed, outcome, and residual risks.
 - Do not use `planner` for final validation unless no auditor/reviewer/oracle substitute is available and the user approves; record that as a fallback receipt.
@@ -316,6 +333,10 @@ Use deterministic wrappers for plan mutations whenever available. Prefer `cartog
   - checklist item IDs are unique and scoped to their phase
   - validation item IDs are unique and scoped to their phase
   - validation commands are declared and appear valid for the project, or are clearly marked as manual checks
+  - behavior-changing validation gates derive from the accepted Testing Strategy and cite concrete test artifacts/scenarios/commands
+  - every topic-generated requirement/scenario has validation coverage or an explicit justified exception
+  - at least one E2E validation exists for applicable behavior-changing topics
+  - generic-only validation gates are rejected for behavior-changing work unless explicitly justified as non-behavioral
   - referenced project files exist in the current checkout
   - referenced indexed node IDs exist in `map.nodes.jsonl`, or `.plan/_index/project-graph.sqlite`
   - referenced fact IDs exist as `fact` nodes in `facts.nodes.jsonl`
@@ -413,7 +434,7 @@ Recommended delegated-role prompts:
 - `researcher`: "Only if research facts are missing, stale, or insufficient: propose source-backed JSONL nodes for `.plan/{topic}/facts.nodes.jsonl` and edges for `.plan/{topic}/facts.edges.jsonl`. Inspect existing facts first and reuse valid local-doc facts. You have read access to Cartographer tools; run index/query/read to ground research in current project context. Every source-backed claim needs a fact node, source node, and `supported_by` edge. Focus on dependencies/tools/validation needed for planning."
 - `planner`: "Draft `.plan/{topic}/plan.md` text with topologically ordered phases, explicit dependencies, phase statuses, checklist task IDs, validation item IDs, exit criteria, risks, and source references from concise proposal/index/map/fact summaries and artifact paths. Treat `plan.nodes.jsonl` and `plan.edges.jsonl` as parent-owned `cartographer_plan generate-graph` outputs. You have read access to Cartographer tools and may run targeted reads before citing indexed context. Do not ask for or inline full raw artifacts."
 - `cartographer-compass`/fallback `oracle`: "Review this phase before finalization. Check scope fit, dependency ordering, missing prerequisites, validation adequacy, reference validity, and whether this phase leaves the project in a coherent state. Use provided `cartographer_artifacts` context/receipt/fact summaries and `cartographer_index` query/read summaries, or parent-generated summary paths if helper tools are unavailable. Return required corrections only."
-- `cartographer-auditor`: "Review the complete plan after `cartographer_jsonl validate-topic` and `validate_planning_graph.py` receipts pass. Check acyclic phase dependencies, complete checklist/validation coverage, valid references, alignment with proposal goals/non-goals, ADR metadata preservation, and readiness for handoff to an execution agent. Use provided artifact helper summaries, deterministic receipt IDs/paths, acceptance criteria, and deterministic auditor receipt path; use Cartographer tools for targeted checks only if freshness or references are uncertain. Do not manually re-parse large JSONL when a deterministic validation receipt is available. Return `PASS`/`FAIL` with required corrections."
+- `cartographer-auditor`: "Review the complete plan after `cartographer_jsonl validate-topic` and `validate_planning_graph.py` receipts pass. Check acyclic phase dependencies, complete checklist/validation coverage, valid references, alignment with proposal goals/non-goals, ADR metadata preservation, Testing Strategy evidence, requirement/scenario coverage, unresolved-decision notes, context-pack ID, and readiness for handoff to an execution agent. Use provided artifact helper summaries, deterministic validation receipt IDs/paths, acceptance criteria, and deterministic receipt output path; use Cartographer tools for targeted checks only if freshness or references are uncertain. Do not manually re-parse large JSONL when a deterministic validation receipt is available. Return `PASS`/`FAIL` with required corrections."
 - Fallback `reviewer`/serial validator: "Use only when `cartographer-auditor` is unavailable or the user approved substitution. Review the same artifacts and deterministic receipts, then write or request an explicit fallback receipt with outcome and residual risk."
 
 Serial-mode role prompts:

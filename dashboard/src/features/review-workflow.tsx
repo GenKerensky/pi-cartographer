@@ -32,7 +32,16 @@ export type DashboardSectionId =
 	| "health"
 	| "graph";
 
-export type TopicWorkspaceTabId = "proposal" | "requirements" | "design" | "plan" | "facts" | "evidence" | "receipts" | "health" | "graph";
+export type TopicWorkspaceTabId =
+	| "proposal"
+	| "requirements"
+	| "design"
+	| "plan"
+	| "facts"
+	| "evidence"
+	| "receipts"
+	| "health"
+	| "graph";
 
 export type DashboardReviewWorkflowProps = {
 	overview: DashboardOverview;
@@ -162,7 +171,13 @@ export function TopicsList({
 
 function tabForSection(section?: DashboardSectionId): TopicWorkspaceTabId | undefined {
 	if (section === "topic" || section === "documents") return "proposal";
-	if (section === "facts" || section === "evidence" || section === "receipts" || section === "health" || section === "graph") {
+	if (
+		section === "facts" ||
+		section === "evidence" ||
+		section === "receipts" ||
+		section === "health" ||
+		section === "graph"
+	) {
 		return section;
 	}
 	return undefined;
@@ -174,7 +189,15 @@ function sectionForTab(tab: string): DashboardSectionId {
 }
 
 function isTopicWorkspaceSection(section: DashboardSectionId | "all"): boolean {
-	return section === "topic" || section === "documents" || section === "facts" || section === "evidence" || section === "receipts" || section === "health" || section === "graph";
+	return (
+		section === "topic" ||
+		section === "documents" ||
+		section === "facts" ||
+		section === "evidence" ||
+		section === "receipts" ||
+		section === "health" ||
+		section === "graph"
+	);
 }
 
 export function TopicWorkspace({
@@ -328,7 +351,12 @@ function HealthPanel({ artifacts }: { artifacts: TopicArtifacts }): React.JSX.El
 	);
 }
 
-export function TopicPageFrame({ artifacts, page, documentKind, children }: TopicPageFrameProps & { children: React.ReactNode }): React.JSX.Element {
+export function TopicPageFrame({
+	artifacts,
+	page,
+	documentKind,
+	children,
+}: TopicPageFrameProps & { children: React.ReactNode }): React.JSX.Element {
 	const heading = pageHeading(page, documentKind);
 	return (
 		<Card
@@ -441,8 +469,8 @@ export function TopicMissingDocumentPanel({
 					Missing {kind}
 				</CardTitle>
 				<CardDescription>
-					No {kind} document is available for {topicName}. This topic is either pre-proposal, gated, or the
-					artifact has not been written yet.
+					No {kind} document is available for {topicName}. This topic is either pre-proposal, gated, or the artifact has
+					not been written yet.
 				</CardDescription>
 			</CardHeader>
 			<CardContent>
@@ -567,7 +595,8 @@ export function DashboardReviewWorkflow({
 }: DashboardReviewWorkflowProps): React.JSX.Element {
 	const showOverview = visibleSection === "all" || visibleSection === "overview";
 	const showTopics = visibleSection === "all" || visibleSection === "topics";
-	const showTopicWorkspace = Boolean(selectedTopic) && (visibleSection === "all" || isTopicWorkspaceSection(visibleSection));
+	const showTopicWorkspace =
+		Boolean(selectedTopic) && (visibleSection === "all" || isTopicWorkspaceSection(visibleSection));
 	return (
 		<div className="min-w-0 space-y-5" data-review-workflow data-visible-section={visibleSection}>
 			{showOverview ? <OverviewMetrics overview={overview} /> : null}

@@ -33,7 +33,7 @@ describe("dashboard Markdown and document viewer", () => {
 		const rendered = await renderMarkdownToHtml(markdown, index);
 
 		expect(rendered.html).toContain('data-reference="F001"');
-		expect(rendered.html).toContain('data-reference-popover');
+		expect(rendered.html).toContain("data-reference-popover");
 		expect(rendered.html).toContain('data-reference-status="resolved"');
 		expect(rendered.html).toContain('href="/api/files?path=README.md"');
 		expect(rendered.html).toContain('href="https://reactflow.dev/examples/overview"');
@@ -55,7 +55,7 @@ describe("dashboard Markdown and document viewer", () => {
 		expect(rendered.html).toContain('data-reference="F001"');
 		expect(rendered.html).toContain('data-reference-popover="true"');
 		expect(rendered.html).toContain('data-reference-status="resolved"');
-		expect(rendered.html).toContain('aria-label=');
+		expect(rendered.html).toContain("aria-label=");
 		// Popover content is portal-rendered; in SSR it is not part of the HTML string.
 		expect(rendered.html).not.toContain("data-reference-popover-content");
 		// The native title attribute is removed from reference anchors.

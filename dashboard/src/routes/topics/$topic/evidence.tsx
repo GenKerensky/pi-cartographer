@@ -18,7 +18,11 @@ function DashboardTopicEvidenceRoute(): React.JSX.Element {
 				void navigate({ to: "/topics/$topic", params: { topic: nextTopic } });
 			}}
 			renderContent={({ selectedTopic }) =>
-				selectedTopic ? <TopicPage artifacts={selectedTopic} page="evidence" /> : <TopicMissingArtifactsPanel topicName={topic} missing={["evidence"]} />
+				selectedTopic ? (
+					<TopicPage artifacts={selectedTopic} page="evidence" />
+				) : (
+					<TopicMissingArtifactsPanel topicName={topic} missing={["evidence"]} />
+				)
 			}
 		/>
 	);

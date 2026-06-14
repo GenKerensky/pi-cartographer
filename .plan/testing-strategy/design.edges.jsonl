@@ -1,0 +1,16 @@
+{"from":"DES-TEST-001","to":"REQ-TEST-001","type":"satisfies"}
+{"from":"DES-TEST-001","to":"REQ-TEST-003","type":"satisfies"}
+{"from":"DES-TEST-001","to":"REQ-TEST-004","type":"satisfies"}
+{"from":"DES-TEST-002","to":"REQ-TEST-002","type":"satisfies"}
+{"from":"DES-TEST-002","to":"REQ-TEST-003","type":"satisfies"}
+{"from":"DES-TEST-003","to":"REQ-TEST-004","type":"satisfies"}
+{"from":"ALT-TEST-001","to":"DES-TEST-001","type":"alternative_to"}
+{"from":"ALT-TEST-002","to":"DES-TEST-003","type":"alternative_to"}
+{"from":"ALT-TEST-003","to":"DES-TEST-002","type":"alternative_to"}
+{"evidence":"Design validator evidence checks Testing Strategy completeness before audit.","from":"DES-TEST-004","to":"REQ-TEST-001","type":"satisfies"}
+{"evidence":"Plan validator evidence checks concrete validation gates trace to the accepted testing strategy.","from":"DES-TEST-004","to":"REQ-TEST-002","type":"satisfies"}
+{"evidence":"Validation evidence checks at least one E2E validation for applicable behavior-changing topics.","from":"DES-TEST-004","to":"REQ-TEST-003","type":"satisfies"}
+{"evidence":"Validation evidence detects major testing-toolchain changes and ADR triggers.","from":"DES-TEST-004","to":"REQ-TEST-004","type":"satisfies"}
+{"evidence":"Uncertainty handling prevents invented design testing strategies.","from":"DES-TEST-005","to":"REQ-TEST-001","type":"satisfies"}
+{"evidence":"Uncertainty handling routes unclear phase validation choices to compass/research/interview before planning.","from":"DES-TEST-005","to":"REQ-TEST-002","type":"satisfies"}
+{"evidence":"User-owned tool pivots and ADR supersession decisions route to interview/user approval.","from":"DES-TEST-005","to":"REQ-TEST-004","type":"satisfies"}

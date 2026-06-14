@@ -147,3 +147,56 @@ The compaction bridge must be configurable or disableable, avoid compaction loop
 
 - **SCN-PCH-004**: Unavailable Pi context is reported as safe skip
 - **SCN-PCH-005**: Recent compaction request suppresses duplicate trigger
+
+### REQ-TEST-001 — Design-phase testing strategy
+
+- Status: accepted
+- Change type: ADDED
+- Domain: cartographer-workflow
+- Priority: must
+- Source topic: testing-strategy
+
+The system MUST require applicable design phases to record a topic-specific testing strategy before planning begins, including languages, application/change type, existing test tools, consulted docs/best practices, unit strategy, integration strategy, E2E strategy, and at least one E2E validation that must run at least once.
+
+#### Scenarios
+
+- **SCN-TEST-001**: TypeScript frontend feature
+
+### REQ-TEST-003 — At least one E2E validation
+
+- Status: accepted
+- Change type: ADDED
+- Domain: cartographer-workflow
+- Priority: must
+- Source topic: testing-strategy
+
+The system MUST require every feature/change topic to design at least one E2E validation that runs at least once before acceptance, with the strategy deciding whether it is recurring CI, one-time validation, or manual-assisted evidence.
+
+### REQ-TEST-002 — Plan validation names concrete tests
+
+- Status: accepted
+- Change type: ADDED
+- Domain: cartographer-workflow
+- Priority: must
+- Source topic: testing-strategy
+
+The system MUST require plan validation items for behavior-changing phases to name specific test artifacts, scenarios, or commands that must be created, updated, and pass; generic validation language such as only 'run tests' is insufficient.
+
+#### Scenarios
+
+- **SCN-TEST-002**: Python CLI/system tool feature
+- **SCN-TEST-004**: Plan rejects generic validation
+
+### REQ-TEST-004 — Existing-tool preservation and user-approved pivots
+
+- Status: accepted
+- Change type: ADDED
+- Domain: cartographer-workflow
+- Priority: must
+- Source topic: testing-strategy
+
+The system MUST build on existing project test tools by default and MUST ask the user before requiring a major testing-tool pivot or upgrade. When a testing strategy would add, remove, replace, or standardize a major testing framework/tool for the project, the workflow MUST trigger ADR evaluation/generation before implementation planning treats that toolchain change as accepted.
+
+#### Scenarios
+
+- **SCN-TEST-003**: Tool pivot recommendation

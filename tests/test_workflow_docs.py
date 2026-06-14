@@ -50,6 +50,66 @@ class WorkflowDocsTests(unittest.TestCase):
         self.assertIn("legacy imports", readme)
         self.assertNotIn("Final concise ADR generation into `docs/` is out of scope", implement)
 
+    def test_design_skill_documents_testing_strategy_contract(self) -> None:
+        design = (ROOT / "skills/design/SKILL.md").read_text(encoding="utf-8")
+
+        for needle in [
+            "Testing Strategy",
+            "behavior-changing topics",
+            "existing test tools/scripts",
+            "related ADRs",
+            "supersession requires a new ADR",
+            "unit, integration, and E2E strategy",
+            "at least one named E2E validation",
+            "requirement/scenario coverage expectation",
+            "REQ-*",
+            "SCN-*",
+            "researcher/archivist",
+            "cartographer-compass",
+            "interview",
+            "ADR evaluation/generation triggers",
+            "validation receipt(s), context pack, auditor PASS",
+        ]:
+            self.assertIn(needle, design)
+
+    def test_plan_skill_documents_testing_strategy_trace(self) -> None:
+        plan = (ROOT / "skills/plan/SKILL.md").read_text(encoding="utf-8")
+
+        for needle in [
+            "Testing Strategy Trace",
+            "concrete test artifacts/scenarios/commands",
+            "covered `REQ-*` requirement IDs and `SCN-*` scenario IDs",
+            "requirement/scenario coverage matrix",
+            "at-least-one `E2E` validation",
+            "Broad commands such as `npm run check` are safety nets",
+            "Generic-only validation for behavior-changing work is not acceptable",
+            "ADR-trigger language",
+            "generic-only validation gates are rejected",
+        ]:
+            self.assertIn(needle, plan)
+
+    def test_auditor_documents_testing_strategy_review(self) -> None:
+        auditor = (ROOT / ".pi/agents/cartographer-auditor.md").read_text(encoding="utf-8")
+        design = (ROOT / "skills/design/SKILL.md").read_text(encoding="utf-8")
+        plan = (ROOT / "skills/plan/SKILL.md").read_text(encoding="utf-8")
+
+        for needle in [
+            "Testing Strategy",
+            "existing tools/scripts",
+            "related ADRs",
+            "unit/integration/E2E",
+            "requirement/scenario",
+            "concrete test artifacts/scenarios/commands",
+            "generic-only behavior-change validation",
+        ]:
+            self.assertIn(needle, auditor)
+        self.assertIn("deterministic validation receipt IDs", design)
+        self.assertIn("requirement/scenario coverage summary", design)
+        self.assertIn("Testing Strategy evidence", plan)
+        self.assertIn("context-pack ID", plan)
+        self.assertIn("unresolved-decision notes", plan)
+        self.assertIn("deterministic receipt output path", plan)
+
     def test_deterministic_then_auditor_gates_are_documented(self) -> None:
         proposal = (ROOT / "skills/proposal/SKILL.md").read_text(encoding="utf-8")
         plan = (ROOT / "skills/plan/SKILL.md").read_text(encoding="utf-8")

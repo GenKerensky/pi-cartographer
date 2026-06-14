@@ -1,0 +1,129 @@
+{
+  "schema_version": 1,
+  "topic": "testing-strategy",
+  "source_status": "hashes-valid",
+  "source_refs": {
+    "plan_md": {
+      "path": ".plan/testing-strategy/plan.md",
+      "sha256": "sha256:50a780f94498ab36b97ae912af95bc032e0bdd783166f4f9be6096ce7c1ce87b"
+    },
+    "plan_nodes": {
+      "path": ".plan/testing-strategy/plan.nodes.jsonl",
+      "sha256": "sha256:4f6c91edda39c566222a3cef15c4a97b6bbb4567ce6f2464de84f2a28b62e221"
+    },
+    "plan_edges": {
+      "path": ".plan/testing-strategy/plan.edges.jsonl",
+      "sha256": "sha256:8bd3df3eaec3e71a06f5738930c023cc2da904215dcdfdd3d45d6a65fffba1e6"
+    },
+    "receipts": {
+      "path": ".plan/testing-strategy/receipts.jsonl",
+      "sha256": "sha256:a0bcaee5a5534a2d6963908928113185fb2f1a3144dd4a68be15aad0eb32d723"
+    },
+    "context_packs": {
+      "path": ".plan/testing-strategy/context-packs.jsonl",
+      "sha256": "sha256:9565634dc4493d7bd3ab5a87aadfc52cef8f928c892bd6e1b14dad00652652b4"
+    }
+  },
+  "current_phase_id": null,
+  "active_task_ids": [],
+  "active_validation_ids": [],
+  "next_action": {
+    "id": "implementation.final-approval",
+    "kind": "approval-gate",
+    "summary": "Await final human implementation approval after P0-P6 completion, final validation, and auditor PASS.",
+    "files_to_inspect": [
+      ".plan/testing-strategy/plan.md",
+      ".plan/testing-strategy/final-auditor.md",
+      ".plan/testing-strategy/receipts.jsonl"
+    ]
+  },
+  "working_set": {
+    "write_allowed": [
+      {
+        "path": ".cartographer/testing-strategy/state.json",
+        "reason": "final resume-state correction through cartographer_state"
+      },
+      {
+        "path": ".plan/testing-strategy/receipts.jsonl",
+        "reason": "future final approval receipt only"
+      }
+    ],
+    "read_only": [
+      {
+        "path": ".plan/testing-strategy/plan.md",
+        "reason": "authoritative completed plan"
+      },
+      {
+        "path": ".plan/testing-strategy/final-auditor.md",
+        "reason": "final auditor evidence"
+      }
+    ],
+    "forbidden": [
+      {
+        "path": ".plan/_private/**",
+        "reason": "raw private inputs are off-limits"
+      },
+      {
+        "path": ".plan/_index/**",
+        "reason": "generated index/cache artifacts"
+      }
+    ]
+  },
+  "known_failures": [],
+  "last_validation_receipt_ids": [
+    "receipt:P0:validation:2026-06-13T23:14:15+00:00",
+    "receipt:P0:validation:2026-06-13T23:14:20+00:00",
+    "receipt:testing-strategy:audit:2026-06-13T23:31:45Z",
+    "receipt:P1:validation:2026-06-13T23:33:46+00:00",
+    "receipt:P1:validation:2026-06-13T23:33:50+00:00",
+    "receipt:testing-strategy:audit:2026-06-13T23:36:11Z",
+    "receipt:P2:validation:2026-06-13T23:37:49+00:00",
+    "receipt:P2:validation:2026-06-13T23:37:53+00:00",
+    "receipt:testing-strategy:audit:2026-06-13T23:39:37Z",
+    "receipt:P3:validation:2026-06-13T23:47:11+00:00",
+    "receipt:P3:validation:2026-06-13T23:47:18+00:00",
+    "receipt:P3:validation:2026-06-13T23:47:23+00:00",
+    "receipt:testing-strategy:audit:2026-06-13T23:49:09Z",
+    "receipt:P4:validation:2026-06-13T23:53:36+00:00",
+    "receipt:P4:validation:2026-06-13T23:53:45+00:00",
+    "receipt:P4:validation:2026-06-13T23:55:39+00:00",
+    "receipt:testing-strategy:audit:2026-06-13T23:57:08Z",
+    "receipt:P5:validation:2026-06-13T23:58:53+00:00",
+    "receipt:P5:validation:2026-06-13T23:59:04+00:00",
+    "receipt:P5:validation:2026-06-13T23:59:20+00:00",
+    "receipt:P5:validation:2026-06-14T00:00:32+00:00",
+    "receipt:P5:validation:2026-06-14T00:00:38+00:00",
+    "receipt:testing-strategy:audit:2026-06-14T00:03:14Z",
+    "receipt:P6:validation:2026-06-14T00:04:23+00:00",
+    "receipt:P6:validation:2026-06-14T00:04:29+00:00",
+    "receipt:P6:validation:2026-06-14T00:04:36+00:00",
+    "receipt:P6:validation:2026-06-14T00:06:54+00:00",
+    "receipt:testing-strategy:audit:2026-06-14T00:10:02Z"
+  ],
+  "journal_refs": [
+    "journal:20260613T233209Z:compact",
+    "journal:20260613T233621Z:compact",
+    "journal:20260613T233949Z:compact",
+    "journal:20260613T234925Z:compact",
+    "journal:20260613T235721Z:compact",
+    "journal:20260614T000329Z:compact",
+    "journal:20260614T001322Z:compact"
+  ],
+  "resume": {
+    "template_id": "cartographer.single_writer.resume.v1",
+    "resume_order": [
+      ".cartographer/testing-strategy/state.json",
+      ".cartographer/testing-strategy/journal.jsonl",
+      ".plan/testing-strategy/plan.md",
+      ".plan/testing-strategy/receipts.jsonl"
+    ],
+    "expected_first_response": ["current_phase", "next_action", "files_to_inspect"],
+    "must_ignore": ["prior chat speculation", "stale generated snippets"]
+  },
+  "updated_at": "2026-06-14T02:49:26Z",
+  "stale_reason": "Implementation compact requested after artifact updates.",
+  "compaction": {
+    "trigger": "final-implementation",
+    "compacted_at": "2026-06-14T00:13:22Z"
+  }
+}

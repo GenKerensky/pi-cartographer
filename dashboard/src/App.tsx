@@ -117,7 +117,8 @@ export function DashboardShell({
 	const adrsSnapshot = useAdrs(!disableDataFetch);
 	const overview = disableDataFetch ? initialOverview : (overviewSnapshot.overview ?? initialOverview);
 	const routeRequiresTopic = routeDescriptor(activeSection).requiresTopic === true;
-	const effectiveTopicId = routeTopicId ?? initialTopic?.topic.id ?? (routeRequiresTopic ? overview?.topics[0]?.id : undefined);
+	const effectiveTopicId =
+		routeTopicId ?? initialTopic?.topic.id ?? (routeRequiresTopic ? overview?.topics[0]?.id : undefined);
 	const selectedTopicSnapshot = useTopicArtifacts(effectiveTopicId, !disableDataFetch && routeRequiresTopic);
 	const selectedTopic = routeRequiresTopic
 		? disableDataFetch
@@ -132,7 +133,9 @@ export function DashboardShell({
 			warnings: initialAdrs?.warnings ?? [],
 		};
 	}, [adrsSnapshot.rows, disableDataFetch, initialAdrs]);
-	const snapshots = routeRequiresTopic ? [overviewSnapshot, selectedTopicSnapshot, adrsSnapshot] : [overviewSnapshot, adrsSnapshot];
+	const snapshots = routeRequiresTopic
+		? [overviewSnapshot, selectedTopicSnapshot, adrsSnapshot]
+		: [overviewSnapshot, adrsSnapshot];
 	const loadError = snapshots.some((snapshot) => snapshot.isError) ? "Dashboard collection load failed" : undefined;
 
 	useEffect(() => {
@@ -198,7 +201,7 @@ export function DashboardShell({
 									"data-nav-active": active,
 								};
 								return useRouterLinks && !unavailable ? (
-									<Link key={item.label} to={target.to as never} params={target.params as never} {...commonProps}>
+									<Link key={item.label} to={target.to} params={target.params as never} {...commonProps}>
 										{content}
 									</Link>
 								) : (

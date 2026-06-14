@@ -13,3 +13,5 @@ tests/dashboard/__screenshots__/
 docs/adr/_graph/
 package-lock.json
 pathfinder-receipt.md
+
+.cartographer/

@@ -34,7 +34,12 @@ function encodeTopic(topicId: string): string {
 }
 
 export function routeDescriptor(page: DashboardPageId): DashboardRouteDescriptor {
-	return dashboardRouteDescriptors.find((descriptor) => descriptor.id === page) ?? dashboardRouteDescriptors[0]!;
+	const fallback = dashboardRouteDescriptors[0];
+	const descriptor = dashboardRouteDescriptors.find((candidate) => candidate.id === page) ?? fallback;
+	if (!descriptor) {
+		throw new Error("dashboard route descriptors must not be empty");
+	}
+	return descriptor;
 }
 
 export function defaultDashboardNavHref(
@@ -69,7 +74,8 @@ export function dashboardRouteLinkTarget(
 	if (page === "overview") return { to: "/" };
 	if (page === "topics" || !topicId) return { to: "/topics" };
 	if (page === "topic") return { to: "/topics/$topic", params: { topic: topicId } };
-	if (page === "documents") return { to: "/topics/$topic/documents/$kind", params: { topic: topicId, kind: documentKind } };
+	if (page === "documents")
+		return { to: "/topics/$topic/documents/$kind", params: { topic: topicId, kind: documentKind } };
 	if (page === "facts") return { to: "/topics/$topic/facts", params: { topic: topicId } };
 	if (page === "evidence") return { to: "/topics/$topic/evidence", params: { topic: topicId } };
 	if (page === "receipts") return { to: "/topics/$topic/receipts", params: { topic: topicId } };
@@ -82,6 +88,7 @@ export function topicTabForPage(
 	documentKind: DashboardTopicDocumentKind = "proposal",
 ): TopicWorkspaceTabId | undefined {
 	if (page === "topic" || page === "documents") return documentKind;
-	if (page === "facts" || page === "evidence" || page === "receipts" || page === "health" || page === "graph") return page;
+	if (page === "facts" || page === "evidence" || page === "receipts" || page === "health" || page === "graph")
+		return page;
 	return undefined;
 }

@@ -1,0 +1,16 @@
+{"from":"REQ-TEST-001","to":"F001","type":"supported_by"}
+{"from":"REQ-TEST-001","to":"F002","type":"supported_by"}
+{"from":"REQ-TEST-001","to":"F003","type":"supported_by"}
+{"from":"REQ-TEST-001","to":"F004","type":"supported_by"}
+{"from":"REQ-TEST-001","to":"docs/requirements.md#testing-strategy-workflow","type":"folds_into"}
+{"from":"REQ-TEST-002","to":"F001","type":"supported_by"}
+{"from":"REQ-TEST-002","to":"F002","type":"supported_by"}
+{"from":"REQ-TEST-002","to":"F003","type":"supported_by"}
+{"from":"REQ-TEST-002","to":"docs/requirements.md#testing-strategy-workflow","type":"folds_into"}
+{"from":"REQ-TEST-003","to":"F003","type":"supported_by"}
+{"from":"REQ-TEST-003","to":"F004","type":"supported_by"}
+{"from":"REQ-TEST-003","to":"docs/requirements.md#testing-strategy-workflow","type":"folds_into"}
+{"from":"REQ-TEST-004","to":"F001","type":"supported_by"}
+{"from":"REQ-TEST-004","to":"F002","type":"supported_by"}
+{"from":"REQ-TEST-004","to":"F003","type":"supported_by"}
+{"from":"REQ-TEST-004","to":"docs/requirements.md#testing-strategy-workflow","type":"folds_into"}

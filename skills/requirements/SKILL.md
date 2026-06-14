@@ -10,7 +10,9 @@ updated: "2026-06-12"
 
 ## When to Use
 
-Use this skill after a proposal is accepted when `.plan/<topic>/proposal.md` says `requirements_required: true`, or when the change affects a core user workflow, durable behavior, a public/API contract, migration/security/privacy risk, or comparable product contract.
+Use this skill after a proposal is accepted when `.plan/<topic>/proposal.md` says `requirements_required: true`, or when the change affects externally visible agent/user behavior, a core user workflow, durable behavior, a public/API contract, migration/security/privacy risk, or comparable product contract.
+
+Requirements capture testable behavior contracts. A change may require requirements even when it does **not** require an ADR; ADRs are for architecture-significant decisions, while requirements are for externally observable behavior and acceptance scenarios.
 
 This phase happens **before design and plan**. It must not be skipped by going directly from proposal to plan.
 

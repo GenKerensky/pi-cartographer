@@ -97,7 +97,8 @@ Use deterministic wrappers for proposal mutations whenever available. Prefer `ca
 
 - Run `cartographer_adr({"action":"evaluate","root":"$PWD","topic":"{topic}"})` once proposal scope is sketched, or the equivalent `python <plan-skill-dir>/scripts/adr_records.py evaluate --root "$PWD" --topic "{topic}" --json` CLI when the tool is unavailable.
 - Record the evaluation under `## ADR Metadata` with `adr_required`, `adr_reason`, `adr_options_status`, and `adr_tool_mode`.
-- Treat requests that embed a durable architectural choice, dependency/platform choice, identity/auth provider, data-store change, deployment topology, public API contract, or cross-cutting workflow policy as ADR-worthy unless clearly routine.
+- Treat requests that embed a durable architectural choice, dependency/platform choice, identity/auth provider, data-store change, deployment topology, or public/API contract architecture as ADR-worthy unless clearly routine.
+- Do **not** mark `adr_required: true` merely because a request changes externally visible workflow behavior, validation policy, or agent/user-facing process. Those are requirements/design signals unless they also choose architecture, structure, dependencies, platform, or another durable technical direction.
 - If the user request directs a specific architectural choice such as "add Auth0" and the proposal lacks alternatives or explicit user rationale, ask one concise clarification for alternatives/rationale before marking the proposal ready for planning. Do not invent the user's rationale.
 - If the user declines or the change is routine, set `adr_required: false` and record the reason. If `adr_required: true`, state that implementation finalization should generate or explicitly skip the ADR using `cartographer_adr` after validation.
 
@@ -250,9 +251,9 @@ Use deterministic wrappers for proposal mutations whenever available. Prefer `ca
 7. **Evaluate the requirements/design scope gate and write next-artifact guidance**
    - Keep the current proposal structure through the non-design sections: `## Description`, `## Problem Statement`, `## Goals`, `## Non-Goals`, `## Background`, `## Viability`, risks, and `## ADR Metadata` remain in `proposal.md`.
    - Do not put detailed architecture or implementation design steps in `proposal.md` for scoped changes. The split starts where detailed design begins.
-   - Decide whether requirements/design artifacts are required using an ADR-style scope/risk gate:
-     - set `requirements_required: true` when the change impacts a core user workflow, changes durable product behavior, changes a public/API contract, introduces migration/security/privacy risk, or otherwise needs a behavioral contract;
-     - set `requirements_required: false` for small changes that do not impact a core user workflow and have no comparable contract/risk signal.
+   - Decide whether requirements/design artifacts are required using a behavior/contract scope gate, not the ADR gate:
+     - set `requirements_required: true` when the change impacts a core user workflow, changes externally visible agent/user behavior, changes durable product behavior, changes a public/API contract, introduces migration/security/privacy risk, or otherwise needs a testable behavioral contract;
+     - set `requirements_required: false` only for small changes that do not impact external behavior, a core user workflow, or any comparable contract/risk signal.
    - Write the decision under `## Scope Gate` with a concise reason.
    - Under `## Next Artifacts`, state either:
      - scoped path: `proposal -> research -> interview gate -> requirements gate -> design gate -> plan -> implement -> fold accepted deltas into docs/requirements.md`, where the interview runs only after relevant project/research context is exhausted and unresolved user-owned decisions remain;
@@ -413,6 +414,7 @@ Serial-mode role prompts:
 - Do not skip compass/oracle checks for design steps, even in serial mode.
 - Do not overwrite useful existing proposal content without preserving or reconciling it.
 - Do not omit `## ADR Metadata`; every proposal should state `adr_required` and why.
+- Do not use ADR metadata as a substitute for requirements gating: externally testable behavior changes usually require requirements even when `adr_required: false`.
 - Do not mark `adr_required: true` for directed architecture choices without alternatives or user-provided rationale unless the user explicitly accepts the rationale.
 
 ## Verification
@@ -431,7 +433,7 @@ Before finalizing, verify:
 - Every cited source-backed fact has a `supported_by` edge to a `source` node.
 - Every file reference in `map.nodes.jsonl` or `map.edges.jsonl` points to an existing project file, ideally with a line number.
 - Every indexed node ID cited in `map.nodes.jsonl`, `map.edges.jsonl`, or `proposal.md` exists in `.plan/_index/project-graph.sqlite`.
-- `## Scope Gate` states whether requirements/design artifacts are required, including the core user workflow or comparable risk rationale.
+- `## Scope Gate` states whether requirements/design artifacts are required, including the external behavior, core user workflow, public/API contract, or comparable risk rationale.
 - `## Next Artifacts` points to research-exhausted interview when unresolved user-owned decisions remain, then approved requirements and design gates for scoped changes, or records why the lightweight proposal -> plan path is enough.
 - `## ADR Metadata` includes `adr_required`, `adr_reason`, `adr_options_status`, and `adr_tool_mode`.
 - Directed ADR-worthy choices include alternatives or user-provided rationale, or the proposal records that clarification is still needed.
