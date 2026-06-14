@@ -311,7 +311,7 @@ This phase intentionally updates auditor guidance because the design now calls f
 
 ### Phase P5 — End-to-end workflow validation
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P4
 - **Unlocks:** P6
 - **Primary references:** `tests/test_validate_planning_graph.py`, `skills/plan/scripts/validate_planning_graph.py`, `skills/plan/scripts/manage_jsonl.ts`, `package.json`, [F004]
@@ -329,18 +329,18 @@ Run focused tests plus at least one E2E-style workflow smoke that proves the des
 
 #### Checklist
 
-- [ ] **P5.T1** Create or update a test helper/fixture that builds a synthetic temp-root topic with requirements, design Testing Strategy, plan validations, facts, and map records.
-- [ ] **P5.T2** Ensure the synthetic topic includes one E2E validation item, one failing/generic-only variant, and one failing uncovered-requirement variant.
-- [ ] **P5.T3** Run focused validator and workflow-doc tests first.
-- [ ] **P5.T4** Run broad project checks only after focused tests pass.
+- [x] **P5.T1** Create or update a test helper/fixture that builds a synthetic temp-root topic with requirements, design Testing Strategy, plan validations, facts, and map records.
+- [x] **P5.T2** Ensure the synthetic topic includes one E2E validation item, one failing/generic-only variant, and one failing uncovered-requirement variant.
+- [x] **P5.T3** Run focused validator and workflow-doc tests first.
+- [x] **P5.T4** Run broad project checks only after focused tests pass.
 
 #### Validation
 
-- [ ] **P5.V1** Run `python -m unittest tests.test_validate_planning_graph.PlanningGraphValidatorTests tests.test_workflow_docs.WorkflowDocsTests` and verify focused Python tests pass. Testing Strategy Trace: design `DES-TEST-002`, `DES-TEST-004`; layer unit/integration.
-- [ ] **P5.V2** Run a temp-root E2E smoke: `tmpdir=$(mktemp -d); python -m unittest tests.test_validate_planning_graph.PlanningGraphValidatorTests.test_testing_strategy_valid_topic_passes` or the equivalent new targeted E2E fixture test, and verify it exercises `manage_jsonl.ts validate-topic` plus `validate_planning_graph.py` against a synthetic topic under `/tmp`. Testing Strategy Trace: design `DES-TEST-003`, `DES-TEST-004`; layer E2E smoke; contributes the required at-least-once E2E validation.
-- [ ] **P5.V3** Run `npm run test:py` and verify all Python tests pass. Testing Strategy Trace: design `DES-TEST-004`; layer broad regression.
-- [ ] **P5.V4** Run `npm run test:ts` and verify TypeScript tests pass. Testing Strategy Trace: design `DES-TEST-004`; layer broad regression.
-- [ ] **P5.V5** Run `npm run check:scripts` and verify script syntax checks pass. Testing Strategy Trace: design `DES-TEST-004`; layer broad static.
+- [x] **P5.V1** Run `python -m unittest tests.test_validate_planning_graph.PlanningGraphValidatorTests tests.test_workflow_docs.WorkflowDocsTests` and verify focused Python tests pass. Testing Strategy Trace: design `DES-TEST-002`, `DES-TEST-004`; layer unit/integration.
+- [x] **P5.V2** Run a temp-root E2E smoke: `tmpdir=$(mktemp -d); python -m unittest tests.test_validate_planning_graph.PlanningGraphValidatorTests.test_testing_strategy_valid_topic_passes` or the equivalent new targeted E2E fixture test, and verify it exercises `manage_jsonl.ts validate-topic` plus `validate_planning_graph.py` against a synthetic topic under `/tmp`. Testing Strategy Trace: design `DES-TEST-003`, `DES-TEST-004`; layer E2E smoke; contributes the required at-least-once E2E validation.
+- [x] **P5.V3** Run `npm run test:py` and verify all Python tests pass. Testing Strategy Trace: design `DES-TEST-004`; layer broad regression.
+- [x] **P5.V4** Run `npm run test:ts` and verify TypeScript tests pass. Testing Strategy Trace: design `DES-TEST-004`; layer broad regression.
+- [x] **P5.V5** Run `npm run check:scripts` and verify script syntax checks pass. Testing Strategy Trace: design `DES-TEST-004`; layer broad static.
 
 #### Exit Criteria
 

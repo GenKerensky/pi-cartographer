@@ -538,6 +538,63 @@ Finish the feature.
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("not earlier in the plan", result.stdout)
 
+    def test_testing_strategy_valid_topic_passes(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            topic_dir = self.write_valid_project(project)
+            self.assertNotIn(str(ROOT), str(topic_dir.resolve()))
+            (topic_dir / "requirements.md").write_text("# Requirements\n\nUses [REQ-DEMO-001] and [SCN-DEMO-001].\n", encoding="utf-8")
+            (topic_dir / "requirements.nodes.jsonl").write_text(
+                json.dumps(
+                    {
+                        "id": "REQ-DEMO-001",
+                        "type": "requirement",
+                        "title": "Demo requirement",
+                        "statement": "The system MUST validate a temp-root testing workflow.",
+                        "change_type": "ADDED",
+                        "domain": "demo",
+                        "priority": "must",
+                        "status": "accepted",
+                        "scenario_refs": ["SCN-DEMO-001"],
+                        "fact_refs": ["F001"],
+                    }
+                )
+                + "\n"
+                + json.dumps(
+                    {"id": "SCN-DEMO-001", "type": "scenario", "title": "Happy path", "requirement_id": "REQ-DEMO-001"}
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (topic_dir / "requirements.edges.jsonl").write_text(
+                json.dumps({"from": "REQ-DEMO-001", "to": "F001", "type": "supported_by"}) + "\n",
+                encoding="utf-8",
+            )
+            (topic_dir / "design.md").write_text(
+                "# Design\n\n## Decision One\n\nSatisfies [REQ-DEMO-001].\n\n## Testing Strategy\n\nLanguage: Python. App type: CLI. Existing test tools: unittest. Docs consulted: Python unittest docs. Unit strategy: focused functions. Integration strategy: temp filesystem command boundaries. E2E strategy: run one CLI smoke. Related ADR notes: none found. Requirement/scenario coverage: REQ-DEMO-001 and SCN-DEMO-001 map to P1.V1.\n",
+                encoding="utf-8",
+            )
+            (topic_dir / "plan.md").write_text(
+                (topic_dir / "plan.md")
+                .read_text(encoding="utf-8")
+                .replace(
+                    "- [ ] **P1.V1** Run final manual check.",
+                    "- [ ] **P1.V1** Testing Strategy Trace: covers REQ-DEMO-001 and SCN-DEMO-001; layer E2E; command `python -m unittest tests.test_demo`; concrete artifact tests/test_demo.py.",
+                )
+                + "\n## Requirement Test Coverage Matrix\n\nREQ-DEMO-001 and SCN-DEMO-001 are covered by P1.V1.\n",
+                encoding="utf-8",
+            )
+
+            manage = ROOT / "skills/plan/scripts/manage_jsonl.ts"
+            topic_result = subprocess.run(
+                ["node", "--experimental-strip-types", str(manage), "validate-topic", "--root", str(project), "--topic", "demo", "--json"],
+                text=True,
+                capture_output=True,
+            )
+            self.assertEqual(topic_result.returncode, 0, topic_result.stdout + topic_result.stderr)
+            graph_result = self.run_validator(project)
+            self.assertEqual(graph_result.returncode, 0, graph_result.stdout + graph_result.stderr)
+
     def test_testing_strategy_contract_failures(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)
