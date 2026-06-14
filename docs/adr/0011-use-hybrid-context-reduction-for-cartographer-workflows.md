@@ -67,7 +67,7 @@ The hybrid approach addresses all observed bloat families while reducing risk th
 ## Consequences
 
 - High-use skills should remain compact kernels and place low-frequency detail in one-level references.
-- Future context-bloat changes should update context inventory budgets and relocation ledgers.
+- Future skill-packaging changes should update context inventory budgets and keep skill kernels/references executable without historical bookkeeping.
 - Post-compaction implementation should use cartographer_state resume-primer before reading expanded state-resume context.
 - Tool/schema reductions must preserve wrapper visibility unless a follow-up design/ADR validates active-tool profiles or deferred discovery.
 - Durable requirements for context inventory, scoped instructions, resume primers, and behavior-preserving migration are folded into docs/requirements.md.

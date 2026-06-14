@@ -2,7 +2,6 @@
 name: "plan"
 description: "Pi Cartographer planning workflow: generate .plan/<topic>/plan.md from a proposal plus index-project, map, and research graphs with ordered phases, dependencies, checklists, and validation criteria."
 version: 6
-created: "2026-06-06"
 updated: "2026-06-14"
 ---
 

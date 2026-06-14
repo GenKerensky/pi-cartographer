@@ -2,7 +2,6 @@
 name: "dashboard"
 description: "Start, open, inspect, or stop the local read-only Pi Cartographer planning dashboard. Use when the user asks for a planning dashboard, topic dashboard, browser view, dashboard status, or dashboard stop command."
 version: 1
-created: "2026-06-10"
 updated: "2026-06-10"
 ---
 

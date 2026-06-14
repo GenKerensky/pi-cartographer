@@ -2,7 +2,6 @@
 name: "implement"
 description: "Pi Cartographer implementation workflow: execute .plan/<topic>/plan.md phase-by-phase with a single parent writer, minimal .cartographer state, milestone compaction, deterministic receipts, read-only specialist gates, and conventional commits."
 version: 7
-created: "2026-06-06"
 updated: "2026-06-14"
 ---
 

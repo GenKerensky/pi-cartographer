@@ -2,7 +2,6 @@
 name: "model-config"
 description: "Interactive Cartographer model routing setup workflow for user-scope provider/model settings, fallback chains, and orchestrator recommendations."
 version: 1
-created: "2026-06-13"
 updated: "2026-06-13"
 ---
 

@@ -2,7 +2,6 @@
 name: "proposal"
 description: "Pi Cartographer proposal workflow: create .plan/<topic>/proposal.md using the index-project SQLite/FTS graph plus delegated scope, mapping, research, design, compass checks, deterministic validation, and cartographer-auditor gates."
 version: 19
-created: "2026-06-05"
 updated: "2026-06-14"
 ---
 
