@@ -323,7 +323,7 @@ Keep raw session/transcript text out of `.plan/` artifacts.
 
 ### Phase P5 — Tool/Schema Overhead Audit and Low-Risk Reductions
 
-- **Status:** in-progress
+- **Status:** complete
 - **Depends on:** P0, P2
 - **Unlocks:** P6
 - **Primary references:** `DES-CBA-005`, `REQ-CBA-005`, `SCN-CBA-009`, `SCN-CBA-010`, `extensions/cartographer-tools.ts`, `F007`
@@ -341,16 +341,16 @@ Measure active tool/schema overhead by workflow phase and apply only low-risk re
 
 #### Checklist
 
-- [ ] **P5.T1** Extend inventory to report tool/schema/prompt-snippet estimates by workflow phase.
-- [ ] **P5.T2** Identify redundant or overlong tool descriptions/snippets in Cartographer extension tooling.
-- [ ] **P5.T3** Apply low-risk schema/snippet reductions that do not remove guardrails.
-- [ ] **P5.T4** Record measurement-based recommendation for active-tool profiles/deferred discovery: implement, defer, or reject.
+- [x] **P5.T1** Extend inventory to report tool/schema/prompt-snippet estimates by workflow phase.
+- [x] **P5.T2** Identify redundant or overlong tool descriptions/snippets in Cartographer extension tooling.
+- [x] **P5.T3** Apply low-risk schema/snippet reductions that do not remove guardrails.
+- [x] **P5.T4** Record measurement-based recommendation for active-tool profiles/deferred discovery: implement, defer, or reject.
 
 #### Validation
 
-- [ ] **P5.V1** Run tool inventory report and write artifact `.plan/context-bloat-audit/evidence/tool-inventory.json`; expected result: proposal/design phase and implementation phase overhead are separately reported, covering `REQ-CBA-005`, `SCN-CBA-009`, and `SCN-CBA-010`.
-- [ ] **P5.V2** Run targeted TypeScript checks for extension/tool changes; expected result: `extensions/cartographer-tools.ts` syntax/type checks pass.
-- [ ] **P5.V3** Run guardrail reachability review; expected result: validation, mutation, audit, state, and transition wrappers remain visible/reachable.
+- [x] **P5.V1** Run tool inventory report and write artifact `.plan/context-bloat-audit/evidence/tool-inventory.json`; expected result: proposal/design phase and implementation phase overhead are separately reported, covering `REQ-CBA-005`, `SCN-CBA-009`, and `SCN-CBA-010`.
+- [x] **P5.V2** Run targeted TypeScript checks for extension/tool changes; expected result: `extensions/cartographer-tools.ts` syntax/type checks pass.
+- [x] **P5.V3** Run guardrail reachability review; expected result: validation, mutation, audit, state, and transition wrappers remain visible/reachable.
 
 #### Testing Strategy Trace
 
@@ -374,7 +374,7 @@ Do not remove or hide Cartographer wrapper tools solely for token savings withou
 
 ### Phase P6 — Final Regression, Fold-In, and ADR
 
-- **Status:** pending
+- **Status:** in-progress
 - **Depends on:** P3, P4, P5
 - **Unlocks:** implementation-ready-for-human-review
 - **Primary references:** `DES-CBA-006`, `TEST-CBA-001`, `REQ-CBA-006`, `SCN-CBA-012`, all prior phase receipts

@@ -5,11 +5,11 @@
   "source_refs": {
     "plan_md": {
       "path": ".plan/context-bloat-audit/plan.md",
-      "sha256": "sha256:f7563b61873cdc84298cdce5010893031467222591a759c4a0b821bf4a0a73f3"
+      "sha256": "sha256:e61d1cfc78f1dd99f0061576f6fc0a3bd72f9caafe456286a36a66e8da3b0361"
     },
     "plan_nodes": {
       "path": ".plan/context-bloat-audit/plan.nodes.jsonl",
-      "sha256": "sha256:7da1e2e3a4935079d3b68eb3bad1dde3b9a8713b892b00a93fe74f07bdaacabc"
+      "sha256": "sha256:82f50614c4bf16fed5f85b6853e7f2be3125180c029edaaaa37e2ed6d9361507"
     },
     "plan_edges": {
       "path": ".plan/context-bloat-audit/plan.edges.jsonl",
@@ -17,88 +17,88 @@
     },
     "receipts": {
       "path": ".plan/context-bloat-audit/receipts.jsonl",
-      "sha256": "sha256:43e9a2d18a1d2ba3ae42f734b5eb1e7da107cc41b60ee0ca12465de00b6be7e0"
+      "sha256": "sha256:bc5f4558b503205369f7cb722965bff9c28e9d8f1b863d86265c05f341e655b9"
     },
     "context_packs": {
       "path": ".plan/context-bloat-audit/context-packs.jsonl",
-      "sha256": "sha256:c075802a04100e0c5173d9af6982ead9580b9cc31471f6198a978d8e911e2298"
+      "sha256": "sha256:91ae058a763dcf8df84757ad79520b02232d6aaf5dcf5628afa3eaee23c3a51d"
     }
   },
-  "current_phase_id": "P5",
+  "current_phase_id": "P6",
   "active_task_ids": [],
   "active_validation_ids": [],
   "next_action": {
-    "id": "P5.T1",
+    "id": "P6.T1",
     "kind": "implementation-task",
-    "summary": "Extend context inventory to report tool/schema/prompt-snippet estimates by workflow phase.",
-    "phase_id": "P5",
-    "task_id": "P5.T1",
+    "summary": "Run final context inventory and produce before/after comparison against P0.",
+    "phase_id": "P6",
+    "task_id": "P6.T1",
     "files_to_inspect": [
       "skills/plan/scripts/context_inventory.py",
-      "extensions/cartographer-tools.ts",
-      ".plan/context-bloat-audit/evidence/context-inventory-p3.json",
+      ".plan/context-bloat-audit/evidence/context-inventory-p0.json",
+      ".plan/context-bloat-audit/evidence/tool-inventory.json",
       ".plan/context-bloat-audit/plan.md"
     ]
   },
   "working_set": {
     "write_allowed": [
       {
-        "path": "skills/plan/scripts/context_inventory.py",
-        "reason": "P5 phase-scoped tool/schema inventory"
+        "path": ".plan/context-bloat-audit/evidence/context-inventory-final*.json",
+        "reason": "P6 final inventory evidence"
       },
       {
-        "path": "extensions/cartographer-tools.ts",
-        "reason": "P5 low-risk tool/schema prompt reductions and P4 compaction primer repair"
+        "path": ".plan/context-bloat-audit/evidence/context-inventory-final*.md",
+        "reason": "P6 final inventory evidence"
       },
       {
-        "path": "tests/test_context_inventory.py",
-        "reason": "P5 inventory regression tests"
+        "path": ".plan/context-bloat-audit/evidence/final-check*.md",
+        "reason": "P6 final validation evidence"
+      },
+      {
+        "path": ".plan/context-bloat-audit/evidence/P6-*.md",
+        "reason": "P6 auditor/fold evidence"
       },
       {
         "path": ".plan/context-bloat-audit/plan.md",
-        "reason": "P5 status updates"
+        "reason": "P6 status updates"
       },
       {
         "path": ".plan/context-bloat-audit/plan.nodes.jsonl",
-        "reason": "P5 status updates"
+        "reason": "P6 status updates"
       },
       {
         "path": ".plan/context-bloat-audit/receipts.jsonl",
-        "reason": "P5/P4 validation and audit receipts"
+        "reason": "P6 validation/audit receipts"
       },
       {
         "path": ".plan/context-bloat-audit/context-packs.jsonl",
-        "reason": "P5/P4 context packs"
+        "reason": "P6 context pack"
       },
       {
-        "path": ".plan/context-bloat-audit/evidence/tool-inventory*.json",
-        "reason": "P5 tool inventory evidence"
+        "path": "docs/**",
+        "reason": "P6 requirements/docs fold if approved or applicable"
       },
       {
-        "path": ".plan/context-bloat-audit/evidence/tool-inventory*.md",
-        "reason": "P5 tool inventory evidence"
-      },
-      {
-        "path": ".plan/context-bloat-audit/evidence/P4-auditor-report.md",
-        "reason": "P4 repaired audit report"
-      },
-      {
-        "path": ".plan/context-bloat-audit/evidence/P5-*.md",
-        "reason": "P5 audit/review evidence"
+        "path": "docs/adr/**",
+        "reason": "P6 ADR output if repository ADR directory is used"
       }
     ],
     "read_only": [
       {
-        "path": ".plan/context-bloat-audit/evidence/context-inventory-p3.json",
-        "reason": "latest completed inventory baseline"
+        "path": ".plan/context-bloat-audit/evidence/context-inventory-p0.json",
+        "reason": "baseline comparison"
       },
       {
-        "path": ".plan/context-bloat-audit/plan.md",
-        "reason": "phase scope and validation criteria"
+        "path": ".plan/context-bloat-audit/evidence/tool-inventory.json",
+        "reason": "P5 tool/schema outcome"
       },
       {
-        "path": ".cartographer/context-bloat-audit/state.json",
-        "reason": "resume-primer behavior"
+        "path": ".plan/context-bloat-audit/requirements.md",
+        "reason": "fold/coverage reference"
+      },
+      {
+        "path": ".plan/context-bloat-audit/design.md",
+        "reason": "ADR/fold reference"
       }
     ],
     "forbidden": [
@@ -138,14 +138,21 @@
     "receipt:context-bloat-audit:audit:2026-06-14T05:59:37Z",
     "receipt:P4:validation:2026-06-14T16:35:03+00:00",
     "receipt:context-bloat-audit:audit:2026-06-14T16:37:04Z",
-    "receipt:P4:validation:2026-06-14T16:37:44+00:00"
+    "receipt:P4:validation:2026-06-14T16:37:44+00:00",
+    "receipt:P5:validation:2026-06-14T16:42:15+00:00",
+    "receipt:P5:validation:2026-06-14T16:42:20+00:00",
+    "receipt:context-bloat-audit:validation:2026-06-14T16:42:25Z",
+    "receipt:P5:validation:2026-06-14T16:43:25+00:00",
+    "receipt:P5:validation:2026-06-14T16:45:40+00:00",
+    "receipt:context-bloat-audit:audit:2026-06-14T16:47:00Z"
   ],
   "journal_refs": [
     "journal:20260614T052134Z:compact",
     "journal:20260614T052929Z:compact",
     "journal:20260614T055033Z:compact",
     "journal:20260614T055949Z:compact",
-    "journal:20260614T163802Z:compact"
+    "journal:20260614T163802Z:compact",
+    "journal:20260614T164721Z:compact"
   ],
   "resume": {
     "template_id": "cartographer.single_writer.resume.v1",
@@ -165,10 +172,10 @@
       "stale generated snippets"
     ]
   },
-  "updated_at": "2026-06-14T16:38:40Z",
+  "updated_at": "2026-06-14T16:48:02Z",
   "stale_reason": "Implementation compact requested after artifact updates.",
   "compaction": {
-    "trigger": "phase-end-P4",
-    "compacted_at": "2026-06-14T16:38:02Z"
+    "trigger": "phase-end-P5",
+    "compacted_at": "2026-06-14T16:47:21Z"
   }
 }

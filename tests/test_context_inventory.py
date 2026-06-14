@@ -24,11 +24,7 @@ class ContextInventoryTests(unittest.TestCase):
         path = root / "skills" / name / "SKILL.md"
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(
-            "---\n"
-            f"name: {name}\n"
-            f"description: {description}\n"
-            "---\n\n"
-            f"# {name}\n\n{body}\n",
+            f"---\nname: {name}\ndescription: {description}\n---\n\n# {name}\n\n{body}\n",
             encoding="utf-8",
         )
 
@@ -97,6 +93,41 @@ class ContextInventoryTests(unittest.TestCase):
             payload = json.loads(result.stdout)
             root_item = [item for item in payload["items"] if item["path"] == "AGENTS.md"][0]
             self.assertEqual(root_item["delta_chars"], len("root rules\n") - 5)
+
+    def test_tool_inventory_reports_phase_estimates(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            ext = root / "extensions" / "cartographer-tools.ts"
+            ext.parent.mkdir(parents=True)
+            ext.write_text(
+                "pi.registerTool({\n"
+                '  name: "cartographer_plan",\n'
+                '  description: "Generate plans.",\n'
+                '  promptSnippet: "Plan workflow",\n'
+                "  parameters: Type.Object({ topic: Type.String() }),\n"
+                "});\n"
+                "pi.registerTool({\n"
+                '  name: "cartographer_implement",\n'
+                '  description: "Run implementation.",\n'
+                '  promptSnippet: "Implement workflow",\n'
+                "  parameters: Type.Object({ topic: Type.String(), force: Type.Optional(Type.Boolean()) }),\n"
+                "});\n",
+                encoding="utf-8",
+            )
+
+            result = self.run_inventory(root)
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertEqual(payload["counts"]["tool_details"], 2)
+            categories = {item["category"] for item in payload["items"]}
+            self.assertIn("tool-schema-estimate", categories)
+            self.assertIn("tool-schema-phase-estimate", categories)
+            phases = {item["path"].split("#", 1)[-1]: item for item in payload["items"] if "#" in item["path"]}
+            self.assertIn("proposal-design-planning", phases)
+            self.assertIn("implementation", phases)
+            self.assertIn("cartographer_plan", phases["proposal-design-planning"]["notes"])
+            self.assertIn("cartographer_implement", phases["implementation"]["notes"])
 
 
 if __name__ == "__main__":

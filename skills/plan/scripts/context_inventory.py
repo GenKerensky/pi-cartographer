@@ -24,6 +24,58 @@ DEFAULT_BUDGETS = {
     "tool-schema-estimate": 12000,
 }
 HIGH_USE_SKILLS = {"implement", "plan", "proposal"}
+PHASE_TOOL_SETS = {
+    "proposal-design-planning": {
+        "cartographer_index",
+        "cartographer_evidence",
+        "cartographer_session",
+        "cartographer_adr",
+        "cartographer_artifacts",
+        "cartographer_proposal",
+        "cartographer_fact",
+        "cartographer_jsonl",
+        "cartographer_transition",
+        "cartographer_plan",
+        "cartographer_handoff",
+        "cartographer_context_pack",
+        "cartographer_receipt",
+        "cartographer_validation",
+    },
+    "implementation": {
+        "cartographer_index",
+        "cartographer_artifacts",
+        "cartographer_compact_context",
+        "cartographer_state",
+        "cartographer_validation",
+        "cartographer_receipt",
+        "cartographer_context_pack",
+        "cartographer_transition",
+        "cartographer_plan_status",
+        "cartographer_implement",
+        "cartographer_handoff",
+        "cartographer_adr",
+        "cartographer_jsonl",
+    },
+}
+
+
+@dataclass
+class ToolEstimate:
+    name: str
+    description_chars: int
+    prompt_snippet_chars: int
+    schema_markers: int
+    estimated_chars: int
+
+    def to_json(self) -> dict[str, Any]:
+        return {
+            "name": self.name,
+            "description_chars": self.description_chars,
+            "prompt_snippet_chars": self.prompt_snippet_chars,
+            "schema_markers": self.schema_markers,
+            "estimated_chars": self.estimated_chars,
+            "approx_tokens": max(1, round(self.estimated_chars / 4)) if self.estimated_chars else 0,
+        }
 
 
 @dataclass
@@ -200,27 +252,75 @@ def inventory_session(root: Path, session_path: str | None) -> list[InventoryIte
     return items
 
 
-def inventory_tools(root: Path) -> list[InventoryItem]:
+def string_field(block: str, field: str) -> str:
+    match = re.search(rf"{field}:\s*([\"'])(.*?)\1", block, re.DOTALL)
+    return match.group(2).strip() if match else ""
+
+
+def tool_blocks(text: str) -> list[str]:
+    starts = [match.start() for match in re.finditer(r"pi\.registerTool\(\{", text)]
+    blocks: list[str] = []
+    for index, start in enumerate(starts):
+        end = starts[index + 1] if index + 1 < len(starts) else len(text)
+        blocks.append(text[start:end])
+    return blocks
+
+
+def estimate_tools(text: str) -> list[ToolEstimate]:
+    tools: list[ToolEstimate] = []
+    for block in tool_blocks(text):
+        name = string_field(block, "name")
+        if not name:
+            continue
+        descriptions = re.findall(r"description:\s*([\"'])(.*?)\1", block, re.DOTALL)
+        description_chars = sum(len(value.strip()) for _, value in descriptions)
+        prompt = string_field(block, "promptSnippet")
+        schema_markers = len(
+            re.findall(r"Type\.(?:Object|String|Array|Number|Boolean|Optional|Union|Literal|Any)", block)
+        )
+        estimated_chars = len(name) + description_chars + len(prompt) + schema_markers * 40
+        tools.append(ToolEstimate(name, description_chars, len(prompt), schema_markers, estimated_chars))
+    return tools
+
+
+def inventory_tools(root: Path) -> tuple[list[InventoryItem], list[dict[str, Any]]]:
     path = root / "extensions" / "cartographer-tools.ts"
     if not path.exists():
-        return []
-    text = read_text(path)
-    names = re.findall(r"name:\s*[\"']([^\"']+)[\"']", text)
-    snippets = re.findall(r"promptSnippet:\s*[\"']([^\"']*)[\"']", text)
-    schemaish = len(re.findall(r"Type\.(?:Object|String|Array|Number|Boolean|Optional|Union|Literal)", text))
-    estimate = sum(len(name) for name in names) + sum(len(snippet) for snippet in snippets) + schemaish * 40
-    return [
+        return [], []
+    tools = estimate_tools(read_text(path))
+    items: list[InventoryItem] = []
+    total = sum(tool.estimated_chars for tool in tools)
+    schema_markers = sum(tool.schema_markers for tool in tools)
+    prompt_chars = sum(tool.prompt_snippet_chars for tool in tools)
+    items.append(
         InventoryItem(
             "tool-schema-estimate",
             rel(root, path),
-            estimate,
-            len(names),
-            round(estimate / 4) if estimate else 0,
+            total,
+            len(tools),
+            round(total / 4) if total else 0,
             DEFAULT_BUDGETS["tool-schema-estimate"],
-            status="estimated" if estimate else "unknown",
-            notes=f"registered_names={len(names)}; prompt_snippets={len(snippets)}; schema_markers={schemaish}",
+            status="estimated" if total else "unknown",
+            notes=f"registered_tools={len(tools)}; prompt_chars={prompt_chars}; schema_markers={schema_markers}",
         )
-    ]
+    )
+    by_name = {tool.name: tool for tool in tools}
+    for phase, names in PHASE_TOOL_SETS.items():
+        selected = [by_name[name] for name in sorted(names) if name in by_name]
+        estimate = sum(tool.estimated_chars for tool in selected)
+        items.append(
+            InventoryItem(
+                "tool-schema-phase-estimate",
+                f"{rel(root, path)}#{phase}",
+                estimate,
+                len(selected),
+                round(estimate / 4) if estimate else 0,
+                DEFAULT_BUDGETS["tool-schema-estimate"],
+                status="estimated" if estimate else "unknown",
+                notes="tools=" + ",".join(tool.name for tool in selected),
+            )
+        )
+    return items, [tool.to_json() for tool in sorted(tools, key=lambda tool: tool.estimated_chars, reverse=True)]
 
 
 def load_baseline(path: str | None) -> dict[str, dict[str, Any]]:
@@ -259,11 +359,12 @@ def build_inventory(root: Path, topic: str | None, session: str | None, baseline
     root = root.resolve()
     items_obj: list[InventoryItem] = []
     skill_items, descriptions = inventory_skills(root)
+    tool_items, tool_details = inventory_tools(root)
     items_obj.extend(inventory_agents(root))
     items_obj.extend(skill_items)
     items_obj.extend(inventory_topic(root, topic))
     items_obj.extend(inventory_session(root, session))
-    items_obj.extend(inventory_tools(root))
+    items_obj.extend(tool_items)
     items = [item.to_json() for item in sorted(items_obj, key=lambda item: item.chars, reverse=True)]
     apply_deltas(items, load_baseline(baseline))
     over_budget = [item for item in items if item.get("over_budget")]
@@ -275,10 +376,12 @@ def build_inventory(root: Path, topic: str | None, session: str | None, baseline
         "counts": {
             "items": len(items),
             "skill_descriptions": len(descriptions),
+            "tool_details": len(tool_details),
             "over_budget": len(over_budget),
         },
         "items": items,
         "skill_descriptions": sorted(descriptions, key=lambda item: item["description_chars"], reverse=True),
+        "tool_details": tool_details,
         "changed_paths": git_changed_paths(root),
     }
 
@@ -293,13 +396,28 @@ def render_markdown(payload: dict[str, Any]) -> str:
         lines.append(
             f"| {item['category']} | `{item['path']}` | {item['chars']} | {item['approx_tokens']} | {budget} | {status} |"
         )
+    phase_items = [item for item in payload["items"] if item["category"] == "tool-schema-phase-estimate"]
+    if phase_items:
+        lines.extend(["", "## Tool/Schema Phase Estimates", ""])
+        lines.append("| Phase | Estimated chars | Approx tokens | Tools |")
+        lines.append("|---|---:|---:|---|")
+        for item in phase_items:
+            phase = item["path"].split("#", 1)[-1]
+            tools = item.get("notes", "").removeprefix("tools=")
+            lines.append(f"| {phase} | {item['chars']} | {item['approx_tokens']} | `{tools}` |")
+    if payload.get("tool_details"):
+        lines.extend(["", "## Largest Tool Definitions", ""])
+        lines.append("| Tool | Estimated chars | Schema markers | Prompt chars |")
+        lines.append("|---|---:|---:|---:|")
+        for item in payload["tool_details"][:12]:
+            lines.append(
+                f"| {item['name']} | {item['estimated_chars']} | {item['schema_markers']} | {item['prompt_snippet_chars']} |"
+            )
     lines.extend(["", "## Active Skill Descriptions", ""])
     lines.append("| Skill | Path | Description chars | Approx tokens |")
     lines.append("|---|---|---:|---:|")
     for item in payload["skill_descriptions"][:30]:
-        lines.append(
-            f"| {item['name']} | `{item['path']}` | {item['description_chars']} | {item['approx_tokens']} |"
-        )
+        lines.append(f"| {item['name']} | `{item['path']}` | {item['description_chars']} | {item['approx_tokens']} |")
     return "\n".join(lines) + "\n"
 
 
@@ -307,7 +425,9 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", default=".", help="Project root to inventory.")
     parser.add_argument("--topic", help="Optional .plan/<topic> and .cartographer/<topic> context to measure.")
-    parser.add_argument("--session", help="Optional authorized Pi session JSONL; emits aggregate compaction metrics only.")
+    parser.add_argument(
+        "--session", help="Optional authorized Pi session JSONL; emits aggregate compaction metrics only."
+    )
     parser.add_argument("--baseline", help="Optional previous JSON inventory to compute per-path char deltas.")
     parser.add_argument("--out", help="Write Markdown report to this path.")
     parser.add_argument("--json-out", help="Write JSON payload to this path.")

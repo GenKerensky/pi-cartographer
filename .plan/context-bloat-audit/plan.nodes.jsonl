@@ -45,15 +45,15 @@
 {"id":"validation:P4.V1","type":"validation","validation_id":"P4.V1","phase_id":"P4","title":"P4.V1","status":"complete","source":"plan.md"}
 {"id":"validation:P4.V2","type":"validation","validation_id":"P4.V2","phase_id":"P4","title":"P4.V2","status":"complete","source":"plan.md"}
 {"id":"validation:P4.V3","type":"validation","validation_id":"P4.V3","phase_id":"P4","title":"P4.V3","status":"complete","source":"plan.md"}
-{"id":"phase:P5","type":"phase","phase_id":"P5","title":"Tool/Schema Overhead Audit and Low-Risk Reductions","status":"in-progress","depends_on":["P0","P2"],"source":"plan.md"}
-{"id":"task:P5.T1","type":"task","task_id":"P5.T1","phase_id":"P5","title":"P5.T1","status":"pending","source":"plan.md"}
-{"id":"task:P5.T2","type":"task","task_id":"P5.T2","phase_id":"P5","title":"P5.T2","status":"pending","source":"plan.md"}
-{"id":"task:P5.T3","type":"task","task_id":"P5.T3","phase_id":"P5","title":"P5.T3","status":"pending","source":"plan.md"}
-{"id":"task:P5.T4","type":"task","task_id":"P5.T4","phase_id":"P5","title":"P5.T4","status":"pending","source":"plan.md"}
-{"id":"validation:P5.V1","type":"validation","validation_id":"P5.V1","phase_id":"P5","title":"P5.V1","status":"pending","source":"plan.md"}
-{"id":"validation:P5.V2","type":"validation","validation_id":"P5.V2","phase_id":"P5","title":"P5.V2","status":"pending","source":"plan.md"}
-{"id":"validation:P5.V3","type":"validation","validation_id":"P5.V3","phase_id":"P5","title":"P5.V3","status":"pending","source":"plan.md"}
-{"id":"phase:P6","type":"phase","phase_id":"P6","title":"Final Regression, Fold-In, and ADR","status":"pending","depends_on":["P3","P4","P5"],"source":"plan.md"}
+{"id":"phase:P5","type":"phase","phase_id":"P5","title":"Tool/Schema Overhead Audit and Low-Risk Reductions","status":"complete","depends_on":["P0","P2"],"source":"plan.md"}
+{"id":"task:P5.T1","type":"task","task_id":"P5.T1","phase_id":"P5","title":"P5.T1","status":"complete","source":"plan.md"}
+{"id":"task:P5.T2","type":"task","task_id":"P5.T2","phase_id":"P5","title":"P5.T2","status":"complete","source":"plan.md"}
+{"id":"task:P5.T3","type":"task","task_id":"P5.T3","phase_id":"P5","title":"P5.T3","status":"complete","source":"plan.md"}
+{"id":"task:P5.T4","type":"task","task_id":"P5.T4","phase_id":"P5","title":"P5.T4","status":"complete","source":"plan.md"}
+{"id":"validation:P5.V1","type":"validation","validation_id":"P5.V1","phase_id":"P5","title":"P5.V1","status":"complete","source":"plan.md"}
+{"id":"validation:P5.V2","type":"validation","validation_id":"P5.V2","phase_id":"P5","title":"P5.V2","status":"complete","source":"plan.md"}
+{"id":"validation:P5.V3","type":"validation","validation_id":"P5.V3","phase_id":"P5","title":"P5.V3","status":"complete","source":"plan.md"}
+{"id":"phase:P6","type":"phase","phase_id":"P6","title":"Final Regression, Fold-In, and ADR","status":"in-progress","depends_on":["P3","P4","P5"],"source":"plan.md"}
 {"id":"task:P6.T1","type":"task","task_id":"P6.T1","phase_id":"P6","title":"P6.T1","status":"pending","source":"plan.md"}
 {"id":"task:P6.T2","type":"task","task_id":"P6.T2","phase_id":"P6","title":"P6.T2","status":"pending","source":"plan.md"}
 {"id":"task:P6.T3","type":"task","task_id":"P6.T3","phase_id":"P6","title":"P6.T3","status":"pending","source":"plan.md"}
