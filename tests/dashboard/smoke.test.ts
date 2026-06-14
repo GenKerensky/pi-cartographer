@@ -153,9 +153,7 @@ describe.skipIf(!hasBuiltAssets)("dashboard Start browser smoke", () => {
 			await page.getByRole("heading", { name: "Demo Proposal" }).first().waitFor();
 			await page.locator("[data-nav-item='graph']").click();
 			await page.locator("[data-topic-graph-panel]").waitFor({ timeout: 10_000 });
-			await expect
-				.poll(() => new URL(page.url()).pathname, { timeout: 10_000 })
-				.toBe(`/topics/${fixture.topic}/graph`);
+			await expect.poll(() => new URL(page.url()).pathname, { timeout: 10_000 }).toBe(`/topics/${fixture.topic}/graph`);
 			await page.locator("[data-graph-explorer]").waitFor();
 			await page.locator("[data-nav-item='documents']").click();
 			await page.locator("[data-topic-document-panel]").waitFor({ timeout: 10_000 });
@@ -177,9 +175,7 @@ describe.skipIf(!hasBuiltAssets)("dashboard Start browser smoke", () => {
 			await expect
 				.poll(async () => page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth))
 				.toBeLessThanOrEqual(4);
-			await expect
-				.poll(() => new URL(page.url()).pathname, { timeout: 10_000 })
-				.toBe("/");
+			await expect.poll(() => new URL(page.url()).pathname, { timeout: 10_000 }).toBe("/");
 
 			await page.goto(`${started.topicUrl}/documents/proposal`);
 			await page.locator("[data-topic-document-panel]").waitFor({ timeout: 10_000 });

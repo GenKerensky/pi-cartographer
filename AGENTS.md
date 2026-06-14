@@ -96,6 +96,7 @@ Update parent docs when parent-level structure, ownership, workflow, or child in
 - Verification must reflect an existing check; if no verification framework exists yet, leave it empty and update it when one exists
 
 Default section order:
+
 - Purpose
 - Ownership
 - Local Contracts

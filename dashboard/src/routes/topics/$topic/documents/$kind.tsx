@@ -1,10 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { DashboardShell } from "../../../../App.js";
 import { TopicMissingArtifactsPanel, TopicPage } from "@/features/review-workflow";
-import {
-	dashboardTopicDocumentKinds,
-	type DashboardTopicDocumentKind,
-} from "../../../../lib/dashboard-routes.js";
+import { dashboardTopicDocumentKinds, type DashboardTopicDocumentKind } from "../../../../lib/dashboard-routes.js";
 
 export const Route = createFileRoute("/topics/$topic/documents/$kind")({
 	component: DashboardTopicDocumentRoute,

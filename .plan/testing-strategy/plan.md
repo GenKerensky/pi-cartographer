@@ -359,7 +359,7 @@ If the exact E2E fixture name differs after implementation, update the validatio
 
 ### Phase P6 — Requirements fold and finalization
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P5
 - **Unlocks:** none
 - **Primary references:** `docs/requirements.md`, `.plan/testing-strategy/requirements.md`, `.plan/testing-strategy/receipts.jsonl`, `.plan/testing-strategy/context-packs.jsonl`, `README.md`
@@ -377,17 +377,17 @@ Finalize implementation evidence, preserve requirement/ADR metadata, and prepare
 
 #### Checklist
 
-- [ ] **P6.T1** Run or plan the requirements fold step for `docs/requirements.md#testing-strategy-workflow`, or record an approved `requirements-fold-skip` receipt if folding is intentionally deferred.
-- [ ] **P6.T2** Create/update final context pack with changed files, validation receipts, E2E evidence, ADR metadata, and residual risks.
-- [ ] **P6.T3** Run final `cartographer-auditor` semantic gate after deterministic validation receipts pass.
-- [ ] **P6.T4** Prepare a conventional commit message based on staged implementation files only.
+- [x] **P6.T1** Run or plan the requirements fold step for `docs/requirements.md#testing-strategy-workflow`, or record an approved `requirements-fold-skip` receipt if folding is intentionally deferred.
+- [x] **P6.T2** Create/update final context pack with changed files, validation receipts, E2E evidence, ADR metadata, and residual risks.
+- [x] **P6.T3** Run final `cartographer-auditor` semantic gate after deterministic validation receipts pass.
+- [x] **P6.T4** Prepare a conventional commit message based on staged implementation files only.
 
 #### Validation
 
-- [ ] **P6.V1** Run `node --experimental-strip-types skills/plan/scripts/manage_jsonl.ts validate-topic --root "$PWD" --topic testing-strategy --json` and verify no errors. Testing Strategy Trace: design `DES-TEST-004`; layer integration.
-- [ ] **P6.V2** Run `python skills/plan/scripts/validate_planning_graph.py --root "$PWD" --topic testing-strategy --json` and verify the topic plan graph passes. Testing Strategy Trace: design `DES-TEST-004`; layer integration.
-- [ ] **P6.V3** Run `npm run check` if focused validations are green and local time/resources permit; otherwise record which narrower checks passed and why full check was deferred. Testing Strategy Trace: design `DES-TEST-004`; layer broad final regression.
-- [ ] **P6.V4** Record final auditor PASS through `cartographer_handoff auditor` with receipts from P5/P6 and the updated context pack. Testing Strategy Trace: design `DES-TEST-004`; layer semantic audit.
+- [x] **P6.V1** Run `node --experimental-strip-types skills/plan/scripts/manage_jsonl.ts validate-topic --root "$PWD" --topic testing-strategy --json` and verify no errors. Testing Strategy Trace: design `DES-TEST-004`; layer integration.
+- [x] **P6.V2** Run `python skills/plan/scripts/validate_planning_graph.py --root "$PWD" --topic testing-strategy --json` and verify the topic plan graph passes. Testing Strategy Trace: design `DES-TEST-004`; layer integration.
+- [x] **P6.V3** Run `npm run check` if focused validations are green and local time/resources permit; otherwise record which narrower checks passed and why full check was deferred. Testing Strategy Trace: design `DES-TEST-004`; layer broad final regression.
+- [x] **P6.V4** Record final auditor PASS through `cartographer_handoff auditor` with receipts from P5/P6 and the updated context pack. Testing Strategy Trace: design `DES-TEST-004`; layer semantic audit.
 
 #### Exit Criteria
 

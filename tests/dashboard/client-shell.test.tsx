@@ -117,7 +117,10 @@ function installDashboardFetchMock(): void {
 	vi.stubGlobal(
 		"fetch",
 		vi.fn(async (input: RequestInfo | URL) => {
-			const url = typeof input === "string" ? new URL(input, "http://localhost") : new URL(input instanceof URL ? input : input.url);
+			const url =
+				typeof input === "string"
+					? new URL(input, "http://localhost")
+					: new URL(input instanceof URL ? input : input.url);
 			const payload =
 				url.pathname === "/api/overview"
 					? overview

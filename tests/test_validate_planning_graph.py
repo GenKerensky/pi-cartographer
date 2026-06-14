@@ -543,7 +543,9 @@ Finish the feature.
             project = Path(tmp)
             topic_dir = self.write_valid_project(project)
             self.assertNotIn(str(ROOT), str(topic_dir.resolve()))
-            (topic_dir / "requirements.md").write_text("# Requirements\n\nUses [REQ-DEMO-001] and [SCN-DEMO-001].\n", encoding="utf-8")
+            (topic_dir / "requirements.md").write_text(
+                "# Requirements\n\nUses [REQ-DEMO-001] and [SCN-DEMO-001].\n", encoding="utf-8"
+            )
             (topic_dir / "requirements.nodes.jsonl").write_text(
                 json.dumps(
                     {
@@ -587,7 +589,17 @@ Finish the feature.
 
             manage = ROOT / "skills/plan/scripts/manage_jsonl.ts"
             topic_result = subprocess.run(
-                ["node", "--experimental-strip-types", str(manage), "validate-topic", "--root", str(project), "--topic", "demo", "--json"],
+                [
+                    "node",
+                    "--experimental-strip-types",
+                    str(manage),
+                    "validate-topic",
+                    "--root",
+                    str(project),
+                    "--topic",
+                    "demo",
+                    "--json",
+                ],
                 text=True,
                 capture_output=True,
             )
@@ -599,7 +611,9 @@ Finish the feature.
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)
             topic_dir = self.write_valid_project(project)
-            (topic_dir / "requirements.md").write_text("# Requirements\n\nUses [REQ-DEMO-001] and [SCN-DEMO-001].\n", encoding="utf-8")
+            (topic_dir / "requirements.md").write_text(
+                "# Requirements\n\nUses [REQ-DEMO-001] and [SCN-DEMO-001].\n", encoding="utf-8"
+            )
             (topic_dir / "requirements.nodes.jsonl").write_text(
                 json.dumps(
                     {
@@ -626,7 +640,9 @@ Finish the feature.
                 json.dumps({"from": "REQ-DEMO-001", "to": "F001", "type": "supported_by"}) + "\n",
                 encoding="utf-8",
             )
-            (topic_dir / "design.md").write_text("# Design\n\n## Decision\n\nSatisfies [REQ-DEMO-001].\n", encoding="utf-8")
+            (topic_dir / "design.md").write_text(
+                "# Design\n\n## Decision\n\nSatisfies [REQ-DEMO-001].\n", encoding="utf-8"
+            )
 
             result = self.run_validator(project)
             self.assertNotEqual(result.returncode, 0)

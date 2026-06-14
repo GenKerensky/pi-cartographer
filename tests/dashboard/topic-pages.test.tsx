@@ -79,7 +79,7 @@ describe("dashboard routed topic pages", () => {
 				<div>child</div>
 			</TopicPageFrame>,
 		);
-		expect(html).toContain('data-topic-page-frame');
+		expect(html).toContain("data-topic-page-frame");
 		expect(html).toContain('data-topic-page="documents"');
 		expect(html).toContain('data-topic-page-document-kind="requirements"');
 		expect(html).toContain("Requirements");
@@ -93,7 +93,7 @@ describe("dashboard routed topic pages", () => {
 			<TopicPage artifacts={artifacts} page="documents" documentKind="proposal" />,
 		);
 		expect(documentHtml).toContain('data-topic-page="documents"');
-		expect(documentHtml).toContain('data-topic-document-panel');
+		expect(documentHtml).toContain("data-topic-document-panel");
 		expect(documentHtml).toContain("Demo Proposal");
 		expect(documentHtml).not.toContain("data-topic-facts-panel");
 
@@ -104,25 +104,25 @@ describe("dashboard routed topic pages", () => {
 
 		const factsHtml = renderToStaticMarkup(<TopicPage artifacts={artifacts} page="facts" />);
 		expect(factsHtml).toContain('data-topic-page="facts"');
-		expect(factsHtml).toContain('data-topic-facts-panel');
+		expect(factsHtml).toContain("data-topic-facts-panel");
 		expect(factsHtml).toContain("F001");
 
 		const evidenceHtml = renderToStaticMarkup(<TopicPage artifacts={artifacts} page="evidence" />);
 		expect(evidenceHtml).toContain('data-topic-page="evidence"');
-		expect(evidenceHtml).toContain('data-topic-evidence-panel');
+		expect(evidenceHtml).toContain("data-topic-evidence-panel");
 
 		const receiptsHtml = renderToStaticMarkup(<TopicPage artifacts={artifacts} page="receipts" />);
 		expect(receiptsHtml).toContain('data-topic-page="receipts"');
-		expect(receiptsHtml).toContain('data-topic-receipts-panel');
+		expect(receiptsHtml).toContain("data-topic-receipts-panel");
 		expect(receiptsHtml).toContain("receipt:P0.V1");
 
 		const healthHtml = renderToStaticMarkup(<TopicPage artifacts={artifacts} page="health" />);
 		expect(healthHtml).toContain('data-topic-page="health"');
-		expect(healthHtml).toContain('data-topic-health-panel');
+		expect(healthHtml).toContain("data-topic-health-panel");
 
 		const graphHtml = renderToStaticMarkup(<TopicPage artifacts={artifacts} page="graph" />);
 		expect(graphHtml).toContain('data-topic-page="graph"');
-		expect(graphHtml).toContain('data-topic-graph-panel');
+		expect(graphHtml).toContain("data-topic-graph-panel");
 		expect(graphHtml).toContain("data-graph-explorer");
 	});
 
@@ -131,7 +131,7 @@ describe("dashboard routed topic pages", () => {
 		const artifacts = await readTopicArtifacts(fixture.root, fixture.topic);
 		const html = renderToStaticMarkup(<TopicDocumentPanel artifacts={artifacts} kind="plan" />);
 		// The fixture does include a plan.md, so we expect data-document-kind="plan".
-		expect(html).toContain('data-topic-document-panel');
+		expect(html).toContain("data-topic-document-panel");
 		expect(html).toContain('data-document-kind="plan"');
 	});
 

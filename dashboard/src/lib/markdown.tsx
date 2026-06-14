@@ -226,16 +226,10 @@ export function ReferencePopoverLink({
 						aria-label={ariaLabel}
 					>
 						{children}
-						{reference.sourceLabel ? (
-							<span className="sr-only"> source {reference.sourceLabel}</span>
-						) : null}
+						{reference.sourceLabel ? <span className="sr-only"> source {reference.sourceLabel}</span> : null}
 					</a>
 				</TooltipTrigger>
-				<TooltipContent
-					className="max-w-xs"
-					data-reference-popover-content
-					data-reference-status={reference.status}
-				>
+				<TooltipContent className="max-w-xs" data-reference-popover-content data-reference-status={reference.status}>
 					<ReferencePopoverBody reference={reference} />
 				</TooltipContent>
 			</Tooltip>
@@ -243,7 +237,9 @@ export function ReferencePopoverLink({
 	);
 }
 
-export function isReferenceResolvedForPopover(reference: ResolvedReference | undefined): reference is ResolvedReference {
+export function isReferenceResolvedForPopover(
+	reference: ResolvedReference | undefined,
+): reference is ResolvedReference {
 	return Boolean(reference);
 }
 

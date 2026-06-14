@@ -5,11 +5,11 @@
   "source_refs": {
     "plan_md": {
       "path": ".plan/testing-strategy/plan.md",
-      "sha256": "sha256:fb19fd57507c492024ffe9cb4d6ac3d1c661d4e47f9caf69f62c2e3666ea286b"
+      "sha256": "sha256:3c92f7a2b29b8ed8fa4c0e535ca7f339701c2196c4191b9bb60ad8ef2ab99dde"
     },
     "plan_nodes": {
       "path": ".plan/testing-strategy/plan.nodes.jsonl",
-      "sha256": "sha256:0ed5cfd95c081e3e9f2b3551ae88687501fe65696a46f7fde4a22aea7907e2ab"
+      "sha256": "sha256:4f6c91edda39c566222a3cef15c4a97b6bbb4567ce6f2464de84f2a28b62e221"
     },
     "plan_edges": {
       "path": ".plan/testing-strategy/plan.edges.jsonl",
@@ -17,11 +17,11 @@
     },
     "receipts": {
       "path": ".plan/testing-strategy/receipts.jsonl",
-      "sha256": "sha256:fa12161b7aa3d67b98cebb4f309ccf4899e448587900be72ff08b743b6f421a5"
+      "sha256": "sha256:a0bcaee5a5534a2d6963908928113185fb2f1a3144dd4a68be15aad0eb32d723"
     },
     "context_packs": {
       "path": ".plan/testing-strategy/context-packs.jsonl",
-      "sha256": "sha256:8d718a1409860bb63af70b8d06ac818f4fbcb6c248e0275f1309ac17a088db5c"
+      "sha256": "sha256:9565634dc4493d7bd3ab5a87aadfc52cef8f928c892bd6e1b14dad00652652b4"
     }
   },
   "current_phase_id": "P0",
@@ -112,7 +112,12 @@
     "receipt:P5:validation:2026-06-13T23:59:20+00:00",
     "receipt:P5:validation:2026-06-14T00:00:32+00:00",
     "receipt:P5:validation:2026-06-14T00:00:38+00:00",
-    "receipt:testing-strategy:audit:2026-06-14T00:03:14Z"
+    "receipt:testing-strategy:audit:2026-06-14T00:03:14Z",
+    "receipt:P6:validation:2026-06-14T00:04:23+00:00",
+    "receipt:P6:validation:2026-06-14T00:04:29+00:00",
+    "receipt:P6:validation:2026-06-14T00:04:36+00:00",
+    "receipt:P6:validation:2026-06-14T00:06:54+00:00",
+    "receipt:testing-strategy:audit:2026-06-14T00:10:02Z"
   ],
   "journal_refs": [
     "journal:20260613T233209Z:compact",
@@ -120,7 +125,8 @@
     "journal:20260613T233949Z:compact",
     "journal:20260613T234925Z:compact",
     "journal:20260613T235721Z:compact",
-    "journal:20260614T000329Z:compact"
+    "journal:20260614T000329Z:compact",
+    "journal:20260614T001322Z:compact"
   ],
   "resume": {
     "template_id": "cartographer.single_writer.resume.v1",
@@ -130,20 +136,13 @@
       ".plan/testing-strategy/plan.md",
       ".plan/testing-strategy/receipts.jsonl"
     ],
-    "expected_first_response": [
-      "current_phase",
-      "next_action",
-      "files_to_inspect"
-    ],
-    "must_ignore": [
-      "prior chat speculation",
-      "stale generated snippets"
-    ]
+    "expected_first_response": ["current_phase", "next_action", "files_to_inspect"],
+    "must_ignore": ["prior chat speculation", "stale generated snippets"]
   },
-  "updated_at": "2026-06-14T00:03:29Z",
+  "updated_at": "2026-06-14T00:13:22Z",
   "stale_reason": "Implementation compact requested after artifact updates.",
   "compaction": {
-    "trigger": "phase-end-P5",
-    "compacted_at": "2026-06-14T00:03:29Z"
+    "trigger": "final-implementation",
+    "compacted_at": "2026-06-14T00:13:22Z"
   }
 }

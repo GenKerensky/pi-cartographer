@@ -615,7 +615,9 @@ def validate_testing_strategy_contract(topic_dir: Path, requirement_ids: set[str
         if re.match(r"(?:run\s+)?(?:the\s+)?(?:tests|checks)\b", validation_lower) and not concrete_pattern.search(
             validation_text
         ):
-            errors.append(f"Validation {validation_id} is generic-only and lacks concrete test artifacts/scenarios/commands")
+            errors.append(
+                f"Validation {validation_id} is generic-only and lacks concrete test artifacts/scenarios/commands"
+            )
 
     pivot_terms = ["jest to vitest", "cypress to playwright", "replace pytest", "standardize playwright"]
     combined = normalized_words(design_text + "\n" + plan_text)
