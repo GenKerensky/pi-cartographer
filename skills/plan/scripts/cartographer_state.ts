@@ -29,6 +29,7 @@ type WorkingSet = {
 };
 type PathReason = { path: string; reason?: string };
 type ParsedArgs = { command: string; options: Record<string, string | boolean | string[]> };
+type ResumePrimerSection = { title: string; lines: string[]; required?: boolean };
 
 type ValidationReport = {
 	ok: boolean;
@@ -115,7 +116,8 @@ function usage(exitCode: number): never {
   ${script} journal-append --root <root> --topic <topic> --record-json '<json>' [--json]
   ${script} current-set --root <root> --topic <topic> [--worktree-id <id>] [--git-branch <branch>] [--last-seen-commit <sha>] [--json]
   ${script} compact-generate --root <root> --topic <topic> --trigger <name> [--summary <text> --impact <text> --importance <1-5> --evidence-json '<json>'] [--json]
-  ${script} state-resume --root <root> --topic <topic> [--max-journal <n>] [--json]`);
+  ${script} state-resume --root <root> --topic <topic> [--max-journal <n>] [--json]
+  ${script} resume-primer --root <root> --topic <topic> [--max-chars <n> --max-journal <n>] [--json]`);
 	process.exit(exitCode);
 }
 
@@ -131,6 +133,17 @@ function optNumber(options: Record<string, unknown>, name: string, fallback: num
 	if (typeof value !== "string") return fallback;
 	const parsed = Number(value);
 	return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function boundedNumber(
+	options: Record<string, unknown>,
+	name: string,
+	fallback: number,
+	min: number,
+	max: number,
+): number {
+	const parsed = optNumber(options, name, fallback);
+	return Math.max(min, Math.min(max, parsed));
 }
 
 function rootFrom(options: Record<string, unknown>): string {
@@ -669,13 +682,8 @@ function compactGenerate(root: string, topic: string, options: Record<string, un
 	return { ...report, action: "compact-generate", trigger };
 }
 
-function stateResume(root: string, topic: string, options: Record<string, unknown>): JsonRecord {
-	const before = fileDigests([statePath(root, topic), journalPath(root, topic), currentPath(root)]);
-	const report = validateState(root, topic, { includeCurrent: true });
-	const state = readJson(statePath(root, topic)) as StateFile;
-	const journal = readJsonl(journalPath(root, topic));
-	const maxJournal = optNumber(options, "max-journal", 5);
-	const selectedJournal = journal
+function selectedJournalRecords(state: StateFile, journal: JsonRecord[], maxJournal: number): JsonRecord[] {
+	return journal
 		.filter((record) => state.journal_refs.includes(String(record.id)) || Number(record.importance || 0) >= 4)
 		.slice(0, maxJournal)
 		.map((record) => ({
@@ -685,6 +693,15 @@ function stateResume(root: string, topic: string, options: Record<string, unknow
 			impact: record.impact,
 			importance: record.importance,
 		}));
+}
+
+function stateResume(root: string, topic: string, options: Record<string, unknown>): JsonRecord {
+	const before = fileDigests([statePath(root, topic), journalPath(root, topic), currentPath(root)]);
+	const report = validateState(root, topic, { includeCurrent: true });
+	const state = readJson(statePath(root, topic)) as StateFile;
+	const journal = readJsonl(journalPath(root, topic));
+	const maxJournal = optNumber(options, "max-journal", 5);
+	const selectedJournal = selectedJournalRecords(state, journal, maxJournal);
 	const workingSet = state.working_set || { write_allowed: [], read_only: [], forbidden: [] };
 	const context =
 		`<CARTOGRAPHER_RESUME_CONTEXT version="1" source=".cartographer/${topic}/state.json">\n` +
@@ -702,6 +719,141 @@ function stateResume(root: string, topic: string, options: Record<string, unknow
 		`</CARTOGRAPHER_RESUME_CONTEXT>`;
 	const after = fileDigests([statePath(root, topic), journalPath(root, topic), currentPath(root)]);
 	return { ...report, action: "state-resume", context, read_only: JSON.stringify(before) === JSON.stringify(after) };
+}
+
+function compactJson(value: unknown): string {
+	return JSON.stringify(value);
+}
+
+function pathList(items: PathReason[] | undefined, limit: number): string[] {
+	const values = (items || [])
+		.slice(0, limit)
+		.map((item) => (item.reason ? `${item.path} (${item.reason})` : item.path));
+	if ((items || []).length > limit) values.push(`... ${(items || []).length - limit} more`);
+	return values.length ? values : ["none"];
+}
+
+function latestContextPacks(root: string, topic: string, limit: number): JsonRecord[] {
+	return readJsonl(path.join(topicPlanDir(root, topic), "context-packs.jsonl"))
+		.slice(-limit)
+		.map((record) => ({ id: record.id, phase_id: record.phase_id, summary: record.summary }));
+}
+
+function renderPrimerSections(
+	sections: ResumePrimerSection[],
+	maxChars: number,
+): { primer: string; omitted: string[]; truncated: boolean } {
+	const header = '<CARTOGRAPHER_RESUME_PRIMER version="1">\n';
+	const footer = "</CARTOGRAPHER_RESUME_PRIMER>";
+	let body = "";
+	const omitted: string[] = [];
+	let truncated = false;
+	for (const section of sections) {
+		const rendered = [`## ${section.title}`, ...section.lines].join("\n") + "\n";
+		const candidate = header + body + rendered + footer;
+		if (candidate.length <= maxChars || section.required) {
+			body += rendered;
+			continue;
+		}
+		omitted.push(section.title);
+		truncated = true;
+	}
+	let primer = header + body + (omitted.length ? `## Omitted\n${omitted.join(", ")}\n` : "") + footer;
+	if (primer.length > maxChars) {
+		truncated = true;
+		const suffix = `\n## Truncated\nPrimer exceeded ${maxChars} chars; rerun with --max-chars 8000 or read referenced artifacts.\n${footer}`;
+		primer = primer.slice(0, Math.max(0, maxChars - suffix.length)) + suffix;
+	}
+	return { primer, omitted, truncated };
+}
+
+function resumePrimer(root: string, topic: string, options: Record<string, unknown>): JsonRecord {
+	const before = fileDigests([statePath(root, topic), journalPath(root, topic), currentPath(root)]);
+	const report = validateState(root, topic, { includeCurrent: true });
+	const state = readJson(statePath(root, topic)) as StateFile;
+	const journal = readJsonl(journalPath(root, topic));
+	const maxJournal = boundedNumber(options, "max-journal", 3, 0, 10);
+	const maxChars = boundedNumber(options, "max-chars", 4000, 1200, 8000);
+	const next = state.next_action || {};
+	const workingSet = state.working_set || { write_allowed: [], read_only: [], forbidden: [] };
+	const validations = state.last_validation_receipt_ids.slice(-8);
+	const selectedJournal = selectedJournalRecords(state, journal, maxJournal);
+	const packs = latestContextPacks(root, topic, 4);
+	const sections: ResumePrimerSection[] = [
+		{
+			title: "Identity",
+			required: true,
+			lines: [
+				`Topic: ${topic}`,
+				`Source status: ${report.ok ? state.source_status || "hashes-valid" : "invalid"}`,
+				`Current phase: ${state.current_phase_id ?? "none"}`,
+				`Active tasks: ${state.active_task_ids.join(", ") || "none"}`,
+				`Active validations: ${state.active_validation_ids.join(", ") || "none"}`,
+			],
+		},
+		{
+			title: "Next action",
+			required: true,
+			lines: [
+				`ID: ${String(next.id || "unknown")}`,
+				`Kind: ${String(next.kind || "unknown")}`,
+				`Summary: ${String(next.summary || "none")}`,
+				`Phase: ${String(next.phase_id || "none")}`,
+				`Task: ${String(next.task_id || "none")}`,
+				`Files to inspect: ${Array.isArray(next.files_to_inspect) ? next.files_to_inspect.join(", ") : "see plan/state"}`,
+			],
+		},
+		{
+			title: "Working set",
+			required: true,
+			lines: [
+				`Write allowed: ${pathList(workingSet.write_allowed, 8).join("; ")}`,
+				`Read only: ${pathList(workingSet.read_only, 6).join("; ")}`,
+				`Forbidden: ${pathList(workingSet.forbidden, 6).join("; ")}`,
+			],
+		},
+		{
+			title: "Critical rules",
+			required: true,
+			lines: [
+				"Trust plan/status/receipts on disk over stale transcript memory.",
+				"Do not read raw .plan/_private/** contents; cite sanitized evidence only.",
+				"Use cartographer_* wrappers for canonical state, plan, receipt, handoff, transition, and ADR mutations.",
+				"Read the compact implement kernel plus one-level references only when needed.",
+				"First post-compaction response: report current phase, next action, and files to inspect before editing.",
+			],
+		},
+		{
+			title: "Validation refs",
+			lines: validations.length ? validations : ["none"],
+		},
+		{
+			title: "Context packs",
+			lines: packs.length ? packs.map((pack) => `${String(pack.id)}: ${String(pack.summary || "")}`) : ["none"],
+		},
+		{
+			title: "Selected journal",
+			lines: selectedJournal.length
+				? selectedJournal.map((record) => `${String(record.id)}: ${String(record.summary)}`)
+				: ["none"],
+		},
+		{
+			title: "Known failures",
+			lines: state.known_failures.length ? state.known_failures.slice(0, 5).map(compactJson) : ["none"],
+		},
+	];
+	const rendered = renderPrimerSections(sections, maxChars);
+	const after = fileDigests([statePath(root, topic), journalPath(root, topic), currentPath(root)]);
+	return {
+		...report,
+		action: "resume-primer",
+		primer: rendered.primer,
+		budget_chars: maxChars,
+		chars: rendered.primer.length,
+		truncated: rendered.truncated,
+		omitted_sections: rendered.omitted,
+		read_only: JSON.stringify(before) === JSON.stringify(after),
+	};
 }
 
 function fileDigests(files: string[]): Record<string, string | null> {
@@ -747,6 +899,9 @@ function main(): number {
 				break;
 			case "state-resume":
 				result = stateResume(root, topic, options);
+				break;
+			case "resume-primer":
+				result = resumePrimer(root, topic, options);
 				break;
 			default:
 				throw new Error(`Unknown command: ${command}`);

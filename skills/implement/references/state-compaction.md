@@ -21,6 +21,7 @@ Use semantic commands/tools rather than direct JSON edits:
 - `cartographer_state journal-append`
 - `cartographer_state current-set`
 - `cartographer_state compact-generate`
+- `cartographer_state resume-primer`
 - `cartographer_state state-resume`
 
 Direct edits are an escape hatch only; run state validation immediately afterward.
@@ -44,6 +45,10 @@ At phase end or major milestone:
 2. Run `cartographer_implement compact` or `cartographer_state compact-generate`.
 3. Use `cartographer_compact_context` when available to request actual Pi transcript compaction.
 4. Include topic, phase, next action, working set, validation refs, blockers, and compact summary.
-5. Re-orient from `state-resume` after compaction.
+5. Re-orient from `resume-primer` after compaction; use `state-resume` only when expanded context is needed.
+
+`resume-primer` is the budgeted default handoff: it includes required resume fields,
+critical rules, validation refs, context-pack/journal pointers, truncation metadata,
+and no raw transcript/private content.
 
 `compact-generate` writes Cartographer resume state; it is not the same as Pi transcript compaction.

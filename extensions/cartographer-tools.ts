@@ -133,7 +133,8 @@ type CartographerStateParams = OutputShapeParams & {
 		| "journal-append"
 		| "current-set"
 		| "compact-generate"
-		| "state-resume";
+		| "state-resume"
+		| "resume-primer";
 	root?: string;
 	topic?: string;
 	nextAction?: unknown;
@@ -150,6 +151,7 @@ type CartographerStateParams = OutputShapeParams & {
 	gitBranch?: string;
 	lastSeenCommit?: string;
 	maxJournal?: number;
+	primerMaxChars?: number;
 };
 
 type CartographerCompactContextParams = OutputShapeParams & {
@@ -567,19 +569,53 @@ function activeTopicFromCurrent(root: string): string | undefined {
 	}
 }
 
-async function loadStateResumeContext(root: string, topic: string, signal?: AbortSignal): Promise<string | undefined> {
+function primerFromStdout(stdout: string): string | undefined {
+	if (!stdout.trim()) return undefined;
 	try {
-		const result = await execFileAsync(
-			"node",
-			["--experimental-strip-types", stateScript, "state-resume", "--root", root, "--topic", topic, "--json"],
-			{ cwd: process.cwd(), signal, maxBuffer: 2 * 1024 * 1024 },
-		);
-		const payload = JSON.parse(result.stdout) as Record<string, unknown>;
+		const payload = JSON.parse(stdout) as Record<string, unknown>;
+		if (typeof payload.primer === "string") return truncateText(payload.primer, MAX_STATE_RESUME_CONTEXT_CHARS);
 		return typeof payload.context === "string"
 			? truncateText(payload.context, MAX_STATE_RESUME_CONTEXT_CHARS)
 			: undefined;
 	} catch {
 		return undefined;
+	}
+}
+
+async function loadStateResumeContext(root: string, topic: string, signal?: AbortSignal): Promise<string | undefined> {
+	try {
+		const result = await execFileAsync(
+			"node",
+			[
+				"--experimental-strip-types",
+				stateScript,
+				"resume-primer",
+				"--root",
+				root,
+				"--topic",
+				topic,
+				"--max-chars",
+				String(MAX_STATE_RESUME_CONTEXT_CHARS),
+				"--json",
+			],
+			{ cwd: process.cwd(), signal, maxBuffer: 2 * 1024 * 1024 },
+		);
+		return primerFromStdout(result.stdout);
+	} catch (error) {
+		const failed = error as ExecFileException & { stdout?: string; stderr?: string };
+		const primer = primerFromStdout(typeof failed.stdout === "string" ? failed.stdout : "");
+		if (primer) return primer;
+		const detail = failed.message || failed.stderr || "resume-primer unavailable";
+		return truncateText(
+			[
+				'<CARTOGRAPHER_RESUME_PRIMER_UNAVAILABLE version="1">',
+				`Topic: ${topic}`,
+				"State resume primer could not be loaded; reload plan/state manually before editing.",
+				`Error: ${detail}`,
+				"</CARTOGRAPHER_RESUME_PRIMER_UNAVAILABLE>",
+			].join("\n"),
+			MAX_STATE_RESUME_CONTEXT_CHARS,
+		);
 	}
 }
 
@@ -607,9 +643,9 @@ function renderCompactionInstructions(params: {
 		params.summary ? `Checkpoint summary: ${params.summary}` : undefined,
 		contextUsageSummary(params.usage),
 		"After compaction, continue with the Cartographer implement skill.",
-		"On the first post-compaction assistant response, reload .plan/<topic>/plan.md and .cartographer/<topic>/state.json/state-resume, then report current phase, next action, and files to inspect before editing.",
+		"On the first post-compaction assistant response, reload .plan/<topic>/plan.md, .cartographer/<topic>/state.json, and cartographer_state resume-primer; then report current phase, next action, and files to inspect before editing.",
 		"Trust plan/state/receipts on disk over stale transcript memory. Do not treat cartographer_state compact-generate as Pi transcript compaction; it is only the resume snapshot that should precede this actual Pi compaction request.",
-		params.stateResumeContext ? "\nBounded state-resume context:\n" + params.stateResumeContext : undefined,
+		params.stateResumeContext ? "\nBounded resume primer:\n" + params.stateResumeContext : undefined,
 		"</CARTOGRAPHER_COMPACTION_INSTRUCTIONS>",
 	].filter((line): line is string => Boolean(line));
 	return truncateText(lines.join("\n"), MAX_COMPACTION_INSTRUCTION_CHARS);
@@ -629,7 +665,7 @@ function compactionContinuationMessage(topic: string, phaseId?: string): string 
 		`[Cartographer] Context compaction completed for topic "${topic}"${phaseHint}. ` +
 		"Resume implementation immediately:\n" +
 		"1. Read .plan/<topic>/plan.md and .cartographer/<topic>/state.json\n" +
-		"2. Run cartographer_state state-resume to load bounded resume context\n" +
+		"2. Run cartographer_state resume-primer to load bounded resume context\n" +
 		"3. Report the current phase, next action, and files to inspect\n" +
 		"4. Continue the current phase without waiting for further instructions"
 	);
@@ -1372,7 +1408,7 @@ export default function cartographerTools(pi: PiApi): void {
 			"Read .cartographer/<topic>/state.json and journal.jsonl directly when useful, but mutate them through cartographer_state commands.",
 			"Do not use cartographer_state to create a duplicate plan graph; .plan/<topic>/plan.md and plan JSONL remain authoritative.",
 			"Use journal-append only for important durable lessons/gotchas/constraints, not raw logs, receipts, transcripts, or routine tool calls.",
-			"Use compact-generate for validated state compaction; use state-resume for bounded read-only context injection data.",
+			"Use compact-generate for validated state compaction; use resume-primer for budgeted implementation handoff and state-resume for full bounded context injection data.",
 			"Treat .cartographer/current.json as a git-ignored local hint only; ignore it when stale or invalid.",
 		],
 		parameters: Type.Object({
@@ -1387,6 +1423,7 @@ export default function cartographerTools(pi: PiApi): void {
 				Type.Literal("current-set"),
 				Type.Literal("compact-generate"),
 				Type.Literal("state-resume"),
+				Type.Literal("resume-primer"),
 			]),
 			root: Type.Optional(Type.String({ description: "Project root. Defaults to current working directory." })),
 			topic: Type.String({ description: "Cartographer topic under .plan/ and .cartographer/." }),
@@ -1405,7 +1442,10 @@ export default function cartographerTools(pi: PiApi): void {
 			worktreeId: Type.Optional(Type.String({ description: "Optional worktree id for current-set." })),
 			gitBranch: Type.Optional(Type.String({ description: "Optional git branch for current-set." })),
 			lastSeenCommit: Type.Optional(Type.String({ description: "Optional commit SHA for current-set." })),
-			maxJournal: Type.Optional(Type.Number({ description: "Maximum selected journal records for state-resume." })),
+			maxJournal: Type.Optional(
+				Type.Number({ description: "Maximum selected journal records for state-resume/resume-primer." }),
+			),
+			primerMaxChars: Type.Optional(Type.Number({ description: "Character budget for resume-primer output." })),
 			maxOutputChars: Type.Optional(
 				Type.Number({ description: "Inline output budget before saving a full-output receipt." }),
 			),
@@ -1436,6 +1476,7 @@ export default function cartographerTools(pi: PiApi): void {
 			if (params.gitBranch) args.push("--git-branch", params.gitBranch);
 			if (params.lastSeenCommit) args.push("--last-seen-commit", params.lastSeenCommit);
 			if (params.maxJournal) args.push("--max-journal", String(params.maxJournal));
+			if (params.primerMaxChars) args.push("--max-chars", String(params.primerMaxChars));
 			return runCommand("node", ["--experimental-strip-types", stateScript, ...args], signal, {
 				maxOutputChars: params.maxOutputChars,
 				outputPath: params.outputPath,

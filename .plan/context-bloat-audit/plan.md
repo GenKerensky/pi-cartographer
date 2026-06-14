@@ -272,7 +272,7 @@ The user explicitly said DOX is removed; do not add DOX framework/index tasks.
 
 ### Phase P4 — State-Aware Resume Primer
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P2
 - **Unlocks:** P6
 - **Primary references:** `DES-CBA-004`, `REQ-CBA-004`, `SCN-CBA-007`, `SCN-CBA-008`, `skills/plan/scripts/cartographer_state.ts`, `extensions/cartographer-tools.ts`
@@ -290,16 +290,16 @@ Generate compact implementation resume primers from Cartographer state, receipts
 
 #### Checklist
 
-- [ ] **P4.T1** Design and implement resume-primer output in state/transition tooling or extension wrapper.
-- [ ] **P4.T2** Add budget enforcement and truncation/reference metadata.
-- [ ] **P4.T3** Integrate primer references with compact `implement` kernel guidance.
-- [ ] **P4.T4** Document command/tool usage for agents.
+- [x] **P4.T1** Design and implement resume-primer output in state/transition tooling or extension wrapper.
+- [x] **P4.T2** Add budget enforcement and truncation/reference metadata.
+- [x] **P4.T3** Integrate primer references with compact `implement` kernel guidance.
+- [x] **P4.T4** Document command/tool usage for agents.
 
 #### Validation
 
-- [ ] **P4.V1** Run resume-primer unit tests with mock `.cartographer` state, receipts, and context packs in temporary projects; expected result: primer contains required fields within budget.
-- [ ] **P4.V2** Run repeated-compaction fixture such as `python -m unittest tests.test_context_resume_primer`; expected result: fixture `tests/fixtures/context_resume/repeated_compaction.json` keeps summaries within fixed budget or externalizes detail, covering `REQ-CBA-004` and `SCN-CBA-008`.
-- [ ] **P4.V3** Run manual-assisted E2E resume smoke validation on a temporary/mock topic and write validation artifact/manual evidence `.plan/context-bloat-audit/evidence/resume-smoke.md`; expected result: agent identifies next wrapper action and required reference while avoiding legacy full skill text, covering `REQ-CBA-004` and `SCN-CBA-007`.
+- [x] **P4.V1** Run resume-primer unit tests with mock `.cartographer` state, receipts, and context packs in temporary projects; expected result: primer contains required fields within budget.
+- [x] **P4.V2** Run repeated-compaction fixture such as `python -m unittest tests.test_context_resume_primer`; expected result: fixture `tests/fixtures/context_resume/repeated_compaction.json` keeps summaries within fixed budget or externalizes detail, covering `REQ-CBA-004` and `SCN-CBA-008`.
+- [x] **P4.V3** Run manual-assisted E2E resume smoke validation on a temporary/mock topic and write validation artifact/manual evidence `.plan/context-bloat-audit/evidence/resume-smoke.md`; expected result: agent identifies next wrapper action and required reference while avoiding legacy full skill text, covering `REQ-CBA-004` and `SCN-CBA-007`.
 
 #### Testing Strategy Trace
 
@@ -323,7 +323,7 @@ Keep raw session/transcript text out of `.plan/` artifacts.
 
 ### Phase P5 — Tool/Schema Overhead Audit and Low-Risk Reductions
 
-- **Status:** pending
+- **Status:** in-progress
 - **Depends on:** P0, P2
 - **Unlocks:** P6
 - **Primary references:** `DES-CBA-005`, `REQ-CBA-005`, `SCN-CBA-009`, `SCN-CBA-010`, `extensions/cartographer-tools.ts`, `F007`

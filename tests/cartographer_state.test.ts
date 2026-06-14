@@ -192,4 +192,56 @@ describe("cartographer_state CLI", () => {
 		expect(resume.context).toContain("Required first response");
 		expect(JSON.stringify(before)).toBe(JSON.stringify(after));
 	});
+
+	it("renders a budgeted resume primer with truncation metadata", () => {
+		const project = makeProject();
+		runState(["state-init", "--root", project, "--topic", "demo"], project);
+		runState(
+			[
+				"state-set-next",
+				"--root",
+				project,
+				"--topic",
+				"demo",
+				"--next-action-json",
+				JSON.stringify({
+					id: "next:P0.T1",
+					kind: "inspect",
+					summary: "Inspect README.",
+					phase_id: "P0",
+					task_id: "P0.T1",
+					files_to_inspect: ["README.md"],
+				}),
+			],
+			project,
+		);
+		runState(
+			[
+				"state-set-working-set",
+				"--root",
+				project,
+				"--topic",
+				"demo",
+				"--working-set-json",
+				JSON.stringify({
+					write_allowed: [{ path: "README.md", reason: "fixture" }],
+					read_only: [{ path: ".plan/demo/plan.md", reason: "authoritative plan" }],
+					forbidden: [{ path: ".plan/_private/**", reason: "private" }],
+				}),
+			],
+			project,
+		);
+		const primer = runState(
+			["resume-primer", "--root", project, "--topic", "demo", "--max-chars", "1600", "--max-journal", "1"],
+			project,
+		);
+		expect(primer.ok).toBe(true);
+		expect(primer.read_only).toBe(true);
+		expect(primer.action).toBe("resume-primer");
+		expect(primer.chars).toBeLessThanOrEqual(1600);
+		expect(primer.primer).toContain("CARTOGRAPHER_RESUME_PRIMER");
+		expect(primer.primer).toContain("Topic: demo");
+		expect(primer.primer).toContain("Next action");
+		expect(primer.primer).toContain("Critical rules");
+	});
 });

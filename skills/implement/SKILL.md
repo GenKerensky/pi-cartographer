@@ -84,8 +84,9 @@ Read only when needed:
 3. Select the first incomplete phase whose dependencies are complete.
 4. Mark it `in-progress` with `cartographer_plan_status`.
 5. Set one `next_action` and a narrow `working_set` with `cartographer_state`.
-6. If resuming after compaction, read `state-resume` and respond with current phase,
-   next action, and files to inspect.
+6. If resuming after compaction, read `resume-primer` first, use `state-resume`
+   only for expanded context, and respond with current phase, next action, and
+   files to inspect.
 
 Read `references/state-compaction.md` if state/resume details are unclear.
 

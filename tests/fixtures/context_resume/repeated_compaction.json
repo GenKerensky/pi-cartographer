@@ -1,0 +1,50 @@
+{
+  "topic": "demo",
+  "journals": [
+    {
+      "id": "journal:one",
+      "ts": "2026-06-10T00:00:00Z",
+      "kind": "phase_summary",
+      "summary": "P0 complete: inventory and state scaffolding validated.",
+      "impact": "Resume should keep only compact phase facts.",
+      "evidence": [{ "receipt_id": "receipt:P0" }],
+      "importance": 4,
+      "status": "active"
+    },
+    {
+      "id": "journal:two",
+      "ts": "2026-06-10T01:00:00Z",
+      "kind": "phase_summary",
+      "summary": "P1 complete: compact skill kernel and one-level references validated.",
+      "impact": "Resume should cite references rather than reinjecting full skill text.",
+      "evidence": [{ "receipt_id": "receipt:P0" }],
+      "importance": 4,
+      "status": "active"
+    },
+    {
+      "id": "journal:three",
+      "ts": "2026-06-10T02:00:00Z",
+      "kind": "phase_summary",
+      "summary": "P2 complete: repeated compaction summaries stay bounded and pointer-based.",
+      "impact": "Primer should externalize lower-priority detail when budget is tight.",
+      "evidence": [{ "receipt_id": "receipt:P0" }],
+      "importance": 4,
+      "status": "active"
+    }
+  ],
+  "contextPacks": [
+    { "id": "context-pack:demo:P0", "type": "context-pack", "phase_id": "P0", "summary": "Inventory context pack." },
+    {
+      "id": "context-pack:demo:P1",
+      "type": "context-pack",
+      "phase_id": "P1",
+      "summary": "Skill compaction context pack."
+    },
+    {
+      "id": "context-pack:demo:P2",
+      "type": "context-pack",
+      "phase_id": "P2",
+      "summary": "Resume compaction context pack with enough detail to force omission when the primer budget is small."
+    }
+  ]
+}

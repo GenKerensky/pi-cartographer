@@ -37,15 +37,15 @@
 {"id":"validation:P3.V1","type":"validation","validation_id":"P3.V1","phase_id":"P3","title":"P3.V1","status":"complete","source":"plan.md"}
 {"id":"validation:P3.V2","type":"validation","validation_id":"P3.V2","phase_id":"P3","title":"P3.V2","status":"complete","source":"plan.md"}
 {"id":"validation:P3.V3","type":"validation","validation_id":"P3.V3","phase_id":"P3","title":"P3.V3","status":"complete","source":"plan.md"}
-{"id":"phase:P4","type":"phase","phase_id":"P4","title":"State-Aware Resume Primer","status":"pending","depends_on":["P2"],"source":"plan.md"}
-{"id":"task:P4.T1","type":"task","task_id":"P4.T1","phase_id":"P4","title":"P4.T1","status":"pending","source":"plan.md"}
-{"id":"task:P4.T2","type":"task","task_id":"P4.T2","phase_id":"P4","title":"P4.T2","status":"pending","source":"plan.md"}
-{"id":"task:P4.T3","type":"task","task_id":"P4.T3","phase_id":"P4","title":"P4.T3","status":"pending","source":"plan.md"}
-{"id":"task:P4.T4","type":"task","task_id":"P4.T4","phase_id":"P4","title":"P4.T4","status":"pending","source":"plan.md"}
-{"id":"validation:P4.V1","type":"validation","validation_id":"P4.V1","phase_id":"P4","title":"P4.V1","status":"pending","source":"plan.md"}
-{"id":"validation:P4.V2","type":"validation","validation_id":"P4.V2","phase_id":"P4","title":"P4.V2","status":"pending","source":"plan.md"}
-{"id":"validation:P4.V3","type":"validation","validation_id":"P4.V3","phase_id":"P4","title":"P4.V3","status":"pending","source":"plan.md"}
-{"id":"phase:P5","type":"phase","phase_id":"P5","title":"Tool/Schema Overhead Audit and Low-Risk Reductions","status":"pending","depends_on":["P0","P2"],"source":"plan.md"}
+{"id":"phase:P4","type":"phase","phase_id":"P4","title":"State-Aware Resume Primer","status":"complete","depends_on":["P2"],"source":"plan.md"}
+{"id":"task:P4.T1","type":"task","task_id":"P4.T1","phase_id":"P4","title":"P4.T1","status":"complete","source":"plan.md"}
+{"id":"task:P4.T2","type":"task","task_id":"P4.T2","phase_id":"P4","title":"P4.T2","status":"complete","source":"plan.md"}
+{"id":"task:P4.T3","type":"task","task_id":"P4.T3","phase_id":"P4","title":"P4.T3","status":"complete","source":"plan.md"}
+{"id":"task:P4.T4","type":"task","task_id":"P4.T4","phase_id":"P4","title":"P4.T4","status":"complete","source":"plan.md"}
+{"id":"validation:P4.V1","type":"validation","validation_id":"P4.V1","phase_id":"P4","title":"P4.V1","status":"complete","source":"plan.md"}
+{"id":"validation:P4.V2","type":"validation","validation_id":"P4.V2","phase_id":"P4","title":"P4.V2","status":"complete","source":"plan.md"}
+{"id":"validation:P4.V3","type":"validation","validation_id":"P4.V3","phase_id":"P4","title":"P4.V3","status":"complete","source":"plan.md"}
+{"id":"phase:P5","type":"phase","phase_id":"P5","title":"Tool/Schema Overhead Audit and Low-Risk Reductions","status":"in-progress","depends_on":["P0","P2"],"source":"plan.md"}
 {"id":"task:P5.T1","type":"task","task_id":"P5.T1","phase_id":"P5","title":"P5.T1","status":"pending","source":"plan.md"}
 {"id":"task:P5.T2","type":"task","task_id":"P5.T2","phase_id":"P5","title":"P5.T2","status":"pending","source":"plan.md"}
 {"id":"task:P5.T3","type":"task","task_id":"P5.T3","phase_id":"P5","title":"P5.T3","status":"pending","source":"plan.md"}
