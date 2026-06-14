@@ -2,7 +2,6 @@
 name: "index-project"
 description: "Pi Cartographer indexer: build and update a shared .plan/_index/project-graph.sqlite SQLite + FTS5 code/doc graph for LLM planning. Use before proposal planning, file discovery, or topic-scoped project mapping."
 version: 3
-created: "2026-06-06"
 updated: "2026-06-07"
 ---
 

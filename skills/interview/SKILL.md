@@ -2,7 +2,6 @@
 name: "interview"
 description: "Run a post-research Cartographer interview to resolve unresolved user-owned decisions one question at a time before or during requirements/design work."
 version: 1
-created: "2026-06-12"
 updated: "2026-06-12"
 ---
 

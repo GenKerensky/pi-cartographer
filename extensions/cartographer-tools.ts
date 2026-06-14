@@ -133,7 +133,8 @@ type CartographerStateParams = OutputShapeParams & {
 		| "journal-append"
 		| "current-set"
 		| "compact-generate"
-		| "state-resume";
+		| "state-resume"
+		| "resume-primer";
 	root?: string;
 	topic?: string;
 	nextAction?: unknown;
@@ -150,6 +151,7 @@ type CartographerStateParams = OutputShapeParams & {
 	gitBranch?: string;
 	lastSeenCommit?: string;
 	maxJournal?: number;
+	primerMaxChars?: number;
 };
 
 type CartographerCompactContextParams = OutputShapeParams & {
@@ -567,19 +569,53 @@ function activeTopicFromCurrent(root: string): string | undefined {
 	}
 }
 
-async function loadStateResumeContext(root: string, topic: string, signal?: AbortSignal): Promise<string | undefined> {
+function primerFromStdout(stdout: string): string | undefined {
+	if (!stdout.trim()) return undefined;
 	try {
-		const result = await execFileAsync(
-			"node",
-			["--experimental-strip-types", stateScript, "state-resume", "--root", root, "--topic", topic, "--json"],
-			{ cwd: process.cwd(), signal, maxBuffer: 2 * 1024 * 1024 },
-		);
-		const payload = JSON.parse(result.stdout) as Record<string, unknown>;
+		const payload = JSON.parse(stdout) as Record<string, unknown>;
+		if (typeof payload.primer === "string") return truncateText(payload.primer, MAX_STATE_RESUME_CONTEXT_CHARS);
 		return typeof payload.context === "string"
 			? truncateText(payload.context, MAX_STATE_RESUME_CONTEXT_CHARS)
 			: undefined;
 	} catch {
 		return undefined;
+	}
+}
+
+async function loadStateResumeContext(root: string, topic: string, signal?: AbortSignal): Promise<string | undefined> {
+	try {
+		const result = await execFileAsync(
+			"node",
+			[
+				"--experimental-strip-types",
+				stateScript,
+				"resume-primer",
+				"--root",
+				root,
+				"--topic",
+				topic,
+				"--max-chars",
+				String(MAX_STATE_RESUME_CONTEXT_CHARS),
+				"--json",
+			],
+			{ cwd: process.cwd(), signal, maxBuffer: 2 * 1024 * 1024 },
+		);
+		return primerFromStdout(result.stdout);
+	} catch (error) {
+		const failed = error as ExecFileException & { stdout?: string; stderr?: string };
+		const primer = primerFromStdout(typeof failed.stdout === "string" ? failed.stdout : "");
+		if (primer) return primer;
+		const detail = failed.message || failed.stderr || "resume-primer unavailable";
+		return truncateText(
+			[
+				'<CARTOGRAPHER_RESUME_PRIMER_UNAVAILABLE version="1">',
+				`Topic: ${topic}`,
+				"State resume primer could not be loaded; reload plan/state manually before editing.",
+				`Error: ${detail}`,
+				"</CARTOGRAPHER_RESUME_PRIMER_UNAVAILABLE>",
+			].join("\n"),
+			MAX_STATE_RESUME_CONTEXT_CHARS,
+		);
 	}
 }
 
@@ -607,9 +643,9 @@ function renderCompactionInstructions(params: {
 		params.summary ? `Checkpoint summary: ${params.summary}` : undefined,
 		contextUsageSummary(params.usage),
 		"After compaction, continue with the Cartographer implement skill.",
-		"On the first post-compaction assistant response, reload .plan/<topic>/plan.md and .cartographer/<topic>/state.json/state-resume, then report current phase, next action, and files to inspect before editing.",
+		"On the first post-compaction assistant response, reload .plan/<topic>/plan.md, .cartographer/<topic>/state.json, and cartographer_state resume-primer; then report current phase, next action, and files to inspect before editing.",
 		"Trust plan/state/receipts on disk over stale transcript memory. Do not treat cartographer_state compact-generate as Pi transcript compaction; it is only the resume snapshot that should precede this actual Pi compaction request.",
-		params.stateResumeContext ? "\nBounded state-resume context:\n" + params.stateResumeContext : undefined,
+		params.stateResumeContext ? "\nBounded resume primer:\n" + params.stateResumeContext : undefined,
 		"</CARTOGRAPHER_COMPACTION_INSTRUCTIONS>",
 	].filter((line): line is string => Boolean(line));
 	return truncateText(lines.join("\n"), MAX_COMPACTION_INSTRUCTION_CHARS);
@@ -629,7 +665,7 @@ function compactionContinuationMessage(topic: string, phaseId?: string): string 
 		`[Cartographer] Context compaction completed for topic "${topic}"${phaseHint}. ` +
 		"Resume implementation immediately:\n" +
 		"1. Read .plan/<topic>/plan.md and .cartographer/<topic>/state.json\n" +
-		"2. Run cartographer_state state-resume to load bounded resume context\n" +
+		"2. Run cartographer_state resume-primer to load bounded resume context\n" +
 		"3. Report the current phase, next action, and files to inspect\n" +
 		"4. Continue the current phase without waiting for further instructions"
 	);
@@ -860,7 +896,7 @@ export default function cartographerTools(pi: PiApi): void {
 			]),
 			root: Type.Optional(
 				Type.String({
-					description: "Project root. Defaults to current working directory.",
+					description: "Project root.",
 				}),
 			),
 			topic: Type.Optional(
@@ -871,7 +907,7 @@ export default function cartographerTools(pi: PiApi): void {
 			path: Type.Optional(Type.String({ description: "Project-relative path for read." })),
 			nodeId: Type.Optional(Type.String({ description: "Indexed node ID for read." })),
 			outDir: Type.Optional(Type.String({ description: "Output directory for slice-jsonl." })),
-			limit: Type.Optional(Type.Number({ description: "Result limit." })),
+			limit: Type.Optional(Type.Number({ description: "Limit." })),
 			maxTokens: Type.Optional(Type.Number({ description: "Approximate context/repo-map token budget." })),
 			pattern: Type.Optional(Type.String({ description: "Pattern for search action." })),
 			mode: Type.Optional(
@@ -918,11 +954,9 @@ export default function cartographerTools(pi: PiApi): void {
 					description: "Also write map.graph.json for slice-jsonl.",
 				}),
 			),
-			maxOutputChars: Type.Optional(
-				Type.Number({ description: "Inline output budget before saving a full-output receipt." }),
-			),
-			outputPath: Type.Optional(Type.String({ description: "Optional full-output path for oversized output." })),
-			raw: Type.Optional(Type.Boolean({ description: "Return raw command output instead of a compact receipt." })),
+			maxOutputChars: Type.Optional(Type.Number({ description: "Inline output budget." })),
+			outputPath: Type.Optional(Type.String({ description: "Full output path." })),
+			raw: Type.Optional(Type.Boolean({ description: "Return raw output." })),
 		}),
 		async execute(_toolCallId, rawParams, signal) {
 			const params = rawParams as CartographerIndexParams;
@@ -1027,7 +1061,7 @@ export default function cartographerTools(pi: PiApi): void {
 		],
 		parameters: Type.Object({
 			action: Type.Union([Type.Literal("import"), Type.Literal("list")]),
-			root: Type.Optional(Type.String({ description: "Project root. Defaults to current working directory." })),
+			root: Type.Optional(Type.String({ description: "Project root." })),
 			topic: Type.Optional(Type.String({ description: "Proposal topic slug for private/evidence directories." })),
 			input: Type.Optional(Type.Array(Type.String(), { description: "Private artifact file path(s) to import." })),
 			move: Type.Optional(Type.Boolean({ description: "Move instead of copy. Tracked repo files are refused." })),
@@ -1043,11 +1077,9 @@ export default function cartographerTools(pi: PiApi): void {
 				Type.Union([Type.Literal("unknown"), Type.Literal("low"), Type.Literal("medium"), Type.Literal("high")]),
 			),
 			limit: Type.Optional(Type.Number({ description: "Record limit for list." })),
-			maxOutputChars: Type.Optional(
-				Type.Number({ description: "Inline output budget before saving a full-output receipt." }),
-			),
-			outputPath: Type.Optional(Type.String({ description: "Optional full-output path for oversized output." })),
-			raw: Type.Optional(Type.Boolean({ description: "Return raw command output instead of a compact receipt." })),
+			maxOutputChars: Type.Optional(Type.Number({ description: "Inline output budget." })),
+			outputPath: Type.Optional(Type.String({ description: "Full output path." })),
+			raw: Type.Optional(Type.Boolean({ description: "Return raw output." })),
 		}),
 		async execute(_toolCallId, rawParams, signal) {
 			const params = rawParams as CartographerEvidenceParams;
@@ -1097,11 +1129,9 @@ export default function cartographerTools(pi: PiApi): void {
 			input: Type.Optional(Type.String({ description: "Authorized input Pi session JSONL file." })),
 			out: Type.Optional(Type.String({ description: "Markdown report output path." })),
 			jsonOut: Type.Optional(Type.String({ description: "Optional JSON summary output path." })),
-			maxOutputChars: Type.Optional(
-				Type.Number({ description: "Inline output budget before saving a full-output receipt." }),
-			),
-			outputPath: Type.Optional(Type.String({ description: "Optional full-output path for oversized output." })),
-			raw: Type.Optional(Type.Boolean({ description: "Return raw command output instead of a compact receipt." })),
+			maxOutputChars: Type.Optional(Type.Number({ description: "Inline output budget." })),
+			outputPath: Type.Optional(Type.String({ description: "Full output path." })),
+			raw: Type.Optional(Type.Boolean({ description: "Return raw output." })),
 		}),
 		async execute(_toolCallId, rawParams, signal) {
 			const params = rawParams as CartographerSessionParams;
@@ -1150,7 +1180,7 @@ export default function cartographerTools(pi: PiApi): void {
 				Type.Literal("import"),
 				Type.Literal("validate"),
 			]),
-			root: Type.Optional(Type.String({ description: "Project root. Defaults to current working directory." })),
+			root: Type.Optional(Type.String({ description: "Project root." })),
 			adrDir: Type.Optional(Type.String({ description: "Explicit ADR directory path relative to root." })),
 			topic: Type.Optional(Type.String({ description: "Cartographer topic under .plan/ for workflow ADRs." })),
 			request: Type.Optional(Type.String({ description: "User request/proposal text for evaluate." })),
@@ -1180,7 +1210,7 @@ export default function cartographerTools(pi: PiApi): void {
 			decisionKind: Type.Optional(Type.String({ description: "Decision kind metadata." })),
 			confidence: Type.Optional(Type.String({ description: "Decision confidence metadata." })),
 			sourceCommits: Type.Optional(Type.Array(Type.String(), { description: "Source commits." })),
-			validationReceipts: Type.Optional(Type.Array(Type.String(), { description: "Validation receipt ids." })),
+			validationReceipts: Type.Optional(Type.Array(Type.String(), { description: "Validation receipts." })),
 			includeSuperseded: Type.Optional(Type.Boolean({ description: "Include superseded/non-current ADRs." })),
 			limit: Type.Optional(Type.Number({ description: "Query result limit." })),
 			query: Type.Optional(Type.String({ description: "Search text for query." })),
@@ -1203,11 +1233,9 @@ export default function cartographerTools(pi: PiApi): void {
 			path: Type.Optional(Type.String({ description: "Repo-relative ADR Markdown path for import." })),
 			legacy: Type.Optional(Type.Boolean({ description: "Mark imported ADR as legacy." })),
 			importNote: Type.Optional(Type.String({ description: "Required note for receiptless legacy import." })),
-			maxOutputChars: Type.Optional(
-				Type.Number({ description: "Inline output budget before saving a full-output receipt." }),
-			),
-			outputPath: Type.Optional(Type.String({ description: "Optional full-output path for oversized output." })),
-			raw: Type.Optional(Type.Boolean({ description: "Return raw command output instead of a compact receipt." })),
+			maxOutputChars: Type.Optional(Type.Number({ description: "Inline output budget." })),
+			outputPath: Type.Optional(Type.String({ description: "Full output path." })),
+			raw: Type.Optional(Type.Boolean({ description: "Return raw output." })),
 		}),
 		async execute(_toolCallId, rawParams, signal) {
 			const params = rawParams as CartographerAdrParams;
@@ -1245,8 +1273,8 @@ export default function cartographerTools(pi: PiApi): void {
 				Type.Literal("evidence-manifest-summary"),
 				Type.Literal("phase-summary"),
 			]),
-			root: Type.Optional(Type.String({ description: "Project root. Defaults to current working directory." })),
-			topic: Type.Optional(Type.String({ description: "Cartographer topic under .plan/." })),
+			root: Type.Optional(Type.String({ description: "Project root." })),
+			topic: Type.Optional(Type.String({ description: "Cartographer topic." })),
 			artifact: Type.Optional(
 				Type.Union(
 					[
@@ -1272,11 +1300,9 @@ export default function cartographerTools(pi: PiApi): void {
 			id: Type.Optional(Type.String({ description: "Record id for show-record." })),
 			limit: Type.Optional(Type.Number({ description: "Compact record limit." })),
 			phaseId: Type.Optional(Type.String({ description: "Optional phase id for phase-summary." })),
-			maxOutputChars: Type.Optional(
-				Type.Number({ description: "Inline output budget before saving a full-output receipt." }),
-			),
-			outputPath: Type.Optional(Type.String({ description: "Optional full-output path for oversized output." })),
-			raw: Type.Optional(Type.Boolean({ description: "Return raw command output instead of a compact receipt." })),
+			maxOutputChars: Type.Optional(Type.Number({ description: "Inline output budget." })),
+			outputPath: Type.Optional(Type.String({ description: "Full output path." })),
+			raw: Type.Optional(Type.Boolean({ description: "Return raw output." })),
 		}),
 		async execute(_toolCallId, rawParams, signal) {
 			const params = rawParams as CartographerArtifactsParams;
@@ -1322,8 +1348,8 @@ export default function cartographerTools(pi: PiApi): void {
 			"Do not confuse cartographer_state compact-generate with actual Pi context compaction; compact-generate only writes resume state.",
 		],
 		parameters: Type.Object({
-			topic: Type.Optional(Type.String({ description: "Cartographer topic under .plan/ and .cartographer/." })),
-			root: Type.Optional(Type.String({ description: "Project root. Defaults to current working directory." })),
+			topic: Type.Optional(Type.String({ description: "Cartographer topic." })),
+			root: Type.Optional(Type.String({ description: "Project root." })),
 			trigger: Type.Optional(
 				Type.String({ description: "Compaction trigger, such as phase-end-P1 or context-threshold-60." }),
 			),
@@ -1339,11 +1365,9 @@ export default function cartographerTools(pi: PiApi): void {
 				Type.Number({ description: "Context threshold percent that caused the request." }),
 			),
 			cooldownMs: Type.Optional(Type.Number({ description: "Duplicate trigger cooldown in milliseconds." })),
-			maxOutputChars: Type.Optional(
-				Type.Number({ description: "Inline output budget before saving a full-output receipt." }),
-			),
-			outputPath: Type.Optional(Type.String({ description: "Optional full-output path for oversized output." })),
-			raw: Type.Optional(Type.Boolean({ description: "Return raw command output instead of a compact receipt." })),
+			maxOutputChars: Type.Optional(Type.Number({ description: "Inline output budget." })),
+			outputPath: Type.Optional(Type.String({ description: "Full output path." })),
+			raw: Type.Optional(Type.Boolean({ description: "Return raw output." })),
 		}),
 		async execute(_toolCallId, rawParams, signal, _onUpdate, ctx) {
 			const params = rawParams as CartographerCompactContextParams;
@@ -1372,7 +1396,7 @@ export default function cartographerTools(pi: PiApi): void {
 			"Read .cartographer/<topic>/state.json and journal.jsonl directly when useful, but mutate them through cartographer_state commands.",
 			"Do not use cartographer_state to create a duplicate plan graph; .plan/<topic>/plan.md and plan JSONL remain authoritative.",
 			"Use journal-append only for important durable lessons/gotchas/constraints, not raw logs, receipts, transcripts, or routine tool calls.",
-			"Use compact-generate for validated state compaction; use state-resume for bounded read-only context injection data.",
+			"Use compact-generate for validated state compaction; use resume-primer for budgeted implementation handoff and state-resume for full bounded context injection data.",
 			"Treat .cartographer/current.json as a git-ignored local hint only; ignore it when stale or invalid.",
 		],
 		parameters: Type.Object({
@@ -1387,9 +1411,10 @@ export default function cartographerTools(pi: PiApi): void {
 				Type.Literal("current-set"),
 				Type.Literal("compact-generate"),
 				Type.Literal("state-resume"),
+				Type.Literal("resume-primer"),
 			]),
-			root: Type.Optional(Type.String({ description: "Project root. Defaults to current working directory." })),
-			topic: Type.String({ description: "Cartographer topic under .plan/ and .cartographer/." }),
+			root: Type.Optional(Type.String({ description: "Project root." })),
+			topic: Type.String({ description: "Cartographer topic." }),
 			nextAction: Type.Optional(Type.Any({ description: "Next action object for state-set-next." })),
 			workingSet: Type.Optional(Type.Any({ description: "Working set object for state-set-working-set." })),
 			receiptId: Type.Optional(
@@ -1405,12 +1430,13 @@ export default function cartographerTools(pi: PiApi): void {
 			worktreeId: Type.Optional(Type.String({ description: "Optional worktree id for current-set." })),
 			gitBranch: Type.Optional(Type.String({ description: "Optional git branch for current-set." })),
 			lastSeenCommit: Type.Optional(Type.String({ description: "Optional commit SHA for current-set." })),
-			maxJournal: Type.Optional(Type.Number({ description: "Maximum selected journal records for state-resume." })),
-			maxOutputChars: Type.Optional(
-				Type.Number({ description: "Inline output budget before saving a full-output receipt." }),
+			maxJournal: Type.Optional(
+				Type.Number({ description: "Maximum selected journal records for state-resume/resume-primer." }),
 			),
-			outputPath: Type.Optional(Type.String({ description: "Optional full-output path for oversized output." })),
-			raw: Type.Optional(Type.Boolean({ description: "Return raw command output instead of a compact receipt." })),
+			primerMaxChars: Type.Optional(Type.Number({ description: "Character budget for resume-primer output." })),
+			maxOutputChars: Type.Optional(Type.Number({ description: "Inline output budget." })),
+			outputPath: Type.Optional(Type.String({ description: "Full output path." })),
+			raw: Type.Optional(Type.Boolean({ description: "Return raw output." })),
 		}),
 		async execute(_toolCallId, rawParams, signal) {
 			const params = rawParams as CartographerStateParams;
@@ -1436,6 +1462,7 @@ export default function cartographerTools(pi: PiApi): void {
 			if (params.gitBranch) args.push("--git-branch", params.gitBranch);
 			if (params.lastSeenCommit) args.push("--last-seen-commit", params.lastSeenCommit);
 			if (params.maxJournal) args.push("--max-journal", String(params.maxJournal));
+			if (params.primerMaxChars) args.push("--max-chars", String(params.primerMaxChars));
 			return runCommand("node", ["--experimental-strip-types", stateScript, ...args], signal, {
 				maxOutputChars: params.maxOutputChars,
 				outputPath: params.outputPath,
@@ -1457,7 +1484,7 @@ export default function cartographerTools(pi: PiApi): void {
 		],
 		parameters: Type.Object({
 			action: Type.Union([Type.Literal("run"), Type.Literal("complete-item")]),
-			root: Type.Optional(Type.String({ description: "Project root. Defaults to current working directory." })),
+			root: Type.Optional(Type.String({ description: "Project root." })),
 			topic: Type.Optional(Type.String({ description: "Cartographer topic under .plan/ for complete-item." })),
 			command: Type.Optional(Type.String({ description: "Validation command to run via the shell." })),
 			phaseId: Type.Optional(Type.String({ description: "Plan phase ID, such as P4." })),
@@ -1472,7 +1499,7 @@ export default function cartographerTools(pi: PiApi): void {
 			),
 			timeoutSec: Type.Optional(Type.Number({ description: "Timeout seconds for the validation command." })),
 			outputPath: Type.Optional(Type.String({ description: "Optional full-output path for wrapper output shaping." })),
-			raw: Type.Optional(Type.Boolean({ description: "Return raw command output instead of a compact receipt." })),
+			raw: Type.Optional(Type.Boolean({ description: "Return raw output." })),
 		}),
 		async execute(_toolCallId, rawParams, signal) {
 			const params = rawParams as CartographerValidationParams;
@@ -1530,15 +1557,15 @@ export default function cartographerTools(pi: PiApi): void {
 		],
 		parameters: Type.Object({
 			action: Type.Literal("append"),
-			root: Type.Optional(Type.String({ description: "Project root. Defaults to current working directory." })),
-			topic: Type.String({ description: "Cartographer topic under .plan/." }),
+			root: Type.Optional(Type.String({ description: "Project root." })),
+			topic: Type.String({ description: "Cartographer topic." }),
 			kind: Type.String({ description: "Receipt kind supported by cartographer_workflow.ts." }),
 			summary: Type.String({ description: "Compact receipt summary." }),
-			phaseId: Type.Optional(Type.String({ description: "Optional phase id." })),
+			phaseId: Type.Optional(Type.String({ description: "Phase id." })),
 			receiptId: Type.Optional(Type.String({ description: "Optional explicit receipt id." })),
 			maxOutputChars: Type.Optional(Type.Number({ description: "Inline output budget." })),
-			outputPath: Type.Optional(Type.String({ description: "Optional full-output path for oversized output." })),
-			raw: Type.Optional(Type.Boolean({ description: "Return raw command output instead of a compact receipt." })),
+			outputPath: Type.Optional(Type.String({ description: "Full output path." })),
+			raw: Type.Optional(Type.Boolean({ description: "Return raw output." })),
 		}),
 		async execute(_toolCallId, rawParams, signal) {
 			const params = rawParams as CartographerReceiptParams;
@@ -1576,15 +1603,15 @@ export default function cartographerTools(pi: PiApi): void {
 		],
 		parameters: Type.Object({
 			action: Type.Union([Type.Literal("create"), Type.Literal("update")]),
-			root: Type.Optional(Type.String({ description: "Project root. Defaults to current working directory." })),
-			topic: Type.String({ description: "Cartographer topic under .plan/." }),
+			root: Type.Optional(Type.String({ description: "Project root." })),
+			topic: Type.String({ description: "Cartographer topic." }),
 			phaseId: Type.String({ description: "Phase id for the context pack." }),
 			summary: Type.String({ description: "Compact context summary." }),
 			artifact: Type.Optional(Type.Array(Type.String(), { description: "Artifact paths to cite." })),
 			validationReceipt: Type.Optional(Type.Array(Type.String(), { description: "Validation receipt ids to cite." })),
 			maxOutputChars: Type.Optional(Type.Number({ description: "Inline output budget." })),
-			outputPath: Type.Optional(Type.String({ description: "Optional full-output path for oversized output." })),
-			raw: Type.Optional(Type.Boolean({ description: "Return raw command output instead of a compact receipt." })),
+			outputPath: Type.Optional(Type.String({ description: "Full output path." })),
+			raw: Type.Optional(Type.Boolean({ description: "Return raw output." })),
 		}),
 		async execute(_toolCallId, rawParams, signal) {
 			const params = rawParams as CartographerContextPackParams;
@@ -1629,18 +1656,18 @@ export default function cartographerTools(pi: PiApi): void {
 				Type.Literal("reject"),
 				Type.Literal("advance"),
 			]),
-			root: Type.Optional(Type.String({ description: "Project root. Defaults to current working directory." })),
-			topic: Type.String({ description: "Cartographer topic under .plan/." }),
+			root: Type.Optional(Type.String({ description: "Project root." })),
+			topic: Type.String({ description: "Cartographer topic." }),
 			gate: Type.Optional(Type.String({ description: "Approval/transition gate." })),
-			phaseId: Type.Optional(Type.String({ description: "Optional phase id." })),
+			phaseId: Type.Optional(Type.String({ description: "Phase id." })),
 			summary: Type.Optional(Type.String({ description: "Transition summary." })),
 			approvedBy: Type.Optional(Type.String({ description: "Explicit human approver label." })),
 			reason: Type.Optional(Type.String({ description: "Rejection reason." })),
 			to: Type.Optional(Type.String({ description: "Lifecycle state for advance." })),
 			ci: Type.Optional(Type.Boolean({ description: "Require explicit approvedBy for approval." })),
 			maxOutputChars: Type.Optional(Type.Number({ description: "Inline output budget." })),
-			outputPath: Type.Optional(Type.String({ description: "Optional full-output path for oversized output." })),
-			raw: Type.Optional(Type.Boolean({ description: "Return raw command output instead of a compact receipt." })),
+			outputPath: Type.Optional(Type.String({ description: "Full output path." })),
+			raw: Type.Optional(Type.Boolean({ description: "Return raw output." })),
 		}),
 		async execute(_toolCallId, rawParams, signal) {
 			const params = rawParams as CartographerTransitionParams;
@@ -1680,12 +1707,12 @@ export default function cartographerTools(pi: PiApi): void {
 		],
 		parameters: Type.Object({
 			action: Type.Union([Type.Literal("generate-graph"), Type.Literal("finalize")]),
-			root: Type.Optional(Type.String({ description: "Project root. Defaults to current working directory." })),
-			topic: Type.String({ description: "Cartographer topic under .plan/." }),
+			root: Type.Optional(Type.String({ description: "Project root." })),
+			topic: Type.String({ description: "Cartographer topic." }),
 			summary: Type.Optional(Type.String({ description: "Finalize/context summary." })),
 			maxOutputChars: Type.Optional(Type.Number({ description: "Inline output budget." })),
-			outputPath: Type.Optional(Type.String({ description: "Optional full-output path for oversized output." })),
-			raw: Type.Optional(Type.Boolean({ description: "Return raw command output instead of a compact receipt." })),
+			outputPath: Type.Optional(Type.String({ description: "Full output path." })),
+			raw: Type.Optional(Type.Boolean({ description: "Return raw output." })),
 		}),
 		async execute(_toolCallId, rawParams, signal) {
 			const params = rawParams as CartographerPlanParams;
@@ -1718,13 +1745,13 @@ export default function cartographerTools(pi: PiApi): void {
 		],
 		parameters: Type.Object({
 			action: Type.Literal("set"),
-			root: Type.Optional(Type.String({ description: "Project root. Defaults to current working directory." })),
-			topic: Type.String({ description: "Cartographer topic under .plan/." }),
+			root: Type.Optional(Type.String({ description: "Project root." })),
+			topic: Type.String({ description: "Cartographer topic." }),
 			id: Type.String({ description: "Phase, task, or validation id such as P3, P3.T1, or P3.V1." }),
 			status: Type.String({ description: "Status: pending, in-progress, complete, or blocked." }),
 			maxOutputChars: Type.Optional(Type.Number({ description: "Inline output budget." })),
-			outputPath: Type.Optional(Type.String({ description: "Optional full-output path for oversized output." })),
-			raw: Type.Optional(Type.Boolean({ description: "Return raw command output instead of a compact receipt." })),
+			outputPath: Type.Optional(Type.String({ description: "Full output path." })),
+			raw: Type.Optional(Type.Boolean({ description: "Return raw output." })),
 		}),
 		async execute(_toolCallId, rawParams, signal) {
 			const params = rawParams as CartographerPlanStatusParams;
@@ -1767,15 +1794,15 @@ export default function cartographerTools(pi: PiApi): void {
 				Type.Literal("compact"),
 				Type.Literal("finalize"),
 			]),
-			root: Type.Optional(Type.String({ description: "Project root. Defaults to current working directory." })),
-			topic: Type.String({ description: "Cartographer topic under .plan/." }),
+			root: Type.Optional(Type.String({ description: "Project root." })),
+			topic: Type.String({ description: "Cartographer topic." }),
 			path: Type.Optional(Type.String({ description: "Optional path to check against active working_set for step." })),
 			receiptId: Type.Optional(Type.Array(Type.String(), { description: "Validation receipt ids for record." })),
 			trigger: Type.Optional(Type.String({ description: "Compaction trigger for compact." })),
 			summary: Type.Optional(Type.String({ description: "Compact/finalize summary." })),
 			maxOutputChars: Type.Optional(Type.Number({ description: "Inline output budget." })),
-			outputPath: Type.Optional(Type.String({ description: "Optional full-output path for oversized output." })),
-			raw: Type.Optional(Type.Boolean({ description: "Return raw command output instead of a compact receipt." })),
+			outputPath: Type.Optional(Type.String({ description: "Full output path." })),
+			raw: Type.Optional(Type.Boolean({ description: "Return raw output." })),
 		}),
 		async execute(_toolCallId, rawParams, signal) {
 			const params = rawParams as CartographerImplementParams;
@@ -1820,8 +1847,8 @@ export default function cartographerTools(pi: PiApi): void {
 				Type.Literal("output-capture"),
 				Type.Literal("dependency-evaluation"),
 			]),
-			root: Type.Optional(Type.String({ description: "Project root. Defaults to current working directory." })),
-			topic: Type.String({ description: "Cartographer topic under .plan/." }),
+			root: Type.Optional(Type.String({ description: "Project root." })),
+			topic: Type.String({ description: "Cartographer topic." }),
 			phaseId: Type.String({ description: "Phase id for the handoff." }),
 			decision: Type.Optional(Type.String({ description: "PASS/FAIL or structured compass decision." })),
 			reportPath: Type.Optional(Type.String({ description: "Report path for auditor/output capture." })),
@@ -1835,12 +1862,12 @@ export default function cartographerTools(pi: PiApi): void {
 			recommendation: Type.Optional(
 				Type.String({ description: "Dependency recommendation: keep, patch, or replace." }),
 			),
-			validationReceipt: Type.Optional(Type.Array(Type.String(), { description: "Validation receipt ids." })),
+			validationReceipt: Type.Optional(Type.Array(Type.String(), { description: "Validation receipts." })),
 			failureMode: Type.Optional(Type.String({ description: "Fallback failure mode." })),
 			fallback: Type.Optional(Type.String({ description: "Approved fallback reviewer/role." })),
 			maxOutputChars: Type.Optional(Type.Number({ description: "Inline output budget." })),
-			outputPath: Type.Optional(Type.String({ description: "Optional full-output path for oversized output." })),
-			raw: Type.Optional(Type.Boolean({ description: "Return raw command output instead of a compact receipt." })),
+			outputPath: Type.Optional(Type.String({ description: "Full output path." })),
+			raw: Type.Optional(Type.Boolean({ description: "Return raw output." })),
 		}),
 		async execute(_toolCallId, rawParams, signal) {
 			const params = rawParams as CartographerHandoffParams;
@@ -1895,8 +1922,8 @@ export default function cartographerTools(pi: PiApi): void {
 		],
 		parameters: Type.Object({
 			action: Type.Union([Type.Literal("init"), Type.Literal("finalize"), Type.Literal("adr-sync")]),
-			root: Type.Optional(Type.String({ description: "Project root. Defaults to current working directory." })),
-			topic: Type.String({ description: "Cartographer topic under .plan/." }),
+			root: Type.Optional(Type.String({ description: "Project root." })),
+			topic: Type.String({ description: "Cartographer topic." }),
 			title: Type.Optional(Type.String({ description: "Proposal title for init." })),
 			summary: Type.Optional(Type.String({ description: "Finalize/context summary." })),
 			adrRequired: Type.Optional(Type.Boolean({ description: "Whether ADR is required." })),
@@ -1905,8 +1932,8 @@ export default function cartographerTools(pi: PiApi): void {
 			adrToolMode: Type.Optional(Type.String({ description: "ADR tool mode." })),
 			overrideRationale: Type.Optional(Type.String({ description: "Explicit override rationale." })),
 			maxOutputChars: Type.Optional(Type.Number({ description: "Inline output budget." })),
-			outputPath: Type.Optional(Type.String({ description: "Optional full-output path for oversized output." })),
-			raw: Type.Optional(Type.Boolean({ description: "Return raw command output instead of a compact receipt." })),
+			outputPath: Type.Optional(Type.String({ description: "Full output path." })),
+			raw: Type.Optional(Type.Boolean({ description: "Return raw output." })),
 		}),
 		async execute(_toolCallId, rawParams, signal) {
 			const params = rawParams as CartographerProposalParams;
@@ -1946,16 +1973,16 @@ export default function cartographerTools(pi: PiApi): void {
 		],
 		parameters: Type.Object({
 			action: Type.Union([Type.Literal("add-source"), Type.Literal("add-fact"), Type.Literal("support-fact")]),
-			root: Type.Optional(Type.String({ description: "Project root. Defaults to current working directory." })),
-			topic: Type.String({ description: "Cartographer topic under .plan/." }),
+			root: Type.Optional(Type.String({ description: "Project root." })),
+			topic: Type.String({ description: "Cartographer topic." }),
 			title: Type.Optional(Type.String({ description: "Source or fact title." })),
 			url: Type.Optional(Type.String({ description: "Optional source URL." })),
 			factId: Type.Optional(Type.String({ description: "Fact node id for support-fact." })),
 			sourceId: Type.Optional(Type.String({ description: "Source node id." })),
 			id: Type.Optional(Type.String({ description: "Optional explicit node id." })),
 			maxOutputChars: Type.Optional(Type.Number({ description: "Inline output budget." })),
-			outputPath: Type.Optional(Type.String({ description: "Optional full-output path for oversized output." })),
-			raw: Type.Optional(Type.Boolean({ description: "Return raw command output instead of a compact receipt." })),
+			outputPath: Type.Optional(Type.String({ description: "Full output path." })),
+			raw: Type.Optional(Type.Boolean({ description: "Return raw output." })),
 		}),
 		async execute(_toolCallId, rawParams, signal) {
 			const params = rawParams as CartographerFactParams;
@@ -2028,11 +2055,9 @@ export default function cartographerTools(pi: PiApi): void {
 					description: "Merge with existing record on upsert. Defaults true.",
 				}),
 			),
-			maxOutputChars: Type.Optional(
-				Type.Number({ description: "Inline output budget before saving a full-output receipt." }),
-			),
-			outputPath: Type.Optional(Type.String({ description: "Optional full-output path for oversized output." })),
-			raw: Type.Optional(Type.Boolean({ description: "Return raw command output instead of a compact receipt." })),
+			maxOutputChars: Type.Optional(Type.Number({ description: "Inline output budget." })),
+			outputPath: Type.Optional(Type.String({ description: "Full output path." })),
+			raw: Type.Optional(Type.Boolean({ description: "Return raw output." })),
 		}),
 		async execute(_toolCallId, rawParams, signal) {
 			const params = rawParams as CartographerJsonlParams;

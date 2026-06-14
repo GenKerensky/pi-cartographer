@@ -86,7 +86,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@types/node": "^22.15.30",
+    "@types/node": "^25.9.3",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@vitest/browser-playwright": "^4.1.8",
@@ -100,7 +100,7 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "check:scripts": "python -m py_compile skills/index-project/scripts/index_project.py skills/plan/scripts/validate_planning_graph.py skills/plan/scripts/private_artifacts.py skills/plan/scripts/analyze_session.py skills/plan/scripts/validation_runner.py skills/plan/scripts/workflow_benchmark.py skills/plan/scripts/adr_records.py skills/plan/scripts/requirements_records.py skills/plan/scripts/check_skill_language.py && node --check bin/cartographer-dashboard.js && node --experimental-strip-types --check dashboard/src/server/cli.ts && node --experimental-strip-types --check dashboard/src/server/live-reload.ts && node --experimental-strip-types --check dashboard/src/server/runtime.ts && node --experimental-strip-types --check skills/plan/scripts/manage_jsonl.ts && node --experimental-strip-types --check skills/plan/scripts/cartographer_state.ts && node --experimental-strip-types --check skills/plan/scripts/cartographer_workflow.ts && node --experimental-strip-types --check skills/plan/scripts/model_config.ts && node --experimental-strip-types --check extensions/cartographer-tools.ts",
+    "check:scripts": "python -m py_compile skills/index-project/scripts/index_project.py skills/plan/scripts/validate_planning_graph.py skills/plan/scripts/private_artifacts.py skills/plan/scripts/analyze_session.py skills/plan/scripts/validation_runner.py skills/plan/scripts/workflow_benchmark.py skills/plan/scripts/adr_records.py skills/plan/scripts/requirements_records.py skills/plan/scripts/check_skill_language.py skills/plan/scripts/context_inventory.py && node --check bin/cartographer-dashboard.js && node --experimental-strip-types --check dashboard/src/server/cli.ts && node --experimental-strip-types --check dashboard/src/server/live-reload.ts && node --experimental-strip-types --check dashboard/src/server/runtime.ts && node --experimental-strip-types --check skills/plan/scripts/manage_jsonl.ts && node --experimental-strip-types --check skills/plan/scripts/cartographer_state.ts && node --experimental-strip-types --check skills/plan/scripts/cartographer_workflow.ts && node --experimental-strip-types --check skills/plan/scripts/model_config.ts && node --experimental-strip-types --check extensions/cartographer-tools.ts",
     "dashboard:dev": "cd dashboard && vite dev",
     "dashboard:build": "cd dashboard && vite build",
     "dashboard:start": "cd dashboard && node .output/server/index.mjs",

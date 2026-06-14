@@ -2,7 +2,6 @@
 name: "design"
 description: "Cartographer design phase: create graph-backed design decisions and alternatives after requirements, before plan generation."
 version: 1
-created: "2026-06-12"
 updated: "2026-06-12"
 ---
 

@@ -1,0 +1,189 @@
+{
+  "schema_version": 1,
+  "topic": "context-bloat-audit",
+  "source_status": "hashes-valid",
+  "source_refs": {
+    "plan_md": {
+      "path": ".plan/context-bloat-audit/plan.md",
+      "sha256": "sha256:195a5e58378bf396b756f4a28b9296dfd32655a7f4019be09cde9f7d3b380f22"
+    },
+    "plan_nodes": {
+      "path": ".plan/context-bloat-audit/plan.nodes.jsonl",
+      "sha256": "sha256:43f02de02f338db8420890910f2042a2cd5775cb5423e00816318bb4da8ea76d"
+    },
+    "plan_edges": {
+      "path": ".plan/context-bloat-audit/plan.edges.jsonl",
+      "sha256": "sha256:90090c68bb0ec3beb91bfbe1f686780cfb5f068d01053071b36093582c490117"
+    },
+    "receipts": {
+      "path": ".plan/context-bloat-audit/receipts.jsonl",
+      "sha256": "sha256:adfd59ebcc1284dfd9e5351bb10e71b2b575b2550e97773699c4b46bb0d20986"
+    },
+    "context_packs": {
+      "path": ".plan/context-bloat-audit/context-packs.jsonl",
+      "sha256": "sha256:0a816dc4c316fd87c5029dd703accdae9e0d2a1b42bbd2897b98501082cd5048"
+    }
+  },
+  "current_phase_id": "P6",
+  "active_task_ids": [],
+  "active_validation_ids": [],
+  "next_action": {
+    "id": "P6.T5",
+    "kind": "human-approval-gate",
+    "summary": "Implementation is ready for human review; approve implementation gate after reviewing residual risks and final evidence.",
+    "phase_id": "P6",
+    "task_id": "P6.T5",
+    "files_to_inspect": [
+      ".plan/context-bloat-audit/evidence/P6-auditor-report.md",
+      ".plan/context-bloat-audit/evidence/final-check.md",
+      "docs/adr/0011-use-hybrid-context-reduction-for-cartographer-workflows.md",
+      "docs/requirements.md",
+      ".plan/context-bloat-audit/plan.md"
+    ]
+  },
+  "working_set": {
+    "write_allowed": [
+      {
+        "path": ".plan/context-bloat-audit/evidence/context-inventory-final*.json",
+        "reason": "P6 final inventory evidence"
+      },
+      {
+        "path": ".plan/context-bloat-audit/evidence/context-inventory-final*.md",
+        "reason": "P6 final inventory evidence"
+      },
+      {
+        "path": ".plan/context-bloat-audit/evidence/final-check*.md",
+        "reason": "P6 final validation evidence"
+      },
+      {
+        "path": ".plan/context-bloat-audit/evidence/P6-*.md",
+        "reason": "P6 auditor/fold evidence"
+      },
+      {
+        "path": ".plan/context-bloat-audit/plan.md",
+        "reason": "P6 status updates"
+      },
+      {
+        "path": ".plan/context-bloat-audit/plan.nodes.jsonl",
+        "reason": "P6 status updates"
+      },
+      {
+        "path": ".plan/context-bloat-audit/receipts.jsonl",
+        "reason": "P6 validation/audit receipts"
+      },
+      {
+        "path": ".plan/context-bloat-audit/context-packs.jsonl",
+        "reason": "P6 context pack"
+      },
+      {
+        "path": "docs/**",
+        "reason": "P6 requirements/docs fold if approved or applicable"
+      },
+      {
+        "path": "docs/adr/**",
+        "reason": "P6 ADR output if repository ADR directory is used"
+      }
+    ],
+    "read_only": [
+      {
+        "path": ".plan/context-bloat-audit/evidence/context-inventory-p0.json",
+        "reason": "baseline comparison"
+      },
+      {
+        "path": ".plan/context-bloat-audit/evidence/tool-inventory.json",
+        "reason": "P5 tool/schema outcome"
+      },
+      {
+        "path": ".plan/context-bloat-audit/requirements.md",
+        "reason": "fold/coverage reference"
+      },
+      {
+        "path": ".plan/context-bloat-audit/design.md",
+        "reason": "ADR/fold reference"
+      }
+    ],
+    "forbidden": [
+      {
+        "path": ".plan/_private/**",
+        "reason": "raw private inputs are off-limits"
+      },
+      {
+        "path": ".plan/_index/**",
+        "reason": "generated index/cache artifacts"
+      }
+    ]
+  },
+  "known_failures": [],
+  "last_validation_receipt_ids": [
+    "receipt:P0:validation:2026-06-14T05:18:34+00:00",
+    "receipt:P0:validation:2026-06-14T05:18:41+00:00",
+    "receipt:P0:validation:2026-06-14T05:18:46+00:00",
+    "receipt:P0:validation:2026-06-14T05:19:35+00:00",
+    "receipt:context-bloat-audit:audit:2026-06-14T05:21:17Z",
+    "receipt:P1:validation:2026-06-14T05:26:10+00:00",
+    "receipt:P1:validation:2026-06-14T05:26:23+00:00",
+    "receipt:context-bloat-audit:validation:2026-06-14T05:26:28Z",
+    "receipt:P1:validation:2026-06-14T05:26:34+00:00",
+    "receipt:P1:validation:2026-06-14T05:26:41+00:00",
+    "receipt:context-bloat-audit:audit:2026-06-14T05:29:06Z",
+    "receipt:P2:validation:2026-06-14T05:47:43+00:00",
+    "receipt:P2:validation:2026-06-14T05:47:48+00:00",
+    "receipt:context-bloat-audit:validation:2026-06-14T05:47:52Z",
+    "receipt:P2:validation:2026-06-14T05:47:57+00:00",
+    "receipt:P2:validation:2026-06-14T05:48:21+00:00",
+    "receipt:context-bloat-audit:audit:2026-06-14T05:50:19Z",
+    "receipt:P3:validation:2026-06-14T05:54:11+00:00",
+    "receipt:P3:validation:2026-06-14T05:54:17+00:00",
+    "receipt:context-bloat-audit:validation:2026-06-14T05:54:21Z",
+    "receipt:P3:validation:2026-06-14T05:58:13+00:00",
+    "receipt:context-bloat-audit:audit:2026-06-14T05:59:37Z",
+    "receipt:P4:validation:2026-06-14T16:35:03+00:00",
+    "receipt:context-bloat-audit:audit:2026-06-14T16:37:04Z",
+    "receipt:P4:validation:2026-06-14T16:37:44+00:00",
+    "receipt:P5:validation:2026-06-14T16:42:15+00:00",
+    "receipt:P5:validation:2026-06-14T16:42:20+00:00",
+    "receipt:context-bloat-audit:validation:2026-06-14T16:42:25Z",
+    "receipt:P5:validation:2026-06-14T16:43:25+00:00",
+    "receipt:P5:validation:2026-06-14T16:45:40+00:00",
+    "receipt:context-bloat-audit:audit:2026-06-14T16:47:00Z",
+    "receipt:P6:validation:2026-06-14T16:48:32+00:00",
+    "receipt:P6:validation:2026-06-14T16:49:49+00:00",
+    "receipt:P6:validation:2026-06-14T16:50:14+00:00",
+    "receipt:context-bloat-audit:validation:2026-06-14T16:50:47Z",
+    "receipt:P6:validation:2026-06-14T16:52:35+00:00",
+    "receipt:context-bloat-audit:audit:2026-06-14T17:04:26Z",
+    "receipt:P6:validation:2026-06-14T17:04:56+00:00"
+  ],
+  "journal_refs": [
+    "journal:20260614T052134Z:compact",
+    "journal:20260614T052929Z:compact",
+    "journal:20260614T055033Z:compact",
+    "journal:20260614T055949Z:compact",
+    "journal:20260614T163802Z:compact",
+    "journal:20260614T164721Z:compact"
+  ],
+  "resume": {
+    "template_id": "cartographer.single_writer.resume.v1",
+    "resume_order": [
+      ".cartographer/context-bloat-audit/state.json",
+      ".cartographer/context-bloat-audit/journal.jsonl",
+      ".plan/context-bloat-audit/plan.md",
+      ".plan/context-bloat-audit/receipts.jsonl"
+    ],
+    "expected_first_response": [
+      "current_phase",
+      "next_action",
+      "files_to_inspect"
+    ],
+    "must_ignore": [
+      "prior chat speculation",
+      "stale generated snippets"
+    ]
+  },
+  "updated_at": "2026-06-14T17:06:40Z",
+  "stale_reason": "Implementation compact requested after artifact updates.",
+  "compaction": {
+    "trigger": "phase-end-P5",
+    "compacted_at": "2026-06-14T16:47:21Z"
+  }
+}

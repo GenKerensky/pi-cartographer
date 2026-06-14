@@ -2,7 +2,6 @@
 name: "requirements"
 description: "Cartographer requirements phase: resolve post-research interview decisions and create scope-gated topic-local requirements deltas before design and planning."
 version: 1
-created: "2026-06-12"
 updated: "2026-06-12"
 ---
 

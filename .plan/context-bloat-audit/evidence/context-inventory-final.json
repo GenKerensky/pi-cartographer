@@ -1,0 +1,537 @@
+{
+  "budgets": {
+    "child-agents": 5000,
+    "resume-primer": 4000,
+    "resume-primer-extended": 8000,
+    "root-agents": 4000,
+    "skill-description": 1200,
+    "skill-kernel:implement": 8000,
+    "skill-kernel:plan": 10000,
+    "skill-kernel:proposal": 10000,
+    "skill-reference": 8000,
+    "tool-schema-estimate": 12000
+  },
+  "changed_paths": [],
+  "counts": {
+    "items": 26,
+    "over_budget": 6,
+    "skill_descriptions": 9,
+    "tool_details": 18
+  },
+  "items": [
+    {
+      "approx_tokens": 39972,
+      "budget": 8000,
+      "category": "topic-resume-source",
+      "chars": 159888,
+      "delta_chars": 100974,
+      "lines": 80,
+      "over_budget": true,
+      "path": ".plan/context-bloat-audit/receipts.jsonl",
+      "status": "measured"
+    },
+    {
+      "approx_tokens": 8837,
+      "budget": 12000,
+      "category": "tool-schema-estimate",
+      "chars": 35349,
+      "delta_chars": 8173,
+      "lines": 18,
+      "notes": "registered_tools=18; prompt_chars=1363; schema_markers=644",
+      "over_budget": true,
+      "path": "extensions/cartographer-tools.ts",
+      "status": "estimated"
+    },
+    {
+      "approx_tokens": 7155,
+      "budget": 12000,
+      "category": "tool-schema-phase-estimate",
+      "chars": 28620,
+      "lines": 13,
+      "notes": "tools=cartographer_adr,cartographer_artifacts,cartographer_compact_context,cartographer_context_pack,cartographer_handoff,cartographer_implement,cartographer_index,cartographer_jsonl,cartographer_plan_status,cartographer_receipt,cartographer_state,cartographer_transition,cartographer_validation",
+      "over_budget": true,
+      "path": "extensions/cartographer-tools.ts#implementation",
+      "status": "estimated"
+    },
+    {
+      "approx_tokens": 7076,
+      "budget": 12000,
+      "category": "tool-schema-phase-estimate",
+      "chars": 28303,
+      "lines": 14,
+      "notes": "tools=cartographer_adr,cartographer_artifacts,cartographer_context_pack,cartographer_evidence,cartographer_fact,cartographer_handoff,cartographer_index,cartographer_jsonl,cartographer_plan,cartographer_proposal,cartographer_receipt,cartographer_session,cartographer_transition,cartographer_validation",
+      "over_budget": true,
+      "path": "extensions/cartographer-tools.ts#proposal-design-planning",
+      "status": "estimated"
+    },
+    {
+      "approx_tokens": 2919,
+      "budget": 8000,
+      "category": "topic-resume-source",
+      "chars": 11677,
+      "delta_chars": 8186,
+      "lines": 11,
+      "over_budget": true,
+      "path": ".plan/context-bloat-audit/context-packs.jsonl",
+      "status": "measured"
+    },
+    {
+      "approx_tokens": 1834,
+      "budget": 10000,
+      "category": "skill-kernel:proposal",
+      "chars": 7335,
+      "delta_chars": -40363,
+      "lines": 174,
+      "notes": "high-use workflow skill",
+      "over_budget": false,
+      "path": "skills/proposal/SKILL.md",
+      "status": "measured"
+    },
+    {
+      "approx_tokens": 1664,
+      "budget": 8000,
+      "category": "skill-kernel:implement",
+      "chars": 6656,
+      "delta_chars": -21550,
+      "lines": 165,
+      "notes": "high-use workflow skill",
+      "over_budget": false,
+      "path": "skills/implement/SKILL.md",
+      "status": "measured"
+    },
+    {
+      "approx_tokens": 1646,
+      "budget": 10000,
+      "category": "skill-kernel:plan",
+      "chars": 6585,
+      "delta_chars": -34792,
+      "lines": 160,
+      "notes": "high-use workflow skill",
+      "over_budget": false,
+      "path": "skills/plan/SKILL.md",
+      "status": "measured"
+    },
+    {
+      "approx_tokens": 1620,
+      "budget": 4000,
+      "category": "resume-primer",
+      "chars": 6478,
+      "delta_chars": 2806,
+      "lines": 182,
+      "over_budget": true,
+      "path": ".cartographer/context-bloat-audit/state.json",
+      "status": "measured"
+    },
+    {
+      "approx_tokens": 987,
+      "budget": 5000,
+      "category": "child-agents",
+      "chars": 3949,
+      "delta_chars": -335,
+      "lines": 64,
+      "over_budget": false,
+      "path": "skills/AGENTS.md",
+      "status": "measured"
+    },
+    {
+      "approx_tokens": 661,
+      "budget": 4000,
+      "category": "root-agents",
+      "chars": 2643,
+      "delta_chars": -218,
+      "lines": 46,
+      "over_budget": false,
+      "path": "AGENTS.md",
+      "status": "measured"
+    },
+    {
+      "approx_tokens": 544,
+      "budget": 8000,
+      "category": "skill-reference",
+      "chars": 2178,
+      "lines": 55,
+      "notes": "implement",
+      "over_budget": false,
+      "path": "skills/implement/references/state-compaction.md",
+      "status": "measured"
+    },
+    {
+      "approx_tokens": 521,
+      "budget": 8000,
+      "category": "skill-reference",
+      "chars": 2085,
+      "lines": 69,
+      "notes": "plan",
+      "over_budget": false,
+      "path": "skills/plan/references/drafting-graph.md",
+      "status": "measured"
+    },
+    {
+      "approx_tokens": 519,
+      "budget": 8000,
+      "category": "skill-reference",
+      "chars": 2077,
+      "lines": 39,
+      "notes": "plan",
+      "over_budget": false,
+      "path": "skills/plan/references/validation-audit.md",
+      "status": "measured"
+    },
+    {
+      "approx_tokens": 516,
+      "budget": 8000,
+      "category": "skill-reference",
+      "chars": 2062,
+      "lines": 45,
+      "notes": "proposal",
+      "over_budget": false,
+      "path": "skills/proposal/references/mapping-facts.md",
+      "status": "measured"
+    },
+    {
+      "approx_tokens": 503,
+      "budget": 8000,
+      "category": "skill-reference",
+      "chars": 2011,
+      "lines": 38,
+      "notes": "implement",
+      "over_budget": false,
+      "path": "skills/implement/references/validation-gates.md",
+      "status": "measured"
+    },
+    {
+      "approx_tokens": 498,
+      "budget": 8000,
+      "category": "skill-reference",
+      "chars": 1991,
+      "lines": 48,
+      "notes": "proposal",
+      "over_budget": false,
+      "path": "skills/proposal/references/scope-next-artifacts.md",
+      "status": "measured"
+    },
+    {
+      "approx_tokens": 495,
+      "budget": 8000,
+      "category": "skill-reference",
+      "chars": 1979,
+      "lines": 45,
+      "notes": "proposal",
+      "over_budget": false,
+      "path": "skills/proposal/references/retrieval-delegation.md",
+      "status": "measured"
+    },
+    {
+      "approx_tokens": 489,
+      "budget": 8000,
+      "category": "skill-reference",
+      "chars": 1957,
+      "lines": 53,
+      "notes": "proposal",
+      "over_budget": false,
+      "path": "skills/proposal/references/intake-private-adr.md",
+      "status": "measured"
+    },
+    {
+      "approx_tokens": 482,
+      "budget": 8000,
+      "category": "skill-reference",
+      "chars": 1928,
+      "lines": 54,
+      "notes": "plan",
+      "over_budget": false,
+      "path": "skills/plan/references/retrieval-delegation.md",
+      "status": "measured"
+    },
+    {
+      "approx_tokens": 474,
+      "budget": 8000,
+      "category": "skill-reference",
+      "chars": 1897,
+      "lines": 43,
+      "notes": "plan",
+      "over_budget": false,
+      "path": "skills/plan/references/inputs-gates.md",
+      "status": "measured"
+    },
+    {
+      "approx_tokens": 467,
+      "budget": 8000,
+      "category": "skill-reference",
+      "chars": 1867,
+      "lines": 48,
+      "notes": "proposal",
+      "over_budget": false,
+      "path": "skills/proposal/references/validation-audit.md",
+      "status": "measured"
+    },
+    {
+      "approx_tokens": 450,
+      "budget": 8000,
+      "category": "skill-reference",
+      "chars": 1801,
+      "lines": 45,
+      "notes": "implement",
+      "over_budget": false,
+      "path": "skills/implement/references/execution-loop.md",
+      "status": "measured"
+    },
+    {
+      "approx_tokens": 409,
+      "budget": 8000,
+      "category": "skill-reference",
+      "chars": 1637,
+      "lines": 47,
+      "notes": "implement",
+      "over_budget": false,
+      "path": "skills/implement/references/retrieval-delegation.md",
+      "status": "measured"
+    },
+    {
+      "approx_tokens": 391,
+      "budget": 8000,
+      "category": "skill-reference",
+      "chars": 1563,
+      "lines": 38,
+      "notes": "implement",
+      "over_budget": false,
+      "path": "skills/implement/references/finalization-adr.md",
+      "status": "measured"
+    },
+    {
+      "approx_tokens": 205,
+      "budget": 8000,
+      "category": "skill-reference",
+      "chars": 821,
+      "delta_chars": 0,
+      "lines": 18,
+      "notes": "plan",
+      "over_budget": false,
+      "path": "skills/plan/references/context-inventory.md",
+      "status": "measured"
+    }
+  ],
+  "ok": true,
+  "root": "/var/home/falco/code/pi-cartographer/skill-context-optimization",
+  "skill_descriptions": [
+    {
+      "approx_tokens": 63,
+      "budget": 1200,
+      "description_chars": 252,
+      "name": "implement",
+      "over_budget": false,
+      "path": "skills/implement/SKILL.md"
+    },
+    {
+      "approx_tokens": 60,
+      "budget": 1200,
+      "description_chars": 239,
+      "name": "proposal",
+      "over_budget": false,
+      "path": "skills/proposal/SKILL.md"
+    },
+    {
+      "approx_tokens": 56,
+      "budget": 1200,
+      "description_chars": 223,
+      "name": "index-project",
+      "over_budget": false,
+      "path": "skills/index-project/SKILL.md"
+    },
+    {
+      "approx_tokens": 55,
+      "budget": 1200,
+      "description_chars": 219,
+      "name": "dashboard",
+      "over_budget": false,
+      "path": "skills/dashboard/SKILL.md"
+    },
+    {
+      "approx_tokens": 50,
+      "budget": 1200,
+      "description_chars": 202,
+      "name": "plan",
+      "over_budget": false,
+      "path": "skills/plan/SKILL.md"
+    },
+    {
+      "approx_tokens": 42,
+      "budget": 1200,
+      "description_chars": 169,
+      "name": "requirements",
+      "over_budget": false,
+      "path": "skills/requirements/SKILL.md"
+    },
+    {
+      "approx_tokens": 40,
+      "budget": 1200,
+      "description_chars": 160,
+      "name": "interview",
+      "over_budget": false,
+      "path": "skills/interview/SKILL.md"
+    },
+    {
+      "approx_tokens": 39,
+      "budget": 1200,
+      "description_chars": 156,
+      "name": "model-config",
+      "over_budget": false,
+      "path": "skills/model-config/SKILL.md"
+    },
+    {
+      "approx_tokens": 32,
+      "budget": 1200,
+      "description_chars": 130,
+      "name": "design",
+      "over_budget": false,
+      "path": "skills/design/SKILL.md"
+    }
+  ],
+  "tool_details": [
+    {
+      "approx_tokens": 1362,
+      "description_chars": 1083,
+      "estimated_chars": 5450,
+      "name": "cartographer_adr",
+      "prompt_snippet_chars": 71,
+      "schema_markers": 107
+    },
+    {
+      "approx_tokens": 1034,
+      "description_chars": 582,
+      "estimated_chars": 4136,
+      "name": "cartographer_index",
+      "prompt_snippet_chars": 56,
+      "schema_markers": 87
+    },
+    {
+      "approx_tokens": 773,
+      "description_chars": 861,
+      "estimated_chars": 3093,
+      "name": "cartographer_state",
+      "prompt_snippet_chars": 94,
+      "schema_markers": 53
+    },
+    {
+      "approx_tokens": 598,
+      "description_chars": 581,
+      "estimated_chars": 2391,
+      "name": "cartographer_handoff",
+      "prompt_snippet_chars": 70,
+      "schema_markers": 43
+    },
+    {
+      "approx_tokens": 538,
+      "description_chars": 308,
+      "estimated_chars": 2151,
+      "name": "cartographer_artifacts",
+      "prompt_snippet_chars": 101,
+      "schema_markers": 43
+    },
+    {
+      "approx_tokens": 530,
+      "description_chars": 492,
+      "estimated_chars": 2122,
+      "name": "cartographer_evidence",
+      "prompt_snippet_chars": 89,
+      "schema_markers": 38
+    },
+    {
+      "approx_tokens": 450,
+      "description_chars": 439,
+      "estimated_chars": 1800,
+      "name": "cartographer_jsonl",
+      "prompt_snippet_chars": 63,
+      "schema_markers": 32
+    },
+    {
+      "approx_tokens": 446,
+      "description_chars": 516,
+      "estimated_chars": 1784,
+      "name": "cartographer_validation",
+      "prompt_snippet_chars": 85,
+      "schema_markers": 29
+    },
+    {
+      "approx_tokens": 419,
+      "description_chars": 579,
+      "estimated_chars": 1676,
+      "name": "cartographer_compact_context",
+      "prompt_snippet_chars": 69,
+      "schema_markers": 25
+    },
+    {
+      "approx_tokens": 410,
+      "description_chars": 344,
+      "estimated_chars": 1640,
+      "name": "cartographer_transition",
+      "prompt_snippet_chars": 73,
+      "schema_markers": 30
+    },
+    {
+      "approx_tokens": 388,
+      "description_chars": 318,
+      "estimated_chars": 1554,
+      "name": "cartographer_proposal",
+      "prompt_snippet_chars": 95,
+      "schema_markers": 28
+    },
+    {
+      "approx_tokens": 352,
+      "description_chars": 321,
+      "estimated_chars": 1406,
+      "name": "cartographer_implement",
+      "prompt_snippet_chars": 63,
+      "schema_markers": 25
+    },
+    {
+      "approx_tokens": 328,
+      "description_chars": 271,
+      "estimated_chars": 1310,
+      "name": "cartographer_fact",
+      "prompt_snippet_chars": 62,
+      "schema_markers": 24
+    },
+    {
+      "approx_tokens": 294,
+      "description_chars": 248,
+      "estimated_chars": 1174,
+      "name": "cartographer_context_pack",
+      "prompt_snippet_chars": 61,
+      "schema_markers": 21
+    },
+    {
+      "approx_tokens": 262,
+      "description_chars": 265,
+      "estimated_chars": 1048,
+      "name": "cartographer_receipt",
+      "prompt_snippet_chars": 83,
+      "schema_markers": 17
+    },
+    {
+      "approx_tokens": 218,
+      "description_chars": 214,
+      "estimated_chars": 872,
+      "name": "cartographer_session",
+      "prompt_snippet_chars": 78,
+      "schema_markers": 14
+    },
+    {
+      "approx_tokens": 218,
+      "description_chars": 169,
+      "estimated_chars": 871,
+      "name": "cartographer_plan",
+      "prompt_snippet_chars": 85,
+      "schema_markers": 15
+    },
+    {
+      "approx_tokens": 218,
+      "description_chars": 262,
+      "estimated_chars": 871,
+      "name": "cartographer_plan_status",
+      "prompt_snippet_chars": 65,
+      "schema_markers": 13
+    }
+  ],
+  "topic": "context-bloat-audit"
+}
